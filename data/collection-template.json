@@ -1,0 +1,16 @@
+{
+  "id": "candidate-id",
+  "title": "候補名",
+  "titleEn": "Candidate title",
+  "type": "demo",
+  "platform": "XR",
+  "engine": "unknown",
+  "source": "where you found it",
+  "url": "https://example.com",
+  "whyInteresting": "どこが気になったか。",
+  "whyInterestingEn": "Why it caught your attention.",
+  "verificationStatus": "collected",
+  "lastChecked": "2026-07-07",
+  "notes": "次に確認したいこと。",
+  "notesEn": "What to verify next."
+}

@@ -1,0 +1,36 @@
+{
+  "queue": [
+    {
+      "id": "babylon-webxr-candidate",
+      "title": "Babylon.js WebXR candidate",
+      "titleEn": "Babylon.js WebXR candidate",
+      "type": "example",
+      "platform": "XR",
+      "engine": "Babylon.js",
+      "source": "Official Babylon.js ecosystem",
+      "url": "https://playground.babylonjs.com/",
+      "whyInteresting": "WebXR 体験を Babylon.js でどう構成しているかを追う候補。Playground ベースなので、作品というより実装パターンの抽出向きです。",
+      "whyInterestingEn": "A candidate for tracing how WebXR experiences are structured in Babylon.js. Because it is Playground-based, it is better for extracting implementation patterns than for cataloging a single finished work.",
+      "verificationStatus": "reviewing",
+      "lastChecked": "2026-07-07",
+      "notes": "次は Babylon.js ドキュメント側の WebXR 導線と、公開されている Playground ID を拾いたい。",
+      "notesEn": "Next step: trace the Babylon.js documentation path for WebXR and collect stable public Playground IDs."
+    },
+    {
+      "id": "playcanvas-xr-candidate",
+      "title": "PlayCanvas XR candidate",
+      "titleEn": "PlayCanvas XR candidate",
+      "type": "example",
+      "platform": "XR",
+      "engine": "PlayCanvas",
+      "source": "Official PlayCanvas ecosystem",
+      "url": "https://playcanvas.com/",
+      "whyInteresting": "PlayCanvas は空間体験の公開例が多いので、このプロジェクトでは作品寄りの事例を後でまとめて拾いたいです。",
+      "whyInterestingEn": "PlayCanvas has many publishable spatial examples, so it is worth collecting more artwork-oriented cases here later.",
+      "verificationStatus": "collected",
+      "lastChecked": "2026-07-07",
+      "notes": "次は developer site / explore 側で WebXR 対応の公式サンプル URL を安定的に拾う。",
+      "notesEn": "Next step: identify stable official sample URLs for WebXR through the developer site and explore sections."
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "example-project-id",
+  "title": "作品名",
+  "titleEn": "Project title",
+  "summary": "日本語の短い要約。",
+  "summaryEn": "Short English summary.",
+  "platform": "XR",
+  "engine": "three.js",
+  "tags": ["webxr", "spatial-ui", "installation"],
+  "creator": "Creator name",
+  "year": "2026",
+  "stage": "archived",
+  "verificationStatus": "verified",
+  "lastChecked": "2026-07-07",
+  "demoUrl": "https://example.com/demo",
+  "sourceUrl": "https://example.com/source",
+  "references": [
+    {
+      "label": "Official page",
+      "url": "https://example.com/official"
+    }
+  ],
+  "notes": "見て良かった理由、真似したい点、発展案。",
+  "notesEn": "Why it matters, what to borrow, and how to extend it.",
+  "status": "watching"
+}
