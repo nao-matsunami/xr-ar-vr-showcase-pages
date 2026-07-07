@@ -28,7 +28,7 @@ jobs:
           node-version: 22
 
       - name: Build site
-        run: node scripts/build-site.mjs
+        run: node scripts/build-gallery.mjs
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
