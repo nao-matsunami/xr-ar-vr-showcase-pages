@@ -3,20 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>XR / AR / VR Showcase</title>
-  
+  <title>XR / AR / VR Daily Samples</title>
   <style>
     :root {
-      --bg0: #09111a;
-      --bg1: #13273b;
-      --panel: rgba(9, 18, 29, 0.82);
-      --panel2: rgba(255, 255, 255, 0.04);
-      --line: rgba(124, 228, 255, 0.12);
-      --text: #ecf8ff;
-      --muted: #97b6ca;
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
       --accent: #7ce4ff;
       --accent2: #ffd868;
-      --shadow: rgba(0, 0, 0, 0.3);
+      --shadow: rgba(0, 0, 0, 0.32);
     }
 
     * { box-sizing: border-box; }
@@ -24,79 +23,80 @@
     body {
       margin: 0;
       min-height: 100vh;
-      color: var(--text);
       font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
       background:
-        radial-gradient(circle at 14% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
-        radial-gradient(circle at 82% 12%, rgba(255, 216, 104, 0.12), transparent 20%),
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
         linear-gradient(180deg, var(--bg1), var(--bg0));
     }
-
-    a { color: inherit; }
 
     .shell {
       max-width: 1180px;
       margin: 0 auto;
-      padding: 28px 20px 56px;
-    }
-
-    .hero, .card, .detail, .sample-list {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      box-shadow: 0 18px 42px var(--shadow);
-      backdrop-filter: blur(14px);
+      padding: 28px 20px 48px;
     }
 
     .hero {
       padding: 28px;
+      border-radius: 26px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
     }
 
     .hero h1 {
       margin: 0 0 10px;
-      font-size: clamp(2rem, 4vw, 3.4rem);
-      line-height: 1.05;
+      font-size: clamp(1.9rem, 4vw, 3.2rem);
+      line-height: 1.1;
     }
 
     .hero p {
       margin: 0;
+      max-width: 780px;
       color: var(--muted);
       line-height: 1.7;
-      max-width: 780px;
     }
 
-    .hero .en {
-      margin-top: 10px;
+    .card-subtitle,
+    .en-copy,
+    .bilingual-secondary,
+    .heading-pair-secondary {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.65;
     }
 
-    .meta, .badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+    .card-subtitle,
+    .heading-pair-secondary {
+      font-size: 0.9rem;
+    }
+
+    .description.en-copy {
+      min-height: 0;
+      margin-top: -4px;
+      font-size: 0.92rem;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
     }
 
     .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
       margin-top: 18px;
     }
 
-    .meta span, .badge {
+    .meta span {
       padding: 8px 12px;
       border-radius: 999px;
-      background: var(--panel2);
-      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255, 255, 255, 0.06);
       color: var(--muted);
-      font-size: 0.85rem;
-    }
-
-    .refs {
-      margin: 14px 0 0;
-      padding-left: 18px;
-      display: grid;
-      gap: 8px;
-    }
-
-    .refs a {
-      color: var(--accent);
+      font-size: 0.88rem;
     }
 
     .grid {
@@ -107,33 +107,70 @@
     }
 
     .card {
-      padding: 18px;
       display: grid;
       gap: 14px;
+      padding: 18px;
+      border-radius: 22px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
     }
 
-    .card h2, .detail h2 {
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .date {
+      margin: 0 0 6px;
+      color: var(--accent2);
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .card h2 {
       margin: 0;
       font-size: 1.15rem;
       line-height: 1.3;
     }
 
-    .sub, .en, .empty {
+    .description {
+      margin: 0;
       color: var(--muted);
       line-height: 1.7;
+      min-height: 4.6em;
     }
 
-    .sub {
-      font-size: 0.92rem;
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .actions {
       display: flex;
-      gap: 10px;
+      align-items: center;
+      gap: 12px;
       flex-wrap: wrap;
     }
 
-    .button, .button-secondary {
+    .primary,
+    .secondary-link,
+    .pager-link,
+    .pager-nav {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -144,150 +181,161 @@
       font-weight: 700;
     }
 
-    .button {
+    .primary {
       background: linear-gradient(135deg, var(--accent), #8effc8);
       color: #062334;
     }
 
-    .button-secondary {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
+    .secondary-link,
+    .pager-link,
+    .pager-nav {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .detail, .sample-list {
-      margin-top: 22px;
-      padding: 22px;
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 320px;
-      gap: 18px;
-      margin-top: 22px;
-    }
-
-    .sidebar {
-      display: grid;
-      gap: 18px;
-    }
-
-    .empty {
-      margin-top: 22px;
-      padding: 24px;
+    .pager {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+      padding: 18px;
+      border-radius: 22px;
       background: var(--panel);
-      border: 1px dashed rgba(124, 228, 255, 0.18);
-      border-radius: 24px;
+      border: 1px solid var(--line);
     }
 
-    @media (max-width: 920px) {
-      .detail-grid {
-        grid-template-columns: 1fr;
-      }
+    .pager-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pager-link.is-current {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+      border-color: transparent;
+    }
+
+    .pager-nav.is-disabled {
+      opacity: 0.4;
+    }
+
+    .like-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 40px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      white-space: nowrap;
+    }
+
+    .like-button.is-liked {
+      border-color: rgba(255, 216, 104, 0.32);
+      background: rgba(255, 216, 104, 0.12);
+      color: #fff2c8;
+    }
+
+    .heart {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .footer-note {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
     }
   </style>
 </head>
 <body>
   <main class="shell">
+    <section class="hero">
+      <h1>XR / AR / VR Daily Samples</h1>
+      <p>
+        各日付のカードから、その日の内容ページへ進める構成に変えています。
+        サンプル単体ではなく、日ごとのまとまりを見やすくし、件数が増えたらページ送りで辿れるようにしています。
+      </p>
+      <p class="en-copy">
+        Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
+      </p>
+      <div class="meta">
+        <span>days: 1</span>
+        <span>page: 1 / 1</span>
+        <span>storage: localStorage likes</span>
+      </div>
+    </section>
+
     
-      <section class="hero">
-        <h1>XR / AR / VR Showcase</h1>
-        <p>作品サンプル、体験事例、空間演出のアーカイブ</p>
-        <p class="en">An archive of spatial works, demos, and interaction references.</p>
-        <div class="meta">
-          <span>projects: 4</span>
-          <span>focus: XR / AR / VR / WebXR</span>
-          <span>static-site ready</span>
-        </div>
-      </section>
-      <section class="grid">
-            <article class="card">
-              <div>
-                <h2>WebXR Samples</h2>
-                <p class="sub">WebXR Samples</p>
-              </div>
-              <p>Immersive Web コミュニティの公式サンプル集。入力、セッション、ヒットテスト、アンカー、深度など、WebXR の基礎から拡張までの確認に向いています。</p>
-              <p class="en">The official sample collection from the Immersive Web community. Useful for checking fundamentals and extensions of WebXR such as input, sessions, hit testing, anchors, and depth.</p>
-              <div class="badges"><span class="badge">XR</span><span class="badge">WebXR</span><span class="badge">official</span><span class="badge">webxr</span><span class="badge">reference</span><span class="badge">samples</span></div>
-              <div class="meta">
-                <span>creator: Immersive Web Community Group</span>
-                <span>year: 2026</span>
-                <span>stage: archived</span>
-                <span>verified: verified</span>
-                <span>status: watching</span>
-              </div>
-              <div class="actions">
-                <a class="button" href="items/webxr-samples.html">詳細 / Detail</a>
-                <a class="button-secondary" href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">デモ / Demo</a>
-              </div>
-            </article>
-          
 
-            <article class="card">
-              <div>
-                <h2>WebXR Layers Samples</h2>
-                <p class="sub">WebXR Layers Samples</p>
-              </div>
-              <p>WebXR Layers API の公式サンプル。UI 面や背景レイヤーを 3D シーンと分けて扱う考え方を掴むのに向いています。</p>
-              <p class="en">Official samples for the WebXR Layers API. Useful for understanding how to separate UI or background layers from the main 3D scene.</p>
-              <div class="badges"><span class="badge">XR</span><span class="badge">WebXR Layers</span><span class="badge">official</span><span class="badge">layers</span><span class="badge">spatial-ui</span><span class="badge">compositor</span></div>
-              <div class="meta">
-                <span>creator: Immersive Web Community Group</span>
-                <span>year: 2026</span>
-                <span>stage: archived</span>
-                <span>verified: verified</span>
-                <span>status: watching</span>
-              </div>
-              <div class="actions">
-                <a class="button" href="items/webxr-layers-samples.html">詳細 / Detail</a>
-                <a class="button-secondary" href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">デモ / Demo</a>
-              </div>
-            </article>
-          
+    <section class="grid">
+      
+        <article class="card" data-slug="2026-07-07">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.07</p>
+              <h2>XR 側を自作日次サンプル形式へ移行</h2>
+              <p class="card-subtitle">XR side moved to original daily-sample format</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-07" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">XR / AR / VR 側の公開面を、既存デモの紹介ではなく自作サンプルの蓄積へ切り替えました。初回として、XR Layers 的な前景 HUD と奥行き面の分離感を、ポインタ視差で試せる最小 HTML サンプルを追加しています。</p>
+          <p class="description en-copy">The XR / AR / VR site has been shifted from listing existing demos to accumulating original samples. As the first entry, it adds a minimal HTML prototype that explores XR-Layers-like separation between foreground HUD and depth planes through pointer-based parallax.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-07-07.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-07-07_html_spatial_hud_depth_stack.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+    </section>
 
-            <article class="card">
-              <div>
-                <h2>model-viewer Augmented Reality</h2>
-                <p class="sub">model-viewer Augmented Reality</p>
-              </div>
-              <p>Google の &lt;model-viewer&gt; 公式 AR 例。WebXR / Scene Viewer / Quick Look の差と、DOM を伴う AR 体験の設計を比較しやすいです。</p>
-              <p class="en">The official AR examples for Google's &lt;model-viewer&gt;. Good for comparing WebXR, Scene Viewer, and Quick Look, especially when DOM is part of the experience.</p>
-              <div class="badges"><span class="badge">AR</span><span class="badge">model-viewer</span><span class="badge">official</span><span class="badge">ar</span><span class="badge">dom</span><span class="badge">commerce</span></div>
-              <div class="meta">
-                <span>creator: Google</span>
-                <span>year: 2026</span>
-                <span>stage: archived</span>
-                <span>verified: verified</span>
-                <span>status: watching</span>
-              </div>
-              <div class="actions">
-                <a class="button" href="items/model-viewer-augmented-reality.html">詳細 / Detail</a>
-                <a class="button-secondary" href="https://modelviewer.dev/examples/augmentedreality/" target="_blank" rel="noreferrer">デモ / Demo</a>
-              </div>
-            </article>
-          
-
-            <article class="card">
-              <div>
-                <h2>A-Frame Examples</h2>
-                <p class="sub">A-Frame Examples</p>
-              </div>
-              <p>A-Frame の公式 examples 一覧。Hand Tracking、Spatial UI、AR Hello World など、体験寄りの構成例が多く、空間インタラクションの観察に向いています。</p>
-              <p class="en">The official A-Frame examples directory. It includes Hand Tracking, Spatial UI, AR Hello World, and other experience-oriented patterns useful for studying spatial interaction.</p>
-              <div class="badges"><span class="badge">XR</span><span class="badge">A-Frame</span><span class="badge">official</span><span class="badge">aframe</span><span class="badge">hand-tracking</span><span class="badge">spatial-ui</span></div>
-              <div class="meta">
-                <span>creator: A-Frame</span>
-                <span>year: 2026</span>
-                <span>stage: archived</span>
-                <span>verified: verified</span>
-                <span>status: watching</span>
-              </div>
-              <div class="actions">
-                <a class="button" href="items/aframe-examples.html">詳細 / Detail</a>
-                <a class="button-secondary" href="https://aframe.io/aframe/examples/" target="_blank" rel="noreferrer">デモ / Demo</a>
-              </div>
-            </article>
-          </section>
     
+
+    <p class="footer-note">
+      補足: 現在の「好き」はブラウザごとのローカル保存です。全ユーザー共通のいいね数にしたい場合は、
+      GitHub Pages 単体ではなく外部の保存先や API が必要です。
+    </p>
   </main>
+
+  <script>
+    const storageKey = "xr-ar-vr-daily-samples-likes";
+    const liked = JSON.parse(localStorage.getItem(storageKey) || "{}");
+
+    function syncButtons() {
+      document.querySelectorAll(".like-button").forEach((button) => {
+        const slug = button.dataset.slug;
+        const isLiked = Boolean(liked[slug]);
+        button.classList.toggle("is-liked", isLiked);
+        button.setAttribute("aria-pressed", String(isLiked));
+        button.querySelector(".heart").textContent = isLiked ? "♥" : "♡";
+        button.querySelector(".label").textContent = isLiked ? "好き済み / Liked" : "好き / Like";
+      });
+    }
+
+    document.querySelectorAll(".like-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        const slug = button.dataset.slug;
+        liked[slug] = !liked[slug];
+        localStorage.setItem(storageKey, JSON.stringify(liked));
+        syncButtons();
+      });
+    });
+
+    syncButtons();
+  </script>
 </body>
 </html>

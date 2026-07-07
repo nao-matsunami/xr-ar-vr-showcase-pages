@@ -1,0 +1,75 @@
+{
+  "date": "YYYY-MM-DD",
+  "headline": "日本語の見出し",
+  "headlineEn": "English headline",
+  "summary": "日本語の短い要約。",
+  "summaryEn": "Short English summary.",
+  "links": [
+    {
+      "label": "Primary source label",
+      "url": "https://example.com"
+    }
+  ],
+  "sections": [
+    {
+      "title": "今日の重要トピック",
+      "titleEn": "Key topics today",
+      "body": "日本語本文。",
+      "bodyEn": "English body.",
+      "links": [
+        {
+          "label": "Official source",
+          "url": "https://example.com"
+        }
+      ]
+    },
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "日本語本文。",
+      "bodyEn": "English body."
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "日本語本文。",
+      "bodyEn": "English body."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "日本語本文。",
+      "bodyEn": "English body."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "日本語本文。",
+      "bodyEn": "English body."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "日本語本文。",
+      "bodyEn": "English body."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "日本語本文。",
+      "bodyEn": "English body."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "日本語本文。",
+      "bodyEn": "English body."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "日本語本文。",
+      "bodyEn": "English body."
+    }
+  ]
+}

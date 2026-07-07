@@ -1,0 +1,77 @@
+{
+  "date": "2026-07-07",
+  "headline": "XR 側を自作日次サンプル形式へ移行",
+  "headlineEn": "XR side moved to original daily-sample format",
+  "summary": "XR / AR / VR 側の公開面を、既存デモの紹介ではなく自作サンプルの蓄積へ切り替えました。初回として、XR Layers 的な前景 HUD と奥行き面の分離感を、ポインタ視差で試せる最小 HTML サンプルを追加しています。",
+  "summaryEn": "The XR / AR / VR site has been shifted from listing existing demos to accumulating original samples. As the first entry, it adds a minimal HTML prototype that explores XR-Layers-like separation between foreground HUD and depth planes through pointer-based parallax.",
+  "links": [
+    {
+      "label": "Today's sample: Spatial HUD Depth Stack",
+      "url": "../outputs/2026-07-07_html_spatial_hud_depth_stack.html"
+    },
+    {
+      "label": "WebXR Layers samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    },
+    {
+      "label": "WebXR Layers source",
+      "url": "https://github.com/immersive-web/webxr-samples"
+    }
+  ],
+  "sections": [
+    {
+      "title": "今日の重要トピック",
+      "titleEn": "Key topics today",
+      "body": "XR 側の公開アーカイブ方針を修正し、既存の公式デモを作品カードとして並べるのではなく、自分で試作したサンプルだけを日付単位で載せる構成へ変更しました。既存デモは今後も参考情報として調べますが、公開面では参考リンクとして本文に残すだけにします。",
+      "bodyEn": "The public XR archive policy was corrected so that only self-made prototypes appear as dated cards. Existing official demos will still be researched, but they will remain as reference links inside the report rather than public archive entries."
+    },
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable reference and why it matters",
+      "body": "参考元として見た WebXR Layers 系の発想で重要なのは、HUD や補助面を 3D シーン内メッシュと同じ扱いにせず、読みやすさのために別の層として考えることです。今回はその考え方だけを抽出し、実装依存の少ない HTML/CSS/JS で疑似的に試しました。",
+      "bodyEn": "The key idea borrowed from WebXR Layers references is to treat HUD and support surfaces as a separate readability layer rather than ordinary scene meshes. This prototype extracts only that idea and tests it in dependency-light HTML/CSS/JS."
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "ポインタを疑似 head pose と見なし、前景 HUD、中景説明面、奥の基準面で反応速度と視差量を変えると、XR での情報の優先順位を Web 上でもかなり早く比較できます。次は gaze 固定、hand ray、hit test で面が差し替わる版へ広げられます。",
+      "bodyEn": "By treating the pointer as a mock head pose and varying response speed and parallax across foreground HUD, mid-layer prompts, and deep anchor planes, XR information hierarchy can be tested quickly on the web. The next step would be versions driven by gaze fixation, hand rays, or hit-test results."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "今回は WebXR 実装に入る前の構造確認として、CSS perspective と pointer tracking のみで層分離を検証しています。利点は、HMD や端末依存なしに、レイヤー距離、面積、読解距離、アニメーション速度を先に詰められることです。",
+      "bodyEn": "This prototype checks layered structure before moving into full WebXR by using only CSS perspective and pointer tracking. The advantage is that layer spacing, panel size, reading distance, and animation speed can be refined without requiring an HMD or device-specific setup."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は WebXR 本体に寄せて、enter immersive 前後で HUD を切り替える最小構成、もしくは AR 的な情報面のアンカー切り替えを確認したいです。加えて、XR での text readability と panel contrast の実測条件も溜めていきます。",
+      "bodyEn": "Next, the work should move closer to actual WebXR by testing a minimal HUD switch around enter-immersive, or an AR-like anchor-switching information surface. It is also worth collecting practical conditions for text readability and panel contrast in XR."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "まずは今回の `Spatial HUD Depth Stack` を見て、前景面・中景面・奥行き面のどこに何の情報を置くと読みやすいかを整理するのが良いです。特に『説明は奥に、即時操作は手前に』というルールがどこまで有効かを試せます。",
+      "bodyEn": "Start by using the current Spatial HUD Depth Stack to map which information belongs to foreground, middle, and depth planes. In particular, it helps test how far the rule of 'instructions deeper, immediate controls closer' remains effective."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "ネタ収集: WebXR Layers と空間 UI の参考整理。アイデア検討: HUD と深度面の役割分離。サンプル実装: pointer parallax 版を追加。結果の検証: 次は immersive 遷移や anchor 切替に広げる段階です。",
+      "bodyEn": "Collection: references on WebXR Layers and spatial UI. Idea phase: separating the roles of HUD and depth planes. Sample implementation: added a pointer-parallax version. Validation next: expand toward immersive transitions and anchor switching."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR 側は、シェーダー側と同様に『毎日の自作サンプルを小さく積む』運用へ寄せたほうが、時間経過で比較しやすくなります。参考調査と公開アーカイブは分け、公開サイトでは自分の判断と試作だけが見える状態にしておくのが良さそうです。",
+      "bodyEn": "The XR side becomes easier to compare over time when it follows the shader side's model of accumulating small original daily samples. Research references and the public archive should stay separate, so the public site shows only your own judgment and prototypes."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "今回は `Spatial HUD Depth Stack` を採用しました。次の最小発展形は、ポインタではなく一定の gaze dwell で前景 HUD を明滅させる版、または 3 面のうち 1 面だけを“固定レイヤー”的に扱う版です。",
+      "bodyEn": "The chosen mini prototype today is Spatial HUD Depth Stack. The next minimal extension would be a gaze-dwell version that fades the foreground HUD, or a variant where only one of the three planes behaves like a fixed layer."
+    }
+  ]
+}

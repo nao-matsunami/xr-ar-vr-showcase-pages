@@ -109,7 +109,7 @@ async function main() {
     );
   }
 
-  await run("node", ["scripts/build-site.mjs"], sourceDir);
+  await run("node", ["scripts/build-gallery.mjs"], sourceDir);
   await copyProject();
   await run("git", ["add", "."], targetDir);
 

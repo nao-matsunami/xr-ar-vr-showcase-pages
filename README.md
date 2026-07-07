@@ -1,84 +1,66 @@
-# XR / AR / VR Showcase
+# XR / AR / VR Daily Samples
 
-VR / XR / AR の作品サンプル、事例、デモ、制作メモを蓄積するための独立プロジェクトです。単なる一覧ではなく、`収集 -> 検証 -> アーカイブ` の流れもここで持てるようにします。
+毎日の XR / AR / VR / WebXR リサーチから生成した `自作サンプル` を蓄積し、GitHub Pages で公開するための最小構成です。役割は `空間体験 / XR 向け表現 / インタラクション試作` 寄りのデイリー実験集です。
 
-## 目的
+このプロジェクトでは、外部の既存デモをそのまま作品カードとして並べません。既存事例はあくまで参考資料として調べ、自分の試作は `outputs/` と `reports/` に日付単位で保存します。
 
-- シェーダー中心のデイリー集とは分けて、空間体験・インタラクション・作品事例を整理する
-- 気になった事例をまず収集し、検証の途中段階も残せるようにする
-- 作品カード一覧と個別ページを静的生成する
-- GitHub Pages や Cloudflare Pages に載せやすい構成にする
+## 含まれるもの
 
-## 構成
-
-- `data/projects.json`
-  - 公開アーカイブに出す作品データ本体
-- `data/project-template.json`
-  - 1件分の入力テンプレート
-- `data/collection-queue.json`
-  - 収集中・検証中の候補メモ
-- `data/collection-template.json`
-  - 候補メモ1件分の入力テンプレート
-- `scripts/build-site.mjs`
-  - 一覧ページと個別ページを生成
+- `outputs/`
+  - 日付ごとの自作サンプル HTML
+- `days/`
+  - 日付ごとの詳細ページ
+- `pages/`
+  - 一覧の2ページ目以降
 - `index.html`
-  - 作品一覧トップ
-- `items/*.html`
-  - 各作品の個別ページ
+  - サンプル一覧トップページ
+- `reports/`
+  - 日次レポート本文を日付ページへ載せるための JSON
+- `scripts/build-gallery.mjs`
+  - `outputs/` と `reports/` を走査して `index.html` / `days/` / `pages/` を再生成
+- `scripts/upsert-report.mjs`
+  - `reports/YYYY-MM-DD.json` を保存してから一覧再生成し、必要なら publish まで実行
+- `.github/workflows/deploy-pages.yml`
+  - GitHub Pages へ自動デプロイする workflow
+- `.nojekyll`
+  - GitHub Pages の Jekyll 処理を無効化
 
-## 使い方
-
-データを編集:
-
-```bash
-open data/projects.json
-```
-
-サイト生成:
+## ローカルで一覧を再生成
 
 ```bash
 npm run build
 ```
 
-## 収集と検証の流れ
+または:
 
-おすすめの運用段階:
+```bash
+node scripts/build-gallery.mjs
+```
 
-1. `data/collection-queue.json`
-   気になった作品、記事、デモ、作者ページをまず入れる
-2. `verification_status`
-   `collected / reviewing / verified / archived` で管理する
-3. `data/projects.json`
-   公開したいものだけ整理して載せる
+GitHub Pages 公開用リポジトリへ反映する場合:
 
-つまり、このプロジェクトは `収集メモ置き場` と `公開アーカイブ` を分ける前提です。
+```bash
+npm run publish:pages
+```
 
-## データ項目
+## 毎朝の自動レポートをサイトへ反映する
 
-主な項目:
+日次レポート JSON を保存し、そのまま一覧再生成と GitHub Pages 公開まで流す場合:
 
-- `id`
-- `title`
-- `titleEn`
-- `summary`
-- `summaryEn`
-- `platform`
-- `engine`
-- `tags`
-- `creator`
-- `year`
-- `demoUrl`
-- `sourceUrl`
-- `references`
-- `stage`
-- `verificationStatus`
-- `lastChecked`
-- `notes`
-- `status`
+```bash
+node scripts/upsert-report.mjs --file reports/2026-07-07.json --publish
+```
 
-## 次にやると良いこと
+## 参考資料の扱い
 
-- GitHub Pages 用 workflow を追加
-- 作品を `XR / AR / VR / WebXR / installation` などでタグ整理
-- 「見て良かった理由」「真似したい技術」「自分ならどう変えるか」を notes に入れる
-- collection queue から公開候補へ移す基準を決める
+既存の公式デモや作例は、公開アーカイブには直接並べず、必要なら内部メモとして残します。
+
+- `research/external-references.json`
+  - 以前確認した外部サンプルの退避メモ
+
+## 運用方針
+
+- 公開面には `自作サンプル` だけを載せる
+- 外部事例はレポート本文の参考リンクとして扱う
+- 毎日 1 本でも小さい試作を `outputs/` に追加する
+- `reports/YYYY-MM-DD.json` で、その日の意図と技術メモを残す

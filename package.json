@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "node scripts/build-site.mjs",
+    "build": "node scripts/build-gallery.mjs",
+    "build:gallery": "node scripts/build-gallery.mjs",
+    "upsert:report": "node scripts/upsert-report.mjs",
     "publish:pages": "node scripts/publish-pages.mjs"
   }
 }
