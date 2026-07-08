@@ -124,6 +124,27 @@
       font-size: 12px;
     }
 
+    .focus-strip {
+      position: fixed;
+      left: 18px;
+      bottom: 16px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      max-width: min(680px, calc(100vw - 36px));
+      z-index: 10;
+    }
+
+    .focus-chip {
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(8, 19, 31, 0.66);
+      color: var(--text);
+      font-size: 12px;
+      backdrop-filter: blur(12px);
+    }
+
     .status {
       position: fixed;
       right: 18px;
@@ -148,12 +169,30 @@
       vertical-align: middle;
       box-shadow: 0 0 12px rgba(136, 240, 255, 0.45);
     }
+
+    @media (max-width: 720px) {
+      .panel {
+        width: min(72vw, 360px);
+        min-height: 132px;
+        padding: 16px;
+      }
+
+      .panel-b { right: 7%; top: 30%; }
+      .panel-c { left: 10%; bottom: 16%; }
+      .status { display: none; }
+    }
   </style>
 </head>
 <body>
   <div class="hud">
     <h1>Spatial HUD Depth Stack</h1>
     <p>XR レイヤー構成を直接実装する前段として、ポインタを疑似 head pose に見立て、前景 HUD と奥行き面を分離して観察する最小プロトタイプです。ドラッグすると視差が強まります。</p>
+  </div>
+
+  <div class="focus-strip" aria-label="検証ポイント">
+    <span class="focus-chip">検証: HUD / 中景 / 奥行き面の読みやすさ</span>
+    <span class="focus-chip">操作: pointer move + drag</span>
+    <span class="focus-chip">差分: drag 中だけ視差を強調</span>
   </div>
 
   <div class="scene" id="scene">

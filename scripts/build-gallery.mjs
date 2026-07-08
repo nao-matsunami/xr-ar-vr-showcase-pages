@@ -76,6 +76,28 @@ function renderLinks(links) {
   `;
 }
 
+function renderKeyTopics(report) {
+  if (!report?.keyTopics?.length) return "";
+  return `
+      <section class="detail-block">
+        <h2>${renderBilingual("今日の重要トピック", "Key topics today", "span", "span", "heading-pair")}</h2>
+        <ol class="topic-list">
+          ${report.keyTopics
+            .map((topic, index) => {
+              const topicEn = report.keyTopicsEn?.[index];
+              return `
+            <li>
+              <span>${escapeHtml(topic)}</span>
+              ${topicEn ? `<span class="en-copy">${escapeHtml(topicEn)}</span>` : ""}
+            </li>
+          `;
+            })
+            .join("")}
+        </ol>
+      </section>
+  `;
+}
+
 function renderReportSections(report) {
   if (!report?.sections?.length) {
     return `
@@ -516,7 +538,7 @@ function renderDetailPage(day, allDays, pageNumberMap) {
   const reportHeadlineEn = day.report?.headlineEn || "";
   const reportSummary = day.report?.summary || primarySample.description;
   const reportSummaryEn = day.report?.summaryEn || "";
-  const reportSections = renderReportSections(day.report);
+  const reportSections = `${renderKeyTopics(day.report)}${renderReportSections(day.report)}`;
   const extraLinks = [];
 
   if (day.report?.links?.length) {
@@ -704,6 +726,17 @@ function renderDetailPage(day, allDays, pageNumberMap) {
 
     .link-list a {
       color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
     }
 
     .sample-list {

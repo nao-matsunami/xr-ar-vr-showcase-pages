@@ -4,6 +4,18 @@
   "headlineEn": "XR side moved to original daily-sample format",
   "summary": "XR / AR / VR 側の公開面を、既存デモの紹介ではなく自作サンプルの蓄積へ切り替えました。初回として、XR Layers 的な前景 HUD と奥行き面の分離感を、ポインタ視差で試せる最小 HTML サンプルを追加しています。",
   "summaryEn": "The XR / AR / VR site has been shifted from listing existing demos to accumulating original samples. As the first entry, it adds a minimal HTML prototype that explores XR-Layers-like separation between foreground HUD and depth planes through pointer-based parallax.",
+  "keyTopics": [
+    "公開カードは自作サンプルだけに限定し、公式サンプルや他者作品は参考リンクへ分離する。",
+    "WebXR Layers 的な発想から、HUD と奥行き面を別レイヤーとして読む検証に絞る。",
+    "HMD なしでも確認できるよう、CSS perspective と pointer tracking で最小サンプル化する。",
+    "次の発展先は gaze dwell、hand ray、AR 的な anchor 切替の 3 系統に置く。"
+  ],
+  "keyTopicsEn": [
+    "Public cards are limited to original samples, while official samples and other works stay as reference links.",
+    "The test narrows the WebXR Layers idea down to readable separation between HUD and depth planes.",
+    "The first sample uses CSS perspective and pointer tracking so it can be evaluated without an HMD.",
+    "Next extensions are gaze dwell, hand ray, and AR-like anchor switching."
+  ],
   "links": [
     {
       "label": "Today's sample: Spatial HUD Depth Stack",
@@ -20,8 +32,8 @@
   ],
   "sections": [
     {
-      "title": "今日の重要トピック",
-      "titleEn": "Key topics today",
+      "title": "公開方針メモ",
+      "titleEn": "Publishing policy memo",
       "body": "XR 側の公開アーカイブ方針を修正し、既存の公式デモを作品カードとして並べるのではなく、自分で試作したサンプルだけを日付単位で載せる構成へ変更しました。既存デモは今後も参考情報として調べますが、公開面では参考リンクとして本文に残すだけにします。",
       "bodyEn": "The public XR archive policy was corrected so that only self-made prototypes appear as dated cards. Existing official demos will still be researched, but they will remain as reference links inside the report rather than public archive entries."
     },

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AR hit test と anchor の最小試作 | 2026-07-08</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.08</p>
+      <h1>AR hit test と anchor の最小試作</h1>
+      <p class="hero-subtitle">Minimal AR hit-test and anchor prototype</p>
+      <p>WebXR Hit Test と Anchors、DOM Overlay の一次情報を参照し、HMD なしで床面への ray、reticle、anchor 配置、tracking drift を観察できる自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">Based on primary references for WebXR Hit Test, Anchors, and DOM Overlay, this adds an original HTML prototype for observing a floor ray, reticle, anchor placement, and tracking drift without an HMD.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-08_html_ar_hit_anchor_board.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-07.html">← 2026.07.07</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>AR Hit Anchor Board</h3>
+              <p>ポインタ位置を画面中央から伸びる ray と見なし、床面 hit test の候補点を描く最小サンプルです。クリックでアンカーを置き、揺れと信頼度を観察します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-08_html_ar_hit_anchor_board.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Hit Test Module は 2025-12-11 の W3C Working Draft として、現実空間ジオメトリに対する ray intersection を扱う。</span>
+              <span class="en-copy">The WebXR Hit Test Module is a W3C Working Draft dated 2025-12-11 and focuses on ray intersections against real-world geometry.</span>
+            </li>
+          
+            <li>
+              <span>Hit Test の公式サンプルは、実空間の床や面に仮想オブジェクトを置く最小導線を確認する入口になる。</span>
+              <span class="en-copy">The official Hit Test sample is a compact entry point for placing virtual objects on real-world floors or surfaces.</span>
+            </li>
+          
+            <li>
+              <span>Anchors Module は `XRAnchor` と `anchorSpace`、persistent handle の考え方を定義しており、配置後の保持を設計する軸になる。</span>
+              <span class="en-copy">The Anchors Module defines `XRAnchor`, `anchorSpace`, and persistent handles, which guide how placed content can be retained.</span>
+            </li>
+          
+            <li>
+              <span>DOM Overlay は immersive session 中の 2D UI を扱い、`beforexrselect` で DOM 操作と XR world select の衝突を分けられる。</span>
+              <span class="en-copy">DOM Overlay covers 2D UI during immersive sessions and uses `beforexrselect` to separate DOM interactions from XR world select events.</span>
+            </li>
+          
+            <li>
+              <span>今日の自作サンプルは、本物の XR セッション前に ray、reticle、anchor list、drift の関係だけをブラウザ上で切り出した。</span>
+              <span class="en-copy">Today's original sample isolates ray, reticle, anchor list, and drift behavior in the browser before using a real XR session.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は WebXR Hit Test の公式サンプルです。面白い点は、空間認識そのものを大きく見せるのではなく、ray が実世界の面に当たった一点を reticle として示し、そこにユーザーの決定を重ねる構造が非常に小さいことです。これに Anchors の発想を足すと、置いた瞬間だけでなく、置いた後にどれだけ信用できるかを UI として見せる必要が出てきます。</p>
+          <p class="en-copy">The notable reference today is the official WebXR Hit Test sample. What matters is how small the interaction structure is: show the point where a ray hits a real-world surface as a reticle, then let the user commit to that point. Adding the Anchors idea shifts the question from placement alone to how confidently placed content can persist afterward.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-samples/hit-test.html" target="_blank" rel="noreferrer">Official Hit Test sample</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hit-test-1/" target="_blank" rel="noreferrer">W3C Hit Test Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>reticle を単なる照準ではなく、面の信頼度、ray の角度、anchor の数を同時に示す小さな計器として扱うと、AR らしい配置前の迷いを表現できます。今日は床面 grid と中心 ray、クリック配置、drift ボタンによる追跡ノイズだけに絞り、実装より先に『置けそう／置くべきでない』のフィードバック設計を確認しました。</p>
+          <p class="en-copy">Treating the reticle not just as a cursor but as a compact instrument for surface confidence, ray angle, and anchor count makes the uncertainty before AR placement visible. Today's prototype keeps only a floor grid, center ray, click placement, and drift button so the feedback design can be tested before a full implementation.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-08_html_ar_hit_anchor_board.html" target="_blank" rel="noreferrer">Today's sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実 WebXR では session request 時に `hit-test` や `dom-overlay` を optionalFeatures / requiredFeatures として扱い、XRFrame から hit test result の pose を取り、必要なら anchor を作る流れになります。今回の HTML 版は canvas 上で疑似 floor projection を描くだけですが、UI 分離としては DOM Overlay の考え方に近く、2D 操作面と空間配置面を分けて検証できます。</p>
+          <p class="en-copy">In real WebXR, a session would request features such as `hit-test` and `dom-overlay`, read hit-test poses from XRFrame, and create anchors where needed. This HTML prototype only draws a simulated floor projection on canvas, but its UI separation mirrors the DOM Overlay idea by separating the 2D control surface from spatial placement.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">DOM Overlays Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Anchors Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>次は WebXR Depth Sensing、Lighting Estimation、Hand Input を見て、配置した anchor が周囲の遮蔽・明るさ・手入力にどう反応すべきかを分けて試したいです。特に depth は『置けた』後の見え方の説得力に効くので、単純な occlusion preview を自作サンプルにできます。</p>
+          <p class="en-copy">Next, watch WebXR Depth Sensing, Lighting Estimation, and Hand Input to split how a placed anchor should react to occlusion, light, and hand input. Depth is especially important after placement because it affects visual believability, making a simple occlusion preview a good next sample.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`AR Hit Anchor Board` を開き、ポインタを下側に動かして reticle の大きさと confidence を見ながらクリック配置します。その後 Drift を押すと、配置後の anchor が少し揺れ、信頼度が下がるため、AR UI で『保持できている感』をどう出すかを考えやすくなります。</p>
+          <p class="en-copy">Open AR Hit Anchor Board, move the pointer toward the lower area, and place anchors while watching reticle size and confidence. Pressing Drift makes placed anchors move slightly and lowers confidence, making it easier to think about how AR UI should communicate persistence quality.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-08_html_ar_hit_anchor_board.html" target="_blank" rel="noreferrer">Open AR Hit Anchor Board</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Hit Test、Anchors、DOM Overlay の一次情報を確認。アイデア: 配置前の ray / reticle と配置後の anchor confidence を一画面にまとめる。実装: canvas と DOM overlay 風 HUD で HMD 不要の疑似 AR サンプルを追加。検証: 次は本物の WebXR session に近い feature check と fallback UI を足す段階です。</p>
+          <p class="en-copy">Research: checked primary sources for Hit Test, Anchors, and DOM Overlay. Idea: combine pre-placement ray and reticle with post-placement anchor confidence on one screen. Implementation: added an HMD-free simulated AR sample using canvas plus a DOM-overlay-like HUD. Validation next: add feature checks and fallback UI closer to a real WebXR session.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>XR の日次サンプルは、API を完全実装する前に『体験上の最小判断』を切り出すと蓄積しやすいです。昨日は HUD と奥行き層、今日は hit test と anchor。どちらも最終的な XR 実装ではなく、体験の読みやすさや不確かさを先に検証するための部品です。</p>
+          <p class="en-copy">Daily XR samples are easier to accumulate when each one extracts the smallest experiential decision before fully implementing the API. Yesterday focused on HUD and depth layers; today focuses on hit testing and anchors. Both are not final XR implementations but parts for testing readability and uncertainty first.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `AR Hit Anchor Board` です。候補としては他に DOM Overlay だけを模した panel blocking sample もありましたが、今日は配置体験の核になる ray、reticle、anchor、drift を一つにまとめました。</p>
+          <p class="en-copy">The selected mini prototype is AR Hit Anchor Board. Another candidate was a DOM-overlay-only panel blocking sample, but today combines ray, reticle, anchor, and drift because they form the core of placement interaction.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-08_html_ar_hit_anchor_board.html" target="_blank" rel="noreferrer">Today's sample: AR Hit Anchor Board</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hit-test-1/" target="_blank" rel="noreferrer">WebXR Hit Test Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/hit-test.html" target="_blank" rel="noreferrer">WebXR Hit Test sample</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">WebXR Anchors Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">WebXR DOM Overlays Module</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-08_html_ar_hit_anchor_board.html" loading="lazy" title="AR Hit Anchor Board"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

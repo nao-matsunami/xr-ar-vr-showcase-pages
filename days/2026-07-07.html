@@ -165,6 +165,17 @@
       color: var(--accent);
     }
 
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
     .sample-list {
       display: grid;
       gap: 12px;
@@ -245,7 +256,7 @@
 
     <nav class="day-nav" aria-label="日付移動">
       <span class="day-link">最初の日 / First day</span>
-      <span class="day-link">最新日 / Latest</span>
+      <a class="day-link" href="../days/2026-07-08.html">2026.07.08 →</a>
     </nav>
 
     <section class="content">
@@ -267,8 +278,35 @@
           </div>
         </section>
         
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>公開カードは自作サンプルだけに限定し、公式サンプルや他者作品は参考リンクへ分離する。</span>
+              <span class="en-copy">Public cards are limited to original samples, while official samples and other works stay as reference links.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Layers 的な発想から、HUD と奥行き面を別レイヤーとして読む検証に絞る。</span>
+              <span class="en-copy">The test narrows the WebXR Layers idea down to readable separation between HUD and depth planes.</span>
+            </li>
+          
+            <li>
+              <span>HMD なしでも確認できるよう、CSS perspective と pointer tracking で最小サンプル化する。</span>
+              <span class="en-copy">The first sample uses CSS perspective and pointer tracking so it can be evaluated without an HMD.</span>
+            </li>
+          
+            <li>
+              <span>次の発展先は gaze dwell、hand ray、AR 的な anchor 切替の 3 系統に置く。</span>
+              <span class="en-copy">Next extensions are gaze dwell, hand ray, and AR-like anchor switching.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
         <section class="detail-block">
-          <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+          <h2><span class="heading-pair"><span class="heading-pair-primary">公開方針メモ</span><span class="heading-pair-secondary">Publishing policy memo</span></span></h2>
           <p>XR 側の公開アーカイブ方針を修正し、既存の公式デモを作品カードとして並べるのではなく、自分で試作したサンプルだけを日付単位で載せる構成へ変更しました。既存デモは今後も参考情報として調べますが、公開面では参考リンクとして本文に残すだけにします。</p>
           <p class="en-copy">The public XR archive policy was corrected so that only self-made prototypes appear as dated cards. Existing official demos will still be researched, but they will remain as reference links inside the report rather than public archive entries.</p>
           

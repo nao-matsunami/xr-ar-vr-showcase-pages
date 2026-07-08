@@ -1,0 +1,125 @@
+{
+  "date": "2026-07-08",
+  "headline": "AR hit test と anchor の最小試作",
+  "headlineEn": "Minimal AR hit-test and anchor prototype",
+  "summary": "WebXR Hit Test と Anchors、DOM Overlay の一次情報を参照し、HMD なしで床面への ray、reticle、anchor 配置、tracking drift を観察できる自作 HTML サンプルを追加しました。",
+  "summaryEn": "Based on primary references for WebXR Hit Test, Anchors, and DOM Overlay, this adds an original HTML prototype for observing a floor ray, reticle, anchor placement, and tracking drift without an HMD.",
+  "keyTopics": [
+    "WebXR Hit Test Module は 2025-12-11 の W3C Working Draft として、現実空間ジオメトリに対する ray intersection を扱う。",
+    "Hit Test の公式サンプルは、実空間の床や面に仮想オブジェクトを置く最小導線を確認する入口になる。",
+    "Anchors Module は `XRAnchor` と `anchorSpace`、persistent handle の考え方を定義しており、配置後の保持を設計する軸になる。",
+    "DOM Overlay は immersive session 中の 2D UI を扱い、`beforexrselect` で DOM 操作と XR world select の衝突を分けられる。",
+    "今日の自作サンプルは、本物の XR セッション前に ray、reticle、anchor list、drift の関係だけをブラウザ上で切り出した。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Hit Test Module is a W3C Working Draft dated 2025-12-11 and focuses on ray intersections against real-world geometry.",
+    "The official Hit Test sample is a compact entry point for placing virtual objects on real-world floors or surfaces.",
+    "The Anchors Module defines `XRAnchor`, `anchorSpace`, and persistent handles, which guide how placed content can be retained.",
+    "DOM Overlay covers 2D UI during immersive sessions and uses `beforexrselect` to separate DOM interactions from XR world select events.",
+    "Today's original sample isolates ray, reticle, anchor list, and drift behavior in the browser before using a real XR session."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: AR Hit Anchor Board",
+      "url": "../outputs/2026-07-08_html_ar_hit_anchor_board.html"
+    },
+    {
+      "label": "WebXR Hit Test Module",
+      "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+    },
+    {
+      "label": "WebXR Hit Test sample",
+      "url": "https://immersive-web.github.io/webxr-samples/hit-test.html"
+    },
+    {
+      "label": "WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "WebXR DOM Overlays Module",
+      "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Hit Test の公式サンプルです。面白い点は、空間認識そのものを大きく見せるのではなく、ray が実世界の面に当たった一点を reticle として示し、そこにユーザーの決定を重ねる構造が非常に小さいことです。これに Anchors の発想を足すと、置いた瞬間だけでなく、置いた後にどれだけ信用できるかを UI として見せる必要が出てきます。",
+      "bodyEn": "The notable reference today is the official WebXR Hit Test sample. What matters is how small the interaction structure is: show the point where a ray hits a real-world surface as a reticle, then let the user commit to that point. Adding the Anchors idea shifts the question from placement alone to how confidently placed content can persist afterward.",
+      "links": [
+        {
+          "label": "Official Hit Test sample",
+          "url": "https://immersive-web.github.io/webxr-samples/hit-test.html"
+        },
+        {
+          "label": "W3C Hit Test Module",
+          "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "reticle を単なる照準ではなく、面の信頼度、ray の角度、anchor の数を同時に示す小さな計器として扱うと、AR らしい配置前の迷いを表現できます。今日は床面 grid と中心 ray、クリック配置、drift ボタンによる追跡ノイズだけに絞り、実装より先に『置けそう／置くべきでない』のフィードバック設計を確認しました。",
+      "bodyEn": "Treating the reticle not just as a cursor but as a compact instrument for surface confidence, ray angle, and anchor count makes the uncertainty before AR placement visible. Today's prototype keeps only a floor grid, center ray, click placement, and drift button so the feedback design can be tested before a full implementation.",
+      "links": [
+        {
+          "label": "Today's sample",
+          "url": "../outputs/2026-07-08_html_ar_hit_anchor_board.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実 WebXR では session request 時に `hit-test` や `dom-overlay` を optionalFeatures / requiredFeatures として扱い、XRFrame から hit test result の pose を取り、必要なら anchor を作る流れになります。今回の HTML 版は canvas 上で疑似 floor projection を描くだけですが、UI 分離としては DOM Overlay の考え方に近く、2D 操作面と空間配置面を分けて検証できます。",
+      "bodyEn": "In real WebXR, a session would request features such as `hit-test` and `dom-overlay`, read hit-test poses from XRFrame, and create anchors where needed. This HTML prototype only draws a simulated floor projection on canvas, but its UI separation mirrors the DOM Overlay idea by separating the 2D control surface from spatial placement.",
+      "links": [
+        {
+          "label": "DOM Overlays Module",
+          "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+        },
+        {
+          "label": "Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は WebXR Depth Sensing、Lighting Estimation、Hand Input を見て、配置した anchor が周囲の遮蔽・明るさ・手入力にどう反応すべきかを分けて試したいです。特に depth は『置けた』後の見え方の説得力に効くので、単純な occlusion preview を自作サンプルにできます。",
+      "bodyEn": "Next, watch WebXR Depth Sensing, Lighting Estimation, and Hand Input to split how a placed anchor should react to occlusion, light, and hand input. Depth is especially important after placement because it affects visual believability, making a simple occlusion preview a good next sample."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`AR Hit Anchor Board` を開き、ポインタを下側に動かして reticle の大きさと confidence を見ながらクリック配置します。その後 Drift を押すと、配置後の anchor が少し揺れ、信頼度が下がるため、AR UI で『保持できている感』をどう出すかを考えやすくなります。",
+      "bodyEn": "Open AR Hit Anchor Board, move the pointer toward the lower area, and place anchors while watching reticle size and confidence. Pressing Drift makes placed anchors move slightly and lowers confidence, making it easier to think about how AR UI should communicate persistence quality.",
+      "links": [
+        {
+          "label": "Open AR Hit Anchor Board",
+          "url": "../outputs/2026-07-08_html_ar_hit_anchor_board.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Hit Test、Anchors、DOM Overlay の一次情報を確認。アイデア: 配置前の ray / reticle と配置後の anchor confidence を一画面にまとめる。実装: canvas と DOM overlay 風 HUD で HMD 不要の疑似 AR サンプルを追加。検証: 次は本物の WebXR session に近い feature check と fallback UI を足す段階です。",
+      "bodyEn": "Research: checked primary sources for Hit Test, Anchors, and DOM Overlay. Idea: combine pre-placement ray and reticle with post-placement anchor confidence on one screen. Implementation: added an HMD-free simulated AR sample using canvas plus a DOM-overlay-like HUD. Validation next: add feature checks and fallback UI closer to a real WebXR session."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の日次サンプルは、API を完全実装する前に『体験上の最小判断』を切り出すと蓄積しやすいです。昨日は HUD と奥行き層、今日は hit test と anchor。どちらも最終的な XR 実装ではなく、体験の読みやすさや不確かさを先に検証するための部品です。",
+      "bodyEn": "Daily XR samples are easier to accumulate when each one extracts the smallest experiential decision before fully implementing the API. Yesterday focused on HUD and depth layers; today focuses on hit testing and anchors. Both are not final XR implementations but parts for testing readability and uncertainty first."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `AR Hit Anchor Board` です。候補としては他に DOM Overlay だけを模した panel blocking sample もありましたが、今日は配置体験の核になる ray、reticle、anchor、drift を一つにまとめました。",
+      "bodyEn": "The selected mini prototype is AR Hit Anchor Board. Another candidate was a DOM-overlay-only panel blocking sample, but today combines ray, reticle, anchor, and drift because they form the core of placement interaction."
+    }
+  ]
+}

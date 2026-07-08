@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AR Hit Anchor Board</title>
+  <style>
+    :root {
+      --ink: #16211f;
+      --paper: #f4f0e8;
+      --panel: rgba(250, 247, 239, 0.88);
+      --line: rgba(22, 33, 31, 0.16);
+      --muted: #66736e;
+      --teal: #159a9c;
+      --moss: #6a8f3a;
+      --amber: #e0a12b;
+      --coral: #d85f45;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(21, 154, 156, 0.16), transparent 34%),
+        linear-gradient(225deg, rgba(216, 95, 69, 0.15), transparent 32%),
+        var(--paper);
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      grid-template-columns: minmax(250px, 360px) 1fr;
+      pointer-events: none;
+    }
+
+    .hud {
+      align-self: start;
+      margin: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 36px rgba(46, 41, 32, 0.14);
+      backdrop-filter: blur(14px);
+      pointer-events: auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.15;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.62);
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: rgba(21, 154, 156, 0.48);
+    }
+
+    .meter {
+      margin-top: 14px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .meter-row {
+      display: grid;
+      grid-template-columns: 74px 1fr;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(22, 33, 31, 0.1);
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      width: 42%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--amber));
+      transition: width 160ms ease;
+    }
+
+    .anchor-list {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      gap: 8px;
+      width: min(320px, calc(100vw - 36px));
+      pointer-events: none;
+    }
+
+    .anchor-pill {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(250, 247, 239, 0.82);
+      box-shadow: 0 10px 22px rgba(46, 41, 32, 0.12);
+      font-size: 12px;
+    }
+
+    .anchor-pill strong {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .anchor-pill span {
+      color: var(--muted);
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(250, 247, 239, 0.76);
+      color: var(--muted);
+      font-size: 12px;
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 760px) {
+      .overlay {
+        display: block;
+      }
+
+      .hud {
+        max-width: calc(100vw - 36px);
+      }
+
+      .anchor-list {
+        right: 12px;
+        bottom: 54px;
+      }
+
+      .hint {
+        width: calc(100vw - 28px);
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="board" aria-label="AR hit test anchor simulator"></canvas>
+
+  <div class="overlay">
+    <section class="hud">
+      <h1>AR Hit Anchor Board</h1>
+      <p>ポインタ位置を画面中央から伸びる ray と見なし、床面 hit test の候補点を描く最小サンプルです。クリックでアンカーを置き、揺れと信頼度を観察します。</p>
+      <div class="controls">
+        <button type="button" id="clearButton">Clear</button>
+        <button type="button" id="driftButton">Drift</button>
+      </div>
+      <div class="meter" aria-label="tracking metrics">
+        <div class="meter-row"><span>ray angle</span><div class="bar"><div class="fill" id="angleFill"></div></div></div>
+        <div class="meter-row"><span>confidence</span><div class="bar"><div class="fill" id="confidenceFill"></div></div></div>
+        <div class="meter-row"><span>anchors</span><div class="bar"><div class="fill" id="anchorFill"></div></div></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="anchor-list" id="anchorList" aria-live="polite"></div>
+  <div class="hint">move: aim ray / click: place anchor / drift: simulate tracking noise</div>
+
+  <script>
+    const canvas = document.getElementById("board");
+    const ctx = canvas.getContext("2d");
+    const anchorList = document.getElementById("anchorList");
+    const angleFill = document.getElementById("angleFill");
+    const confidenceFill = document.getElementById("confidenceFill");
+    const anchorFill = document.getElementById("anchorFill");
+    const clearButton = document.getElementById("clearButton");
+    const driftButton = document.getElementById("driftButton");
+
+    const state = {
+      width: 0,
+      height: 0,
+      dpr: 1,
+      pointerX: 0.54,
+      pointerY: 0.58,
+      targetX: 0.54,
+      targetY: 0.58,
+      time: 0,
+      anchors: []
+    };
+
+    function resize() {
+      state.dpr = Math.min(devicePixelRatio || 1, 2);
+      state.width = innerWidth;
+      state.height = innerHeight;
+      canvas.width = Math.round(state.width * state.dpr);
+      canvas.height = Math.round(state.height * state.dpr);
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    }
+
+    function setPointer(clientX, clientY) {
+      state.targetX = Math.max(0.05, Math.min(0.95, clientX / state.width));
+      state.targetY = Math.max(0.24, Math.min(0.9, clientY / state.height));
+    }
+
+    function hitPoint() {
+      const x = state.width * (0.18 + state.pointerX * 0.64);
+      const y = state.height * (0.48 + state.pointerY * 0.34);
+      const depth = Math.max(0, Math.min(1, (y - state.height * 0.46) / (state.height * 0.36)));
+      return { x, y, depth };
+    }
+
+    function placeAnchor() {
+      const hit = hitPoint();
+      const confidence = Math.round((0.92 - Math.abs(hit.depth - 0.56) * 0.72) * 100);
+      state.anchors.unshift({
+        id: Date.now(),
+        label: `A${String(state.anchors.length + 1).padStart(2, "0")}`,
+        x: hit.x,
+        y: hit.y,
+        baseX: hit.x,
+        baseY: hit.y,
+        depth: hit.depth,
+        confidence: Math.max(38, Math.min(94, confidence)),
+        offset: Math.random() * Math.PI * 2
+      });
+      state.anchors = state.anchors.slice(0, 6);
+      renderList();
+    }
+
+    function renderList() {
+      anchorList.innerHTML = state.anchors.map((anchor) => `
+        <div class="anchor-pill">
+          <strong>${anchor.label}: floor anchor</strong>
+          <span>confidence ${anchor.confidence}% / depth ${anchor.depth.toFixed(2)}</span>
+        </div>
+      `).join("");
+    }
+
+    function simulateDrift() {
+      for (const anchor of state.anchors) {
+        const amount = 8 + (100 - anchor.confidence) * 0.18;
+        anchor.x = anchor.baseX + Math.cos(state.time * 0.02 + anchor.offset) * amount;
+        anchor.y = anchor.baseY + Math.sin(state.time * 0.017 + anchor.offset) * amount * 0.62;
+        anchor.confidence = Math.max(34, anchor.confidence - 3);
+      }
+      renderList();
+    }
+
+    function drawFloor() {
+      const horizon = state.height * 0.42;
+      ctx.fillStyle = "#f4f0e8";
+      ctx.fillRect(0, 0, state.width, state.height);
+
+      const sky = ctx.createLinearGradient(0, 0, state.width, horizon);
+      sky.addColorStop(0, "rgba(21,154,156,0.14)");
+      sky.addColorStop(0.52, "rgba(224,161,43,0.08)");
+      sky.addColorStop(1, "rgba(216,95,69,0.09)");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, state.width, horizon);
+
+      const floor = ctx.createLinearGradient(0, horizon, 0, state.height);
+      floor.addColorStop(0, "rgba(106,143,58,0.08)");
+      floor.addColorStop(1, "rgba(22,33,31,0.10)");
+      ctx.fillStyle = floor;
+      ctx.fillRect(0, horizon, state.width, state.height - horizon);
+
+      ctx.strokeStyle = "rgba(22,33,31,0.14)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 18; i += 1) {
+        const t = i / 18;
+        const y = horizon + Math.pow(t, 1.85) * (state.height - horizon + 80);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(state.width, y);
+        ctx.stroke();
+      }
+
+      for (let i = -10; i <= 10; i += 1) {
+        const vanishingX = state.width * 0.5;
+        const bottomX = state.width * 0.5 + i * state.width * 0.085;
+        ctx.beginPath();
+        ctx.moveTo(vanishingX, horizon);
+        ctx.lineTo(bottomX, state.height);
+        ctx.stroke();
+      }
+    }
+
+    function drawRay(hit) {
+      const origin = { x: state.width * 0.5, y: state.height * 0.24 };
+      const angle = Math.hypot(hit.x - origin.x, hit.y - origin.y) / Math.hypot(state.width, state.height);
+      const confidence = Math.max(0.28, 0.96 - Math.abs(hit.depth - 0.56) * 0.9);
+
+      ctx.strokeStyle = "rgba(21,154,156,0.66)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(origin.x, origin.y);
+      ctx.lineTo(hit.x, hit.y);
+      ctx.stroke();
+
+      ctx.fillStyle = "#16211f";
+      ctx.beginPath();
+      ctx.arc(origin.x, origin.y, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = confidence > 0.58 ? "#159a9c" : "#d85f45";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.ellipse(hit.x, hit.y, 42 + hit.depth * 28, 12 + hit.depth * 12, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = confidence > 0.58 ? "rgba(21,154,156,0.18)" : "rgba(216,95,69,0.18)";
+      ctx.beginPath();
+      ctx.ellipse(hit.x, hit.y, 42 + hit.depth * 28, 12 + hit.depth * 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      angleFill.style.width = `${Math.min(100, Math.round(angle * 190))}%`;
+      confidenceFill.style.width = `${Math.round(confidence * 100)}%`;
+      anchorFill.style.width = `${Math.round((state.anchors.length / 6) * 100)}%`;
+    }
+
+    function drawAnchors() {
+      for (const anchor of state.anchors) {
+        const pulse = 1 + Math.sin(state.time * 0.04 + anchor.offset) * 0.08;
+        ctx.save();
+        ctx.translate(anchor.x, anchor.y);
+        ctx.scale(pulse, pulse);
+        ctx.fillStyle = "rgba(224,161,43,0.26)";
+        ctx.strokeStyle = "#e0a12b";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 32 + anchor.depth * 24, 10 + anchor.depth * 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#16211f";
+        ctx.font = "700 12px Avenir Next, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(anchor.label, 0, -16);
+        ctx.restore();
+      }
+    }
+
+    function frame() {
+      state.time += 1;
+      state.pointerX += (state.targetX - state.pointerX) * 0.12;
+      state.pointerY += (state.targetY - state.pointerY) * 0.12;
+      const hit = hitPoint();
+      drawFloor();
+      drawAnchors();
+      drawRay(hit);
+      requestAnimationFrame(frame);
+    }
+
+    addEventListener("resize", resize);
+    addEventListener("pointermove", (event) => setPointer(event.clientX, event.clientY));
+    addEventListener("pointerdown", (event) => {
+      setPointer(event.clientX, event.clientY);
+      if (!event.target.closest("button")) placeAnchor();
+    });
+
+    clearButton.addEventListener("click", () => {
+      state.anchors = [];
+      renderList();
+    });
+
+    driftButton.addEventListener("click", simulateDrift);
+
+    resize();
+    renderList();
+    frame();
+  </script>
+</body>
+</html>

@@ -4,6 +4,16 @@
   "headlineEn": "English headline",
   "summary": "日本語の短い要約。",
   "summaryEn": "Short English summary.",
+  "keyTopics": [
+    "今日の重要トピック 1",
+    "今日の重要トピック 2",
+    "今日の重要トピック 3"
+  ],
+  "keyTopicsEn": [
+    "Key topic 1",
+    "Key topic 2",
+    "Key topic 3"
+  ],
   "links": [
     {
       "label": "Primary source label",
@@ -12,8 +22,8 @@
   ],
   "sections": [
     {
-      "title": "今日の重要トピック",
-      "titleEn": "Key topics today",
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
       "body": "日本語本文。",
       "bodyEn": "English body.",
       "links": [
@@ -22,12 +32,6 @@
           "url": "https://example.com"
         }
       ]
-    },
-    {
-      "title": "注目事例と何が面白いか",
-      "titleEn": "Notable example and why it matters",
-      "body": "日本語本文。",
-      "bodyEn": "English body."
     },
     {
       "title": "表現・インタラクションのアイデア",
