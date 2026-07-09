@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Depth Sensing と遮蔽量の最小試作 | 2026-07-09</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.09</p>
+      <h1>Depth Sensing と遮蔽量の最小試作</h1>
+      <p class="hero-subtitle">Minimal depth-sensing and occlusion prototype</p>
+      <p>WebXR Depth Sensing、Lighting Estimation、Hand Input の一次情報を確認し、今日は depth buffer と仮想オブジェクト深度の比較から遮蔽量を可視化する自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing primary references for WebXR Depth Sensing, Lighting Estimation, and Hand Input, today's original HTML sample visualizes occlusion by comparing a simulated depth buffer with virtual object depth.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-09_html_depth_occlusion_meter.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-08.html">← 2026.07.08</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Depth Occlusion Meter</h3>
+              <p>疑似 depth buffer を背景に、仮想カードの深度を比較して遮蔽量を測る最小サンプルです。ドラッグで配置、ホイールまたはボタンで深度を変えます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-09_html_depth_occlusion_meter.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Depth Sensing Module は 2025-12-10 の Editor's Draft で、XR device が計算した環境の depth 情報を session へ渡す。</span>
+              <span class="en-copy">The WebXR Depth Sensing Module is an Editor's Draft dated 2025-12-10 and exposes environment depth computed by XR devices to sessions.</span>
+            </li>
+          
+            <li>
+              <span>Depth Sensing では `depth-sensing` feature descriptor と `depthSensing` 初期化設定が重要で、CPU / GPU usage と depth data format を選ぶ必要がある。</span>
+              <span class="en-copy">Depth Sensing depends on the `depth-sensing` feature descriptor plus `depthSensing` session initialization, including CPU/GPU usage and depth data format choices.</span>
+            </li>
+          
+            <li>
+              <span>`XRDepthInformation.rawValueToMeters` は raw depth value を meter に変換する scale で、今回の自作サンプルでは疑似 depth map を直接 meter として扱った。</span>
+              <span class="en-copy">`XRDepthInformation.rawValueToMeters` scales raw depth values into meters; today's sample treats its simulated depth map directly as meter values.</span>
+            </li>
+          
+            <li>
+              <span>Lighting Estimation は `XRLightProbe` と `XRLightEstimate` を通じて primary light と spherical harmonics を扱い、遮蔽後の見え方の次段階になる。</span>
+              <span class="en-copy">Lighting Estimation uses `XRLightProbe` and `XRLightEstimate` for primary light and spherical harmonics, making it a natural next step after occlusion.</span>
+            </li>
+          
+            <li>
+              <span>Hand Input は 25 joints の articulated hand pose を扱うため、depth で隠れた仮想物に手が近づく表現へ発展させやすい。</span>
+              <span class="en-copy">Hand Input exposes articulated hand poses across 25 joints, which can extend this depth idea into hands approaching partially hidden virtual objects.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は WebXR Depth Sensing Module です。面白い点は、AR で『そこに置けた』だけでは足りず、現実の机や人の輪郭より奥にある仮想物を正しく隠すことで初めて合成の説得力が上がることです。仕様上は raw / smooth、CPU / GPU、複数 data format の選択があり、体験上は depth の精度よりも遮蔽の破綻をどう見せるかが重要になります。</p>
+          <p class="en-copy">Today's notable reference is the WebXR Depth Sensing Module. What matters is that AR placement alone is not enough: compositing becomes convincing when virtual content behind real desks or silhouettes is hidden correctly. The specification exposes choices such as raw/smooth depth, CPU/GPU usage, and data formats, while the experiential issue is how to present imperfect occlusion.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/depth-sensing/" target="_blank" rel="noreferrer">WebXR Depth Sensing Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>depth map を単なる背景処理にせず、ユーザーが置いたカードの何割が現実側に隠れているかを meter として出すと、AR の不確かな合成状態を説明できます。今日のサンプルでは、ドラッグでカード位置を変え、深度を手前・奥へ動かし、Mask を切り替えて遮蔽の有無を比べられるようにしました。</p>
+          <p class="en-copy">Instead of treating the depth map as invisible background processing, showing how much of a placed card is hidden by the real scene makes AR's uncertain compositing state legible. Today's sample lets the user drag the card, move its depth near or far, and toggle the occlusion mask.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-09_html_depth_occlusion_meter.html" target="_blank" rel="noreferrer">Today's sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実 WebXR では `navigator.xr.requestSession(&quot;immersive-ar&quot;, { requiredFeatures: [&quot;depth-sensing&quot;], depthSensing: { usagePreference, dataFormatPreference } })` のように session を作り、frame / view ごとの depth information を取得します。CPU 側で判定するなら `getDepthInformation(view)` と `rawValueToMeters`、GPU 側なら depth texture と shader で virtual fragment depth を比較する構成になります。</p>
+          <p class="en-copy">In real WebXR, a session can request depth sensing with options such as `requiredFeatures: [&quot;depth-sensing&quot;]` and a `depthSensing` configuration for usage and data format preferences. CPU-side logic would use per-view depth information and `rawValueToMeters`; GPU-side compositing would compare virtual fragment depth against a depth texture in a shader.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/depth-sensing/#session-configuration" target="_blank" rel="noreferrer">Depth Sensing session configuration</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>次は Lighting Estimation を掘り、遮蔽されたカードの明るさや色温度が環境 light estimate に追従する最小サンプルにすると流れがよいです。さらに Hand Input の joint radius を使えば、手前にある手が仮想カードを隠す、または近づいた指先だけ反応する表現へ進められます。</p>
+          <p class="en-copy">Next, Lighting Estimation is the best continuation: make the occluded card follow estimated brightness and color temperature. Hand Input can then add joint radius behavior so a foreground hand hides the virtual card or only nearby fingertips react.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/lighting-estimation/" target="_blank" rel="noreferrer">WebXR Lighting Estimation</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-hand-input/" target="_blank" rel="noreferrer">WebXR Hand Input</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Depth Occlusion Meter` を開き、カードを明るい近距離 depth 領域へドラッグしてから Far を押します。カードが現実側の depth に隠れ、occluded の値が上がるので、AR 合成の『奥に入った感』を確認できます。</p>
+          <p class="en-copy">Open Depth Occlusion Meter, drag the card over a bright near-depth region, then press Far. The card becomes hidden by the simulated real-depth layer and the occluded value rises, showing how AR content appears to go behind the real scene.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-09_html_depth_occlusion_meter.html" target="_blank" rel="noreferrer">Open Depth Occlusion Meter</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Depth Sensing を中心に Lighting Estimation と Hand Input の一次情報を確認。アイデア: depth buffer と virtual z の比較を UI として見えるようにする。実装: canvas の疑似 depth map、ドラッグ可能な仮想カード、mask toggle、遮蔽率 meter を追加。検証: 次は実機 WebXR で feature availability と fallback 表示を確認する段階です。</p>
+          <p class="en-copy">Research: reviewed primary sources for Depth Sensing plus Lighting Estimation and Hand Input. Idea: make the comparison between depth buffer and virtual z visible as UI. Implementation: added a canvas-based simulated depth map, draggable virtual card, mask toggle, and occlusion meter. Validation next: check feature availability and fallback behavior on real WebXR hardware.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web samples index</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion の順で、空間体験の『見える』『置く』『隠れる』を小さく切り出しています。公開アーカイブでは外部デモをカード化せず、自作の最小サンプルだけを日ごとに積む方針を維持します。</p>
+          <p class="en-copy">The sequence so far isolates small parts of spatial experience: seeing depth layers, placing via hit testing and anchors, then hiding via depth occlusion. The public archive continues to keep external demos as references only, while daily cards remain original minimal samples.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Depth Occlusion Meter` です。候補として Lighting Probe の色温度 slider も考えましたが、昨日の anchor 配置の次に自然につながるのは、配置後の仮想物が現実空間に隠れるかどうかだったため、Depth Sensing を優先しました。</p>
+          <p class="en-copy">The selected prototype is Depth Occlusion Meter. A lighting-probe color-temperature slider was another candidate, but the most natural follow-up to yesterday's anchor placement was whether placed virtual content is correctly hidden by the real environment, so Depth Sensing came first.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-09_html_depth_occlusion_meter.html" target="_blank" rel="noreferrer">Today's sample: Depth Occlusion Meter</a></li>
+          
+            <li><a href="https://immersive-web.github.io/depth-sensing/" target="_blank" rel="noreferrer">WebXR Depth Sensing Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/lighting-estimation/" target="_blank" rel="noreferrer">WebXR Lighting Estimation API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-hand-input/" target="_blank" rel="noreferrer">WebXR Hand Input Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-09_html_depth_occlusion_meter.html" loading="lazy" title="Depth Occlusion Meter"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

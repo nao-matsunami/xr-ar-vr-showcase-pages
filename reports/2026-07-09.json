@@ -1,0 +1,133 @@
+{
+  "date": "2026-07-09",
+  "headline": "Depth Sensing と遮蔽量の最小試作",
+  "headlineEn": "Minimal depth-sensing and occlusion prototype",
+  "summary": "WebXR Depth Sensing、Lighting Estimation、Hand Input の一次情報を確認し、今日は depth buffer と仮想オブジェクト深度の比較から遮蔽量を可視化する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing primary references for WebXR Depth Sensing, Lighting Estimation, and Hand Input, today's original HTML sample visualizes occlusion by comparing a simulated depth buffer with virtual object depth.",
+  "keyTopics": [
+    "WebXR Depth Sensing Module は 2025-12-10 の Editor's Draft で、XR device が計算した環境の depth 情報を session へ渡す。",
+    "Depth Sensing では `depth-sensing` feature descriptor と `depthSensing` 初期化設定が重要で、CPU / GPU usage と depth data format を選ぶ必要がある。",
+    "`XRDepthInformation.rawValueToMeters` は raw depth value を meter に変換する scale で、今回の自作サンプルでは疑似 depth map を直接 meter として扱った。",
+    "Lighting Estimation は `XRLightProbe` と `XRLightEstimate` を通じて primary light と spherical harmonics を扱い、遮蔽後の見え方の次段階になる。",
+    "Hand Input は 25 joints の articulated hand pose を扱うため、depth で隠れた仮想物に手が近づく表現へ発展させやすい。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Depth Sensing Module is an Editor's Draft dated 2025-12-10 and exposes environment depth computed by XR devices to sessions.",
+    "Depth Sensing depends on the `depth-sensing` feature descriptor plus `depthSensing` session initialization, including CPU/GPU usage and depth data format choices.",
+    "`XRDepthInformation.rawValueToMeters` scales raw depth values into meters; today's sample treats its simulated depth map directly as meter values.",
+    "Lighting Estimation uses `XRLightProbe` and `XRLightEstimate` for primary light and spherical harmonics, making it a natural next step after occlusion.",
+    "Hand Input exposes articulated hand poses across 25 joints, which can extend this depth idea into hands approaching partially hidden virtual objects."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Depth Occlusion Meter",
+      "url": "../outputs/2026-07-09_html_depth_occlusion_meter.html"
+    },
+    {
+      "label": "WebXR Depth Sensing Module",
+      "url": "https://immersive-web.github.io/depth-sensing/"
+    },
+    {
+      "label": "WebXR Lighting Estimation API Level 1",
+      "url": "https://immersive-web.github.io/lighting-estimation/"
+    },
+    {
+      "label": "WebXR Hand Input Module",
+      "url": "https://immersive-web.github.io/webxr-hand-input/"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Depth Sensing Module です。面白い点は、AR で『そこに置けた』だけでは足りず、現実の机や人の輪郭より奥にある仮想物を正しく隠すことで初めて合成の説得力が上がることです。仕様上は raw / smooth、CPU / GPU、複数 data format の選択があり、体験上は depth の精度よりも遮蔽の破綻をどう見せるかが重要になります。",
+      "bodyEn": "Today's notable reference is the WebXR Depth Sensing Module. What matters is that AR placement alone is not enough: compositing becomes convincing when virtual content behind real desks or silhouettes is hidden correctly. The specification exposes choices such as raw/smooth depth, CPU/GPU usage, and data formats, while the experiential issue is how to present imperfect occlusion.",
+      "links": [
+        {
+          "label": "WebXR Depth Sensing Module",
+          "url": "https://immersive-web.github.io/depth-sensing/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "depth map を単なる背景処理にせず、ユーザーが置いたカードの何割が現実側に隠れているかを meter として出すと、AR の不確かな合成状態を説明できます。今日のサンプルでは、ドラッグでカード位置を変え、深度を手前・奥へ動かし、Mask を切り替えて遮蔽の有無を比べられるようにしました。",
+      "bodyEn": "Instead of treating the depth map as invisible background processing, showing how much of a placed card is hidden by the real scene makes AR's uncertain compositing state legible. Today's sample lets the user drag the card, move its depth near or far, and toggle the occlusion mask.",
+      "links": [
+        {
+          "label": "Today's sample",
+          "url": "../outputs/2026-07-09_html_depth_occlusion_meter.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実 WebXR では `navigator.xr.requestSession(\"immersive-ar\", { requiredFeatures: [\"depth-sensing\"], depthSensing: { usagePreference, dataFormatPreference } })` のように session を作り、frame / view ごとの depth information を取得します。CPU 側で判定するなら `getDepthInformation(view)` と `rawValueToMeters`、GPU 側なら depth texture と shader で virtual fragment depth を比較する構成になります。",
+      "bodyEn": "In real WebXR, a session can request depth sensing with options such as `requiredFeatures: [\"depth-sensing\"]` and a `depthSensing` configuration for usage and data format preferences. CPU-side logic would use per-view depth information and `rawValueToMeters`; GPU-side compositing would compare virtual fragment depth against a depth texture in a shader.",
+      "links": [
+        {
+          "label": "Depth Sensing session configuration",
+          "url": "https://immersive-web.github.io/depth-sensing/#session-configuration"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は Lighting Estimation を掘り、遮蔽されたカードの明るさや色温度が環境 light estimate に追従する最小サンプルにすると流れがよいです。さらに Hand Input の joint radius を使えば、手前にある手が仮想カードを隠す、または近づいた指先だけ反応する表現へ進められます。",
+      "bodyEn": "Next, Lighting Estimation is the best continuation: make the occluded card follow estimated brightness and color temperature. Hand Input can then add joint radius behavior so a foreground hand hides the virtual card or only nearby fingertips react.",
+      "links": [
+        {
+          "label": "WebXR Lighting Estimation",
+          "url": "https://immersive-web.github.io/lighting-estimation/"
+        },
+        {
+          "label": "WebXR Hand Input",
+          "url": "https://immersive-web.github.io/webxr-hand-input/"
+        }
+      ]
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Depth Occlusion Meter` を開き、カードを明るい近距離 depth 領域へドラッグしてから Far を押します。カードが現実側の depth に隠れ、occluded の値が上がるので、AR 合成の『奥に入った感』を確認できます。",
+      "bodyEn": "Open Depth Occlusion Meter, drag the card over a bright near-depth region, then press Far. The card becomes hidden by the simulated real-depth layer and the occluded value rises, showing how AR content appears to go behind the real scene.",
+      "links": [
+        {
+          "label": "Open Depth Occlusion Meter",
+          "url": "../outputs/2026-07-09_html_depth_occlusion_meter.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Depth Sensing を中心に Lighting Estimation と Hand Input の一次情報を確認。アイデア: depth buffer と virtual z の比較を UI として見えるようにする。実装: canvas の疑似 depth map、ドラッグ可能な仮想カード、mask toggle、遮蔽率 meter を追加。検証: 次は実機 WebXR で feature availability と fallback 表示を確認する段階です。",
+      "bodyEn": "Research: reviewed primary sources for Depth Sensing plus Lighting Estimation and Hand Input. Idea: make the comparison between depth buffer and virtual z visible as UI. Implementation: added a canvas-based simulated depth map, draggable virtual card, mask toggle, and occlusion meter. Validation next: check feature availability and fallback behavior on real WebXR hardware.",
+      "links": [
+        {
+          "label": "Immersive Web samples index",
+          "url": "https://immersive-web.github.io/webxr-samples/"
+        }
+      ]
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion の順で、空間体験の『見える』『置く』『隠れる』を小さく切り出しています。公開アーカイブでは外部デモをカード化せず、自作の最小サンプルだけを日ごとに積む方針を維持します。",
+      "bodyEn": "The sequence so far isolates small parts of spatial experience: seeing depth layers, placing via hit testing and anchors, then hiding via depth occlusion. The public archive continues to keep external demos as references only, while daily cards remain original minimal samples."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Depth Occlusion Meter` です。候補として Lighting Probe の色温度 slider も考えましたが、昨日の anchor 配置の次に自然につながるのは、配置後の仮想物が現実空間に隠れるかどうかだったため、Depth Sensing を優先しました。",
+      "bodyEn": "The selected prototype is Depth Occlusion Meter. A lighting-probe color-temperature slider was another candidate, but the most natural follow-up to yesterday's anchor placement was whether placed virtual content is correctly hidden by the real environment, so Depth Sensing came first."
+    }
+  ]
+}

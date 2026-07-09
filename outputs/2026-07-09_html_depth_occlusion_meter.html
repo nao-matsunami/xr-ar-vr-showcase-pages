@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Depth Occlusion Meter</title>
+  <style>
+    :root {
+      --ink: #17201f;
+      --paper: #f3f4ef;
+      --panel: rgba(250, 251, 247, 0.88);
+      --line: rgba(23, 32, 31, 0.16);
+      --muted: #63706d;
+      --cyan: #169fb0;
+      --green: #5a9d4a;
+      --amber: #df9b25;
+      --rose: #c85a61;
+      --violet: #6b66c9;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+      background:
+        linear-gradient(140deg, rgba(22, 159, 176, 0.14), transparent 32%),
+        linear-gradient(230deg, rgba(200, 90, 97, 0.13), transparent 30%),
+        var(--paper);
+      color: var(--ink);
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+    }
+
+    .hud {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      width: min(370px, calc(100vw - 36px));
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 34px rgba(43, 48, 43, 0.14);
+      backdrop-filter: blur(14px);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.15;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.66);
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(22, 159, 176, 0.62);
+      background: rgba(22, 159, 176, 0.13);
+    }
+
+    .meters {
+      display: grid;
+      gap: 7px;
+      margin-top: 14px;
+    }
+
+    .meter {
+      display: grid;
+      grid-template-columns: 86px 1fr 44px;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(23, 32, 31, 0.1);
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      width: 50%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--cyan), var(--amber));
+      transition: width 120ms ease;
+    }
+
+    .readout {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .legend {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: min(330px, calc(100vw - 36px));
+      display: grid;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .legend-item {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(250, 251, 247, 0.82);
+      box-shadow: 0 10px 22px rgba(43, 48, 43, 0.12);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .legend-item strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 2px;
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      max-width: calc(100vw - 36px);
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(250, 251, 247, 0.78);
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 720px) {
+      .hud {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .legend {
+        right: 12px;
+        bottom: 54px;
+      }
+
+      .legend-item {
+        display: none;
+      }
+
+      .legend-item:first-child {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="Depth occlusion simulator"></canvas>
+
+  <section class="hud">
+    <h1>Depth Occlusion Meter</h1>
+    <p>疑似 depth buffer を背景に、仮想カードの深度を比較して遮蔽量を測る最小サンプルです。ドラッグで配置、ホイールまたはボタンで深度を変えます。</p>
+    <div class="controls">
+      <button type="button" id="nearButton">Near</button>
+      <button type="button" id="farButton">Far</button>
+      <button type="button" id="maskButton" aria-pressed="true">Mask</button>
+    </div>
+    <div class="meters">
+      <div class="meter"><span>virtual z</span><div class="bar"><div class="fill" id="virtualFill"></div></div><span class="readout" id="virtualValue">1.6m</span></div>
+      <div class="meter"><span>scene depth</span><div class="bar"><div class="fill" id="sceneFill"></div></div><span class="readout" id="sceneValue">1.8m</span></div>
+      <div class="meter"><span>occluded</span><div class="bar"><div class="fill" id="occlusionFill"></div></div><span class="readout" id="occlusionValue">0%</span></div>
+    </div>
+  </section>
+
+  <aside class="legend" aria-live="polite">
+    <div class="legend-item"><strong>depth map</strong>明るい場所ほど近く、暗い場所ほど遠い想定。実 API では raw depth value に scale を掛けて meter へ変換します。</div>
+    <div class="legend-item"><strong>virtual card</strong>カードの z が背景 depth より遠い領域だけ、現実物体に隠れるように描画されます。</div>
+  </aside>
+
+  <div class="hint">drag: move card / wheel: z depth / near-far: adjust / mask: toggle occlusion</div>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const nearButton = document.getElementById("nearButton");
+    const farButton = document.getElementById("farButton");
+    const maskButton = document.getElementById("maskButton");
+    const virtualFill = document.getElementById("virtualFill");
+    const sceneFill = document.getElementById("sceneFill");
+    const occlusionFill = document.getElementById("occlusionFill");
+    const virtualValue = document.getElementById("virtualValue");
+    const sceneValue = document.getElementById("sceneValue");
+    const occlusionValue = document.getElementById("occlusionValue");
+
+    const state = {
+      width: 0,
+      height: 0,
+      dpr: 1,
+      time: 0,
+      dragging: false,
+      mask: true,
+      cardX: 0.58,
+      cardY: 0.58,
+      cardZ: 1.68,
+      targetZ: 1.68,
+      pointerId: null
+    };
+
+    function resize() {
+      state.dpr = Math.min(devicePixelRatio || 1, 2);
+      state.width = innerWidth;
+      state.height = innerHeight;
+      canvas.width = Math.round(state.width * state.dpr);
+      canvas.height = Math.round(state.height * state.dpr);
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function depthAt(x, y) {
+      const nx = x / Math.max(1, state.width);
+      const ny = y / Math.max(1, state.height);
+      const table = Math.exp(-((nx - 0.46) ** 2 / 0.038 + (ny - 0.63) ** 2 / 0.018));
+      const standing = Math.exp(-((nx - 0.72) ** 2 / 0.014 + (ny - 0.45) ** 2 / 0.06));
+      const wall = 0.42 + ny * 1.7 + Math.sin(nx * 8 + state.time * 0.001) * 0.06;
+      return clamp(wall - table * 0.95 - standing * 0.72, 0.52, 3.2);
+    }
+
+    function colorForDepth(depth) {
+      const t = clamp((depth - 0.52) / 2.68, 0, 1);
+      const r = Math.round(238 - t * 90);
+      const g = Math.round(241 - t * 88);
+      const b = Math.round(226 - t * 60);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    function cardRect() {
+      const scale = 1.08 - (state.cardZ - 0.6) / 3.6;
+      const w = clamp(state.width * 0.18 * scale, 92, 190);
+      const h = w * 0.66;
+      const x = state.cardX * state.width - w / 2;
+      const y = state.cardY * state.height - h / 2;
+      return { x, y, w, h };
+    }
+
+    function drawDepthMap() {
+      const step = Math.max(12, Math.round(Math.min(state.width, state.height) / 48));
+      for (let y = 0; y < state.height + step; y += step) {
+        for (let x = 0; x < state.width + step; x += step) {
+          const depth = depthAt(x + step * 0.5, y + step * 0.5);
+          ctx.fillStyle = colorForDepth(depth);
+          ctx.fillRect(x, y, step + 1, step + 1);
+        }
+      }
+
+      ctx.strokeStyle = "rgba(23, 32, 31, 0.12)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 13; i += 1) {
+        const y = state.height * (0.4 + i * 0.045);
+        ctx.beginPath();
+        ctx.moveTo(state.width * 0.08, y);
+        ctx.lineTo(state.width * 0.92, y + i * 4);
+        ctx.stroke();
+      }
+    }
+
+    function drawVirtualCard(rect, masked) {
+      const radius = 10;
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(rect.x, rect.y, rect.w, rect.h, radius);
+      ctx.clip();
+
+      const gradient = ctx.createLinearGradient(rect.x, rect.y, rect.x + rect.w, rect.y + rect.h);
+      gradient.addColorStop(0, masked ? "rgba(22, 159, 176, 0.24)" : "rgba(22, 159, 176, 0.88)");
+      gradient.addColorStop(1, masked ? "rgba(107, 102, 201, 0.16)" : "rgba(107, 102, 201, 0.82)");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+
+      ctx.strokeStyle = masked ? "rgba(23, 32, 31, 0.28)" : "rgba(255, 255, 255, 0.72)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(rect.x + 11, rect.y + 11, rect.w - 22, rect.h - 22);
+
+      ctx.fillStyle = masked ? "rgba(23, 32, 31, 0.38)" : "rgba(255, 255, 255, 0.86)";
+      ctx.font = "700 13px Avenir Next, sans-serif";
+      ctx.fillText(masked ? "behind real depth" : "visible virtual layer", rect.x + 18, rect.y + 30);
+      ctx.restore();
+    }
+
+    function drawOcclusionMask(rect) {
+      const cell = 8;
+      let hidden = 0;
+      let total = 0;
+      let sceneSum = 0;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(rect.x, rect.y, rect.w, rect.h, 10);
+      ctx.clip();
+
+      for (let y = rect.y; y < rect.y + rect.h; y += cell) {
+        for (let x = rect.x; x < rect.x + rect.w; x += cell) {
+          const depth = depthAt(x + cell * 0.5, y + cell * 0.5);
+          sceneSum += depth;
+          total += 1;
+          if (state.mask && state.cardZ > depth + 0.03) {
+            hidden += 1;
+            ctx.fillStyle = colorForDepth(depth);
+            ctx.fillRect(x, y, cell + 1, cell + 1);
+            ctx.fillStyle = "rgba(23, 32, 31, 0.12)";
+            ctx.fillRect(x, y, cell + 1, cell + 1);
+          }
+        }
+      }
+
+      ctx.restore();
+      return {
+        occlusion: total ? hidden / total : 0,
+        sceneDepth: total ? sceneSum / total : 0
+      };
+    }
+
+    function drawCardFrame(rect) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(23, 32, 31, 0.58)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(rect.x, rect.y, rect.w, rect.h, 10);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(250, 251, 247, 0.82)";
+      ctx.fillRect(rect.x + 12, rect.y + rect.h - 30, 86, 20);
+      ctx.fillStyle = "#17201f";
+      ctx.font = "700 11px Avenir Next, sans-serif";
+      ctx.fillText(`${state.cardZ.toFixed(2)} m`, rect.x + 24, rect.y + rect.h - 16);
+      ctx.restore();
+    }
+
+    function updateMeters(sample) {
+      const zNorm = clamp((state.cardZ - 0.55) / 2.65, 0, 1);
+      const sceneNorm = clamp((sample.sceneDepth - 0.55) / 2.65, 0, 1);
+      virtualFill.style.width = `${Math.round(zNorm * 100)}%`;
+      sceneFill.style.width = `${Math.round(sceneNorm * 100)}%`;
+      occlusionFill.style.width = `${Math.round(sample.occlusion * 100)}%`;
+      virtualValue.textContent = `${state.cardZ.toFixed(1)}m`;
+      sceneValue.textContent = `${sample.sceneDepth.toFixed(1)}m`;
+      occlusionValue.textContent = `${Math.round(sample.occlusion * 100)}%`;
+    }
+
+    function render(time) {
+      state.time = time;
+      state.cardZ += (state.targetZ - state.cardZ) * 0.16;
+
+      drawDepthMap();
+      const rect = cardRect();
+      drawVirtualCard(rect, false);
+      const sample = drawOcclusionMask(rect);
+      drawCardFrame(rect);
+      updateMeters(sample);
+
+      requestAnimationFrame(render);
+    }
+
+    function setCardPosition(clientX, clientY) {
+      state.cardX = clamp(clientX / state.width, 0.12, 0.9);
+      state.cardY = clamp(clientY / state.height, 0.26, 0.86);
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.dragging = true;
+      state.pointerId = event.pointerId;
+      canvas.setPointerCapture(event.pointerId);
+      setCardPosition(event.clientX, event.clientY);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!state.dragging || event.pointerId !== state.pointerId) return;
+      setCardPosition(event.clientX, event.clientY);
+    });
+
+    canvas.addEventListener("pointerup", (event) => {
+      if (event.pointerId === state.pointerId) {
+        state.dragging = false;
+        state.pointerId = null;
+      }
+    });
+
+    canvas.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      state.targetZ = clamp(state.targetZ + event.deltaY * 0.002, 0.58, 3.15);
+    }, { passive: false });
+
+    nearButton.addEventListener("click", () => {
+      state.targetZ = clamp(state.targetZ - 0.22, 0.58, 3.15);
+    });
+
+    farButton.addEventListener("click", () => {
+      state.targetZ = clamp(state.targetZ + 0.22, 0.58, 3.15);
+    });
+
+    maskButton.addEventListener("click", () => {
+      state.mask = !state.mask;
+      maskButton.setAttribute("aria-pressed", String(state.mask));
+    });
+
+    addEventListener("resize", resize);
+    resize();
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
