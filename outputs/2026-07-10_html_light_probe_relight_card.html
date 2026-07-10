@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Light Probe Relight Card</title>
+  <style>
+    :root {
+      --ink: #16201d;
+      --paper: #eef2ec;
+      --panel: rgba(249, 251, 247, 0.9);
+      --line: rgba(22, 32, 29, 0.16);
+      --muted: #61706b;
+      --teal: #1497a3;
+      --gold: #d7a22d;
+      --coral: #cf6558;
+      --blue: #477fc0;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .hud {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      width: min(390px, calc(100vw - 32px));
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 34px rgba(34, 42, 38, 0.14);
+      backdrop-filter: blur(14px);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.16;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .control {
+      display: grid;
+      grid-template-columns: 92px 1fr 48px;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--teal);
+    }
+
+    .value {
+      text-align: right;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.68);
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(20, 151, 163, 0.62);
+      background: rgba(20, 151, 163, 0.14);
+    }
+
+    .probe {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: min(340px, calc(100vw - 36px));
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(249, 251, 247, 0.86);
+      box-shadow: 0 12px 26px rgba(34, 42, 38, 0.13);
+      pointer-events: none;
+    }
+
+    .probe-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .probe-cell {
+      min-height: 48px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .readout {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      max-width: calc(100vw - 36px);
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(249, 251, 247, 0.78);
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 720px) {
+      .hud {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .control {
+        grid-template-columns: 78px 1fr 44px;
+      }
+
+      .probe {
+        right: 12px;
+        bottom: 54px;
+        width: calc(100vw - 24px);
+      }
+
+      .probe-grid {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+      }
+
+      .probe-cell {
+        min-height: 42px;
+        padding: 7px;
+      }
+
+      .probe-cell:nth-child(n+5) {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="Lighting estimation relight simulator"></canvas>
+
+  <section class="hud">
+    <h1>Light Probe Relight Card</h1>
+    <p>WebXR Lighting Estimation の light probe を疑似化し、primary light と ambient intensity で仮想カードを再ライティングする最小サンプルです。</p>
+    <div class="controls">
+      <label class="control">ambient <input id="ambient" type="range" min="15" max="120" value="62"><span class="value" id="ambientValue">0.62</span></label>
+      <label class="control">warmth <input id="warmth" type="range" min="0" max="100" value="58"><span class="value" id="warmthValue">5800K</span></label>
+      <label class="control">heading <input id="heading" type="range" min="0" max="360" value="318"><span class="value" id="headingValue">318°</span></label>
+    </div>
+    <div class="chips">
+      <button type="button" data-mode="window" aria-pressed="true">Window</button>
+      <button type="button" data-mode="desk">Desk</button>
+      <button type="button" data-mode="gallery">Gallery</button>
+    </div>
+  </section>
+
+  <aside class="probe">
+    <p>画面内のカードは環境推定値だけで見た目を変えます。実 API では `XRLightProbe` から frame ごとの `XRLightEstimate` を読み、primary light と spherical harmonics を描画へ渡します。</p>
+    <div class="probe-grid">
+      <div class="probe-cell"><span class="label">primary</span><span class="readout" id="primaryValue">318°</span></div>
+      <div class="probe-cell"><span class="label">intensity</span><span class="readout" id="intensityValue">0.62</span></div>
+      <div class="probe-cell"><span class="label">temperature</span><span class="readout" id="tempValue">5800K</span></div>
+      <div class="probe-cell"><span class="label">shadow</span><span class="readout" id="shadowValue">44%</span></div>
+    </div>
+  </aside>
+
+  <div class="hint">drag / tap: move light direction / sliders: change estimated light probe</div>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const ambientInput = document.getElementById("ambient");
+    const warmthInput = document.getElementById("warmth");
+    const headingInput = document.getElementById("heading");
+    const ambientValue = document.getElementById("ambientValue");
+    const warmthValue = document.getElementById("warmthValue");
+    const headingValue = document.getElementById("headingValue");
+    const primaryValue = document.getElementById("primaryValue");
+    const intensityValue = document.getElementById("intensityValue");
+    const tempValue = document.getElementById("tempValue");
+    const shadowValue = document.getElementById("shadowValue");
+    const modeButtons = [...document.querySelectorAll("[data-mode]")];
+
+    const modes = {
+      window: { ambient: 62, warmth: 58, heading: 318, label: "Window" },
+      desk: { ambient: 36, warmth: 74, heading: 250, label: "Desk" },
+      gallery: { ambient: 84, warmth: 38, heading: 36, label: "Gallery" }
+    };
+
+    const state = {
+      width: 0,
+      height: 0,
+      dpr: 1,
+      cardX: 0,
+      cardY: 0,
+      cardW: 260,
+      cardH: 172,
+      draggingLight: false,
+      tick: 0,
+      mode: "window"
+    };
+
+    function resize() {
+      state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      state.width = window.innerWidth;
+      state.height = window.innerHeight;
+      canvas.width = Math.floor(state.width * state.dpr);
+      canvas.height = Math.floor(state.height * state.dpr);
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+      state.cardX = state.width * 0.56;
+      state.cardY = state.height * 0.52;
+      state.cardW = Math.max(210, Math.min(320, state.width * 0.28));
+      state.cardH = state.cardW * 0.66;
+    }
+
+    function kelvinFromWarmth(warmth) {
+      return Math.round(7200 - warmth * 38);
+    }
+
+    function lightColor(warmth, intensity) {
+      const t = warmth / 100;
+      const r = Math.round(185 + t * 58 + intensity * 10);
+      const g = Math.round(205 + t * 18 + intensity * 12);
+      const b = Math.round(255 - t * 88 + intensity * 4);
+      return `rgb(${Math.min(r, 255)}, ${Math.min(g, 255)}, ${Math.max(b, 120)})`;
+    }
+
+    function currentProbe() {
+      const ambient = Number(ambientInput.value) / 100;
+      const warmth = Number(warmthInput.value);
+      const heading = Number(headingInput.value);
+      const radians = (heading - 90) * Math.PI / 180;
+      return {
+        ambient,
+        warmth,
+        heading,
+        radians,
+        color: lightColor(warmth, ambient),
+        temperature: kelvinFromWarmth(warmth),
+        direction: { x: Math.cos(radians), y: Math.sin(radians) }
+      };
+    }
+
+    function setMode(mode) {
+      state.mode = mode;
+      const preset = modes[mode];
+      ambientInput.value = preset.ambient;
+      warmthInput.value = preset.warmth;
+      headingInput.value = preset.heading;
+      for (const button of modeButtons) {
+        button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
+      }
+      updateHud();
+    }
+
+    function updateHud() {
+      const probe = currentProbe();
+      const shadow = Math.round((1 - probe.ambient * 0.56) * 62);
+      ambientValue.textContent = probe.ambient.toFixed(2);
+      warmthValue.textContent = `${probe.temperature}K`;
+      headingValue.textContent = `${probe.heading}°`;
+      primaryValue.textContent = `${probe.heading}°`;
+      intensityValue.textContent = probe.ambient.toFixed(2);
+      tempValue.textContent = `${probe.temperature}K`;
+      shadowValue.textContent = `${shadow}%`;
+    }
+
+    function drawRoom(probe) {
+      const sky = ctx.createLinearGradient(0, 0, state.width, state.height);
+      sky.addColorStop(0, probe.warmth > 58 ? "#f4eadb" : "#e4eef5");
+      sky.addColorStop(0.52, "#eef2ec");
+      sky.addColorStop(1, probe.warmth > 58 ? "#d9e0d5" : "#d8e5e6");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, state.width, state.height);
+
+      ctx.fillStyle = "rgba(22, 32, 29, 0.07)";
+      for (let i = 0; i < 9; i += 1) {
+        const x = state.width * (0.07 + i * 0.12);
+        ctx.fillRect(x, state.height * 0.66, 1, state.height * 0.28);
+      }
+
+      const lampX = state.width * 0.18;
+      const lampY = state.height * 0.26;
+      const glow = ctx.createRadialGradient(lampX, lampY, 10, lampX, lampY, state.width * 0.35);
+      glow.addColorStop(0, `${probe.color.replace("rgb", "rgba").replace(")", ", 0.42)")}`);
+      glow.addColorStop(1, "rgba(255, 255, 255, 0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, state.width, state.height);
+
+      ctx.strokeStyle = "rgba(22, 32, 29, 0.16)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, state.height * 0.66);
+      ctx.lineTo(state.width, state.height * 0.66);
+      ctx.stroke();
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function drawRelitCard(probe) {
+      const x = state.cardX - state.cardW / 2;
+      const y = state.cardY - state.cardH / 2;
+      const lightX = state.cardX - probe.direction.x * state.cardW * 0.55;
+      const lightY = state.cardY - probe.direction.y * state.cardH * 0.85;
+      const darkX = state.cardX + probe.direction.x * state.cardW * 0.62;
+      const darkY = state.cardY + probe.direction.y * state.cardH * 0.9;
+      const lift = 0.38 + probe.ambient * 0.46;
+
+      ctx.save();
+      ctx.translate(Math.sin(state.tick * 0.012) * 2.5, Math.cos(state.tick * 0.01) * 1.8);
+
+      const shadowBlur = 18 + (1 - probe.ambient) * 34;
+      ctx.shadowColor = `rgba(22, 32, 29, ${0.18 + (1 - probe.ambient) * 0.28})`;
+      ctx.shadowBlur = shadowBlur;
+      ctx.shadowOffsetX = probe.direction.x * 22;
+      ctx.shadowOffsetY = probe.direction.y * 18 + 14;
+      roundRect(x, y, state.cardW, state.cardH, 8);
+      ctx.fillStyle = "#f9fbf7";
+      ctx.fill();
+
+      ctx.shadowColor = "transparent";
+      const cardLight = ctx.createRadialGradient(lightX, lightY, 8, darkX, darkY, state.cardW * 1.15);
+      cardLight.addColorStop(0, probe.color);
+      cardLight.addColorStop(0.45, `rgba(255, 255, 255, ${lift})`);
+      cardLight.addColorStop(1, `rgba(22, 32, 29, ${0.14 + (1 - probe.ambient) * 0.22})`);
+      roundRect(x, y, state.cardW, state.cardH, 8);
+      ctx.fillStyle = cardLight;
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(22, 32, 29, 0.18)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(22, 32, 29, 0.72)";
+      ctx.font = "700 18px Avenir Next, sans-serif";
+      ctx.fillText("estimated light", x + 22, y + 38);
+
+      ctx.fillStyle = "rgba(22, 32, 29, 0.48)";
+      ctx.font = "12px Avenir Next, sans-serif";
+      ctx.fillText(`primary ${probe.heading}° / ambient ${probe.ambient.toFixed(2)}`, x + 22, y + 62);
+      ctx.fillText(`probe color ${probe.temperature}K`, x + 22, y + 82);
+
+      for (let i = 0; i < 8; i += 1) {
+        const px = x + 24 + i * 28;
+        const py = y + state.cardH - 38 + Math.sin(state.tick * 0.035 + i) * 7;
+        ctx.fillStyle = i % 2 ? "rgba(20, 151, 163, 0.68)" : "rgba(215, 162, 45, 0.72)";
+        ctx.beginPath();
+        ctx.arc(px, py, 5 + probe.ambient * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function drawLightVector(probe) {
+      const cx = state.cardX - probe.direction.x * state.cardW * 0.82;
+      const cy = state.cardY - probe.direction.y * state.cardH * 1.04;
+      const gx = ctx.createRadialGradient(cx, cy, 4, cx, cy, 74);
+      gx.addColorStop(0, `${probe.color.replace("rgb", "rgba").replace(")", ", 0.68)")}`);
+      gx.addColorStop(1, "rgba(255, 255, 255, 0)");
+      ctx.fillStyle = gx;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 74, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(22, 32, 29, 0.36)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(state.cardX, state.cardY);
+      ctx.stroke();
+
+      ctx.fillStyle = probe.color;
+      ctx.strokeStyle = "rgba(22, 32, 29, 0.32)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    function drawSphericalHarmonicsHint(probe) {
+      const originX = state.width * 0.76;
+      const originY = state.height * 0.28;
+      ctx.save();
+      ctx.globalAlpha = 0.74;
+      for (let ring = 0; ring < 3; ring += 1) {
+        const radius = 26 + ring * 24;
+        ctx.strokeStyle = ring === 0 ? "rgba(20,151,163,0.46)" : "rgba(22,32,29,0.16)";
+        ctx.beginPath();
+        ctx.ellipse(originX, originY, radius * (1 + probe.ambient * 0.24), radius * 0.48, probe.radians + ring * 0.5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "rgba(22, 32, 29, 0.5)";
+      ctx.font = "11px Avenir Next, sans-serif";
+      ctx.fillText("spherical harmonics hint", originX - 58, originY + 62);
+      ctx.restore();
+    }
+
+    function render() {
+      const probe = currentProbe();
+      state.tick += 1;
+      drawRoom(probe);
+      drawSphericalHarmonicsHint(probe);
+      drawLightVector(probe);
+      drawRelitCard(probe);
+      requestAnimationFrame(render);
+    }
+
+    function setHeadingFromPointer(event) {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const dx = state.cardX - x;
+      const dy = state.cardY - y;
+      const deg = Math.round((Math.atan2(dy, dx) * 180 / Math.PI + 450) % 360);
+      headingInput.value = deg;
+      updateHud();
+      for (const button of modeButtons) button.setAttribute("aria-pressed", "false");
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.draggingLight = true;
+      canvas.setPointerCapture(event.pointerId);
+      setHeadingFromPointer(event);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (state.draggingLight) setHeadingFromPointer(event);
+    });
+
+    canvas.addEventListener("pointerup", () => {
+      state.draggingLight = false;
+    });
+
+    for (const input of [ambientInput, warmthInput, headingInput]) {
+      input.addEventListener("input", () => {
+        updateHud();
+        for (const button of modeButtons) button.setAttribute("aria-pressed", "false");
+      });
+    }
+
+    for (const button of modeButtons) {
+      button.addEventListener("click", () => setMode(button.dataset.mode));
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+    setMode("window");
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+{
+  "date": "2026-07-10",
+  "headline": "Lighting Estimation で仮想カードを再ライティング",
+  "headlineEn": "Relighting a virtual card with Lighting Estimation",
+  "summary": "WebXR Lighting Estimation、WebXR Samples、Hand Input の一次情報を確認し、今日は light probe の primary light と ambient intensity を疑似化して仮想カードの明るさ、影、色温度を変える自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing primary references for WebXR Lighting Estimation, WebXR Samples, and Hand Input, today's original HTML sample simulates a light probe and relights a virtual card with primary light, ambient intensity, shadows, and color temperature.",
+  "keyTopics": [
+    "WebXR Lighting Estimation API Level 1 は 2025-12-11 の Editor's Draft で、XR session の `light-estimation` feature として扱われる。",
+    "`XRLightProbe` は環境光推定の入口で、frame ごとの `XRLightEstimate` から primary light direction / intensity と spherical harmonics coefficients を取得する。",
+    "実装上は現実環境に仮想物を『置く』だけでなく、明るさ、影の向き、色温度が揃うことで AR 合成の違和感を減らせる。",
+    "Immersive Web の WebXR Samples は hit test、anchors、depth sensing、hand input などを横断的に確認でき、毎日の自作サンプルの参照元として使いやすい。",
+    "Hand Input は 25 joint の手姿勢を扱うため、今後は light / depth / hand の三つを組み合わせて、手前の手に反応する仮想 UI へ発展できる。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Lighting Estimation API Level 1 is an Editor's Draft dated 2025-12-11 and is requested as the `light-estimation` feature on an XR session.",
+    "`XRLightProbe` is the entry point for environmental lighting, and per-frame `XRLightEstimate` values expose primary light direction, intensity, and spherical harmonics coefficients.",
+    "For AR compositing, placing a virtual object is not enough; matching brightness, shadow direction, and color temperature reduces visual mismatch.",
+    "The Immersive Web WebXR Samples index is useful for checking related topics such as hit testing, anchors, depth sensing, and hand input as references for daily original samples.",
+    "Hand Input exposes 25 hand joints, making it a natural next step for combining light, depth, and hands into virtual UI that reacts to foreground fingers."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Light Probe Relight Card",
+      "url": "../outputs/2026-07-10_html_light_probe_relight_card.html"
+    },
+    {
+      "label": "WebXR Lighting Estimation API Level 1",
+      "url": "https://immersive-web.github.io/lighting-estimation/"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "WebXR Hand Input Module",
+      "url": "https://immersive-web.github.io/webxr-hand-input/"
+    },
+    {
+      "label": "WebXR Depth Sensing Module",
+      "url": "https://immersive-web.github.io/depth-sensing/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Lighting Estimation です。面白い点は、AR の説得力が hit test や anchor の位置合わせだけで決まらず、環境光に合わせて仮想物の明るさ、影、色味を変えることで大きく変わることです。仕様では `XRLightProbe` と `XRLightEstimate` を通じて primary light と spherical harmonics を扱うため、単なる UI slider ではなく、描画パイプラインへ入る光情報として考える必要があります。",
+      "bodyEn": "Today's notable reference is WebXR Lighting Estimation. The interesting point is that AR believability is not determined only by hit-test placement or anchors; matching virtual brightness, shadows, and color to the real environment matters. The specification exposes primary light and spherical harmonics through `XRLightProbe` and `XRLightEstimate`, so lighting should be treated as render-pipeline data rather than just UI state.",
+      "links": [
+        {
+          "label": "WebXR Lighting Estimation API Level 1",
+          "url": "https://immersive-web.github.io/lighting-estimation/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "light probe を見えない内部値にせず、primary direction、ambient intensity、temperature を小さな meter として見せると、AR 合成の状態が理解しやすくなります。今日のサンプルでは、Window / Desk / Gallery のプリセットと slider、画面タップによる光源方向変更を用意し、同じ仮想カードが環境推定値だけで違う質感に見えるようにしました。",
+      "bodyEn": "Instead of hiding the light probe as internal data, showing primary direction, ambient intensity, and temperature as small meters makes AR compositing more legible. Today's sample includes Window, Desk, and Gallery presets plus sliders and tap-based light direction changes, so the same virtual card changes its material feeling only from estimated environment values.",
+      "links": [
+        {
+          "label": "Today's sample",
+          "url": "../outputs/2026-07-10_html_light_probe_relight_card.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実 WebXR では `navigator.xr.requestSession(\"immersive-ar\", { optionalFeatures: [\"light-estimation\"] })` のように feature を要求し、session から light probe を作成して、frame ごとに light estimate を読む流れになります。primary light direction / intensity は directional light と shadow に、spherical harmonics coefficients は ambient diffuse や image based lighting の近似に渡すと使いやすいです。",
+      "bodyEn": "In real WebXR, the session can request a feature such as `optionalFeatures: [\"light-estimation\"]`, create a light probe from the session, and read a light estimate each frame. Primary light direction and intensity map well to directional lights and shadows, while spherical harmonics coefficients are useful for ambient diffuse or approximate image-based lighting.",
+      "links": [
+        {
+          "label": "Lighting estimation interface definitions",
+          "url": "https://immersive-web.github.io/lighting-estimation/#api"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は Hand Input を掘り、手の joint が仮想カードに近づいたときだけハイライトや影が変わる最小サンプルにすると流れが自然です。Depth Sensing で遮蔽、Lighting Estimation で光、Hand Input で操作を足すと、空間 UI の基本要素がそろいます。",
+      "bodyEn": "Next, Hand Input is the most natural continuation: make a small sample where the card highlights or changes shadow only when hand joints approach it. With Depth Sensing for occlusion, Lighting Estimation for light, and Hand Input for interaction, the basic pieces of spatial UI come together.",
+      "links": [
+        {
+          "label": "WebXR Hand Input Module",
+          "url": "https://immersive-web.github.io/webxr-hand-input/"
+        }
+      ]
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Light Probe Relight Card` を開き、Window から Desk へ切り替えてから画面右下や左上をタップします。カードの影の向き、明るさ、色温度が変わり、同じ平面でも環境光に追従すると AR らしい合成に近づくことを確認できます。",
+      "bodyEn": "Open Light Probe Relight Card, switch from Window to Desk, then tap the lower-right or upper-left side of the screen. The card's shadow direction, brightness, and color temperature change, showing how the same plane becomes more AR-like when it follows environmental lighting.",
+      "links": [
+        {
+          "label": "Open Light Probe Relight Card",
+          "url": "../outputs/2026-07-10_html_light_probe_relight_card.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Lighting Estimation を中心に WebXR Samples、Depth Sensing、Hand Input の一次情報を確認。アイデア: light probe の値を仮想カードの再ライティングとして見える化する。実装: canvas の疑似空間、環境プリセット、primary light vector、ambient / warmth / heading slider、probe readout を追加。検証: JSON parse、生成スクリプト、HTML script 構文を確認する段階です。",
+      "bodyEn": "Research: reviewed primary sources for Lighting Estimation plus WebXR Samples, Depth Sensing, and Hand Input. Idea: visualize light probe values by relighting a virtual card. Implementation: added a canvas scene, environment presets, primary light vector, ambient/warmth/heading sliders, and probe readouts. Validation: JSON parsing, generation scripts, and HTML script syntax are the next checks.",
+      "links": [
+        {
+          "label": "Immersive Web WebXR Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/"
+        }
+      ]
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの流れは、2026-07-07 の奥行き HUD、2026-07-08 の hit test / anchor、2026-07-09 の depth occlusion、2026-07-10 の lighting estimation です。空間体験の『見える』『置く』『隠れる』『なじむ』を、小さな自作サンプルとして日ごとに積み上げています。",
+      "bodyEn": "The sequence so far is depth HUD on 2026-07-07, hit test and anchors on 2026-07-08, depth occlusion on 2026-07-09, and lighting estimation on 2026-07-10. The archive is building small original samples around seeing, placing, hiding, and blending into space."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Light Probe Relight Card` です。Hand Input の joint visualizer も候補でしたが、昨日の depth occlusion の次に仮想物の見た目を現実環境へ寄せる段階として Lighting Estimation を先に試しました。",
+      "bodyEn": "The selected prototype is Light Probe Relight Card. A Hand Input joint visualizer was also a candidate, but after yesterday's depth occlusion sample, Lighting Estimation was the clearer next step for making virtual content visually fit the real environment."
+    }
+  ]
+}

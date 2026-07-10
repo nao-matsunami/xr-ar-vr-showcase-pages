@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lighting Estimation で仮想カードを再ライティング | 2026-07-10</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.10</p>
+      <h1>Lighting Estimation で仮想カードを再ライティング</h1>
+      <p class="hero-subtitle">Relighting a virtual card with Lighting Estimation</p>
+      <p>WebXR Lighting Estimation、WebXR Samples、Hand Input の一次情報を確認し、今日は light probe の primary light と ambient intensity を疑似化して仮想カードの明るさ、影、色温度を変える自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing primary references for WebXR Lighting Estimation, WebXR Samples, and Hand Input, today's original HTML sample simulates a light probe and relights a virtual card with primary light, ambient intensity, shadows, and color temperature.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-10_html_light_probe_relight_card.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-09.html">← 2026.07.09</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Light Probe Relight Card</h3>
+              <p>WebXR Lighting Estimation の light probe を疑似化し、primary light と ambient intensity で仮想カードを再ライティングする最小サンプルです。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-10_html_light_probe_relight_card.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Lighting Estimation API Level 1 は 2025-12-11 の Editor's Draft で、XR session の `light-estimation` feature として扱われる。</span>
+              <span class="en-copy">The WebXR Lighting Estimation API Level 1 is an Editor's Draft dated 2025-12-11 and is requested as the `light-estimation` feature on an XR session.</span>
+            </li>
+          
+            <li>
+              <span>`XRLightProbe` は環境光推定の入口で、frame ごとの `XRLightEstimate` から primary light direction / intensity と spherical harmonics coefficients を取得する。</span>
+              <span class="en-copy">`XRLightProbe` is the entry point for environmental lighting, and per-frame `XRLightEstimate` values expose primary light direction, intensity, and spherical harmonics coefficients.</span>
+            </li>
+          
+            <li>
+              <span>実装上は現実環境に仮想物を『置く』だけでなく、明るさ、影の向き、色温度が揃うことで AR 合成の違和感を減らせる。</span>
+              <span class="en-copy">For AR compositing, placing a virtual object is not enough; matching brightness, shadow direction, and color temperature reduces visual mismatch.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の WebXR Samples は hit test、anchors、depth sensing、hand input などを横断的に確認でき、毎日の自作サンプルの参照元として使いやすい。</span>
+              <span class="en-copy">The Immersive Web WebXR Samples index is useful for checking related topics such as hit testing, anchors, depth sensing, and hand input as references for daily original samples.</span>
+            </li>
+          
+            <li>
+              <span>Hand Input は 25 joint の手姿勢を扱うため、今後は light / depth / hand の三つを組み合わせて、手前の手に反応する仮想 UI へ発展できる。</span>
+              <span class="en-copy">Hand Input exposes 25 hand joints, making it a natural next step for combining light, depth, and hands into virtual UI that reacts to foreground fingers.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は WebXR Lighting Estimation です。面白い点は、AR の説得力が hit test や anchor の位置合わせだけで決まらず、環境光に合わせて仮想物の明るさ、影、色味を変えることで大きく変わることです。仕様では `XRLightProbe` と `XRLightEstimate` を通じて primary light と spherical harmonics を扱うため、単なる UI slider ではなく、描画パイプラインへ入る光情報として考える必要があります。</p>
+          <p class="en-copy">Today's notable reference is WebXR Lighting Estimation. The interesting point is that AR believability is not determined only by hit-test placement or anchors; matching virtual brightness, shadows, and color to the real environment matters. The specification exposes primary light and spherical harmonics through `XRLightProbe` and `XRLightEstimate`, so lighting should be treated as render-pipeline data rather than just UI state.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/lighting-estimation/" target="_blank" rel="noreferrer">WebXR Lighting Estimation API Level 1</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>light probe を見えない内部値にせず、primary direction、ambient intensity、temperature を小さな meter として見せると、AR 合成の状態が理解しやすくなります。今日のサンプルでは、Window / Desk / Gallery のプリセットと slider、画面タップによる光源方向変更を用意し、同じ仮想カードが環境推定値だけで違う質感に見えるようにしました。</p>
+          <p class="en-copy">Instead of hiding the light probe as internal data, showing primary direction, ambient intensity, and temperature as small meters makes AR compositing more legible. Today's sample includes Window, Desk, and Gallery presets plus sliders and tap-based light direction changes, so the same virtual card changes its material feeling only from estimated environment values.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-10_html_light_probe_relight_card.html" target="_blank" rel="noreferrer">Today's sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実 WebXR では `navigator.xr.requestSession(&quot;immersive-ar&quot;, { optionalFeatures: [&quot;light-estimation&quot;] })` のように feature を要求し、session から light probe を作成して、frame ごとに light estimate を読む流れになります。primary light direction / intensity は directional light と shadow に、spherical harmonics coefficients は ambient diffuse や image based lighting の近似に渡すと使いやすいです。</p>
+          <p class="en-copy">In real WebXR, the session can request a feature such as `optionalFeatures: [&quot;light-estimation&quot;]`, create a light probe from the session, and read a light estimate each frame. Primary light direction and intensity map well to directional lights and shadows, while spherical harmonics coefficients are useful for ambient diffuse or approximate image-based lighting.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/lighting-estimation/#api" target="_blank" rel="noreferrer">Lighting estimation interface definitions</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>次は Hand Input を掘り、手の joint が仮想カードに近づいたときだけハイライトや影が変わる最小サンプルにすると流れが自然です。Depth Sensing で遮蔽、Lighting Estimation で光、Hand Input で操作を足すと、空間 UI の基本要素がそろいます。</p>
+          <p class="en-copy">Next, Hand Input is the most natural continuation: make a small sample where the card highlights or changes shadow only when hand joints approach it. With Depth Sensing for occlusion, Lighting Estimation for light, and Hand Input for interaction, the basic pieces of spatial UI come together.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-hand-input/" target="_blank" rel="noreferrer">WebXR Hand Input Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Light Probe Relight Card` を開き、Window から Desk へ切り替えてから画面右下や左上をタップします。カードの影の向き、明るさ、色温度が変わり、同じ平面でも環境光に追従すると AR らしい合成に近づくことを確認できます。</p>
+          <p class="en-copy">Open Light Probe Relight Card, switch from Window to Desk, then tap the lower-right or upper-left side of the screen. The card's shadow direction, brightness, and color temperature change, showing how the same plane becomes more AR-like when it follows environmental lighting.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-10_html_light_probe_relight_card.html" target="_blank" rel="noreferrer">Open Light Probe Relight Card</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Lighting Estimation を中心に WebXR Samples、Depth Sensing、Hand Input の一次情報を確認。アイデア: light probe の値を仮想カードの再ライティングとして見える化する。実装: canvas の疑似空間、環境プリセット、primary light vector、ambient / warmth / heading slider、probe readout を追加。検証: JSON parse、生成スクリプト、HTML script 構文を確認する段階です。</p>
+          <p class="en-copy">Research: reviewed primary sources for Lighting Estimation plus WebXR Samples, Depth Sensing, and Hand Input. Idea: visualize light probe values by relighting a virtual card. Implementation: added a canvas scene, environment presets, primary light vector, ambient/warmth/heading sliders, and probe readouts. Validation: JSON parsing, generation scripts, and HTML script syntax are the next checks.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web WebXR Samples</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>これまでの流れは、2026-07-07 の奥行き HUD、2026-07-08 の hit test / anchor、2026-07-09 の depth occlusion、2026-07-10 の lighting estimation です。空間体験の『見える』『置く』『隠れる』『なじむ』を、小さな自作サンプルとして日ごとに積み上げています。</p>
+          <p class="en-copy">The sequence so far is depth HUD on 2026-07-07, hit test and anchors on 2026-07-08, depth occlusion on 2026-07-09, and lighting estimation on 2026-07-10. The archive is building small original samples around seeing, placing, hiding, and blending into space.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Light Probe Relight Card` です。Hand Input の joint visualizer も候補でしたが、昨日の depth occlusion の次に仮想物の見た目を現実環境へ寄せる段階として Lighting Estimation を先に試しました。</p>
+          <p class="en-copy">The selected prototype is Light Probe Relight Card. A Hand Input joint visualizer was also a candidate, but after yesterday's depth occlusion sample, Lighting Estimation was the clearer next step for making virtual content visually fit the real environment.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-10_html_light_probe_relight_card.html" target="_blank" rel="noreferrer">Today's sample: Light Probe Relight Card</a></li>
+          
+            <li><a href="https://immersive-web.github.io/lighting-estimation/" target="_blank" rel="noreferrer">WebXR Lighting Estimation API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web WebXR Samples</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-hand-input/" target="_blank" rel="noreferrer">WebXR Hand Input Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/depth-sensing/" target="_blank" rel="noreferrer">WebXR Depth Sensing Module</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-10_html_light_probe_relight_card.html" loading="lazy" title="Light Probe Relight Card"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
