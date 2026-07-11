@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hand Input の 25 joint で近接パネルを試す | 2026-07-11</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.11</p>
+      <h1>Hand Input の 25 joint で近接パネルを試す</h1>
+      <p class="hero-subtitle">Testing a proximity panel with 25 Hand Input joints</p>
+      <p>WebXR Hand Input Module と公式 WebXR Samples を確認し、今日は 25 joint、指先 radius、pinch 距離、index-tip と空間パネルの近接状態を HMD なしで観察できる自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the WebXR Hand Input Module and official WebXR Samples, today's original HTML sample visualizes 25 joints, fingertip radius, pinch distance, and index-tip proximity to a spatial panel without requiring a headset.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-11_html_hand_joint_proximity_panel.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-10.html">← 2026.07.10</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Hand Joint Proximity Panel</h3>
+              <p>WebXR Hand Input の 25 joint を疑似化し、index-tip と thumb-tip の pinch 距離、指先と空間パネルの近接状態を観察する最小サンプルです。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-11_html_hand_joint_proximity_panel.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Hand Input Module Level 1 は 2024-06-05 の Working Draft / Editor's Draft として公開され、articulated hand pose を WebXR Device API に追加する。</span>
+              <span class="en-copy">The WebXR Hand Input Module Level 1 is available as a 2024-06-05 Working Draft / Editor's Draft and adds articulated hand poses to the WebXR Device API.</span>
+            </li>
+          
+            <li>
+              <span>セッションで `hand-tracking` feature descriptor を要求すると、対応する physical hand input source から `XRInputSource.hand` を通じて `XRHand` を取得できる。</span>
+              <span class="en-copy">When a session requests the `hand-tracking` feature descriptor, compatible physical hand input sources expose an `XRHand` through `XRInputSource.hand`.</span>
+            </li>
+          
+            <li>
+              <span>`XRHand` は 25 個の joint を持ち、`wrist` から各指の metacarpal / phalanx / tip までの名前と順序が仕様で定義されている。</span>
+              <span class="en-copy">`XRHand` contains 25 joints, with names and order defined from `wrist` through each finger's metacarpal, phalanx, and tip joints.</span>
+            </li>
+          
+            <li>
+              <span>frame loop では `XRFrame.getJointPose()` や `fillJointRadii()` により、joint pose と指先 collision に使える radius を読む設計になっている。</span>
+              <span class="en-copy">The frame loop reads joint poses and collision-friendly radii through methods such as `XRFrame.getJointPose()` and `fillJointRadii()`.</span>
+            </li>
+          
+            <li>
+              <span>手入力 UI は pinch だけでなく、指先の近接、hover、押し込み、誤認識時の feedback を別々に可視化すると調整しやすい。</span>
+              <span class="en-copy">Hand UI is easier to tune when pinch, fingertip proximity, hover, press depth, and recognition feedback are visualized separately.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は WebXR Hand Input です。面白い点は、controller のボタンイベントではなく、手首と各指の joint pose を frame ごとに取得し、接近、pinch、衝突判定、手モデル描画を同じ skeleton から組み立てられることです。仕様では `XRHand.size` が 25 で、各 joint 名と順序が固定されるため、UI 側は index-tip、thumb-tip、wrist などを安定して参照できます。</p>
+          <p class="en-copy">Today's notable reference is WebXR Hand Input. The interesting part is that interaction can be built from per-frame wrist and finger joint poses rather than controller button events, so proximity, pinch, collision, and hand rendering can all come from the same skeleton. The specification fixes `XRHand.size` at 25 and defines stable joint names and order, allowing UI code to consistently target joints such as index-tip, thumb-tip, and wrist.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-hand-input/" target="_blank" rel="noreferrer">WebXR Hand Input Module - Level 1</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>手の skeleton をそのまま見せるだけでなく、index-tip から対象パネルへの距離線、thumb-tip との pinch 距離、tip radius を同時に出すと、空間 UI が hover なのか select なのかを説明しやすくなります。今日のサンプルでは Open / Pinch / Reach の preset、curl / spread / depth の slider、drag で手全体の位置移動を用意し、近接と pinch を分けて観察できるようにしました。</p>
+          <p class="en-copy">Instead of only showing a hand skeleton, drawing the distance from the index tip to a target panel, the pinch distance to the thumb tip, and the fingertip radius makes hover versus select states easier to understand. Today's sample includes Open, Pinch, and Reach presets, curl/spread/depth sliders, and drag-based hand movement so proximity and pinch can be inspected separately.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-11_html_hand_joint_proximity_panel.html" target="_blank" rel="noreferrer">Open today's sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実 WebXR では `navigator.xr.requestSession(&quot;immersive-vr&quot;, { optionalFeatures: [&quot;hand-tracking&quot;] })` のように feature を要求し、input source の `hand` から `XRJointSpace` を列挙します。毎 frame で `getJointPose(jointSpace, baseSpace)` を呼び、tip joint の位置と `XRJointPose.radius` を UI hit area や collision volume に変換すると、controller ray とは違う近接型インタラクションを作れます。</p>
+          <p class="en-copy">In real WebXR, a session can request a feature such as `optionalFeatures: [&quot;hand-tracking&quot;]`, then enumerate `XRJointSpace` values from an input source's `hand`. Each frame can call `getJointPose(jointSpace, baseSpace)` and convert tip joint positions plus `XRJointPose.radius` into UI hit areas or collision volumes, enabling proximity interactions that differ from controller rays.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-hand-input/#xrframe" target="_blank" rel="noreferrer">Frame loop interfaces</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>次は Hand Input と Depth Sensing を組み合わせ、手が仮想カードの手前に来た時だけ UI を隠す、または手の奥にある仮想物だけ薄くする表現を試したいです。さらに Lighting Estimation を足すと、手元 UI の影やハイライトが環境に合わせて変わるサンプルへ発展できます。</p>
+          <p class="en-copy">Next, Hand Input can be combined with Depth Sensing so UI hides only when a hand is in front of a virtual card, or virtual content behind the hand fades out. Adding Lighting Estimation would extend this into a sample where hand-adjacent UI shadows and highlights respond to the environment.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/depth-sensing/" target="_blank" rel="noreferrer">WebXR Depth Sensing Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/lighting-estimation/" target="_blank" rel="noreferrer">WebXR Lighting Estimation API Level 1</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Hand Joint Proximity Panel` を開き、Pinch preset を押してから canvas 上で手をドラッグしてください。index-tip がパネル中央に近く、thumb-tip との距離が小さい時だけ target が select に変わります。curl と spread を動かすと、同じ手位置でも pinch 認識が変わることを確認できます。</p>
+          <p class="en-copy">Open Hand Joint Proximity Panel, press the Pinch preset, then drag the hand on the canvas. The target changes to select only when the index tip is close to the panel center and the thumb-tip distance is small. Adjusting curl and spread shows how the same hand location can change pinch recognition.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-11_html_hand_joint_proximity_panel.html" target="_blank" rel="noreferrer">Open Hand Joint Proximity Panel</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Hand Input Module、W3C Working Draft、公式 WebXR Samples、MDN の hand property を確認。アイデア: 25 joint と tip radius を空間パネルの hover / select 判定として見える化する。実装: canvas の疑似手 skeleton、Open / Pinch / Reach preset、curl / spread / depth slider、pinch 距離と target 状態の readout を追加。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。</p>
+          <p class="en-copy">Research: reviewed the Hand Input Module, W3C Working Draft, official WebXR Samples, and MDN's hand property page. Idea: visualize 25 joints and tip radius as hover/select logic for a spatial panel. Implementation: added a canvas-based simulated hand skeleton, Open/Pinch/Reach presets, curl/spread/depth sliders, and readouts for pinch distance and target state. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web WebXR Samples</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion、lighting estimation、hand input です。空間体験の『見える』『置く』『隠れる』『なじむ』『触る』を、自作の最小サンプルとして日ごとに分解しています。</p>
+          <p class="en-copy">The sequence so far is depth HUD, hit test and anchors, depth occlusion, lighting estimation, and hand input. The archive is decomposing spatial experience into small original samples around seeing, placing, hiding, blending, and touching.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Hand Joint Proximity Panel` です。実機の hand tracking ではなく、仕様上の joint 名、tip、radius、pinch 距離という観察点をブラウザ単体で触れる形にして、今後の実 WebXR 実装へ移しやすい最小単位にしました。</p>
+          <p class="en-copy">The selected prototype is Hand Joint Proximity Panel. Instead of relying on live hand tracking hardware, it turns specification concepts such as joint names, tips, radii, and pinch distance into a browser-only sketch that can later be moved into a real WebXR implementation.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-11_html_hand_joint_proximity_panel.html" target="_blank" rel="noreferrer">Today's sample: Hand Joint Proximity Panel</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-hand-input/" target="_blank" rel="noreferrer">WebXR Hand Input Module - Level 1</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hand-input-1/" target="_blank" rel="noreferrer">W3C WebXR Hand Input Module - Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web WebXR Samples</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/immersive-hands.html" target="_blank" rel="noreferrer">Immersive Session with hands sample</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRInputSource/hand" target="_blank" rel="noreferrer">MDN: XRInputSource hand property</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-11_html_hand_joint_proximity_panel.html" loading="lazy" title="Hand Joint Proximity Panel"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

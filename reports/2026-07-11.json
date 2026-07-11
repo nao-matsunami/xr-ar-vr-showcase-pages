@@ -1,0 +1,137 @@
+{
+  "date": "2026-07-11",
+  "headline": "Hand Input の 25 joint で近接パネルを試す",
+  "headlineEn": "Testing a proximity panel with 25 Hand Input joints",
+  "summary": "WebXR Hand Input Module と公式 WebXR Samples を確認し、今日は 25 joint、指先 radius、pinch 距離、index-tip と空間パネルの近接状態を HMD なしで観察できる自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Hand Input Module and official WebXR Samples, today's original HTML sample visualizes 25 joints, fingertip radius, pinch distance, and index-tip proximity to a spatial panel without requiring a headset.",
+  "keyTopics": [
+    "WebXR Hand Input Module Level 1 は 2024-06-05 の Working Draft / Editor's Draft として公開され、articulated hand pose を WebXR Device API に追加する。",
+    "セッションで `hand-tracking` feature descriptor を要求すると、対応する physical hand input source から `XRInputSource.hand` を通じて `XRHand` を取得できる。",
+    "`XRHand` は 25 個の joint を持ち、`wrist` から各指の metacarpal / phalanx / tip までの名前と順序が仕様で定義されている。",
+    "frame loop では `XRFrame.getJointPose()` や `fillJointRadii()` により、joint pose と指先 collision に使える radius を読む設計になっている。",
+    "手入力 UI は pinch だけでなく、指先の近接、hover、押し込み、誤認識時の feedback を別々に可視化すると調整しやすい。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Hand Input Module Level 1 is available as a 2024-06-05 Working Draft / Editor's Draft and adds articulated hand poses to the WebXR Device API.",
+    "When a session requests the `hand-tracking` feature descriptor, compatible physical hand input sources expose an `XRHand` through `XRInputSource.hand`.",
+    "`XRHand` contains 25 joints, with names and order defined from `wrist` through each finger's metacarpal, phalanx, and tip joints.",
+    "The frame loop reads joint poses and collision-friendly radii through methods such as `XRFrame.getJointPose()` and `fillJointRadii()`.",
+    "Hand UI is easier to tune when pinch, fingertip proximity, hover, press depth, and recognition feedback are visualized separately."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Hand Joint Proximity Panel",
+      "url": "../outputs/2026-07-11_html_hand_joint_proximity_panel.html"
+    },
+    {
+      "label": "WebXR Hand Input Module - Level 1",
+      "url": "https://immersive-web.github.io/webxr-hand-input/"
+    },
+    {
+      "label": "W3C WebXR Hand Input Module - Level 1",
+      "url": "https://www.w3.org/TR/webxr-hand-input-1/"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Session with hands sample",
+      "url": "https://immersive-web.github.io/webxr-samples/immersive-hands.html"
+    },
+    {
+      "label": "MDN: XRInputSource hand property",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRInputSource/hand"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Hand Input です。面白い点は、controller のボタンイベントではなく、手首と各指の joint pose を frame ごとに取得し、接近、pinch、衝突判定、手モデル描画を同じ skeleton から組み立てられることです。仕様では `XRHand.size` が 25 で、各 joint 名と順序が固定されるため、UI 側は index-tip、thumb-tip、wrist などを安定して参照できます。",
+      "bodyEn": "Today's notable reference is WebXR Hand Input. The interesting part is that interaction can be built from per-frame wrist and finger joint poses rather than controller button events, so proximity, pinch, collision, and hand rendering can all come from the same skeleton. The specification fixes `XRHand.size` at 25 and defines stable joint names and order, allowing UI code to consistently target joints such as index-tip, thumb-tip, and wrist.",
+      "links": [
+        {
+          "label": "WebXR Hand Input Module - Level 1",
+          "url": "https://immersive-web.github.io/webxr-hand-input/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "手の skeleton をそのまま見せるだけでなく、index-tip から対象パネルへの距離線、thumb-tip との pinch 距離、tip radius を同時に出すと、空間 UI が hover なのか select なのかを説明しやすくなります。今日のサンプルでは Open / Pinch / Reach の preset、curl / spread / depth の slider、drag で手全体の位置移動を用意し、近接と pinch を分けて観察できるようにしました。",
+      "bodyEn": "Instead of only showing a hand skeleton, drawing the distance from the index tip to a target panel, the pinch distance to the thumb tip, and the fingertip radius makes hover versus select states easier to understand. Today's sample includes Open, Pinch, and Reach presets, curl/spread/depth sliders, and drag-based hand movement so proximity and pinch can be inspected separately.",
+      "links": [
+        {
+          "label": "Open today's sample",
+          "url": "../outputs/2026-07-11_html_hand_joint_proximity_panel.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実 WebXR では `navigator.xr.requestSession(\"immersive-vr\", { optionalFeatures: [\"hand-tracking\"] })` のように feature を要求し、input source の `hand` から `XRJointSpace` を列挙します。毎 frame で `getJointPose(jointSpace, baseSpace)` を呼び、tip joint の位置と `XRJointPose.radius` を UI hit area や collision volume に変換すると、controller ray とは違う近接型インタラクションを作れます。",
+      "bodyEn": "In real WebXR, a session can request a feature such as `optionalFeatures: [\"hand-tracking\"]`, then enumerate `XRJointSpace` values from an input source's `hand`. Each frame can call `getJointPose(jointSpace, baseSpace)` and convert tip joint positions plus `XRJointPose.radius` into UI hit areas or collision volumes, enabling proximity interactions that differ from controller rays.",
+      "links": [
+        {
+          "label": "Frame loop interfaces",
+          "url": "https://immersive-web.github.io/webxr-hand-input/#xrframe"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は Hand Input と Depth Sensing を組み合わせ、手が仮想カードの手前に来た時だけ UI を隠す、または手の奥にある仮想物だけ薄くする表現を試したいです。さらに Lighting Estimation を足すと、手元 UI の影やハイライトが環境に合わせて変わるサンプルへ発展できます。",
+      "bodyEn": "Next, Hand Input can be combined with Depth Sensing so UI hides only when a hand is in front of a virtual card, or virtual content behind the hand fades out. Adding Lighting Estimation would extend this into a sample where hand-adjacent UI shadows and highlights respond to the environment.",
+      "links": [
+        {
+          "label": "WebXR Depth Sensing Module",
+          "url": "https://immersive-web.github.io/depth-sensing/"
+        },
+        {
+          "label": "WebXR Lighting Estimation API Level 1",
+          "url": "https://immersive-web.github.io/lighting-estimation/"
+        }
+      ]
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Hand Joint Proximity Panel` を開き、Pinch preset を押してから canvas 上で手をドラッグしてください。index-tip がパネル中央に近く、thumb-tip との距離が小さい時だけ target が select に変わります。curl と spread を動かすと、同じ手位置でも pinch 認識が変わることを確認できます。",
+      "bodyEn": "Open Hand Joint Proximity Panel, press the Pinch preset, then drag the hand on the canvas. The target changes to select only when the index tip is close to the panel center and the thumb-tip distance is small. Adjusting curl and spread shows how the same hand location can change pinch recognition.",
+      "links": [
+        {
+          "label": "Open Hand Joint Proximity Panel",
+          "url": "../outputs/2026-07-11_html_hand_joint_proximity_panel.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Hand Input Module、W3C Working Draft、公式 WebXR Samples、MDN の hand property を確認。アイデア: 25 joint と tip radius を空間パネルの hover / select 判定として見える化する。実装: canvas の疑似手 skeleton、Open / Pinch / Reach preset、curl / spread / depth slider、pinch 距離と target 状態の readout を追加。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。",
+      "bodyEn": "Research: reviewed the Hand Input Module, W3C Working Draft, official WebXR Samples, and MDN's hand property page. Idea: visualize 25 joints and tip radius as hover/select logic for a spatial panel. Implementation: added a canvas-based simulated hand skeleton, Open/Pinch/Reach presets, curl/spread/depth sliders, and readouts for pinch distance and target state. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.",
+      "links": [
+        {
+          "label": "Immersive Web WebXR Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/"
+        }
+      ]
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion、lighting estimation、hand input です。空間体験の『見える』『置く』『隠れる』『なじむ』『触る』を、自作の最小サンプルとして日ごとに分解しています。",
+      "bodyEn": "The sequence so far is depth HUD, hit test and anchors, depth occlusion, lighting estimation, and hand input. The archive is decomposing spatial experience into small original samples around seeing, placing, hiding, blending, and touching."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Hand Joint Proximity Panel` です。実機の hand tracking ではなく、仕様上の joint 名、tip、radius、pinch 距離という観察点をブラウザ単体で触れる形にして、今後の実 WebXR 実装へ移しやすい最小単位にしました。",
+      "bodyEn": "The selected prototype is Hand Joint Proximity Panel. Instead of relying on live hand tracking hardware, it turns specification concepts such as joint names, tips, radii, and pinch distance into a browser-only sketch that can later be moved into a real WebXR implementation."
+    }
+  ]
+}

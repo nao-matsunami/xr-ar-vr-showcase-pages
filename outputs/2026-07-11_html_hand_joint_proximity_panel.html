@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hand Joint Proximity Panel</title>
+  <style>
+    :root {
+      --ink: #17211f;
+      --paper: #edf2ee;
+      --panel: rgba(248, 251, 247, 0.9);
+      --line: rgba(23, 33, 31, 0.16);
+      --muted: #5d6f69;
+      --cyan: #168fa1;
+      --green: #4f9b58;
+      --amber: #d19828;
+      --rose: #c8585b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+      cursor: grab;
+    }
+
+    canvas:active { cursor: grabbing; }
+
+    .hud,
+    .readout {
+      position: fixed;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 34px rgba(32, 42, 38, 0.14);
+      backdrop-filter: blur(14px);
+    }
+
+    .hud {
+      top: 16px;
+      left: 16px;
+      width: min(410px, calc(100vw - 32px));
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.18;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .control {
+      display: grid;
+      grid-template-columns: 92px 1fr 48px;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+    }
+
+    .value {
+      text-align: right;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.68);
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(22, 143, 161, 0.62);
+      background: rgba(22, 143, 161, 0.14);
+    }
+
+    .readout {
+      right: 18px;
+      bottom: 18px;
+      width: min(360px, calc(100vw - 36px));
+      padding: 14px;
+      pointer-events: none;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .cell {
+      min-height: 50px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.52);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .metric {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      max-width: calc(100vw - 36px);
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(248, 251, 247, 0.78);
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 720px) {
+      .hud {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .control {
+        grid-template-columns: 78px 1fr 44px;
+      }
+
+      .readout {
+        right: 12px;
+        bottom: 54px;
+        width: calc(100vw - 24px);
+      }
+
+      .readout-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .cell {
+        min-height: 42px;
+        padding: 7px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="WebXR hand joint proximity simulator"></canvas>
+
+  <section class="hud">
+    <h1>Hand Joint Proximity Panel</h1>
+    <p>WebXR Hand Input の 25 joint を疑似化し、index-tip と thumb-tip の pinch 距離、指先と空間パネルの近接状態を観察する最小サンプルです。</p>
+    <div class="controls">
+      <label class="control">curl <input id="curl" type="range" min="0" max="100" value="34"><span class="value" id="curlValue">34%</span></label>
+      <label class="control">spread <input id="spread" type="range" min="0" max="100" value="52"><span class="value" id="spreadValue">52%</span></label>
+      <label class="control">depth <input id="depth" type="range" min="0" max="100" value="42"><span class="value" id="depthValue">0.42m</span></label>
+    </div>
+    <div class="chips">
+      <button type="button" data-pose="open" aria-pressed="true">Open</button>
+      <button type="button" data-pose="pinch">Pinch</button>
+      <button type="button" data-pose="reach">Reach</button>
+    </div>
+  </section>
+
+  <aside class="readout">
+    <p>実 WebXR では `hand-tracking` を要求し、`XRInputSource.hand` の `XRJointSpace` から frame ごとに `getJointPose()` を読みます。このサンプルは同じ観察点を 2D で再現します。</p>
+    <div class="readout-grid">
+      <div class="cell"><span class="label">joints</span><span class="metric" id="jointValue">25</span></div>
+      <div class="cell"><span class="label">pinch</span><span class="metric" id="pinchValue">42mm</span></div>
+      <div class="cell"><span class="label">target</span><span class="metric" id="targetValue">near</span></div>
+      <div class="cell"><span class="label">radius</span><span class="metric" id="radiusValue">10mm</span></div>
+    </div>
+  </aside>
+
+  <div class="hint">drag: move hand / sliders: joint pose / buttons: preset hand states</div>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const curlInput = document.getElementById("curl");
+    const spreadInput = document.getElementById("spread");
+    const depthInput = document.getElementById("depth");
+    const curlValue = document.getElementById("curlValue");
+    const spreadValue = document.getElementById("spreadValue");
+    const depthValue = document.getElementById("depthValue");
+    const pinchValue = document.getElementById("pinchValue");
+    const targetValue = document.getElementById("targetValue");
+    const radiusValue = document.getElementById("radiusValue");
+    const poseButtons = [...document.querySelectorAll("[data-pose]")];
+
+    const jointNames = [
+      "wrist",
+      "thumb-metacarpal", "thumb-phalanx-proximal", "thumb-phalanx-distal", "thumb-tip",
+      "index-finger-metacarpal", "index-finger-phalanx-proximal", "index-finger-phalanx-intermediate", "index-finger-phalanx-distal", "index-finger-tip",
+      "middle-finger-metacarpal", "middle-finger-phalanx-proximal", "middle-finger-phalanx-intermediate", "middle-finger-phalanx-distal", "middle-finger-tip",
+      "ring-finger-metacarpal", "ring-finger-phalanx-proximal", "ring-finger-phalanx-intermediate", "ring-finger-phalanx-distal", "ring-finger-tip",
+      "pinky-finger-metacarpal", "pinky-finger-phalanx-proximal", "pinky-finger-phalanx-intermediate", "pinky-finger-phalanx-distal", "pinky-finger-tip"
+    ];
+
+    const fingers = [
+      { key: "thumb", start: 1, color: "#d19828", angle: -1.05, spread: -0.58, lengths: [46, 42, 34, 22] },
+      { key: "index", start: 5, color: "#168fa1", angle: -0.42, spread: -0.18, lengths: [50, 44, 36, 24] },
+      { key: "middle", start: 10, color: "#4f9b58", angle: -0.08, spread: 0, lengths: [54, 48, 39, 26] },
+      { key: "ring", start: 15, color: "#c8585b", angle: 0.22, spread: 0.16, lengths: [50, 43, 35, 24] },
+      { key: "pinky", start: 20, color: "#6a78b8", angle: 0.48, spread: 0.32, lengths: [43, 36, 30, 21] }
+    ];
+
+    const presets = {
+      open: { curl: 34, spread: 52, depth: 42 },
+      pinch: { curl: 72, spread: 24, depth: 36 },
+      reach: { curl: 18, spread: 68, depth: 18 }
+    };
+
+    const state = {
+      width: 1,
+      height: 1,
+      dpr: 1,
+      handX: 0.46,
+      handY: 0.58,
+      dragging: false,
+      pose: "open",
+      joints: []
+    };
+
+    function resize() {
+      state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      state.width = window.innerWidth;
+      state.height = window.innerHeight;
+      canvas.width = Math.floor(state.width * state.dpr);
+      canvas.height = Math.floor(state.height * state.dpr);
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function dist(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function setPreset(name) {
+      const preset = presets[name];
+      state.pose = name;
+      curlInput.value = preset.curl;
+      spreadInput.value = preset.spread;
+      depthInput.value = preset.depth;
+      poseButtons.forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.pose === name));
+      });
+    }
+
+    function buildHand() {
+      const curl = Number(curlInput.value) / 100;
+      const spread = Number(spreadInput.value) / 100;
+      const depth = Number(depthInput.value) / 100;
+      const scale = lerp(1.1, 0.68, depth);
+      const palm = {
+        x: state.width * state.handX,
+        y: state.height * state.handY
+      };
+      const joints = [{ name: "wrist", x: palm.x, y: palm.y + 92 * scale, radius: 15 * scale, color: "#17211f" }];
+
+      fingers.forEach((finger, fingerIndex) => {
+        const baseX = palm.x + (fingerIndex - 2) * 28 * scale;
+        const baseY = palm.y + Math.abs(fingerIndex - 2) * 6 * scale;
+        const spreadAngle = lerp(-0.18, 0.22, spread) * finger.spread * 2.6;
+        const curlAngle = lerp(0.05, 1.18, curl);
+        const thumbPinch = state.pose === "pinch" && finger.key === "thumb" ? 0.46 : 0;
+        const indexPinch = state.pose === "pinch" && finger.key === "index" ? -0.28 : 0;
+        let angle = finger.angle + spreadAngle + thumbPinch + indexPinch;
+        let x = baseX;
+        let y = baseY;
+
+        for (let i = 0; i < 4; i += 1) {
+          const segmentCurl = curlAngle * (i / 3) * (finger.key === "thumb" ? 0.64 : 1);
+          angle += segmentCurl * (finger.key === "thumb" ? 0.48 : 0.36);
+          x += Math.sin(angle) * finger.lengths[i] * scale;
+          y -= Math.cos(angle) * finger.lengths[i] * scale;
+          joints[finger.start + i] = {
+            name: jointNames[finger.start + i],
+            x,
+            y,
+            radius: lerp(9, 5, i / 3) * scale,
+            color: finger.color
+          };
+        }
+      });
+
+      state.joints = joints.map((joint, index) => ({
+        ...joint,
+        name: joint.name || jointNames[index]
+      }));
+    }
+
+    function drawBackground() {
+      const gradient = ctx.createLinearGradient(0, 0, state.width, state.height);
+      gradient.addColorStop(0, "#f5f7f2");
+      gradient.addColorStop(1, "#dce8e6");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, state.width, state.height);
+
+      ctx.strokeStyle = "rgba(23, 33, 31, 0.08)";
+      ctx.lineWidth = 1;
+      for (let x = -80; x < state.width + 80; x += 48) {
+        ctx.beginPath();
+        ctx.moveTo(x, state.height);
+        ctx.lineTo(x + state.height * 0.45, 0);
+        ctx.stroke();
+      }
+    }
+
+    function drawPanel(indexTip, thumbTip) {
+      const panel = {
+        x: state.width * 0.62,
+        y: state.height * 0.36,
+        w: Math.min(360, state.width * 0.34),
+        h: Math.min(210, state.height * 0.26)
+      };
+      if (state.width < 760) {
+        panel.x = state.width * 0.5;
+        panel.y = state.height * 0.52;
+        panel.w = Math.min(300, state.width * 0.72);
+        panel.h = 156;
+      }
+
+      const left = panel.x - panel.w / 2;
+      const top = panel.y - panel.h / 2;
+      const target = { x: panel.x, y: panel.y };
+      const proximity = Math.max(0, 1 - dist(indexTip, target) / 190);
+      const pinchMm = dist(indexTip, thumbTip) * 0.55;
+      const pressed = proximity > 0.62 && pinchMm < 42;
+
+      ctx.save();
+      ctx.translate(panel.x, panel.y);
+      ctx.rotate(-0.06);
+      ctx.shadowColor = "rgba(32, 42, 38, 0.22)";
+      ctx.shadowBlur = 24;
+      ctx.shadowOffsetY = 16;
+      ctx.fillStyle = pressed ? "rgba(79, 155, 88, 0.28)" : proximity > 0.34 ? "rgba(22, 143, 161, 0.18)" : "rgba(255, 255, 255, 0.74)";
+      ctx.strokeStyle = pressed ? "rgba(79, 155, 88, 0.9)" : "rgba(23, 33, 31, 0.18)";
+      ctx.lineWidth = 2;
+      roundRect(ctx, -panel.w / 2, -panel.h / 2, panel.w, panel.h, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.shadowColor = "transparent";
+
+      const fillW = Math.max(28, panel.w * Math.max(0.08, proximity) - 36);
+      ctx.fillStyle = pressed ? "rgba(79, 155, 88, 0.5)" : "rgba(22, 143, 161, 0.38)";
+      roundRect(ctx, -panel.w / 2 + 18, panel.h / 2 - 44, fillW, 14, 7);
+      ctx.fill();
+
+      ctx.fillStyle = "#17211f";
+      ctx.font = "700 18px Avenir Next, sans-serif";
+      ctx.fillText(pressed ? "select" : proximity > 0.34 ? "hover" : "spatial target", -panel.w / 2 + 18, -panel.h / 2 + 42);
+      ctx.fillStyle = "#5d6f69";
+      ctx.font = "12px Avenir Next, sans-serif";
+      ctx.fillText("index-tip proximity + pinch distance", -panel.w / 2 + 18, -panel.h / 2 + 66);
+      ctx.restore();
+
+      ctx.setLineDash([6, 7]);
+      ctx.strokeStyle = pressed ? "rgba(79, 155, 88, 0.8)" : "rgba(22, 143, 161, 0.46)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(indexTip.x, indexTip.y);
+      ctx.lineTo(panel.x, panel.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      targetValue.textContent = pressed ? "select" : proximity > 0.34 ? "near" : "far";
+      return { panel, proximity, pinchMm, pressed };
+    }
+
+    function drawHand() {
+      const palm = state.joints[0];
+      ctx.fillStyle = "rgba(255, 255, 255, 0.52)";
+      ctx.strokeStyle = "rgba(23, 33, 31, 0.18)";
+      ctx.lineWidth = 2;
+      roundRect(ctx, palm.x - 72, palm.y - 30, 144, 116, 58);
+      ctx.fill();
+      ctx.stroke();
+
+      fingers.forEach((finger) => {
+        ctx.strokeStyle = finger.color;
+        ctx.lineWidth = 8;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        const base = state.joints[finger.start];
+        ctx.moveTo(palm.x + (fingers.indexOf(finger) - 2) * 28, palm.y);
+        ctx.lineTo(base.x, base.y);
+        for (let i = 1; i < 4; i += 1) {
+          const joint = state.joints[finger.start + i];
+          ctx.lineTo(joint.x, joint.y);
+        }
+        ctx.stroke();
+      });
+
+      state.joints.forEach((joint, index) => {
+        const isTip = joint.name.endsWith("-tip");
+        ctx.fillStyle = isTip ? "#ffffff" : joint.color;
+        ctx.strokeStyle = joint.color;
+        ctx.lineWidth = isTip ? 3 : 2;
+        ctx.beginPath();
+        ctx.arc(joint.x, joint.y, joint.radius + (isTip ? 3 : 0), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        if (index === 9 || index === 4) {
+          ctx.fillStyle = joint.color;
+          ctx.font = "11px Avenir Next, sans-serif";
+          ctx.fillText(index === 9 ? "index-tip" : "thumb-tip", joint.x + 10, joint.y - 8);
+        }
+      });
+    }
+
+    function roundRect(context, x, y, width, height, radius) {
+      const r = Math.min(radius, width / 2, height / 2);
+      context.beginPath();
+      context.moveTo(x + r, y);
+      context.arcTo(x + width, y, x + width, y + height, r);
+      context.arcTo(x + width, y + height, x, y + height, r);
+      context.arcTo(x, y + height, x, y, r);
+      context.arcTo(x, y, x + width, y, r);
+      context.closePath();
+    }
+
+    function updateReadout(pinchMm) {
+      curlValue.textContent = `${curlInput.value}%`;
+      spreadValue.textContent = `${spreadInput.value}%`;
+      depthValue.textContent = `${(Number(depthInput.value) / 100).toFixed(2)}m`;
+      pinchValue.textContent = `${Math.round(pinchMm)}mm`;
+      const tipRadius = state.joints[9]?.radius || 0;
+      radiusValue.textContent = `${Math.round(tipRadius * 1.35)}mm`;
+    }
+
+    function draw() {
+      buildHand();
+      drawBackground();
+      const indexTip = state.joints[9];
+      const thumbTip = state.joints[4];
+      const result = drawPanel(indexTip, thumbTip);
+      drawHand();
+      updateReadout(result.pinchMm);
+      requestAnimationFrame(draw);
+    }
+
+    function pointerToHand(event) {
+      state.handX = event.clientX / state.width;
+      state.handY = event.clientY / state.height;
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.dragging = true;
+      canvas.setPointerCapture(event.pointerId);
+      pointerToHand(event);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (state.dragging) pointerToHand(event);
+    });
+
+    canvas.addEventListener("pointerup", () => {
+      state.dragging = false;
+    });
+
+    [curlInput, spreadInput, depthInput].forEach((input) => {
+      input.addEventListener("input", () => {
+        poseButtons.forEach((button) => button.setAttribute("aria-pressed", "false"));
+      });
+    });
+
+    poseButtons.forEach((button) => {
+      button.addEventListener("click", () => setPreset(button.dataset.pose));
+    });
+
+    window.addEventListener("resize", resize);
+    resize();
+    draw();
+  </script>
+</body>
+</html>
