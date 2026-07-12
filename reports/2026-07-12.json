@@ -1,0 +1,137 @@
+{
+  "date": "2026-07-12",
+  "headline": "Layers と Hand/Depth を重ねた遮蔽 UI を試す",
+  "headlineEn": "Testing occluded UI by combining Layers with Hand and Depth cues",
+  "summary": "WebXR Layers API、Depth Sensing、Hand Input、Lighting Estimation の一次情報を確認し、今日は高精細 quad layer が手前の手で隠れ、pinch と照明で状態が変わる自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing primary sources for the WebXR Layers API, Depth Sensing, Hand Input, and Lighting Estimation, today's original HTML sample simulates a high-fidelity quad layer that is occluded by a nearer hand and changes state through pinch and lighting controls.",
+  "keyTopics": [
+    "WebXR Layers API Level 1 の Editor's Draft は 2026-06-12 更新で、WebXR session 内の projection / quad / cylinder / equirect / cube などの composition layer を扱う。",
+    "Layers は `layers` feature descriptor を immersive-vr / immersive-ar session で要求し、`XRWebGLBinding` や `XRMediaBinding` から layer を作成して render state に追加する流れになっている。",
+    "Composition layer は text-optimized / graphics-optimized の quality を持ち、HUD や地図、文字 UI の可読性を eye buffer だけに依存しない形で高められる。",
+    "Depth Sensing と Hand Input を重ねると、手が UI より手前にある時だけ遮蔽し、奥にある仮想物を薄くするような空間 UI の整合性を作りやすい。",
+    "Lighting Estimation の考え方を足すと、手元の layer の影、明るさ、選択 feedback を環境光に合わせて調整できる。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Layers API Level 1 Editor's Draft was updated on 2026-06-12 and covers composition layers such as projection, quad, cylinder, equirect, and cube layers within WebXR sessions.",
+    "Layers are requested through the `layers` feature descriptor in immersive-vr or immersive-ar sessions, then created through `XRWebGLBinding` or `XRMediaBinding` and added to render state.",
+    "Composition layers can use text-optimized or graphics-optimized quality, improving readability for HUDs, maps, and text UI without relying only on the eye buffer.",
+    "Combining Depth Sensing and Hand Input makes spatial UI coherence easier: content can hide only when a hand is physically in front of the UI, while farther virtual content can fade.",
+    "Adding Lighting Estimation ideas lets hand-adjacent layers adjust shadows, brightness, and selection feedback to the surrounding light."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Layered Hand Occlusion Stage",
+      "url": "../outputs/2026-07-12_html_layered_hand_occlusion_stage.html"
+    },
+    {
+      "label": "WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "WebXR Depth Sensing Module",
+      "url": "https://immersive-web.github.io/depth-sensing/"
+    },
+    {
+      "label": "WebXR Hand Input Module - Level 1",
+      "url": "https://immersive-web.github.io/webxr-hand-input/"
+    },
+    {
+      "label": "WebXR Lighting Estimation API Level 1",
+      "url": "https://immersive-web.github.io/lighting-estimation/"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Layers API です。面白い点は、通常の projection layer だけでなく、quad layer や cylinder layer のような composition layer を compositor 側で扱い、テキストや地図のような細かい UI を高品質に保てることです。仕様上は `XRCompositionLayer.opacity`、`quality`、`needsRedraw` などがあり、動き続ける 3D scene と、読みやすい固定 UI を分けて考えられます。",
+      "bodyEn": "Today's notable reference is the WebXR Layers API. The interesting part is that composition layers such as quad and cylinder layers can be handled by the compositor rather than relying only on the projection layer, helping detailed UI like text or maps remain legible. The specification includes concepts such as `XRCompositionLayer.opacity`, `quality`, and `needsRedraw`, letting authors separate a moving 3D scene from readable fixed UI.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "Layers の利点を UI の見やすさだけで終わらせず、Hand Input と Depth Sensing の観察点を混ぜると、手が quad layer より手前に入った時だけ UI を自然に隠す表現になります。今日のサンプルでは pointer を手として扱い、hand depth と layer depth の差から遮蔽率を計算し、pinch が強い時だけ hover から select に変わるようにしました。",
+      "bodyEn": "Layers become more than a readability tool when combined with Hand Input and Depth Sensing: UI can be hidden naturally only when a hand is in front of the quad layer. Today's sample treats the pointer as a hand, computes occlusion from the hand/layer depth difference, and changes hover into select only when pinch is strong.",
+      "links": [
+        {
+          "label": "Open today's sample",
+          "url": "../outputs/2026-07-12_html_layered_hand_occlusion_stage.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は `navigator.xr.requestSession(\"immersive-ar\", { optionalFeatures: [\"layers\", \"depth-sensing\", \"hand-tracking\", \"light-estimation\"] })` のように機能を分けて要求し、layer は `XRWebGLBinding` から作ります。遮蔽は depth texture または CPU depth data と hand joint の位置を同じ reference space にそろえ、UI layer の矩形内で前後関係を評価するのが基本になります。",
+      "bodyEn": "In a real implementation, features can be requested separately, for example `navigator.xr.requestSession(\"immersive-ar\", { optionalFeatures: [\"layers\", \"depth-sensing\", \"hand-tracking\", \"light-estimation\"] })`, while layers are created from `XRWebGLBinding`. For occlusion, depth textures or CPU depth data and hand joint positions should be resolved into the same reference space, then tested against the UI layer rectangle.",
+      "links": [
+        {
+          "label": "Layers initialization flow",
+          "url": "https://immersive-web.github.io/layers/#initialization"
+        },
+        {
+          "label": "Depth Sensing Module",
+          "url": "https://immersive-web.github.io/depth-sensing/"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は Layers の中でも cylinder layer と stereo media layer を見たいです。手前の手で遮蔽されるナビゲーション HUD から、視野を包むパノラマ/動画 layer、または複数の layer 間の depth sorting へ広げると、実用 UI に近づきます。",
+      "bodyEn": "Next, cylinder layers and stereo media layers are worth watching. Extending from a hand-occluded navigation HUD into panoramic/video layers or depth sorting between multiple layers would move the samples closer to practical spatial UI.",
+      "links": [
+        {
+          "label": "Layer types",
+          "url": "https://immersive-web.github.io/layers/#layer-types"
+        }
+      ]
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Layered Hand Occlusion Stage` を開き、pointer を中央の layer 上に移動してから hand depth を layer depth より小さくしてください。手が手前にある時だけ遮蔽率が上がり、pinch を強くすると hover が select に変わります。Text / Media / Alert を切り替えると、同じ depth 判定で異なる layer 用途を確認できます。",
+      "bodyEn": "Open Layered Hand Occlusion Stage, move the pointer over the central layer, then set hand depth lower than layer depth. Occlusion increases only when the hand is in front, and increasing pinch changes hover into select. Switching Text, Media, and Alert shows different layer uses with the same depth logic.",
+      "links": [
+        {
+          "label": "Open Layered Hand Occlusion Stage",
+          "url": "../outputs/2026-07-12_html_layered_hand_occlusion_stage.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Layers API、Depth Sensing、Hand Input、Lighting Estimation、公式 WebXR Samples を確認。アイデア: 高精細 UI layer と手前の手の遮蔽を HMD なしで観察する。実装: canvas 上の quad layer、手の円形 depth volume、pinch slider、lighting slider、text/media/alert preset、遮蔽率 readout を作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。",
+      "bodyEn": "Research: reviewed the Layers API, Depth Sensing, Hand Input, Lighting Estimation, and official WebXR Samples. Idea: inspect high-fidelity UI layer occlusion by a nearer hand without a headset. Implementation: created a canvas quad layer, circular hand depth volume, pinch slider, lighting slider, text/media/alert presets, and occlusion readout. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.",
+      "links": [
+        {
+          "label": "Immersive Web WebXR Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/"
+        }
+      ]
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion、lighting estimation、hand input、そして layer + hand/depth 合成です。空間体験の『見える』『置く』『隠れる』『なじむ』『触る』『読みやすく重ねる』を、自作の最小サンプルとして積み上げています。",
+      "bodyEn": "The sequence so far is depth HUD, hit test and anchors, depth occlusion, lighting estimation, hand input, and now layer plus hand/depth composition. The archive is building small original samples around seeing, placing, hiding, blending, touching, and readable layering."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Layered Hand Occlusion Stage` です。実機の WebXR Layers ではなく、layer の opacity、quality、手前/奥の depth gap、pinch による select をブラウザ単体で触れる形にして、次の実 WebXR 実装へ移しやすい観察単位にしました。",
+      "bodyEn": "The selected prototype is Layered Hand Occlusion Stage. Instead of requiring live WebXR Layers hardware, it makes layer opacity, quality, hand/layer depth gap, and pinch selection inspectable in a normal browser, creating an observation unit that can later move into a real WebXR implementation."
+    }
+  ]
+}

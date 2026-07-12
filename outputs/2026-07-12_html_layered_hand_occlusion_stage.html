@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Layered Hand Occlusion Stage</title>
+  <style>
+    :root {
+      --ink: #152023;
+      --paper: #f2f4ed;
+      --panel: rgba(255, 255, 250, 0.88);
+      --line: rgba(21, 32, 35, 0.15);
+      --muted: #607076;
+      --cyan: #128ea0;
+      --green: #558b43;
+      --amber: #c88727;
+      --rose: #bb5461;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .hud,
+    .readout {
+      position: fixed;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 36px rgba(31, 42, 38, 0.16);
+      backdrop-filter: blur(14px);
+    }
+
+    .hud {
+      top: 16px;
+      left: 16px;
+      width: min(430px, calc(100vw - 32px));
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .controls {
+      display: grid;
+      gap: 11px;
+      margin-top: 14px;
+    }
+
+    .control {
+      display: grid;
+      grid-template-columns: 104px 1fr 54px;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+    }
+
+    .value {
+      text-align: right;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.64);
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(18, 142, 160, 0.66);
+      background: rgba(18, 142, 160, 0.13);
+    }
+
+    .readout {
+      right: 18px;
+      bottom: 18px;
+      width: min(380px, calc(100vw - 36px));
+      padding: 14px;
+      pointer-events: none;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .cell {
+      min-height: 50px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .metric {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      max-width: calc(100vw - 36px);
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 250, 0.78);
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 720px) {
+      .hud {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .control {
+        grid-template-columns: 86px 1fr 48px;
+      }
+
+      .readout {
+        right: 12px;
+        bottom: 54px;
+        width: calc(100vw - 24px);
+      }
+
+      .readout-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .cell {
+        min-height: 42px;
+        padding: 7px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="Layered hand occlusion simulator"></canvas>
+
+  <section class="hud">
+    <h1>Layered Hand Occlusion Stage</h1>
+    <p>WebXR Layers の text-optimized quad layer、Depth Sensing 的な手前/奥の遮蔽、Hand Input の pinch を疑似化する最小サンプルです。</p>
+    <div class="controls">
+      <label class="control">hand depth <input id="handDepth" type="range" min="20" max="92" value="42"><span class="value" id="handDepthValue">0.42m</span></label>
+      <label class="control">layer depth <input id="layerDepth" type="range" min="30" max="96" value="68"><span class="value" id="layerDepthValue">0.68m</span></label>
+      <label class="control">pinch <input id="pinch" type="range" min="0" max="100" value="54"><span class="value" id="pinchValue">54%</span></label>
+      <label class="control">lighting <input id="light" type="range" min="0" max="100" value="62"><span class="value" id="lightValue">0.62</span></label>
+    </div>
+    <div class="chips">
+      <button type="button" data-mode="text" aria-pressed="true">Text</button>
+      <button type="button" data-mode="media">Media</button>
+      <button type="button" data-mode="alert">Alert</button>
+    </div>
+  </section>
+
+  <aside class="readout">
+    <p>pointer: 手の位置 / depth: 手が layer より近い時だけ遮蔽 / pinch: 近接時に layer opacity と select を変化</p>
+    <div class="readout-grid">
+      <div class="cell"><span class="label">occlusion</span><span class="metric" id="occlusionValue">34%</span></div>
+      <div class="cell"><span class="label">layer</span><span class="metric" id="stateValue">hover</span></div>
+      <div class="cell"><span class="label">quality</span><span class="metric" id="qualityValue">text</span></div>
+      <div class="cell"><span class="label">depth gap</span><span class="metric" id="gapValue">26cm</span></div>
+    </div>
+  </aside>
+
+  <div class="hint">move pointer: hand pose / sliders: depth, pinch, lighting / buttons: layer content preset</div>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const handDepthInput = document.getElementById("handDepth");
+    const layerDepthInput = document.getElementById("layerDepth");
+    const pinchInput = document.getElementById("pinch");
+    const lightInput = document.getElementById("light");
+    const handDepthValue = document.getElementById("handDepthValue");
+    const layerDepthValue = document.getElementById("layerDepthValue");
+    const pinchValue = document.getElementById("pinchValue");
+    const lightValue = document.getElementById("lightValue");
+    const occlusionValue = document.getElementById("occlusionValue");
+    const stateValue = document.getElementById("stateValue");
+    const qualityValue = document.getElementById("qualityValue");
+    const gapValue = document.getElementById("gapValue");
+    const modeButtons = [...document.querySelectorAll("[data-mode]")];
+
+    const state = {
+      pointer: { x: 0.58, y: 0.53 },
+      mode: "text",
+      time: 0,
+      dpr: 1
+    };
+
+    const modes = {
+      text: {
+        title: "Route layer",
+        lines: ["Gate A12", "Walk 48m", "ETA 02:10"],
+        color: "#128ea0",
+        quality: "text"
+      },
+      media: {
+        title: "Remote feed",
+        lines: ["Stereo clip", "Stable 60fps", "Needs redraw"],
+        color: "#558b43",
+        quality: "graphics"
+      },
+      alert: {
+        title: "Safety card",
+        lines: ["Hand in front", "Lower opacity", "Keep anchor"],
+        color: "#bb5461",
+        quality: "text"
+      }
+    };
+
+    function resize() {
+      state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(innerWidth * state.dpr);
+      canvas.height = Math.floor(innerHeight * state.dpr);
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function roundedRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function drawScene() {
+      const w = innerWidth;
+      const h = innerHeight;
+      const handDepth = Number(handDepthInput.value) / 100;
+      const layerDepth = Number(layerDepthInput.value) / 100;
+      const pinch = Number(pinchInput.value) / 100;
+      const lighting = Number(lightInput.value) / 100;
+      const mode = modes[state.mode];
+      const cx = state.pointer.x * w;
+      const cy = state.pointer.y * h;
+      const layerW = Math.min(440, w * 0.58);
+      const layerH = Math.min(260, h * 0.34);
+      const layerX = w * 0.5 - layerW * 0.5;
+      const layerY = h * 0.48 - layerH * 0.5;
+      const handRadius = 74 + (1 - handDepth) * 64;
+      const overlapX = clamp(Math.min(cx + handRadius, layerX + layerW) - Math.max(cx - handRadius, layerX), 0, layerW);
+      const overlapY = clamp(Math.min(cy + handRadius, layerY + layerH) - Math.max(cy - handRadius, layerY), 0, layerH);
+      const projectedOverlap = (overlapX * overlapY) / (layerW * layerH);
+      const inFront = handDepth < layerDepth;
+      const occlusion = inFront ? clamp(projectedOverlap * 1.65, 0, 0.92) : 0;
+      const nearCenter = Math.hypot(cx - (layerX + layerW * 0.5), cy - (layerY + layerH * 0.5)) < layerW * 0.38;
+      const selected = nearCenter && pinch > 0.72 && inFront;
+      const hovered = nearCenter && inFront;
+      const layerOpacity = clamp(1 - occlusion * 0.55 + (selected ? 0.08 : 0), 0.34, 1);
+
+      ctx.clearRect(0, 0, w, h);
+      drawRoom(w, h, lighting);
+      drawDepthGrid(w, h, handDepth, layerDepth);
+      drawLayer(layerX, layerY, layerW, layerH, mode, layerOpacity, selected, hovered, lighting);
+      drawHand(cx, cy, handRadius, pinch, handDepth, inFront, occlusion);
+      drawOcclusionMask(layerX, layerY, layerW, layerH, cx, cy, handRadius, occlusion, inFront);
+      drawConnector(cx, cy, layerX + layerW * 0.5, layerY + layerH * 0.5, hovered, selected);
+
+      handDepthValue.textContent = `${handDepth.toFixed(2)}m`;
+      layerDepthValue.textContent = `${layerDepth.toFixed(2)}m`;
+      pinchValue.textContent = `${Math.round(pinch * 100)}%`;
+      lightValue.textContent = lighting.toFixed(2);
+      occlusionValue.textContent = `${Math.round(occlusion * 100)}%`;
+      stateValue.textContent = selected ? "select" : hovered ? "hover" : "idle";
+      qualityValue.textContent = mode.quality;
+      gapValue.textContent = `${Math.round(Math.abs(layerDepth - handDepth) * 100)}cm`;
+
+      state.time += 0.016;
+      requestAnimationFrame(drawScene);
+    }
+
+    function drawRoom(w, h, lighting) {
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, `rgba(242,244,237,1)`);
+      grad.addColorStop(1, `rgba(210,221,219,1)`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = `rgba(21,32,35,${0.05 + lighting * 0.06})`;
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 14; i += 1) {
+        const y = h * 0.36 + i * 34;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.12, y);
+        ctx.lineTo(w * 0.88, y + i * 4);
+        ctx.stroke();
+      }
+    }
+
+    function drawDepthGrid(w, h, handDepth, layerDepth) {
+      const left = w * 0.08;
+      const top = h * 0.74;
+      const width = Math.min(360, w * 0.42);
+      ctx.fillStyle = "rgba(255,255,250,0.58)";
+      roundedRect(left, top, width, 42, 8);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(21,32,35,0.12)";
+      ctx.stroke();
+      [["hand", handDepth, "#bb5461"], ["layer", layerDepth, "#128ea0"]].forEach(([label, value, color]) => {
+        const x = left + 18 + value * (width - 36);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, top + 21, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#152023";
+        ctx.font = "12px Avenir Next, sans-serif";
+        ctx.fillText(label, x - 16, top + 38);
+      });
+    }
+
+    function drawLayer(x, y, w, h, mode, opacity, selected, hovered, lighting) {
+      ctx.save();
+      ctx.globalAlpha = opacity;
+      ctx.shadowColor = "rgba(25,34,32,0.22)";
+      ctx.shadowBlur = 30 + lighting * 18;
+      ctx.shadowOffsetY = 18;
+      ctx.fillStyle = selected ? "rgba(255,255,255,0.94)" : "rgba(255,255,250,0.88)";
+      roundedRect(x, y, w, h, 8);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = hovered ? mode.color : "rgba(21,32,35,0.18)";
+      ctx.lineWidth = hovered ? 3 : 1;
+      ctx.stroke();
+
+      ctx.fillStyle = mode.color;
+      roundedRect(x + 18, y + 18, 76, 26, 6);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "700 12px Avenir Next, sans-serif";
+      ctx.fillText(mode.quality === "text" ? "text layer" : "media layer", x + 28, y + 36);
+
+      ctx.fillStyle = "#152023";
+      ctx.font = "700 30px Avenir Next, sans-serif";
+      ctx.fillText(mode.title, x + 24, y + 86);
+      ctx.font = "18px Avenir Next, sans-serif";
+      mode.lines.forEach((line, index) => {
+        ctx.fillStyle = index === 0 ? "#152023" : "rgba(21,32,35,0.68)";
+        ctx.fillText(line, x + 26, y + 128 + index * 36);
+      });
+
+      for (let i = 0; i < 5; i += 1) {
+        ctx.fillStyle = i < 3 ? mode.color : "rgba(21,32,35,0.16)";
+        roundedRect(x + w - 126, y + 52 + i * 30, 82 - i * 9, 9, 4);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function drawHand(cx, cy, radius, pinch, depth, inFront, occlusion) {
+      const scale = 0.78 + (1 - depth) * 0.48;
+      const color = inFront ? "#bb5461" : "#607076";
+      ctx.save();
+      ctx.globalAlpha = inFront ? 0.86 : 0.48;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 12 * scale;
+      const wristY = cy + 100 * scale;
+      const palmY = cy + 36 * scale;
+      ctx.beginPath();
+      ctx.moveTo(cx, wristY);
+      ctx.lineTo(cx - 20 * scale, palmY);
+      ctx.lineTo(cx + 22 * scale, palmY);
+      ctx.closePath();
+      ctx.stroke();
+
+      const fingerData = [
+        [-58, -34, 0.8],
+        [-24, -84, 1.08],
+        [8, -96, 1.16],
+        [39, -82, 1.04],
+        [68, -50, 0.86]
+      ];
+      fingerData.forEach(([baseX, tipY, length], index) => {
+        const pinchPull = index < 2 ? pinch * 34 * scale : pinch * 8 * scale;
+        const base = { x: cx + baseX * scale, y: palmY };
+        const tip = {
+          x: cx + baseX * scale + (index === 0 ? 62 * pinch * scale : -10 * pinch * scale),
+          y: cy + tipY * length * scale + pinchPull
+        };
+        const mid = {
+          x: (base.x + tip.x) * 0.5 + (index - 2) * 8 * scale,
+          y: (base.y + tip.y) * 0.5 + 20 * pinch * scale
+        };
+        ctx.beginPath();
+        ctx.moveTo(base.x, base.y);
+        ctx.quadraticCurveTo(mid.x, mid.y, tip.x, tip.y);
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(tip.x, tip.y, (8 + index) * scale, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.fillStyle = `rgba(187,84,97,${0.08 + occlusion * 0.18})`;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawOcclusionMask(x, y, w, h, cx, cy, radius, occlusion, inFront) {
+      if (!inFront || occlusion <= 0.01) return;
+      ctx.save();
+      ctx.beginPath();
+      roundedRect(x, y, w, h, 8);
+      ctx.clip();
+      const mask = ctx.createRadialGradient(cx, cy, radius * 0.16, cx, cy, radius);
+      mask.addColorStop(0, `rgba(242,244,237,${0.42 + occlusion * 0.42})`);
+      mask.addColorStop(1, "rgba(242,244,237,0)");
+      ctx.fillStyle = mask;
+      ctx.fillRect(x, y, w, h);
+      ctx.restore();
+    }
+
+    function drawConnector(x1, y1, x2, y2, hovered, selected) {
+      ctx.save();
+      ctx.strokeStyle = selected ? "rgba(85,139,67,0.76)" : hovered ? "rgba(18,142,160,0.58)" : "rgba(21,32,35,0.16)";
+      ctx.lineWidth = selected ? 4 : 2;
+      ctx.setLineDash(hovered ? [] : [6, 8]);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function setPointer(event) {
+      const rect = canvas.getBoundingClientRect();
+      state.pointer.x = clamp((event.clientX - rect.left) / rect.width, 0.05, 0.95);
+      state.pointer.y = clamp((event.clientY - rect.top) / rect.height, 0.12, 0.92);
+    }
+
+    modeButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        state.mode = button.dataset.mode;
+        modeButtons.forEach((item) => {
+          item.setAttribute("aria-pressed", String(item === button));
+        });
+      });
+    });
+
+    canvas.addEventListener("pointermove", setPointer);
+    canvas.addEventListener("pointerdown", setPointer);
+    window.addEventListener("resize", resize);
+
+    resize();
+    requestAnimationFrame(drawScene);
+  </script>
+</body>
+</html>
