@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Curved Layer Readability Tunnel</title>
+  <style>
+    :root {
+      --ink: #172126;
+      --paper: #f5f1e8;
+      --panel: rgba(255, 252, 244, 0.9);
+      --line: rgba(23, 33, 38, 0.16);
+      --muted: #627074;
+      --blue: #286fa3;
+      --green: #4d8a63;
+      --red: #bd5555;
+      --gold: #b8842f;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+      cursor: grab;
+    }
+
+    canvas:active { cursor: grabbing; }
+
+    .hud,
+    .readout {
+      position: fixed;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 40px rgba(28, 35, 37, 0.16);
+      backdrop-filter: blur(14px);
+    }
+
+    .hud {
+      top: 16px;
+      left: 16px;
+      width: min(456px, calc(100vw - 32px));
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .controls {
+      display: grid;
+      gap: 11px;
+      margin-top: 14px;
+    }
+
+    .control {
+      display: grid;
+      grid-template-columns: 112px 1fr 62px;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+
+    .value {
+      text-align: right;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.66);
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(40, 111, 163, 0.68);
+      background: rgba(40, 111, 163, 0.14);
+    }
+
+    .readout {
+      right: 18px;
+      bottom: 18px;
+      width: min(408px, calc(100vw - 36px));
+      padding: 14px;
+      pointer-events: none;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .cell {
+      min-height: 52px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.52);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .metric {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      max-width: calc(100vw - 36px);
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 252, 244, 0.78);
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 760px) {
+      .hud {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .control {
+        grid-template-columns: 92px 1fr 54px;
+      }
+
+      .chips {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .readout {
+        right: 12px;
+        bottom: 54px;
+        width: calc(100vw - 24px);
+      }
+
+      .readout-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .cell {
+        min-height: 44px;
+        padding: 7px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="Curved layer readability simulator"></canvas>
+
+  <section class="hud">
+    <h1>Curved Layer Readability Tunnel</h1>
+    <p>XRCylinderLayer 的な曲面 UI を、視線角・半径・stereo offset・奥行き順で観察する自作の最小サンプルです。</p>
+    <div class="controls">
+      <label class="control">viewer yaw <input id="yaw" type="range" min="-42" max="42" value="0"><span class="value" id="yawValue">0deg</span></label>
+      <label class="control">radius <input id="radius" type="range" min="42" max="92" value="64"><span class="value" id="radiusValue">0.64m</span></label>
+      <label class="control">arc width <input id="arc" type="range" min="34" max="92" value="66"><span class="value" id="arcValue">66deg</span></label>
+      <label class="control">stereo bias <input id="stereo" type="range" min="0" max="36" value="12"><span class="value" id="stereoValue">12px</span></label>
+      <label class="control">near card <input id="nearCard" type="range" min="0" max="100" value="38"><span class="value" id="nearCardValue">38%</span></label>
+    </div>
+    <div class="chips">
+      <button type="button" data-mode="text" aria-pressed="true">Text</button>
+      <button type="button" data-mode="map">Map</button>
+      <button type="button" data-mode="video">Video</button>
+      <button type="button" data-mode="depth">Depth</button>
+    </div>
+  </section>
+
+  <section class="readout">
+    <p>曲面 layer は正面付近の読みやすさを保ちやすい一方、端の角度と奥行き順で情報密度が変わります。</p>
+    <div class="readout-grid">
+      <div class="cell"><span class="label">legibility</span><span class="metric" id="legibility">92%</span></div>
+      <div class="cell"><span class="label">edge skew</span><span class="metric" id="skew">18deg</span></div>
+      <div class="cell"><span class="label">sort state</span><span class="metric" id="sortState">clear</span></div>
+      <div class="cell"><span class="label">layer mode</span><span class="metric" id="modeLabel">Text</span></div>
+    </div>
+  </section>
+
+  <div class="hint">drag で viewer yaw を変更。near card が中央 layer に重なると depth sorting の破綻を観察できます。</div>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const controls = {
+      yaw: document.getElementById("yaw"),
+      radius: document.getElementById("radius"),
+      arc: document.getElementById("arc"),
+      stereo: document.getElementById("stereo"),
+      nearCard: document.getElementById("nearCard")
+    };
+
+    const labels = {
+      yaw: document.getElementById("yawValue"),
+      radius: document.getElementById("radiusValue"),
+      arc: document.getElementById("arcValue"),
+      stereo: document.getElementById("stereoValue"),
+      nearCard: document.getElementById("nearCardValue"),
+      legibility: document.getElementById("legibility"),
+      skew: document.getElementById("skew"),
+      sortState: document.getElementById("sortState"),
+      mode: document.getElementById("modeLabel")
+    };
+
+    const buttons = [...document.querySelectorAll("button[data-mode]")];
+    const state = {
+      mode: "text",
+      pointerDown: false,
+      lastX: 0,
+      phase: 0
+    };
+
+    const modeCopy = {
+      text: ["STATUS", "Layer quality: text-optimized", "Checklist remains readable", "Static layer redraw: false"],
+      map: ["ROUTE", "Anchor A -> Gate 4", "Turn arc with viewer yaw", "Map labels need center bias"],
+      video: ["MEDIA", "Stereo strip: left/right", "Keep subtitles on own layer", "Motion stays below 24 deg edge"],
+      depth: ["SORT", "Near card crosses layer", "Depth gap controls conflict", "Compositor order must be explicit"]
+    };
+
+    function resize() {
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function roundedRect(x, y, w, h, r) {
+      const rr = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rr);
+      ctx.arcTo(x + w, y + h, x, y + h, rr);
+      ctx.arcTo(x, y + h, x, y, rr);
+      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.closePath();
+    }
+
+    function mix(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function getValues() {
+      return {
+        yaw: Number(controls.yaw.value),
+        radius: Number(controls.radius.value) / 100,
+        arc: Number(controls.arc.value),
+        stereo: Number(controls.stereo.value),
+        nearCard: Number(controls.nearCard.value) / 100
+      };
+    }
+
+    function drawBackground(w, h, values) {
+      const gradient = ctx.createLinearGradient(0, 0, w, h);
+      gradient.addColorStop(0, "#e7efe9");
+      gradient.addColorStop(0.45, "#f5f1e8");
+      gradient.addColorStop(1, "#e9dfcf");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.translate(w / 2, h * 0.58);
+      ctx.rotate((values.yaw * Math.PI) / 900);
+      ctx.strokeStyle = "rgba(23, 33, 38, 0.08)";
+      ctx.lineWidth = 1;
+      for (let i = -8; i <= 8; i += 1) {
+        const x = i * 76;
+        ctx.beginPath();
+        ctx.moveTo(x, -h);
+        ctx.lineTo(x * 1.35, h);
+        ctx.stroke();
+      }
+      for (let j = 0; j < 9; j += 1) {
+        const y = j * 58;
+        ctx.beginPath();
+        ctx.moveTo(-w, y);
+        ctx.quadraticCurveTo(0, y + 22, w, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawLayerTile(tile, values, alpha) {
+      const { x, y, width, height, angle, scale, index } = tile;
+      const skew = Math.sin(angle) * 18;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.transform(1, 0, skew / 320, 1, 0, 0);
+      ctx.scale(scale, scale);
+
+      roundedRect(-width / 2, -height / 2, width, height, 8);
+      ctx.fillStyle = `rgba(255, 255, 252, ${alpha})`;
+      ctx.fill();
+      ctx.strokeStyle = "rgba(23, 33, 38, 0.18)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      const accent = ["#286fa3", "#4d8a63", "#b8842f", "#bd5555"][index % 4];
+      ctx.fillStyle = accent;
+      roundedRect(-width / 2 + 14, -height / 2 + 14, 42, 10, 5);
+      ctx.fill();
+
+      ctx.fillStyle = "#172126";
+      ctx.font = "700 15px Avenir Next, sans-serif";
+      ctx.fillText(modeCopy[state.mode][0], -width / 2 + 14, -height / 2 + 46);
+
+      ctx.fillStyle = "rgba(23, 33, 38, 0.72)";
+      ctx.font = "12px Avenir Next, sans-serif";
+      const line = modeCopy[state.mode][index] || modeCopy[state.mode][1];
+      ctx.fillText(line, -width / 2 + 14, -height / 2 + 74);
+
+      ctx.strokeStyle = "rgba(23, 33, 38, 0.12)";
+      for (let i = 0; i < 3; i += 1) {
+        const yy = -height / 2 + 96 + i * 17;
+        ctx.beginPath();
+        ctx.moveTo(-width / 2 + 14, yy);
+        ctx.lineTo(width / 2 - 18 - i * 24, yy);
+        ctx.stroke();
+      }
+
+      if (state.mode === "map") {
+        ctx.strokeStyle = "rgba(40, 111, 163, 0.58)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-width / 2 + 28, height / 2 - 34);
+        ctx.bezierCurveTo(-42, 8, 20, 42, width / 2 - 32, -16);
+        ctx.stroke();
+      } else if (state.mode === "video") {
+        ctx.fillStyle = "rgba(40, 111, 163, 0.14)";
+        roundedRect(-width / 2 + 14, height / 2 - 52, width - 28, 26, 5);
+        ctx.fill();
+        ctx.fillStyle = "rgba(23, 33, 38, 0.66)";
+        ctx.font = "700 11px Avenir Next, sans-serif";
+        ctx.fillText("L/R subtitle layer", -width / 2 + 24, height / 2 - 34);
+      } else if (state.mode === "depth") {
+        ctx.fillStyle = "rgba(189, 85, 85, 0.13)";
+        roundedRect(-width / 2 + 14, height / 2 - 54, width - 28, 28, 5);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function drawCurvedLayer(w, h, values) {
+      const centerX = w / 2;
+      const centerY = h * 0.54;
+      const count = 5;
+      const arcRad = (values.arc * Math.PI) / 180;
+      const yawRad = (values.yaw * Math.PI) / 180;
+      const visualRadius = mix(350, 620, values.radius);
+      const tiles = [];
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.strokeStyle = "rgba(40, 111, 163, 0.22)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(0, 28, visualRadius, visualRadius * 0.2, 0, Math.PI + 0.12, Math.PI * 2 - 0.12);
+      ctx.stroke();
+      ctx.restore();
+
+      for (let i = 0; i < count; i += 1) {
+        const t = count === 1 ? 0.5 : i / (count - 1);
+        const angle = -arcRad / 2 + arcRad * t - yawRad;
+        const x = centerX + Math.sin(angle) * visualRadius;
+        const y = centerY - Math.cos(angle) * visualRadius * 0.16 + Math.abs(Math.sin(angle)) * 30;
+        const facing = Math.max(0.36, Math.cos(angle));
+        const scale = mix(0.72, 1.02, facing);
+        const width = 188;
+        const height = 146;
+        tiles.push({ x, y, width, height, angle, scale, index: i });
+      }
+
+      for (const tile of tiles.sort((a, b) => a.scale - b.scale)) {
+        drawLayerTile(tile, values, mix(0.5, 0.96, tile.scale));
+      }
+
+      return tiles;
+    }
+
+    function drawStereoGhost(w, h, values) {
+      const cx = w / 2;
+      const cy = h * 0.77;
+      const gap = values.stereo;
+      ctx.save();
+      ctx.globalAlpha = 0.62;
+      ctx.strokeStyle = "rgba(40, 111, 163, 0.5)";
+      ctx.lineWidth = 2;
+      roundedRect(cx - 138 - gap, cy - 32, 116, 48, 8);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(189, 85, 85, 0.48)";
+      roundedRect(cx + 22 + gap, cy - 32, 116, 48, 8);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(23, 33, 38, 0.62)";
+      ctx.font = "12px Avenir Next, sans-serif";
+      ctx.fillText("left view", cx - 114 - gap, cy - 3);
+      ctx.fillText("right view", cx + 42 + gap, cy - 3);
+      ctx.restore();
+    }
+
+    function drawNearCard(w, h, values) {
+      const x = mix(w * 0.34, w * 0.62, values.nearCard);
+      const y = h * 0.52 + Math.sin(state.phase * 0.02) * 10;
+      const overlap = Math.max(0, 1 - Math.abs(values.nearCard - 0.5) / 0.22);
+      const alpha = mix(0.16, 0.82, overlap);
+
+      ctx.save();
+      ctx.translate(x, y);
+      roundedRect(-74, -52, 148, 104, 8);
+      ctx.fillStyle = `rgba(189, 85, 85, ${alpha})`;
+      ctx.fill();
+      ctx.strokeStyle = "rgba(120, 42, 42, 0.42)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255, 252, 244, 0.92)";
+      ctx.font = "700 13px Avenir Next, sans-serif";
+      ctx.fillText("near card", -42, -10);
+      ctx.font = "11px Avenir Next, sans-serif";
+      ctx.fillText("depth test", -38, 12);
+      ctx.restore();
+
+      return overlap;
+    }
+
+    function draw() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const values = getValues();
+      state.phase += 1;
+
+      drawBackground(w, h, values);
+      drawCurvedLayer(w, h, values);
+      drawStereoGhost(w, h, values);
+      const overlap = drawNearCard(w, h, values);
+
+      const centerSkew = Math.round(Math.abs(values.yaw) + values.arc / 2 * 0.42);
+      const legibility = Math.max(34, Math.round(100 - Math.abs(values.yaw) * 0.72 - values.arc * 0.18 - values.stereo * 0.28 - overlap * 24));
+      const sortState = overlap > 0.66 ? "conflict" : overlap > 0.28 ? "watch" : "clear";
+
+      labels.yaw.textContent = `${values.yaw}deg`;
+      labels.radius.textContent = `${values.radius.toFixed(2)}m`;
+      labels.arc.textContent = `${values.arc}deg`;
+      labels.stereo.textContent = `${values.stereo}px`;
+      labels.nearCard.textContent = `${Math.round(values.nearCard * 100)}%`;
+      labels.legibility.textContent = `${legibility}%`;
+      labels.skew.textContent = `${centerSkew}deg`;
+      labels.sortState.textContent = sortState;
+      labels.mode.textContent = state.mode[0].toUpperCase() + state.mode.slice(1);
+
+      requestAnimationFrame(draw);
+    }
+
+    for (const input of Object.values(controls)) {
+      input.addEventListener("input", () => {});
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        state.mode = button.dataset.mode;
+        buttons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+      });
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.pointerDown = true;
+      state.lastX = event.clientX;
+      canvas.setPointerCapture(event.pointerId);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!state.pointerDown) return;
+      const dx = event.clientX - state.lastX;
+      state.lastX = event.clientX;
+      controls.yaw.value = String(Math.max(-42, Math.min(42, Number(controls.yaw.value) + dx * 0.12)));
+    });
+
+    canvas.addEventListener("pointerup", () => {
+      state.pointerDown = false;
+    });
+
+    window.addEventListener("resize", resize);
+    resize();
+    draw();
+  </script>
+</body>
+</html>

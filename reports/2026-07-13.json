@@ -1,0 +1,137 @@
+{
+  "date": "2026-07-13",
+  "headline": "Cylinder Layer で曲面 UI の可読性を観察する",
+  "headlineEn": "Observing curved UI readability with cylinder-layer ideas",
+  "summary": "WebXR Layers API、XRCylinderLayer、XRQuadLayer、公式 WebXR Samples を確認し、今日は曲面 UI の視線角、半径、stereo offset、手前カードとの depth sorting を操作できる自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Layers API, XRCylinderLayer, XRQuadLayer, and the official WebXR Samples, today's original HTML sample explores curved UI readability through viewer yaw, radius, stereo offset, and depth sorting against a nearer card.",
+  "keyTopics": [
+    "WebXR Layers API Level 1 は 2026-06-12 版 Editor's Draft で、projection / quad / cylinder / equirect / cube などの composition layer を定義している。",
+    "XRCylinderLayer は視野をゆるく包む UI やメディア面に向いており、平面 HUD より端の角度と読みやすさを観察しやすい。",
+    "仕様では layer の `quality` に text-optimized / graphics-optimized があり、文字、地図、字幕のような情報を通常の eye buffer から分けて扱える。",
+    "stereo-left-right や stereo-top-bottom の layout は既存の stereo media を少ない draw call で扱うための考え方として重要。",
+    "複数 layer の depth sorting は、近いカード、曲面 UI、背景 scene が重なる時に破綻が見えやすく、実装前に最小サンプルで確認する価値がある。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Layers API Level 1 Editor's Draft dated 2026-06-12 defines composition layers such as projection, quad, cylinder, equirect, and cube layers.",
+    "XRCylinderLayer is useful for UI or media surfaces that gently wrap around the field of view, making edge angle and readability easier to study than with flat HUDs.",
+    "The specification includes layer `quality` values such as text-optimized and graphics-optimized, allowing text, maps, and captions to be treated separately from the regular eye buffer.",
+    "stereo-left-right and stereo-top-bottom layouts matter as a way to handle existing stereo media with fewer draw calls.",
+    "Depth sorting between multiple layers becomes visibly fragile when a near card, curved UI, and background scene overlap, so it is worth checking in a minimal sample before a full implementation."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Curved Layer Readability Tunnel",
+      "url": "../outputs/2026-07-13_html_curved_layer_readability_tunnel.html"
+    },
+    {
+      "label": "WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "MDN: XRCylinderLayer",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRCylinderLayer"
+    },
+    {
+      "label": "MDN: XRQuadLayer",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRQuadLayer"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Layers API の cylinder layer です。面白い点は、平面の quad layer だけでなく、視野に沿って湾曲する layer を compositor 側で扱えることです。文字、地図、字幕、動画パネルのような情報は、3D scene と同じ projection layer に混ぜるより、曲面 composition layer として分けた方が読みやすさと描画更新頻度を設計しやすくなります。",
+      "bodyEn": "Today's notable reference is the cylinder layer in the WebXR Layers API. The interesting part is that the compositor can handle not only flat quad layers but also layers curved around the field of view. Information surfaces such as text, maps, captions, and video panels can be easier to design for readability and update frequency when separated into curved composition layers instead of being mixed into the same projection layer as the 3D scene.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        },
+        {
+          "label": "MDN: XRCylinderLayer",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRCylinderLayer"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "曲面 UI は『読むための空間』として使えます。viewer yaw を変えると中央の情報は読みやすく、端の情報は角度がつくため、重要度に応じて情報を中央へ寄せる設計が必要です。今日のサンプルでは Text / Map / Video / Depth のモードを切り替え、同じ曲面 layer に載せる情報種別で、端の歪み、stereo offset、手前カードとの重なり方を比較できます。",
+      "bodyEn": "Curved UI can act as a space built for reading. As viewer yaw changes, central information stays readable while edge content becomes angled, so important information should be biased toward the center. Today's sample switches between Text, Map, Video, and Depth modes, letting the same curved layer compare edge skew, stereo offset, and overlap with a nearer card across different information types.",
+      "links": [
+        {
+          "label": "Open today's sample",
+          "url": "../outputs/2026-07-13_html_curved_layer_readability_tunnel.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実 WebXR では `navigator.xr.requestSession(\"immersive-vr\", { optionalFeatures: [\"layers\"] })` のように layers を要求し、`XRWebGLBinding` または `XRMediaBinding` から cylinder / quad / media layer を作る流れになります。曲面 UI は半径、centralAngle、aspectRatio、space、transform を決める必要があり、文字 layer は `quality = \"text-optimized\"`、動画や図版は `graphics-optimized` を試す候補になります。",
+      "bodyEn": "In a real WebXR implementation, layers can be requested with something like `navigator.xr.requestSession(\"immersive-vr\", { optionalFeatures: [\"layers\"] })`, then cylinder, quad, or media layers are created from `XRWebGLBinding` or `XRMediaBinding`. Curved UI needs decisions around radius, centralAngle, aspectRatio, space, and transform; text layers are candidates for `quality = \"text-optimized\"`, while video or graphics can test `graphics-optimized`.",
+      "links": [
+        {
+          "label": "Layers initialization flow",
+          "url": "https://immersive-web.github.io/layers/#initialization"
+        },
+        {
+          "label": "Layer types",
+          "url": "https://immersive-web.github.io/layers/#layer-types"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は media layer と equirect / cube layer を見たいです。曲面 UI の読みやすさから、360 度メディア、環境背景、字幕や注釈の layer 分離へ広げると、VR 内の観賞体験や遠隔説明 UI に近づきます。あわせて DOM Overlay と WebXR Layers の役割分担も確認したいです。",
+      "bodyEn": "Next, media layers and equirect or cube layers are worth watching. Extending from curved UI readability into 360-degree media, environment backgrounds, and separate caption or annotation layers would move toward VR viewing and remote explanation interfaces. It is also worth checking the division of responsibility between DOM Overlay and WebXR Layers.",
+      "links": [
+        {
+          "label": "Immersive Web WebXR Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/"
+        }
+      ]
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Curved Layer Readability Tunnel` を開き、viewer yaw と arc width を大きくしてください。legibility が落ち、edge skew が上がる様子を見たあと、near card を中央へ寄せると depth sorting が clear から watch / conflict に変わります。曲面 UI を作る前に、情報を中央へ寄せる理由と、手前の layer が重なる危険を短時間で確認できます。",
+      "bodyEn": "Open Curved Layer Readability Tunnel and increase viewer yaw and arc width. After observing legibility drop and edge skew rise, move the near card toward the center to change depth sorting from clear to watch or conflict. Before building curved UI, this quickly shows why important information belongs near the center and why nearer overlapping layers need care.",
+      "links": [
+        {
+          "label": "Open Curved Layer Readability Tunnel",
+          "url": "../outputs/2026-07-13_html_curved_layer_readability_tunnel.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Layers API、XRCylinderLayer、XRQuadLayer、公式 WebXR Samples を確認。アイデア: 曲面 composition layer の可読性を、HMD なしの canvas で観察する。実装: viewer yaw、radius、arc width、stereo bias、near card、Text / Map / Video / Depth モード、legibility / edge skew / sort state readout を作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。",
+      "bodyEn": "Research: reviewed the WebXR Layers API, XRCylinderLayer, XRQuadLayer, and official WebXR Samples. Idea: observe curved composition-layer readability in a canvas without a headset. Implementation: added viewer yaw, radius, arc width, stereo bias, near card, Text / Map / Video / Depth modes, and legibility / edge skew / sort state readouts. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        }
+      ]
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion、lighting estimation、hand input、layer + hand/depth、そして曲面 layer の可読性です。空間体験の『見える』『置く』『隠れる』『なじむ』『触る』『重ねる』『包む』を、自作の最小サンプルとして順番に増やしています。",
+      "bodyEn": "The sequence so far is depth HUD, hit test and anchors, depth occlusion, lighting estimation, hand input, layer plus hand/depth, and now curved layer readability. The archive is gradually adding original minimal samples around seeing, placing, hiding, blending, touching, layering, and wrapping."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Curved Layer Readability Tunnel` です。XRCylinderLayer の実機 API 呼び出しではなく、曲率、視線角、stereo offset、depth sorting の観察単位をブラウザ単体で触れるようにしました。次に進めるなら、実 WebXR session で cylinder media layer と字幕 quad layer を分離して試すのが自然です。",
+      "bodyEn": "The selected prototype is Curved Layer Readability Tunnel. Instead of calling the real XRCylinderLayer API on hardware, it makes curvature, viewer angle, stereo offset, and depth sorting inspectable in a normal browser. A natural next step is to test a real WebXR session with a cylinder media layer separated from a subtitle quad layer."
+    }
+  ]
+}
