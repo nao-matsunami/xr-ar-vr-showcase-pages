@@ -524,6 +524,10 @@
       state.dragging = false;
     });
 
+    canvas.addEventListener("pointercancel", () => {
+      state.dragging = false;
+    });
+
     [curlInput, spreadInput, depthInput].forEach((input) => {
       input.addEventListener("input", () => {
         poseButtons.forEach((button) => button.setAttribute("aria-pressed", "false"));

@@ -512,6 +512,10 @@
       state.draggingLight = false;
     });
 
+    canvas.addEventListener("pointercancel", () => {
+      state.draggingLight = false;
+    });
+
     for (const input of [ambientInput, warmthInput, headingInput]) {
       input.addEventListener("input", () => {
         updateHud();

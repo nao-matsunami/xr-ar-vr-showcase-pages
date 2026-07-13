@@ -541,6 +541,10 @@
       state.pointerDown = false;
     });
 
+    canvas.addEventListener("pointercancel", () => {
+      state.pointerDown = false;
+    });
+
     window.addEventListener("resize", resize);
     resize();
     draw();

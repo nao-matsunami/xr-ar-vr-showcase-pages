@@ -428,6 +428,13 @@
       }
     });
 
+    canvas.addEventListener("pointercancel", (event) => {
+      if (event.pointerId === state.pointerId) {
+        state.dragging = false;
+        state.pointerId = null;
+      }
+    });
+
     canvas.addEventListener("wheel", (event) => {
       event.preventDefault();
       state.targetZ = clamp(state.targetZ + event.deltaY * 0.002, 0.58, 3.15);

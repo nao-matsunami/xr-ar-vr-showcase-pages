@@ -22,6 +22,7 @@
       margin: 0;
       height: 100%;
       overflow: hidden;
+      touch-action: none;
       background:
         radial-gradient(circle at 16% 18%, rgba(136, 240, 255, 0.18), transparent 22%),
         radial-gradient(circle at 84% 16%, rgba(255, 222, 122, 0.12), transparent 20%),
@@ -36,6 +37,7 @@
       height: 100vh;
       perspective: 1200px;
       overflow: hidden;
+      touch-action: none;
     }
 
     .layer {
@@ -258,6 +260,11 @@
     });
 
     addEventListener("pointerup", () => {
+      state.pressed = false;
+      statusText.textContent = "idle parallax / drag to deepen";
+    });
+
+    addEventListener("pointercancel", () => {
       state.pressed = false;
       statusText.textContent = "idle parallax / drag to deepen";
     });
