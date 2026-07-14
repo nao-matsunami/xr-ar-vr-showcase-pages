@@ -1,0 +1,141 @@
+{
+  "date": "2026-07-14",
+  "headline": "360 メディア背景と注釈レイヤーを分けて観察する",
+  "headlineEn": "Separating 360 media backgrounds from annotation layers",
+  "summary": "WebXR Layers API、XREquirectLayer、XRCubeLayer、XRMediaBinding を確認し、今日は 360 メディア背景、字幕 quad、注釈 quad の分離と奥行き順を通常ブラウザで触れる自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Layers API, XREquirectLayer, XRCubeLayer, and XRMediaBinding, today's original HTML sample explores separating a 360 media background from caption and annotation quad layers in a normal browser.",
+  "keyTopics": [
+    "WebXR Layers API Level 1 は 2026-06-12 版 Editor's Draft で、equirect / cube / media layer と depth sorting の設計点を含んでいる。",
+    "XREquirectLayer は equirectangular 形式のデータを球の内側に貼る layer で、360 度映像や写真の背景に向く。",
+    "XRMediaBinding には HTMLVideoElement から quad / cylinder / equirect の media layer を作る入口があり、動画を通常の projection layer から分離しやすい。",
+    "depth-sorted-layers は projection / quad / cylinder layer の奥行き順制御に関わるが、equirect / cube のような環境 layer は別の扱いとして考える必要がある。",
+    "字幕や注釈は背景メディアと同じテクスチャに焼き込まず、quad layer として分けると読みやすさ、透明度、更新頻度を独立して調整できる。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Layers API Level 1 Editor's Draft dated 2026-06-12 includes equirect, cube, media layers, and depth-sorting design points.",
+    "XREquirectLayer maps equirectangular data onto the inside of a sphere, making it suitable for 360-degree video and photo backgrounds.",
+    "XRMediaBinding provides entry points for creating quad, cylinder, and equirect media layers from an HTMLVideoElement, making video easier to separate from the regular projection layer.",
+    "depth-sorted-layers affects depth ordering for projection, quad, and cylinder layers, while environmental layers such as equirect and cube layers need separate treatment.",
+    "Captions and annotations should often be separated into quad layers rather than baked into the background media, so legibility, opacity, and update frequency can be tuned independently."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Equirect Media Annotation Deck",
+      "url": "../outputs/2026-07-14_html_equirect_media_annotation_deck.html"
+    },
+    {
+      "label": "WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "MDN: XREquirectLayer",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XREquirectLayer"
+    },
+    {
+      "label": "MDN: XRCubeLayer",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRCubeLayer"
+    },
+    {
+      "label": "MDN: XRMediaBinding",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRMediaBinding"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Layers API の equirect / media layer です。面白い点は、360 度映像や写真を scene の通常描画に混ぜるのではなく、環境 layer として compositor 側に渡し、字幕や注釈を別の quad layer として重ねられることです。映像は滑らかに動かし、文字は読みやすい解像度と安定した位置を保つ、という分業がしやすくなります。",
+      "bodyEn": "Today's notable reference is the equirect and media layer area of the WebXR Layers API. The interesting part is that 360-degree video or photography can be handed to the compositor as an environment layer instead of being mixed into normal scene rendering, while captions and annotations can sit in separate quad layers. This makes it easier to let video move smoothly while text keeps readable resolution and a stable position.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        },
+        {
+          "label": "MDN: XRMediaBinding",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRMediaBinding"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "360 背景は『場』として広く動かし、字幕と注釈は『読ませる layer』として視野内に固定する構成が有効です。今日のサンプルでは canvas をドラッグして viewer yaw / pitch を動かし、Tour / Sports / Lab の 3 種類で背景メディアの動きと注釈の乗り方を比較できます。caption depth を近づけすぎると、字幕は目立つ一方で視界の圧迫感が増える、という設計上のトレードオフも見えます。",
+      "bodyEn": "A useful composition is to let the 360 background behave as the surrounding place, while captions and annotations stay as readable layers inside the view. Today's sample lets you drag the canvas to change viewer yaw and pitch, then compare Tour, Sports, and Lab modes for how background motion and annotations combine. Pulling caption depth too close makes captions more prominent but also more visually intrusive.",
+      "links": [
+        {
+          "label": "Open today's sample",
+          "url": "../outputs/2026-07-14_html_equirect_media_annotation_deck.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実 WebXR では `navigator.xr.requestSession(\"immersive-vr\", { optionalFeatures: [\"layers\"] })` で layers を有効にし、動画を使う場合は `new XRMediaBinding(session).createEquirectLayer(video, init)` のような流れを検討します。字幕や注釈は `XRWebGLBinding` 由来の quad layer、または media / canvas 由来の別 layer として扱い、`opacity`、`quality`、`blendTextureSourceAlpha`、`layers` 配列の順序を明示的に管理するのが要点です。",
+      "bodyEn": "In a real WebXR implementation, layers can be enabled through `navigator.xr.requestSession(\"immersive-vr\", { optionalFeatures: [\"layers\"] })`, and video-backed environments can be explored through a flow such as `new XRMediaBinding(session).createEquirectLayer(video, init)`. Captions and annotations should be handled as separate quad layers from `XRWebGLBinding`, or as separate media/canvas-backed layers, with explicit control over `opacity`, `quality`, `blendTextureSourceAlpha`, and the `layers` array order.",
+      "links": [
+        {
+          "label": "Layers application flow",
+          "url": "https://immersive-web.github.io/layers/#application-flow"
+        },
+        {
+          "label": "Video layer creation",
+          "url": "https://immersive-web.github.io/layers/#video-layer-creation"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は WebXR Layers の redraw / needsRedraw と、静的 layer をどのタイミングで更新すべきかを見たいです。字幕や注釈は毎フレーム描き直す必要がない場合も多く、動画 layer、静的注釈 layer、動的ポインタ layer の更新頻度を分けると、電力と視覚安定性の両方に効きます。あわせて Space Warp と foveation も追跡対象にします。",
+      "bodyEn": "Next, it is worth watching redraw / needsRedraw behavior in WebXR Layers and when static layers should be updated. Captions and annotations often do not need to be redrawn every frame, so separating update rates across video layers, static annotation layers, and dynamic pointer layers can help both power use and visual stability. Space Warp and foveation are also worth tracking.",
+      "links": [
+        {
+          "label": "Layer events and redraw",
+          "url": "https://immersive-web.github.io/layers/#events"
+        }
+      ]
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Equirect Media Annotation Deck` を開き、canvas を横にドラッグして viewer yaw を大きく動かしてください。背景の 360 メディア風グリッドは流れますが、字幕 quad は視野内に残ります。次に caption depth を 0.34m 未満へ近づけると sort state が `too near` になり、読みやすさと圧迫感の境目を短時間で確認できます。",
+      "bodyEn": "Open Equirect Media Annotation Deck and drag the canvas horizontally to move viewer yaw. The 360-media-like background grid moves, while the caption quad remains in view. Then pull caption depth below 0.34m to switch the sort state to `too near`, making the readability versus intrusion tradeoff quick to inspect.",
+      "links": [
+        {
+          "label": "Open Equirect Media Annotation Deck",
+          "url": "../outputs/2026-07-14_html_equirect_media_annotation_deck.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Layers API、XREquirectLayer、XRCubeLayer、XRMediaBinding、公式 WebXR Samples を確認。アイデア: 360 メディア背景と字幕・注釈 layer の分離を HMD なしで観察する。実装: viewer yaw / pitch、video drift、caption depth、annotation alpha、Tour / Sports / Lab モード、focus angle / caption hold / sort state readout を作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。",
+      "bodyEn": "Research: reviewed the WebXR Layers API, XREquirectLayer, XRCubeLayer, XRMediaBinding, and official WebXR Samples. Idea: observe the separation between a 360 media background and caption/annotation layers without a headset. Implementation: added viewer yaw / pitch, video drift, caption depth, annotation alpha, Tour / Sports / Lab modes, and focus angle / caption hold / sort state readouts. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        }
+      ]
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion、lighting estimation、hand input、layer + hand/depth、曲面 layer、そして 360 media + annotation layer です。空間体験の『見える』『置く』『隠れる』『なじむ』『触る』『重ねる』『包む』『観る』を、自作の最小サンプルとして日次で増やしています。",
+      "bodyEn": "The sequence so far is depth HUD, hit test and anchors, depth occlusion, lighting estimation, hand input, layer plus hand/depth, curved layers, and now 360 media plus annotation layers. The archive is adding original minimal samples around seeing, placing, hiding, blending, touching, layering, wrapping, and watching."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Equirect Media Annotation Deck` です。XREquirectLayer の実機 API 呼び出しではなく、360 背景、字幕、注釈、奥行き順、透明度の関係を通常ブラウザで触れるようにしました。次に進めるなら、静的注釈 layer の needsRedraw と、動的ポインタ layer の更新頻度を分けるサンプルへ発展させます。",
+      "bodyEn": "The selected prototype is Equirect Media Annotation Deck. Instead of calling XREquirectLayer on hardware, it makes the relationship between a 360 background, captions, annotations, depth order, and opacity inspectable in a normal browser. A natural next step is to separate needsRedraw behavior for static annotation layers from update frequency for dynamic pointer layers."
+    }
+  ]
+}

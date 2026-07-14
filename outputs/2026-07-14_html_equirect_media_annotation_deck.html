@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Equirect Media Annotation Deck</title>
+  <style>
+    :root {
+      --ink: #1c2024;
+      --paper: #eef2ee;
+      --panel: rgba(250, 252, 247, 0.9);
+      --line: rgba(28, 32, 36, 0.16);
+      --muted: #657070;
+      --cyan: #237c8f;
+      --rose: #b94d6b;
+      --leaf: #4b8d5f;
+      --gold: #b2872e;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+      cursor: grab;
+    }
+
+    canvas:active { cursor: grabbing; }
+
+    .hud,
+    .readout {
+      position: fixed;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(18, 32, 36, 0.16);
+      backdrop-filter: blur(14px);
+    }
+
+    .hud {
+      top: 16px;
+      left: 16px;
+      width: min(470px, calc(100vw - 32px));
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .controls {
+      display: grid;
+      gap: 11px;
+      margin-top: 14px;
+    }
+
+    .control {
+      display: grid;
+      grid-template-columns: 118px 1fr 64px;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+    }
+
+    .value {
+      text-align: right;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.64);
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(35, 124, 143, 0.7);
+      background: rgba(35, 124, 143, 0.14);
+    }
+
+    .readout {
+      right: 18px;
+      bottom: 18px;
+      width: min(430px, calc(100vw - 36px));
+      padding: 14px;
+      pointer-events: none;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .cell {
+      min-height: 52px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.54);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .metric {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      max-width: calc(100vw - 36px);
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(250, 252, 247, 0.78);
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 760px) {
+      .hud {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .control {
+        grid-template-columns: 94px 1fr 54px;
+      }
+
+      .chips {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .readout {
+        right: 12px;
+        bottom: 54px;
+        width: calc(100vw - 24px);
+      }
+
+      .readout-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .cell {
+        min-height: 44px;
+        padding: 7px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="Equirect media layer annotation simulator"></canvas>
+
+  <section class="hud">
+    <h1>Equirect Media Annotation Deck</h1>
+    <p>XREquirectLayer 的な 360 メディア背景と、字幕・注釈 quad layer の分離を観察する自作の最小サンプルです。</p>
+    <div class="controls">
+      <label class="control">viewer yaw <input id="yaw" type="range" min="-180" max="180" value="-18"><span class="value" id="yawValue">-18deg</span></label>
+      <label class="control">viewer pitch <input id="pitch" type="range" min="-42" max="42" value="4"><span class="value" id="pitchValue">4deg</span></label>
+      <label class="control">video drift <input id="drift" type="range" min="0" max="100" value="38"><span class="value" id="driftValue">38%</span></label>
+      <label class="control">caption depth <input id="captionDepth" type="range" min="18" max="92" value="42"><span class="value" id="captionDepthValue">0.42m</span></label>
+      <label class="control">annotation α <input id="annotationAlpha" type="range" min="20" max="100" value="82"><span class="value" id="annotationAlphaValue">82%</span></label>
+    </div>
+    <div class="chips">
+      <button type="button" data-mode="tour" aria-pressed="true">Tour</button>
+      <button type="button" data-mode="sports">Sports</button>
+      <button type="button" data-mode="lab">Lab</button>
+    </div>
+  </section>
+
+  <section class="readout">
+    <p>背景メディア、字幕、注釈を別 layer として扱うと、更新頻度と読みやすさの設計が分かれます。</p>
+    <div class="readout-grid">
+      <div class="cell"><span class="label">focus angle</span><span class="metric" id="focusAngle">18deg</span></div>
+      <div class="cell"><span class="label">caption hold</span><span class="metric" id="captionHold">82%</span></div>
+      <div class="cell"><span class="label">sort state</span><span class="metric" id="sortState">front</span></div>
+      <div class="cell"><span class="label">media mode</span><span class="metric" id="modeLabel">Tour</span></div>
+    </div>
+  </section>
+
+  <div class="hint">drag the canvas to pan the 360 media layer</div>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      yaw: document.getElementById("yaw"),
+      pitch: document.getElementById("pitch"),
+      drift: document.getElementById("drift"),
+      captionDepth: document.getElementById("captionDepth"),
+      annotationAlpha: document.getElementById("annotationAlpha")
+    };
+    const values = {
+      yaw: document.getElementById("yawValue"),
+      pitch: document.getElementById("pitchValue"),
+      drift: document.getElementById("driftValue"),
+      captionDepth: document.getElementById("captionDepthValue"),
+      annotationAlpha: document.getElementById("annotationAlphaValue"),
+      focusAngle: document.getElementById("focusAngle"),
+      captionHold: document.getElementById("captionHold"),
+      sortState: document.getElementById("sortState"),
+      modeLabel: document.getElementById("modeLabel")
+    };
+    const buttons = [...document.querySelectorAll("[data-mode]")];
+
+    const modes = {
+      tour: {
+        label: "Tour",
+        palette: ["#6fa7a0", "#d7c47a", "#38566b"],
+        caption: "West arch: keep labels separate from the panorama.",
+        annotations: ["entry", "audio note", "exit"]
+      },
+      sports: {
+        label: "Sports",
+        palette: ["#5578b5", "#dd7560", "#f1c84f"],
+        caption: "Sideline replay: stats should stay readable while video moves.",
+        annotations: ["score", "pace", "heat"]
+      },
+      lab: {
+        label: "Lab",
+        palette: ["#5b8f62", "#b65b84", "#60708c"],
+        caption: "Experiment bay: pin warnings in a stable quad layer.",
+        annotations: ["sensor", "sample", "safe"]
+      }
+    };
+
+    const state = {
+      mode: "tour",
+      pointer: null,
+      lastX: 0,
+      lastY: 0,
+      time: 0
+    };
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function readState() {
+      return {
+        yaw: Number(controls.yaw.value),
+        pitch: Number(controls.pitch.value),
+        drift: Number(controls.drift.value) / 100,
+        captionDepth: Number(controls.captionDepth.value) / 100,
+        alpha: Number(controls.annotationAlpha.value) / 100
+      };
+    }
+
+    function wrapAngle(angle) {
+      let wrapped = ((angle + 180) % 360) - 180;
+      if (wrapped < -180) wrapped += 360;
+      return wrapped;
+    }
+
+    function project(longitude, latitude, view) {
+      const fov = 118;
+      const yawDelta = wrapAngle(longitude - view.yaw);
+      const x = window.innerWidth / 2 + (yawDelta / fov) * window.innerWidth;
+      const y = window.innerHeight / 2 - ((latitude - view.pitch) / 70) * window.innerHeight;
+      return { x, y, yawDelta };
+    }
+
+    function drawPanorama(view, mode) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, "#dfeef2");
+      grad.addColorStop(0.48, "#f7f1dc");
+      grad.addColorStop(1, "#dbe2dc");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.globalAlpha = 0.52;
+      for (let lon = -360; lon <= 360; lon += 20) {
+        const p = project(lon, 0, view);
+        if (p.x < -40 || p.x > w + 40) continue;
+        ctx.strokeStyle = lon % 60 === 0 ? "rgba(28,32,36,0.2)" : "rgba(28,32,36,0.09)";
+        ctx.lineWidth = lon % 60 === 0 ? 1.4 : 1;
+        ctx.beginPath();
+        ctx.moveTo(p.x, 0);
+        ctx.lineTo(p.x, h);
+        ctx.stroke();
+      }
+
+      for (let lat = -40; lat <= 40; lat += 20) {
+        const y = project(view.yaw, lat, view).y;
+        ctx.strokeStyle = lat === 0 ? "rgba(28,32,36,0.18)" : "rgba(28,32,36,0.08)";
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      const colors = mode.palette;
+      for (let i = 0; i < 11; i += 1) {
+        const lon = -145 + i * 29 + Math.sin(state.time * 0.001 + i) * view.drift * 16;
+        const lat = Math.sin(i * 0.74) * 18 - 3;
+        const p = project(lon, lat, view);
+        if (p.x < -120 || p.x > w + 120) continue;
+        const scale = 1 - Math.min(Math.abs(p.yawDelta) / 120, 0.72);
+        const width = 72 * scale + 26;
+        const height = 132 * scale + 24;
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.globalAlpha = 0.24 + scale * 0.28;
+        ctx.beginPath();
+        ctx.roundRect(p.x - width / 2, p.y - height / 2, width, height, 8);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      ctx.fillStyle = "rgba(28,32,36,0.72)";
+      ctx.font = "700 11px Avenir Next, sans-serif";
+      ctx.textAlign = "center";
+      for (let lon = -180; lon <= 180; lon += 60) {
+        const p = project(lon, -34, view);
+        if (p.x > -40 && p.x < w + 40) ctx.fillText(`${lon}deg`, p.x, p.y);
+      }
+    }
+
+    function drawAnnotationLayer(view, mode) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const anchorLongitudes = [-36, 6, 42];
+      mode.annotations.forEach((label, index) => {
+        const p = project(anchorLongitudes[index], 6 + index * 7, view);
+        if (p.x < -120 || p.x > w + 120) return;
+        const anglePenalty = Math.min(Math.abs(p.yawDelta) / 95, 1);
+        const size = 1 - anglePenalty * 0.34;
+        const boxW = 92 * size;
+        const boxH = 34 * size;
+        ctx.globalAlpha = view.alpha * (1 - anglePenalty * 0.28);
+        ctx.fillStyle = index === 0 ? "rgba(35,124,143,0.86)" : index === 1 ? "rgba(185,77,107,0.86)" : "rgba(178,135,46,0.86)";
+        ctx.beginPath();
+        ctx.roundRect(p.x - boxW / 2, p.y - boxH / 2, boxW, boxH, 8);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.75)";
+        ctx.stroke();
+        ctx.fillStyle = "white";
+        ctx.font = `700 ${11 * size}px Avenir Next, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, p.x, p.y + 1);
+        ctx.globalAlpha = 1;
+      });
+    }
+
+    function drawCaptionLayer(view, mode) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const depthScale = 1 + (0.62 - view.captionDepth) * 0.42;
+      const captionW = Math.min(620, w - 34) * depthScale;
+      const captionH = 58 * depthScale;
+      const x = w / 2;
+      const y = h * 0.78 + view.pitch * 1.8;
+      const anglePenalty = Math.min(Math.abs(view.yaw) / 170, 1);
+      const hold = clamp(1 - anglePenalty * 0.52 - Math.max(0, 0.34 - view.captionDepth) * 0.42, 0.2, 1);
+
+      ctx.save();
+      ctx.globalAlpha = 0.78 + hold * 0.18;
+      ctx.fillStyle = "rgba(250,252,247,0.9)";
+      ctx.strokeStyle = view.captionDepth < 0.34 ? "rgba(185,77,107,0.72)" : "rgba(28,32,36,0.16)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(x - captionW / 2, y - captionH / 2, captionW, captionH, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#1c2024";
+      ctx.font = `${Math.max(12, 15 * depthScale)}px Avenir Next, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(mode.caption, x, y + 1);
+      ctx.restore();
+
+      return hold;
+    }
+
+    function drawLayerStack(view) {
+      const x = window.innerWidth - 128;
+      const y = 126;
+      const rows = [
+        ["equirect media", "#237c8f", 1],
+        ["annotation quad", "#b94d6b", view.alpha],
+        ["caption quad", "#b2872e", clamp(1 - view.captionDepth * 0.45, 0.58, 0.95)]
+      ];
+      ctx.save();
+      ctx.font = "700 10px Avenir Next, sans-serif";
+      rows.forEach((row, index) => {
+        ctx.globalAlpha = row[2];
+        ctx.fillStyle = row[1];
+        ctx.beginPath();
+        ctx.roundRect(x - index * 12, y + index * 34, 112, 24, 6);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.fillText(row[0], x + 8 - index * 12, y + 16 + index * 34);
+      });
+      ctx.restore();
+    }
+
+    function render(time = 0) {
+      state.time = time;
+      const view = readState();
+      const mode = modes[state.mode];
+      drawPanorama(view, mode);
+      drawAnnotationLayer(view, mode);
+      const hold = drawCaptionLayer(view, mode);
+      drawLayerStack(view);
+
+      values.yaw.textContent = `${view.yaw}deg`;
+      values.pitch.textContent = `${view.pitch}deg`;
+      values.drift.textContent = `${Math.round(view.drift * 100)}%`;
+      values.captionDepth.textContent = `${view.captionDepth.toFixed(2)}m`;
+      values.annotationAlpha.textContent = `${Math.round(view.alpha * 100)}%`;
+      values.focusAngle.textContent = `${Math.abs(view.yaw)}deg`;
+      values.captionHold.textContent = `${Math.round(hold * 100)}%`;
+      values.sortState.textContent = view.captionDepth < 0.34 ? "too near" : view.alpha < 0.46 ? "faint" : "front";
+      values.modeLabel.textContent = mode.label;
+
+      requestAnimationFrame(render);
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        state.mode = button.dataset.mode;
+        buttons.forEach((target) => target.setAttribute("aria-pressed", String(target === button)));
+      });
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.pointer = event.pointerId;
+      state.lastX = event.clientX;
+      state.lastY = event.clientY;
+      canvas.setPointerCapture(event.pointerId);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (state.pointer !== event.pointerId) return;
+      const dx = event.clientX - state.lastX;
+      const dy = event.clientY - state.lastY;
+      state.lastX = event.clientX;
+      state.lastY = event.clientY;
+      controls.yaw.value = String(clamp(Number(controls.yaw.value) - dx * 0.42, -180, 180));
+      controls.pitch.value = String(clamp(Number(controls.pitch.value) + dy * 0.16, -42, 42));
+    });
+
+    function release(event) {
+      if (state.pointer === event.pointerId) state.pointer = null;
+    }
+
+    canvas.addEventListener("pointerup", release);
+    canvas.addEventListener("pointercancel", release);
+    window.addEventListener("resize", resize);
+
+    resize();
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
