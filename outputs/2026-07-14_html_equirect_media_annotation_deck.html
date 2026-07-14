@@ -6,15 +6,15 @@
   <title>Equirect Media Annotation Deck</title>
   <style>
     :root {
-      --ink: #1c2024;
-      --paper: #eef2ee;
-      --panel: rgba(250, 252, 247, 0.9);
-      --line: rgba(28, 32, 36, 0.16);
-      --muted: #657070;
-      --cyan: #237c8f;
-      --rose: #b94d6b;
-      --leaf: #4b8d5f;
-      --gold: #b2872e;
+      --ink: #edf8ff;
+      --paper: #05070a;
+      --panel: rgba(8, 14, 20, 0.72);
+      --line: rgba(125, 230, 255, 0.24);
+      --muted: #94a7b4;
+      --cyan: #50e7ff;
+      --rose: #ff5c9a;
+      --leaf: #78f29a;
+      --gold: #ffc857;
     }
 
     * { box-sizing: border-box; }
@@ -27,6 +27,33 @@
       background: var(--paper);
       color: var(--ink);
       font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: linear-gradient(to bottom, transparent, black 16%, black 72%, transparent);
+      opacity: 0.34;
+      z-index: 1;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(80, 231, 255, 0.16), transparent 24%, transparent 74%, rgba(255, 92, 154, 0.14)),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 5px);
+      mix-blend-mode: screen;
+      opacity: 0.45;
+      z-index: 2;
     }
 
     canvas {
@@ -46,8 +73,20 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       background: var(--panel);
-      box-shadow: 0 18px 44px rgba(18, 32, 36, 0.16);
-      backdrop-filter: blur(14px);
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.38), 0 0 34px rgba(80, 231, 255, 0.09);
+      backdrop-filter: blur(18px) saturate(138%);
+      z-index: 4;
+    }
+
+    .hud::before,
+    .readout::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background: linear-gradient(135deg, rgba(80, 231, 255, 0.18), transparent 38%, rgba(255, 92, 154, 0.12));
+      opacity: 0.66;
     }
 
     .hud {
@@ -61,6 +100,9 @@
       margin: 0 0 8px;
       font-size: 18px;
       line-height: 1.2;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 18px rgba(80, 231, 255, 0.38);
     }
 
     p {
@@ -83,6 +125,7 @@
       gap: 10px;
       color: var(--muted);
       font-size: 12px;
+      text-transform: uppercase;
     }
 
     input[type="range"] {
@@ -94,6 +137,7 @@
       text-align: right;
       color: var(--ink);
       font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 14px rgba(80, 231, 255, 0.46);
     }
 
     .chips {
@@ -107,17 +151,20 @@
       min-height: 38px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: rgba(255, 255, 255, 0.64);
+      background: rgba(255, 255, 255, 0.045);
       color: var(--ink);
       font: inherit;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
 
     button[aria-pressed="true"] {
-      border-color: rgba(35, 124, 143, 0.7);
-      background: rgba(35, 124, 143, 0.14);
+      border-color: rgba(80, 231, 255, 0.78);
+      background: rgba(80, 231, 255, 0.14);
+      box-shadow: 0 0 22px rgba(80, 231, 255, 0.18) inset, 0 0 18px rgba(80, 231, 255, 0.14);
     }
 
     .readout {
@@ -140,7 +187,7 @@
       padding: 8px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: rgba(255, 255, 255, 0.54);
+      background: rgba(255, 255, 255, 0.055);
     }
 
     .label {
@@ -157,6 +204,7 @@
       font-size: 14px;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 16px rgba(80, 231, 255, 0.45);
     }
 
     .hint {
@@ -168,12 +216,13 @@
       padding: 9px 12px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: rgba(250, 252, 247, 0.78);
+      background: rgba(8, 14, 20, 0.62);
       color: var(--muted);
       font-size: 12px;
       text-align: center;
       pointer-events: none;
       backdrop-filter: blur(10px);
+      z-index: 4;
     }
 
     @media (max-width: 760px) {
@@ -266,19 +315,19 @@
     const modes = {
       tour: {
         label: "Tour",
-        palette: ["#6fa7a0", "#d7c47a", "#38566b"],
+        palette: ["#50e7ff", "#ffc857", "#7c5cff"],
         caption: "West arch: keep labels separate from the panorama.",
         annotations: ["entry", "audio note", "exit"]
       },
       sports: {
         label: "Sports",
-        palette: ["#5578b5", "#dd7560", "#f1c84f"],
+        palette: ["#4da3ff", "#ff5c9a", "#ffc857"],
         caption: "Sideline replay: stats should stay readable while video moves.",
         annotations: ["score", "pace", "heat"]
       },
       lab: {
         label: "Lab",
-        palette: ["#5b8f62", "#b65b84", "#60708c"],
+        palette: ["#78f29a", "#ff5c9a", "#50e7ff"],
         caption: "Experiment bay: pin warnings in a stable quad layer.",
         annotations: ["sensor", "sample", "safe"]
       }
@@ -331,19 +380,30 @@
       const w = window.innerWidth;
       const h = window.innerHeight;
       const grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, "#dfeef2");
-      grad.addColorStop(0.48, "#f7f1dc");
-      grad.addColorStop(1, "#dbe2dc");
+      grad.addColorStop(0, "#07111c");
+      grad.addColorStop(0.46, "#0d1721");
+      grad.addColorStop(1, "#05070a");
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, w, h);
 
       ctx.save();
-      ctx.globalAlpha = 0.52;
+      ctx.globalCompositeOperation = "screen";
+      const aura = ctx.createLinearGradient(0, h * 0.2, w, h * 0.84);
+      aura.addColorStop(0, "rgba(80,231,255,0.18)");
+      aura.addColorStop(0.5, "rgba(255,200,87,0.08)");
+      aura.addColorStop(1, "rgba(255,92,154,0.16)");
+      ctx.fillStyle = aura;
+      ctx.fillRect(0, 0, w, h);
+      ctx.restore();
+
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = 0.72;
       for (let lon = -360; lon <= 360; lon += 20) {
         const p = project(lon, 0, view);
         if (p.x < -40 || p.x > w + 40) continue;
-        ctx.strokeStyle = lon % 60 === 0 ? "rgba(28,32,36,0.2)" : "rgba(28,32,36,0.09)";
-        ctx.lineWidth = lon % 60 === 0 ? 1.4 : 1;
+        ctx.strokeStyle = lon % 60 === 0 ? "rgba(80,231,255,0.34)" : "rgba(80,231,255,0.11)";
+        ctx.lineWidth = lon % 60 === 0 ? 1.6 : 0.8;
         ctx.beginPath();
         ctx.moveTo(p.x, 0);
         ctx.lineTo(p.x, h);
@@ -352,12 +412,26 @@
 
       for (let lat = -40; lat <= 40; lat += 20) {
         const y = project(view.yaw, lat, view).y;
-        ctx.strokeStyle = lat === 0 ? "rgba(28,32,36,0.18)" : "rgba(28,32,36,0.08)";
+        ctx.strokeStyle = lat === 0 ? "rgba(255,200,87,0.32)" : "rgba(255,255,255,0.09)";
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(w, y);
         ctx.stroke();
       }
+      ctx.restore();
+
+      const horizon = project(view.yaw, 0, view).y;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.strokeStyle = "rgba(80,231,255,0.34)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += 18) {
+        const y = horizon + Math.sin((x * 0.014) + state.time * 0.0018) * 10;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
       ctx.restore();
 
       const colors = mode.palette;
@@ -369,15 +443,24 @@
         const scale = 1 - Math.min(Math.abs(p.yawDelta) / 120, 0.72);
         const width = 72 * scale + 26;
         const height = 132 * scale + 24;
-        ctx.fillStyle = colors[i % colors.length];
-        ctx.globalAlpha = 0.24 + scale * 0.28;
+        const color = colors[i % colors.length];
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 24 * scale;
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.16 + scale * 0.34;
         ctx.beginPath();
         ctx.roundRect(p.x - width / 2, p.y - height / 2, width, height, 8);
         ctx.fill();
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = 0.42 + scale * 0.36;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        ctx.restore();
       }
 
-      ctx.fillStyle = "rgba(28,32,36,0.72)";
+      ctx.fillStyle = "rgba(237,248,255,0.74)";
       ctx.font = "700 11px Avenir Next, sans-serif";
       ctx.textAlign = "center";
       for (let lon = -180; lon <= 180; lon += 60) {
@@ -395,21 +478,41 @@
         if (p.x < -120 || p.x > w + 120) return;
         const anglePenalty = Math.min(Math.abs(p.yawDelta) / 95, 1);
         const size = 1 - anglePenalty * 0.34;
-        const boxW = 92 * size;
-        const boxH = 34 * size;
+        const boxW = 104 * size;
+        const boxH = 38 * size;
+        const color = index === 0 ? "#50e7ff" : index === 1 ? "#ff5c9a" : "#ffc857";
+        const targetY = p.y + 54 * size;
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.globalAlpha = view.alpha * 0.42;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(p.x, targetY);
+        ctx.lineTo(p.x, p.y + boxH / 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(p.x, targetY, 7 * size, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
         ctx.globalAlpha = view.alpha * (1 - anglePenalty * 0.28);
-        ctx.fillStyle = index === 0 ? "rgba(35,124,143,0.86)" : index === 1 ? "rgba(185,77,107,0.86)" : "rgba(178,135,46,0.86)";
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 24 * size;
+        ctx.fillStyle = "rgba(6,12,18,0.78)";
         ctx.beginPath();
         ctx.roundRect(p.x - boxW / 2, p.y - boxH / 2, boxW, boxH, 8);
         ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.75)";
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.4;
         ctx.stroke();
-        ctx.fillStyle = "white";
-        ctx.font = `700 ${11 * size}px Avenir Next, sans-serif`;
+        ctx.fillStyle = color;
+        ctx.font = `800 ${11 * size}px Avenir Next, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(label, p.x, p.y + 1);
-        ctx.globalAlpha = 1;
+        ctx.fillText(label.toUpperCase(), p.x, p.y + 1);
+        ctx.restore();
       });
     }
 
@@ -426,15 +529,18 @@
 
       ctx.save();
       ctx.globalAlpha = 0.78 + hold * 0.18;
-      ctx.fillStyle = "rgba(250,252,247,0.9)";
-      ctx.strokeStyle = view.captionDepth < 0.34 ? "rgba(185,77,107,0.72)" : "rgba(28,32,36,0.16)";
+      ctx.shadowColor = view.captionDepth < 0.34 ? "#ff5c9a" : "#50e7ff";
+      ctx.shadowBlur = 28;
+      ctx.fillStyle = "rgba(8,14,20,0.82)";
+      ctx.strokeStyle = view.captionDepth < 0.34 ? "rgba(255,92,154,0.82)" : "rgba(80,231,255,0.58)";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.roundRect(x - captionW / 2, y - captionH / 2, captionW, captionH, 8);
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = "#1c2024";
-      ctx.font = `${Math.max(12, 15 * depthScale)}px Avenir Next, sans-serif`;
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#edf8ff";
+      ctx.font = `800 ${Math.max(12, 15 * depthScale)}px Avenir Next, sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(mode.caption, x, y + 1);
@@ -447,19 +553,24 @@
       const x = window.innerWidth - 128;
       const y = 126;
       const rows = [
-        ["equirect media", "#237c8f", 1],
-        ["annotation quad", "#b94d6b", view.alpha],
-        ["caption quad", "#b2872e", clamp(1 - view.captionDepth * 0.45, 0.58, 0.95)]
+        ["EQUIRECT MEDIA", "#50e7ff", 1],
+        ["ANNOTATION QUAD", "#ff5c9a", view.alpha],
+        ["CAPTION QUAD", "#ffc857", clamp(1 - view.captionDepth * 0.45, 0.58, 0.95)]
       ];
       ctx.save();
       ctx.font = "700 10px Avenir Next, sans-serif";
       rows.forEach((row, index) => {
         ctx.globalAlpha = row[2];
-        ctx.fillStyle = row[1];
+        ctx.shadowColor = row[1];
+        ctx.shadowBlur = 16;
+        ctx.fillStyle = "rgba(8,14,20,0.74)";
         ctx.beginPath();
         ctx.roundRect(x - index * 12, y + index * 34, 112, 24, 6);
         ctx.fill();
-        ctx.fillStyle = "white";
+        ctx.strokeStyle = row[1];
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = row[1];
         ctx.fillText(row[0], x + 8 - index * 12, y + 16 + index * 34);
       });
       ctx.restore();
