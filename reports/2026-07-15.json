@@ -1,0 +1,145 @@
+{
+  "date": "2026-07-15",
+  "headline": "静的レイヤーの再描画タイミングを分けて観察する",
+  "headlineEn": "Separating redraw timing for static composition layers",
+  "summary": "WebXR Layers API の needsRedraw、redraw event、isStatic、fixedFoveation、layers 配列の扱いを確認し、今日は静的注釈 quad と動的ポインタ layer の更新頻度差を通常ブラウザで観察する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing needsRedraw, redraw events, isStatic, fixedFoveation, and the layers array in the WebXR Layers API, today's original HTML sample explores different update rates for a static annotation quad and a dynamic pointer layer in a normal browser.",
+  "keyTopics": [
+    "WebXR Layers API Level 1 は 2026-06-12 版 Editor's Draft で、composition layer の性能、可読性、電力、遅延面の利点を整理している。",
+    "XRCompositionLayer.needsRedraw は、layer が次の XR animation frame で再描画されるべきことを示し、再描画しないと flicker などの副作用があり得る。",
+    "composition layer の underlying resources が失われた場合、needsRedraw が true になり、projection layer 以外では redraw event が queue される。",
+    "XRWebGLBinding.createQuadLayer の isStatic は、needsRedraw が true のときだけ描ける layer を表し、静的注釈や地図のような高解像度 layer に向く。",
+    "XRProjectionLayer.fixedFoveation は中心以外を低解像度にして GPU 負荷を下げる仕組みで、背景向きだが文字や細部には慎重な調整が必要。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Layers API Level 1 Editor's Draft dated 2026-06-12 describes composition layer benefits around performance, legibility, power, and latency.",
+    "XRCompositionLayer.needsRedraw indicates that a layer should be rerendered in the next XR animation frame, otherwise flickering or other side effects may occur.",
+    "When a composition layer's underlying resources are lost, needsRedraw becomes true and non-projection layers queue a redraw event.",
+    "The isStatic option on XRWebGLBinding.createQuadLayer represents a layer that can only be drawn when needsRedraw is true, which suits static annotations or maps.",
+    "XRProjectionLayer.fixedFoveation reduces GPU load by lowering edge resolution outside the center, making it useful for backgrounds but risky for text or fine detail."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Static Layer Redraw Meter",
+      "url": "../outputs/2026-07-15_html_static_layer_redraw_meter.html"
+    },
+    {
+      "label": "WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "MDN: XRCompositionLayer",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRCompositionLayer"
+    },
+    {
+      "label": "MDN: XRWebGLBinding.createQuadLayer()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLBinding/createQuadLayer"
+    },
+    {
+      "label": "MDN: XRProjectionLayer.fixedFoveation",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRProjectionLayer/fixedFoveation"
+    },
+    {
+      "label": "MDN: XRSession.updateRenderState()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/updateRenderState"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Layers API の static layer と redraw まわりです。面白い点は、空間内の文字、地図、注釈のような高解像度で読みたい layer を毎フレーム再描画しなくても、compositor が pose に合わせて再投影できる設計になっていることです。映像やポインタは動かし続けつつ、静的情報は needsRedraw のタイミングだけ更新する、という分業が見えてきます。",
+      "bodyEn": "Today's notable area is static layers and redraw behavior in the WebXR Layers API. The interesting part is that high-resolution readable layers such as text, maps, or annotations do not necessarily need to be redrawn every frame because the compositor can reproject them with pose updates. Video and pointers can keep moving while static information updates only when needsRedraw requires it.",
+      "links": [
+        {
+          "label": "WebXR Layers API: XRCompositionLayer",
+          "url": "https://immersive-web.github.io/layers/#xrcompositionlayer"
+        },
+        {
+          "label": "MDN: createQuadLayer isStatic",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLBinding/createQuadLayer"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "静的な説明パネルは isStatic な quad layer として扱い、視線カーソルや手先の ray は小さな動的 layer として高頻度に更新する構成が有効です。今日のサンプルでは Static と Dynamic を切り替え、Static では注釈 layer の再描画回数がほぼ増えず、ポインタだけが動き続ける様子を counters で見られます。Loss ボタンは layer resource loss 後の redraw event を擬似的に表します。",
+      "bodyEn": "A useful composition is to treat explanatory panels as static quad layers, while gaze cursors or fingertip rays update as small dynamic layers at a higher frequency. Today's sample switches between Static and Dynamic modes: in Static mode the annotation layer's redraw count barely changes while the pointer keeps moving. The Loss button simulates a redraw event after layer resource loss.",
+      "links": [
+        {
+          "label": "Open today's sample",
+          "url": "../outputs/2026-07-15_html_static_layer_redraw_meter.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は `navigator.xr.requestSession(\"immersive-ar\", { optionalFeatures: [\"layers\"] })` で layers を要求し、`XRWebGLBinding.createQuadLayer({ space, viewPixelWidth, viewPixelHeight, isStatic: true })` のように静的 quad を作る流れを検討します。`XRSession.updateRenderState({ layers: [...] })` の配列は back-to-front 順で扱われるため、背景 projection、静的注釈、動的ポインタの順序を明示します。projection layer の `fixedFoveation` は背景の負荷削減には使えますが、文字 layer に強くかける設計は避けたいです。",
+      "bodyEn": "For a real implementation, request layers through `navigator.xr.requestSession(\"immersive-ar\", { optionalFeatures: [\"layers\"] })`, then create a static quad with a shape such as `XRWebGLBinding.createQuadLayer({ space, viewPixelWidth, viewPixelHeight, isStatic: true })`. The `XRSession.updateRenderState({ layers: [...] })` array is treated back-to-front, so the projection background, static annotations, and dynamic pointer layers should be ordered explicitly. `fixedFoveation` can reduce background load, but it should be applied carefully around text layers.",
+      "links": [
+        {
+          "label": "MDN: updateRenderState layers",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/updateRenderState"
+        },
+        {
+          "label": "MDN: fixedFoveation",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRProjectionLayer/fixedFoveation"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は Layers API の Space Warp と `XRProjectionLayer.deltaPose`、そして foveation と文字 layer の組み合わせを見たいです。静的 layer の更新頻度を下げても、頭部移動や手前の pointer が破綻しないかを、pose compensation と depth sorting の観点で続けて観察します。",
+      "bodyEn": "Next, it is worth watching Space Warp, `XRProjectionLayer.deltaPose`, and how foveation interacts with text layers. Even if static layers update less often, head movement and foreground pointers still need to remain stable, so pose compensation and depth sorting are the next inspection points.",
+      "links": [
+        {
+          "label": "WebXR Layers API: Space warp",
+          "url": "https://immersive-web.github.io/layers/#space-warp"
+        }
+      ]
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Static Layer Redraw Meter` を開き、まず Static のまま画面上でポインタを動かしてください。Pointer draws は増えますが Static redraws は増えにくく、Saved draws が伸びます。次に Detail を変えるか Loss を押すと needsRedraw が発生し、静的注釈 layer が一度だけ再描画される動きを確認できます。",
+      "bodyEn": "Open Static Layer Redraw Meter and move the pointer while staying in Static mode. Pointer draws increase, Static redraws barely move, and Saved draws climbs. Then change Detail or press Loss to trigger needsRedraw and watch the static annotation layer redraw once.",
+      "links": [
+        {
+          "label": "Open Static Layer Redraw Meter",
+          "url": "../outputs/2026-07-15_html_static_layer_redraw_meter.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Layers API の needsRedraw、redraw event、isStatic、fixedFoveation、updateRenderState の layers 配列を確認。アイデア: 静的注釈 layer と動的 pointer layer の更新頻度分離を HMD なしで観察する。実装: static / dynamic mode、resource loss simulation、foveation slider、pointer rate、redraw counters、saved draw counter を作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。",
+      "bodyEn": "Research: reviewed needsRedraw, redraw events, isStatic, fixedFoveation, and the updateRenderState layers array in the WebXR Layers API. Idea: observe update-rate separation between a static annotation layer and a dynamic pointer layer without a headset. Implementation: added static / dynamic mode, resource loss simulation, foveation slider, pointer rate, redraw counters, and saved draw counters. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        }
+      ]
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion、lighting estimation、hand input、layer + hand/depth、曲面 layer、360 media + annotation layer、そして static layer redraw です。空間体験を構成する『見える』『置く』『隠れる』『なじむ』『触る』『重ねる』『包む』『更新する』を、自作の最小サンプルとして積み上げています。",
+      "bodyEn": "The sequence so far is depth HUD, hit test and anchors, depth occlusion, lighting estimation, hand input, layer plus hand/depth, curved layers, 360 media plus annotation layers, and now static layer redraw. The archive is building original minimal samples around seeing, placing, hiding, blending, touching, layering, wrapping, and updating."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Static Layer Redraw Meter` です。XR 実機 API の代わりに、projection、static annotation、dynamic pointer の 3 layer を canvas 上で擬似合成し、needsRedraw と redraw event の意味を counters で読めるようにしました。次に進めるなら、Space Warp / deltaPose 風の pose 補正と、depth-sorted layer の手前オブジェクトを追加します。",
+      "bodyEn": "The selected prototype is Static Layer Redraw Meter. Instead of using hardware XR APIs directly, it simulates projection, static annotation, and dynamic pointer layers on canvas, making needsRedraw and redraw event behavior readable through counters. A natural next step is to add Space Warp / deltaPose-style pose compensation and a foreground depth-sorted object."
+    }
+  ]
+}

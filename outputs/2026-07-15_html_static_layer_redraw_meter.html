@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Static Layer Redraw Meter</title>
+  <style>
+    :root {
+      --ink: #f2f7f5;
+      --paper: #06100e;
+      --panel: rgba(10, 22, 20, 0.76);
+      --line: rgba(138, 226, 195, 0.26);
+      --muted: #9fb4ad;
+      --mint: #6ff0bd;
+      --amber: #f2b84b;
+      --blue: #74a7ff;
+      --red: #ff6f7a;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Avenir Next", "Hiragino Sans", system-ui, sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255,255,255,0.032) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: linear-gradient(to bottom, transparent, black 12%, black 78%, transparent);
+      z-index: 1;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .hud,
+    .readout {
+      position: fixed;
+      z-index: 4;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38), 0 0 28px rgba(111, 240, 189, 0.1);
+      backdrop-filter: blur(18px) saturate(130%);
+    }
+
+    .hud {
+      top: 16px;
+      left: 16px;
+      width: min(470px, calc(100vw - 32px));
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .control {
+      display: grid;
+      grid-template-columns: 120px 1fr 60px;
+      gap: 10px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--mint);
+    }
+
+    .value {
+      text-align: right;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.052);
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(111, 240, 189, 0.78);
+      background: rgba(111, 240, 189, 0.14);
+      box-shadow: 0 0 20px rgba(111, 240, 189, 0.18) inset;
+    }
+
+    .readout {
+      right: 18px;
+      bottom: 18px;
+      width: min(440px, calc(100vw - 36px));
+      padding: 14px;
+      pointer-events: none;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .cell {
+      min-height: 52px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.052);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .metric {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 4;
+      max-width: calc(100vw - 36px);
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(10, 22, 20, 0.66);
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    @media (max-width: 760px) {
+      .hud {
+        top: 10px;
+        left: 10px;
+        width: calc(100vw - 20px);
+        padding: 12px;
+      }
+
+      h1 { font-size: 15px; }
+      p { font-size: 11px; }
+
+      .control {
+        grid-template-columns: 92px 1fr 48px;
+        gap: 7px;
+        font-size: 10px;
+      }
+
+      .chips { grid-template-columns: repeat(2, 1fr); }
+      button { min-height: 34px; font-size: 10px; }
+
+      .readout {
+        right: 10px;
+        bottom: 48px;
+        width: calc(100vw - 20px);
+        padding: 10px;
+      }
+
+      .readout-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+
+      .cell {
+        min-height: 45px;
+        padding: 6px;
+      }
+
+      .metric { font-size: 12px; }
+      .hint { bottom: 8px; font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="Simulated WebXR layer redraw meter"></canvas>
+
+  <section class="hud">
+    <h1>Static Layer Redraw Meter</h1>
+    <p>
+      Simulates a WebXR layer stack: a moving projection layer, a static text quad
+      that redraws only when needed, and a high-frequency pointer layer.
+    </p>
+
+    <div class="controls">
+      <label class="control">
+        <span>Static detail</span>
+        <input id="detail" type="range" min="1" max="8" step="1" value="4">
+        <span id="detailValue" class="value">4</span>
+      </label>
+      <label class="control">
+        <span>Pointer rate</span>
+        <input id="pointerRate" type="range" min="12" max="90" step="1" value="72">
+        <span id="pointerRateValue" class="value">72</span>
+      </label>
+      <label class="control">
+        <span>Foveation</span>
+        <input id="foveation" type="range" min="0" max="1" step="0.01" value="0.38">
+        <span id="foveationValue" class="value">0.38</span>
+      </label>
+      <label class="control">
+        <span>Drift</span>
+        <input id="drift" type="range" min="0" max="1" step="0.01" value="0.3">
+        <span id="driftValue" class="value">0.30</span>
+      </label>
+    </div>
+
+    <div class="chips">
+      <button id="staticMode" type="button" aria-pressed="true">Static</button>
+      <button id="dynamicMode" type="button" aria-pressed="false">Dynamic</button>
+      <button id="redrawNow" type="button">Redraw</button>
+      <button id="resourceLoss" type="button">Loss</button>
+      <button id="calmPreset" type="button">Calm</button>
+      <button id="busyPreset" type="button">Busy</button>
+    </div>
+  </section>
+
+  <section class="readout">
+    <p>Layer update counters</p>
+    <div class="readout-grid">
+      <div class="cell"><span class="label">Mode</span><span id="modeMetric" class="metric">static</span></div>
+      <div class="cell"><span class="label">Static redraws</span><span id="staticMetric" class="metric">0</span></div>
+      <div class="cell"><span class="label">Pointer draws</span><span id="pointerMetric" class="metric">0</span></div>
+      <div class="cell"><span class="label">Saved draws</span><span id="savedMetric" class="metric">0</span></div>
+      <div class="cell"><span class="label">needsRedraw</span><span id="needsMetric" class="metric">true</span></div>
+      <div class="cell"><span class="label">Composite load</span><span id="loadMetric" class="metric">0%</span></div>
+    </div>
+  </section>
+
+  <div class="hint">Move pointer or touch the screen. Use Loss to simulate a redraw event after layer resources are lost.</div>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const els = {
+      detail: document.getElementById("detail"),
+      pointerRate: document.getElementById("pointerRate"),
+      foveation: document.getElementById("foveation"),
+      drift: document.getElementById("drift"),
+      detailValue: document.getElementById("detailValue"),
+      pointerRateValue: document.getElementById("pointerRateValue"),
+      foveationValue: document.getElementById("foveationValue"),
+      driftValue: document.getElementById("driftValue"),
+      staticMode: document.getElementById("staticMode"),
+      dynamicMode: document.getElementById("dynamicMode"),
+      redrawNow: document.getElementById("redrawNow"),
+      resourceLoss: document.getElementById("resourceLoss"),
+      calmPreset: document.getElementById("calmPreset"),
+      busyPreset: document.getElementById("busyPreset"),
+      modeMetric: document.getElementById("modeMetric"),
+      staticMetric: document.getElementById("staticMetric"),
+      pointerMetric: document.getElementById("pointerMetric"),
+      savedMetric: document.getElementById("savedMetric"),
+      needsMetric: document.getElementById("needsMetric"),
+      loadMetric: document.getElementById("loadMetric")
+    };
+
+    const state = {
+      width: 0,
+      height: 0,
+      pointerX: 0.62,
+      pointerY: 0.48,
+      targetX: 0.62,
+      targetY: 0.48,
+      mode: "static",
+      needsRedraw: true,
+      staticRedraws: 0,
+      projectionDraws: 0,
+      pointerDraws: 0,
+      savedDraws: 0,
+      staticVersion: 0,
+      lostUntil: 0,
+      lastPointerDraw: 0
+    };
+
+    const staticLayer = document.createElement("canvas");
+    const staticCtx = staticLayer.getContext("2d");
+
+    function resize() {
+      state.width = window.innerWidth;
+      state.height = window.innerHeight;
+      canvas.width = Math.floor(state.width * dpr);
+      canvas.height = Math.floor(state.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      staticLayer.width = Math.floor(Math.min(680, state.width * 0.72) * dpr);
+      staticLayer.height = Math.floor(Math.min(320, state.height * 0.42) * dpr);
+      staticCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      state.needsRedraw = true;
+    }
+
+    function syncLabels() {
+      els.detailValue.textContent = els.detail.value;
+      els.pointerRateValue.textContent = els.pointerRate.value;
+      els.foveationValue.textContent = Number(els.foveation.value).toFixed(2);
+      els.driftValue.textContent = Number(els.drift.value).toFixed(2);
+      els.staticMode.setAttribute("aria-pressed", String(state.mode === "static"));
+      els.dynamicMode.setAttribute("aria-pressed", String(state.mode === "dynamic"));
+    }
+
+    function markStaticDirty() {
+      state.needsRedraw = true;
+      state.staticVersion += 1;
+    }
+
+    function drawStaticLayer(now) {
+      const w = staticLayer.width / dpr;
+      const h = staticLayer.height / dpr;
+      const detail = Number(els.detail.value);
+      staticCtx.clearRect(0, 0, w, h);
+
+      const grad = staticCtx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, "rgba(111, 240, 189, 0.24)");
+      grad.addColorStop(0.52, "rgba(116, 167, 255, 0.18)");
+      grad.addColorStop(1, "rgba(242, 184, 75, 0.18)");
+      staticCtx.fillStyle = grad;
+      staticCtx.fillRect(0, 0, w, h);
+
+      staticCtx.strokeStyle = "rgba(242, 247, 245, 0.22)";
+      staticCtx.lineWidth = 1;
+      for (let i = 0; i <= detail + 2; i += 1) {
+        const x = (i / (detail + 2)) * w;
+        staticCtx.beginPath();
+        staticCtx.moveTo(x, 0);
+        staticCtx.lineTo(w - x * 0.25, h);
+        staticCtx.stroke();
+      }
+
+      staticCtx.fillStyle = "rgba(6, 16, 14, 0.7)";
+      staticCtx.fillRect(18, 18, w - 36, h - 36);
+      staticCtx.strokeStyle = "rgba(111, 240, 189, 0.62)";
+      staticCtx.strokeRect(18.5, 18.5, w - 37, h - 37);
+
+      staticCtx.fillStyle = "#f2f7f5";
+      staticCtx.font = "700 24px Avenir Next, system-ui, sans-serif";
+      staticCtx.fillText("STATIC ANNOTATION QUAD", 34, 58);
+      staticCtx.font = "13px Avenir Next, system-ui, sans-serif";
+      staticCtx.fillStyle = "rgba(242, 247, 245, 0.72)";
+      staticCtx.fillText("Redraws after needsRedraw, parameter edits, resize, or resource loss.", 34, 88);
+      staticCtx.fillText(`version ${state.staticVersion} | detail ${detail} | ${new Date(now).toLocaleTimeString()}`, 34, 112);
+
+      for (let i = 0; i < detail; i += 1) {
+        const x = 38 + i * ((w - 76) / Math.max(1, detail));
+        const barH = 34 + Math.sin(i * 1.4 + state.staticVersion) * 16 + detail * 4;
+        staticCtx.fillStyle = i % 2 ? "rgba(116, 167, 255, 0.68)" : "rgba(111, 240, 189, 0.72)";
+        staticCtx.fillRect(x, h - 48 - barH, Math.max(16, (w - 90) / (detail * 1.8)), barH);
+      }
+
+      state.needsRedraw = false;
+      state.staticRedraws += 1;
+    }
+
+    function drawProjection(now) {
+      const w = state.width;
+      const h = state.height;
+      const drift = Number(els.drift.value);
+      const foveation = Number(els.foveation.value);
+      const t = now * 0.001;
+      state.projectionDraws += 1;
+
+      ctx.fillStyle = "#06100e";
+      ctx.fillRect(0, 0, w, h);
+
+      const horizon = h * (0.48 + Math.sin(t * 0.42) * 0.035 * drift);
+      const bg = ctx.createLinearGradient(0, 0, 0, h);
+      bg.addColorStop(0, "#0b1a20");
+      bg.addColorStop(0.52, "#0a1714");
+      bg.addColorStop(1, "#141209");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = "rgba(111, 240, 189, 0.18)";
+      ctx.lineWidth = 1;
+      for (let i = -10; i <= 10; i += 1) {
+        const offset = ((t * 24 * drift) + i * 58) % 58;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.5 + offset - 290, horizon);
+        ctx.lineTo(w * 0.5 + (i * 86), h);
+        ctx.stroke();
+      }
+      for (let j = 0; j < 11; j += 1) {
+        const y = horizon + Math.pow(j / 10, 1.8) * (h - horizon);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      const radius = Math.max(w, h) * (0.18 + foveation * 0.28);
+      const cx = state.pointerX * w;
+      const cy = state.pointerY * h;
+      const vignette = ctx.createRadialGradient(cx, cy, radius * 0.12, cx, cy, radius);
+      vignette.addColorStop(0, "rgba(255,255,255,0)");
+      vignette.addColorStop(1, `rgba(0,0,0,${0.08 + foveation * 0.52})`);
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    function drawCompositedStatic(now) {
+      if (state.mode === "dynamic" || state.needsRedraw) {
+        drawStaticLayer(now);
+      } else {
+        state.savedDraws += 1;
+      }
+
+      const w = staticLayer.width / dpr;
+      const h = staticLayer.height / dpr;
+      const bob = Math.sin(now * 0.0012) * 8 * Number(els.drift.value);
+      const x = state.width * 0.5 - w * 0.5;
+      const y = state.height * 0.52 - h * 0.5 + bob;
+
+      ctx.save();
+      ctx.shadowColor = "rgba(0,0,0,0.42)";
+      ctx.shadowBlur = 28;
+      ctx.drawImage(staticLayer, x, y, w, h);
+      ctx.restore();
+
+      ctx.strokeStyle = state.needsRedraw ? "rgba(255,111,122,0.9)" : "rgba(111,240,189,0.72)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+    }
+
+    function drawPointer(now) {
+      const minInterval = 1000 / Number(els.pointerRate.value);
+      if (now - state.lastPointerDraw < minInterval) return;
+      state.lastPointerDraw = now;
+      state.pointerDraws += 1;
+
+      const w = state.width;
+      const h = state.height;
+      const x = state.pointerX * w;
+      const y = state.pointerY * h;
+      const pulse = 9 + Math.sin(now * 0.012) * 3;
+
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.strokeStyle = "rgba(242,184,75,0.9)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, pulse, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - 26, y);
+      ctx.lineTo(x - 8, y);
+      ctx.moveTo(x + 8, y);
+      ctx.lineTo(x + 26, y);
+      ctx.moveTo(x, y - 26);
+      ctx.lineTo(x, y - 8);
+      ctx.moveTo(x, y + 8);
+      ctx.lineTo(x, y + 26);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLossOverlay(now) {
+      if (now > state.lostUntil) return;
+      ctx.fillStyle = "rgba(255, 111, 122, 0.12)";
+      ctx.fillRect(0, 0, state.width, state.height);
+      ctx.fillStyle = "rgba(255, 111, 122, 0.88)";
+      ctx.font = "700 13px Avenir Next, system-ui, sans-serif";
+      ctx.fillText("redraw event queued after simulated resource loss", 22, state.height - 28);
+    }
+
+    function updateMetrics() {
+      const raw = state.projectionDraws + state.pointerDraws + state.staticRedraws;
+      const ideal = Math.max(1, state.projectionDraws * 3);
+      const load = Math.min(100, Math.round((raw / ideal) * 100));
+      els.modeMetric.textContent = state.mode;
+      els.staticMetric.textContent = String(state.staticRedraws);
+      els.pointerMetric.textContent = String(state.pointerDraws);
+      els.savedMetric.textContent = String(state.savedDraws);
+      els.needsMetric.textContent = String(state.needsRedraw);
+      els.loadMetric.textContent = `${load}%`;
+    }
+
+    function frame(now) {
+      state.pointerX += (state.targetX - state.pointerX) * 0.14;
+      state.pointerY += (state.targetY - state.pointerY) * 0.14;
+      drawProjection(now);
+      drawCompositedStatic(now);
+      drawPointer(now);
+      drawLossOverlay(now);
+      updateMetrics();
+      requestAnimationFrame(frame);
+    }
+
+    function setMode(mode) {
+      state.mode = mode;
+      syncLabels();
+      markStaticDirty();
+    }
+
+    function applyPreset(kind) {
+      if (kind === "calm") {
+        els.detail.value = 3;
+        els.pointerRate.value = 36;
+        els.foveation.value = 0.62;
+        els.drift.value = 0.18;
+        setMode("static");
+      } else {
+        els.detail.value = 7;
+        els.pointerRate.value = 88;
+        els.foveation.value = 0.18;
+        els.drift.value = 0.74;
+        setMode("dynamic");
+      }
+      syncLabels();
+      markStaticDirty();
+    }
+
+    for (const input of [els.detail, els.foveation, els.drift]) {
+      input.addEventListener("input", () => {
+        syncLabels();
+        markStaticDirty();
+      });
+    }
+
+    els.pointerRate.addEventListener("input", syncLabels);
+    els.staticMode.addEventListener("click", () => setMode("static"));
+    els.dynamicMode.addEventListener("click", () => setMode("dynamic"));
+    els.redrawNow.addEventListener("click", markStaticDirty);
+    els.resourceLoss.addEventListener("click", () => {
+      state.lostUntil = performance.now() + 950;
+      markStaticDirty();
+    });
+    els.calmPreset.addEventListener("click", () => applyPreset("calm"));
+    els.busyPreset.addEventListener("click", () => applyPreset("busy"));
+
+    canvas.addEventListener("pointermove", (event) => {
+      state.targetX = event.clientX / Math.max(1, state.width);
+      state.targetY = event.clientY / Math.max(1, state.height);
+    });
+    canvas.addEventListener("pointerdown", (event) => {
+      canvas.setPointerCapture(event.pointerId);
+      state.targetX = event.clientX / Math.max(1, state.width);
+      state.targetY = event.clientY / Math.max(1, state.height);
+    });
+    canvas.addEventListener("pointercancel", () => {
+      state.targetX = state.pointerX;
+      state.targetY = state.pointerY;
+    });
+
+    window.addEventListener("resize", resize);
+    resize();
+    syncLabels();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>静的レイヤーの再描画タイミングを分けて観察する | 2026-07-15</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.15</p>
+      <h1>静的レイヤーの再描画タイミングを分けて観察する</h1>
+      <p class="hero-subtitle">Separating redraw timing for static composition layers</p>
+      <p>WebXR Layers API の needsRedraw、redraw event、isStatic、fixedFoveation、layers 配列の扱いを確認し、今日は静的注釈 quad と動的ポインタ layer の更新頻度差を通常ブラウザで観察する自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing needsRedraw, redraw events, isStatic, fixedFoveation, and the layers array in the WebXR Layers API, today's original HTML sample explores different update rates for a static annotation quad and a dynamic pointer layer in a normal browser.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-15_html_static_layer_redraw_meter.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-14.html">← 2026.07.14</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Static Layer Redraw Meter</h3>
+              <p>Simulates a WebXR layer stack: a moving projection layer, a static text quad that redraws only when needed, and a high-frequency pointer layer.</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-15_html_static_layer_redraw_meter.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Layers API Level 1 は 2026-06-12 版 Editor's Draft で、composition layer の性能、可読性、電力、遅延面の利点を整理している。</span>
+              <span class="en-copy">The WebXR Layers API Level 1 Editor's Draft dated 2026-06-12 describes composition layer benefits around performance, legibility, power, and latency.</span>
+            </li>
+          
+            <li>
+              <span>XRCompositionLayer.needsRedraw は、layer が次の XR animation frame で再描画されるべきことを示し、再描画しないと flicker などの副作用があり得る。</span>
+              <span class="en-copy">XRCompositionLayer.needsRedraw indicates that a layer should be rerendered in the next XR animation frame, otherwise flickering or other side effects may occur.</span>
+            </li>
+          
+            <li>
+              <span>composition layer の underlying resources が失われた場合、needsRedraw が true になり、projection layer 以外では redraw event が queue される。</span>
+              <span class="en-copy">When a composition layer's underlying resources are lost, needsRedraw becomes true and non-projection layers queue a redraw event.</span>
+            </li>
+          
+            <li>
+              <span>XRWebGLBinding.createQuadLayer の isStatic は、needsRedraw が true のときだけ描ける layer を表し、静的注釈や地図のような高解像度 layer に向く。</span>
+              <span class="en-copy">The isStatic option on XRWebGLBinding.createQuadLayer represents a layer that can only be drawn when needsRedraw is true, which suits static annotations or maps.</span>
+            </li>
+          
+            <li>
+              <span>XRProjectionLayer.fixedFoveation は中心以外を低解像度にして GPU 負荷を下げる仕組みで、背景向きだが文字や細部には慎重な調整が必要。</span>
+              <span class="en-copy">XRProjectionLayer.fixedFoveation reduces GPU load by lowering edge resolution outside the center, making it useful for backgrounds but risky for text or fine detail.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は WebXR Layers API の static layer と redraw まわりです。面白い点は、空間内の文字、地図、注釈のような高解像度で読みたい layer を毎フレーム再描画しなくても、compositor が pose に合わせて再投影できる設計になっていることです。映像やポインタは動かし続けつつ、静的情報は needsRedraw のタイミングだけ更新する、という分業が見えてきます。</p>
+          <p class="en-copy">Today's notable area is static layers and redraw behavior in the WebXR Layers API. The interesting part is that high-resolution readable layers such as text, maps, or annotations do not necessarily need to be redrawn every frame because the compositor can reproject them with pose updates. Video and pointers can keep moving while static information updates only when needsRedraw requires it.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/#xrcompositionlayer" target="_blank" rel="noreferrer">WebXR Layers API: XRCompositionLayer</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLBinding/createQuadLayer" target="_blank" rel="noreferrer">MDN: createQuadLayer isStatic</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>静的な説明パネルは isStatic な quad layer として扱い、視線カーソルや手先の ray は小さな動的 layer として高頻度に更新する構成が有効です。今日のサンプルでは Static と Dynamic を切り替え、Static では注釈 layer の再描画回数がほぼ増えず、ポインタだけが動き続ける様子を counters で見られます。Loss ボタンは layer resource loss 後の redraw event を擬似的に表します。</p>
+          <p class="en-copy">A useful composition is to treat explanatory panels as static quad layers, while gaze cursors or fingertip rays update as small dynamic layers at a higher frequency. Today's sample switches between Static and Dynamic modes: in Static mode the annotation layer's redraw count barely changes while the pointer keeps moving. The Loss button simulates a redraw event after layer resource loss.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-15_html_static_layer_redraw_meter.html" target="_blank" rel="noreferrer">Open today's sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装時は `navigator.xr.requestSession(&quot;immersive-ar&quot;, { optionalFeatures: [&quot;layers&quot;] })` で layers を要求し、`XRWebGLBinding.createQuadLayer({ space, viewPixelWidth, viewPixelHeight, isStatic: true })` のように静的 quad を作る流れを検討します。`XRSession.updateRenderState({ layers: [...] })` の配列は back-to-front 順で扱われるため、背景 projection、静的注釈、動的ポインタの順序を明示します。projection layer の `fixedFoveation` は背景の負荷削減には使えますが、文字 layer に強くかける設計は避けたいです。</p>
+          <p class="en-copy">For a real implementation, request layers through `navigator.xr.requestSession(&quot;immersive-ar&quot;, { optionalFeatures: [&quot;layers&quot;] })`, then create a static quad with a shape such as `XRWebGLBinding.createQuadLayer({ space, viewPixelWidth, viewPixelHeight, isStatic: true })`. The `XRSession.updateRenderState({ layers: [...] })` array is treated back-to-front, so the projection background, static annotations, and dynamic pointer layers should be ordered explicitly. `fixedFoveation` can reduce background load, but it should be applied carefully around text layers.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSession/updateRenderState" target="_blank" rel="noreferrer">MDN: updateRenderState layers</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRProjectionLayer/fixedFoveation" target="_blank" rel="noreferrer">MDN: fixedFoveation</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>次は Layers API の Space Warp と `XRProjectionLayer.deltaPose`、そして foveation と文字 layer の組み合わせを見たいです。静的 layer の更新頻度を下げても、頭部移動や手前の pointer が破綻しないかを、pose compensation と depth sorting の観点で続けて観察します。</p>
+          <p class="en-copy">Next, it is worth watching Space Warp, `XRProjectionLayer.deltaPose`, and how foveation interacts with text layers. Even if static layers update less often, head movement and foreground pointers still need to remain stable, so pose compensation and depth sorting are the next inspection points.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/#space-warp" target="_blank" rel="noreferrer">WebXR Layers API: Space warp</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Static Layer Redraw Meter` を開き、まず Static のまま画面上でポインタを動かしてください。Pointer draws は増えますが Static redraws は増えにくく、Saved draws が伸びます。次に Detail を変えるか Loss を押すと needsRedraw が発生し、静的注釈 layer が一度だけ再描画される動きを確認できます。</p>
+          <p class="en-copy">Open Static Layer Redraw Meter and move the pointer while staying in Static mode. Pointer draws increase, Static redraws barely move, and Saved draws climbs. Then change Detail or press Loss to trigger needsRedraw and watch the static annotation layer redraw once.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-15_html_static_layer_redraw_meter.html" target="_blank" rel="noreferrer">Open Static Layer Redraw Meter</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Layers API の needsRedraw、redraw event、isStatic、fixedFoveation、updateRenderState の layers 配列を確認。アイデア: 静的注釈 layer と動的 pointer layer の更新頻度分離を HMD なしで観察する。実装: static / dynamic mode、resource loss simulation、foveation slider、pointer rate、redraw counters、saved draw counter を作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。</p>
+          <p class="en-copy">Research: reviewed needsRedraw, redraw events, isStatic, fixedFoveation, and the updateRenderState layers array in the WebXR Layers API. Idea: observe update-rate separation between a static annotation layer and a dynamic pointer layer without a headset. Implementation: added static / dynamic mode, resource loss simulation, foveation slider, pointer rate, redraw counters, and saved draw counters. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion、lighting estimation、hand input、layer + hand/depth、曲面 layer、360 media + annotation layer、そして static layer redraw です。空間体験を構成する『見える』『置く』『隠れる』『なじむ』『触る』『重ねる』『包む』『更新する』を、自作の最小サンプルとして積み上げています。</p>
+          <p class="en-copy">The sequence so far is depth HUD, hit test and anchors, depth occlusion, lighting estimation, hand input, layer plus hand/depth, curved layers, 360 media plus annotation layers, and now static layer redraw. The archive is building original minimal samples around seeing, placing, hiding, blending, touching, layering, wrapping, and updating.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Static Layer Redraw Meter` です。XR 実機 API の代わりに、projection、static annotation、dynamic pointer の 3 layer を canvas 上で擬似合成し、needsRedraw と redraw event の意味を counters で読めるようにしました。次に進めるなら、Space Warp / deltaPose 風の pose 補正と、depth-sorted layer の手前オブジェクトを追加します。</p>
+          <p class="en-copy">The selected prototype is Static Layer Redraw Meter. Instead of using hardware XR APIs directly, it simulates projection, static annotation, and dynamic pointer layers on canvas, making needsRedraw and redraw event behavior readable through counters. A natural next step is to add Space Warp / deltaPose-style pose compensation and a foreground depth-sorted object.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-15_html_static_layer_redraw_meter.html" target="_blank" rel="noreferrer">Today's sample: Static Layer Redraw Meter</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRCompositionLayer" target="_blank" rel="noreferrer">MDN: XRCompositionLayer</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLBinding/createQuadLayer" target="_blank" rel="noreferrer">MDN: XRWebGLBinding.createQuadLayer()</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRProjectionLayer/fixedFoveation" target="_blank" rel="noreferrer">MDN: XRProjectionLayer.fixedFoveation</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSession/updateRenderState" target="_blank" rel="noreferrer">MDN: XRSession.updateRenderState()</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-15_html_static_layer_redraw_meter.html" loading="lazy" title="Static Layer Redraw Meter"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
