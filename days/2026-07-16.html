@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>低頻度描画を deltaPose 風の姿勢補正で観察する | 2026-07-16</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.16</p>
+      <h1>低頻度描画を deltaPose 風の姿勢補正で観察する</h1>
+      <p class="hero-subtitle">Observing low-rate rendering with deltaPose-style pose compensation</p>
+      <p>WebXR Layers API の Space Warp と XRProjectionLayer.deltaPose を確認し、今日は projection layer を低頻度で描いた場合の姿勢ずれと、deltaPose 風の補正結果を通常ブラウザで比較する自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing Space Warp and XRProjectionLayer.deltaPose in the WebXR Layers API, today's original HTML sample compares low-rate projection rendering against deltaPose-style compensation in a normal browser.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-16_html_delta_pose_space_warp_lab.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-15.html">← 2026.07.15</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Delta Pose Space Warp Lab</h3>
+              <p>A browser-safe miniature of WebXR Layers space-warp thinking: render a low-rate projection layer, then compare raw pose drift with a deltaPose-style compensated preview.</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-16_html_delta_pose_space_warp_lab.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Layers API Level 1 の 2026-06-12 版 Editor's Draft では、composition layer の再投影、遅延低減、Space Warp が整理されている。</span>
+              <span class="en-copy">The WebXR Layers API Level 1 Editor's Draft dated 2026-06-12 describes composition layer reprojection, latency reduction, and Space Warp.</span>
+            </li>
+          
+            <li>
+              <span>XRProjectionLayer.deltaPose は、前フレームからビューに影響した application-applied transform の差分を表し、Space Warp feature を要求していない場合は null または no-op になり得る。</span>
+              <span class="en-copy">XRProjectionLayer.deltaPose represents the incremental application-applied transform since the previous frame that affects the view, and may be null or a no-op when Space Warp support was not requested.</span>
+            </li>
+          
+            <li>
+              <span>deltaPose の値は requestAnimationFrame の終端で自動 reset されず、人工 locomotion などで transform が変わったときに更新し、変化がないフレームでは null または identity に戻す設計が求められる。</span>
+              <span class="en-copy">deltaPose is not automatically reset at the end of requestAnimationFrame, so authors should update it when transforms change and set null or identity when no application transform occurred.</span>
+            </li>
+          
+            <li>
+              <span>MDN は XRProjectionLayer を observer の全視野を埋め、native frame rate 近くで refresh される layer と説明し、layers render state への追加には XRSession.updateRenderState() を使う。</span>
+              <span class="en-copy">MDN describes XRProjectionLayer as a full-view layer refreshed close to the native frame rate, with XRSession.updateRenderState() used to add layers to render state.</span>
+            </li>
+          
+            <li>
+              <span>低頻度で app が描画する layer と高頻度に compositor が補間する layer を分けると、可読 UI や背景の描画負荷を抑えつつ、頭部移動時の体感だけを保つ余地が出る。</span>
+              <span class="en-copy">Separating low-rate app-rendered layers from high-rate compositor synthesis can reduce rendering cost while preserving perceived stability during head movement.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は WebXR Layers API の Space Warp と `XRProjectionLayer.deltaPose` です。面白い点は、application が毎フレーム完全に描けない場合でも、前回描画した projection layer に対して『このフレームまでに world がどれだけ動いたか』を差分として compositor に渡すことで、欠けた中間フレームを合成する余地があることです。昨日の static layer redraw は『描かないで済ませる』話でしたが、今日は『描けない間の見え方を補う』話です。</p>
+          <p class="en-copy">Today's notable area is Space Warp and `XRProjectionLayer.deltaPose` in the WebXR Layers API. The interesting part is that even when the application cannot fully render every frame, it can describe how the world changed since the previous frame so the compositor has a chance to synthesize missing frames. Yesterday's static layer redraw was about avoiding unnecessary drawing; today is about compensating visual motion while drawing less often.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/#space-warp" target="_blank" rel="noreferrer">WebXR Layers API: Space warp</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/#dom-xrprojectionlayer-deltapose" target="_blank" rel="noreferrer">WebXR Layers API: XRProjectionLayer.deltaPose</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>空間 UI では、背景や大きな projection layer を 24Hz 程度でしか描けない状況でも、頭部 yaw の差分を deltaPose として扱えば、compositor 側の再投影で体感のずれを減らせる可能性があります。今日のサンプルでは、cyan が最後に app が描いた pose、green が deltaPose 風に補正した pose、薄い white が実際の現在 pose です。Render rate を下げ、Warp off にすると、低頻度描画の遅れが視覚的に分かります。</p>
+          <p class="en-copy">For spatial UI, even if a background or large projection layer can only be rendered at around 24 Hz, treating head-yaw changes as deltaPose can reduce perceived drift through compositor reprojection. In today's sample, cyan is the last app-rendered pose, green is the deltaPose-style compensated pose, and faint white is the current pose. Lowering render rate and toggling Warp off makes the low-rate delay visible.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-16_html_delta_pose_space_warp_lab.html" target="_blank" rel="noreferrer">Open today's sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装時は `navigator.xr.requestSession(&quot;immersive-vr&quot;, { optionalFeatures: [&quot;layers&quot;, &quot;space-warp&quot;] })` のように Space Warp を要求できるかを確認し、`XRWebGLBinding.createProjectionLayer()` で projection layer を作り、`XRSession.updateRenderState({ layers: [projectionLayer, ...] })` に載せる流れを検討します。`deltaPose` は前フレームからの application-applied transform の差分なので、頭部 pose そのものではなく、人工 locomotion、world origin の補正、低頻度 world update の差分として扱うのが要点です。</p>
+          <p class="en-copy">A real implementation should check whether Space Warp can be requested with a shape such as `navigator.xr.requestSession(&quot;immersive-vr&quot;, { optionalFeatures: [&quot;layers&quot;, &quot;space-warp&quot;] })`, create a projection layer with `XRWebGLBinding.createProjectionLayer()`, and place it in `XRSession.updateRenderState({ layers: [projectionLayer, ...] })`. `deltaPose` is an application-applied transform difference since the previous frame, so the key is to treat it as artificial locomotion, world-origin correction, or low-rate world-update delta rather than the raw head pose itself.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRProjectionLayer" target="_blank" rel="noreferrer">MDN: XRProjectionLayer</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>次は Space Warp と depth sorting の組み合わせ、特に projection layer が補正される一方で、前景の pointer、hand mesh、quad layer が別タイミングで更新される場合の破綻を見たいです。`ignoreDepthValues`、foreground object の depth、foveation、static annotation の redraw が同時に絡むと、どの layer を信用して合成するかが設計課題になります。</p>
+          <p class="en-copy">Next, it is worth watching Space Warp together with depth sorting, especially cases where a projection layer is compensated while foreground pointers, hand meshes, or quad layers update on different schedules. When `ignoreDepthValues`, foreground depth, foveation, and static annotation redraw all interact, the main design question becomes which layer should be trusted during composition.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/#depth-sorting-between-layers" target="_blank" rel="noreferrer">WebXR Layers API: Depth sorting between layers</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Delta Pose Space Warp Lab` を開き、Render rate を 12Hz まで下げてから Warp on/off を切り替えてください。Warp on では green の補正フレームが white の現在 pose に近づき、Warp off では cyan の app-rendered pose に残るため、Residual error が大きくなります。Drag で head yaw を手動追加すると、deltaPose の増減も読みやすくなります。</p>
+          <p class="en-copy">Open Delta Pose Space Warp Lab, lower Render rate to 12 Hz, then toggle Warp on and off. With Warp on, the green compensated frame approaches the white current pose; with Warp off, it stays near the cyan app-rendered pose and residual error grows. Dragging adds manual head yaw and makes the deltaPose readout easier to read.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-16_html_delta_pose_space_warp_lab.html" target="_blank" rel="noreferrer">Open Delta Pose Space Warp Lab</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Layers API の Space Warp、XRProjectionLayer.deltaPose、fixedFoveation、updateRenderState、MDN の XRProjectionLayer 解説を確認。アイデア: projection layer の低頻度描画と compositor 補正を HMD なしで観察する。実装: render rate、head yaw、motion、warp gain、depth grid、app/synth frame counters、residual error readout を持つ canvas サンプルを作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。</p>
+          <p class="en-copy">Research: reviewed Space Warp, XRProjectionLayer.deltaPose, fixedFoveation, updateRenderState, and MDN's XRProjectionLayer page. Idea: observe low-rate projection rendering and compositor-style compensation without a headset. Implementation: built a canvas sample with render rate, head yaw, motion, warp gain, depth grid, app/synth frame counters, and residual error readout. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion、lighting estimation、hand input、layer + hand/depth、曲面 layer、360 media + annotation layer、static layer redraw、そして deltaPose / Space Warp です。空間体験を構成する『見える』『置く』『隠れる』『なじむ』『触る』『重ねる』『包む』『更新する』『補間する』を、自作の最小サンプルとして積み上げています。</p>
+          <p class="en-copy">The sequence so far is depth HUD, hit test and anchors, depth occlusion, lighting estimation, hand input, layer plus hand/depth, curved layers, 360 media plus annotation layers, static layer redraw, and now deltaPose / Space Warp. The archive is building original minimal samples around seeing, placing, hiding, blending, touching, layering, wrapping, updating, and synthesizing.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Delta Pose Space Warp Lab` です。実機 API を直接使わず、projection layer が低頻度でしか描けない状態を canvas 上で擬似化し、最後に描いた pose、現在 pose、deltaPose 風の補正 pose を重ねて表示します。次に発展させるなら、手前の pointer/hand layer を追加し、補正された projection layer と未補正 foreground layer の depth mismatch を観察します。</p>
+          <p class="en-copy">The selected prototype is Delta Pose Space Warp Lab. Without directly using hardware XR APIs, it simulates a projection layer that renders at a low rate and overlays the last rendered pose, the current pose, and a deltaPose-style compensated pose. A natural next step is adding a foreground pointer or hand layer to inspect depth mismatch between a compensated projection layer and an uncompensated foreground layer.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-16_html_delta_pose_space_warp_lab.html" target="_blank" rel="noreferrer">Today's sample: Delta Pose Space Warp Lab</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/#space-warp" target="_blank" rel="noreferrer">WebXR Layers API: Space warp</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/#xrprojectionlayer" target="_blank" rel="noreferrer">WebXR Layers API: XRProjectionLayer</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRProjectionLayer" target="_blank" rel="noreferrer">MDN: XRProjectionLayer</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-16_html_delta_pose_space_warp_lab.html" loading="lazy" title="Delta Pose Space Warp Lab"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

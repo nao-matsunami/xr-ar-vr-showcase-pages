@@ -1,0 +1,141 @@
+{
+  "date": "2026-07-16",
+  "headline": "低頻度描画を deltaPose 風の姿勢補正で観察する",
+  "headlineEn": "Observing low-rate rendering with deltaPose-style pose compensation",
+  "summary": "WebXR Layers API の Space Warp と XRProjectionLayer.deltaPose を確認し、今日は projection layer を低頻度で描いた場合の姿勢ずれと、deltaPose 風の補正結果を通常ブラウザで比較する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing Space Warp and XRProjectionLayer.deltaPose in the WebXR Layers API, today's original HTML sample compares low-rate projection rendering against deltaPose-style compensation in a normal browser.",
+  "keyTopics": [
+    "WebXR Layers API Level 1 の 2026-06-12 版 Editor's Draft では、composition layer の再投影、遅延低減、Space Warp が整理されている。",
+    "XRProjectionLayer.deltaPose は、前フレームからビューに影響した application-applied transform の差分を表し、Space Warp feature を要求していない場合は null または no-op になり得る。",
+    "deltaPose の値は requestAnimationFrame の終端で自動 reset されず、人工 locomotion などで transform が変わったときに更新し、変化がないフレームでは null または identity に戻す設計が求められる。",
+    "MDN は XRProjectionLayer を observer の全視野を埋め、native frame rate 近くで refresh される layer と説明し、layers render state への追加には XRSession.updateRenderState() を使う。",
+    "低頻度で app が描画する layer と高頻度に compositor が補間する layer を分けると、可読 UI や背景の描画負荷を抑えつつ、頭部移動時の体感だけを保つ余地が出る。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Layers API Level 1 Editor's Draft dated 2026-06-12 describes composition layer reprojection, latency reduction, and Space Warp.",
+    "XRProjectionLayer.deltaPose represents the incremental application-applied transform since the previous frame that affects the view, and may be null or a no-op when Space Warp support was not requested.",
+    "deltaPose is not automatically reset at the end of requestAnimationFrame, so authors should update it when transforms change and set null or identity when no application transform occurred.",
+    "MDN describes XRProjectionLayer as a full-view layer refreshed close to the native frame rate, with XRSession.updateRenderState() used to add layers to render state.",
+    "Separating low-rate app-rendered layers from high-rate compositor synthesis can reduce rendering cost while preserving perceived stability during head movement."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Delta Pose Space Warp Lab",
+      "url": "../outputs/2026-07-16_html_delta_pose_space_warp_lab.html"
+    },
+    {
+      "label": "WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "WebXR Layers API: Space warp",
+      "url": "https://immersive-web.github.io/layers/#space-warp"
+    },
+    {
+      "label": "WebXR Layers API: XRProjectionLayer",
+      "url": "https://immersive-web.github.io/layers/#xrprojectionlayer"
+    },
+    {
+      "label": "MDN: XRProjectionLayer",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRProjectionLayer"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Layers API の Space Warp と `XRProjectionLayer.deltaPose` です。面白い点は、application が毎フレーム完全に描けない場合でも、前回描画した projection layer に対して『このフレームまでに world がどれだけ動いたか』を差分として compositor に渡すことで、欠けた中間フレームを合成する余地があることです。昨日の static layer redraw は『描かないで済ませる』話でしたが、今日は『描けない間の見え方を補う』話です。",
+      "bodyEn": "Today's notable area is Space Warp and `XRProjectionLayer.deltaPose` in the WebXR Layers API. The interesting part is that even when the application cannot fully render every frame, it can describe how the world changed since the previous frame so the compositor has a chance to synthesize missing frames. Yesterday's static layer redraw was about avoiding unnecessary drawing; today is about compensating visual motion while drawing less often.",
+      "links": [
+        {
+          "label": "WebXR Layers API: Space warp",
+          "url": "https://immersive-web.github.io/layers/#space-warp"
+        },
+        {
+          "label": "WebXR Layers API: XRProjectionLayer.deltaPose",
+          "url": "https://immersive-web.github.io/layers/#dom-xrprojectionlayer-deltapose"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "空間 UI では、背景や大きな projection layer を 24Hz 程度でしか描けない状況でも、頭部 yaw の差分を deltaPose として扱えば、compositor 側の再投影で体感のずれを減らせる可能性があります。今日のサンプルでは、cyan が最後に app が描いた pose、green が deltaPose 風に補正した pose、薄い white が実際の現在 pose です。Render rate を下げ、Warp off にすると、低頻度描画の遅れが視覚的に分かります。",
+      "bodyEn": "For spatial UI, even if a background or large projection layer can only be rendered at around 24 Hz, treating head-yaw changes as deltaPose can reduce perceived drift through compositor reprojection. In today's sample, cyan is the last app-rendered pose, green is the deltaPose-style compensated pose, and faint white is the current pose. Lowering render rate and toggling Warp off makes the low-rate delay visible.",
+      "links": [
+        {
+          "label": "Open today's sample",
+          "url": "../outputs/2026-07-16_html_delta_pose_space_warp_lab.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は `navigator.xr.requestSession(\"immersive-vr\", { optionalFeatures: [\"layers\", \"space-warp\"] })` のように Space Warp を要求できるかを確認し、`XRWebGLBinding.createProjectionLayer()` で projection layer を作り、`XRSession.updateRenderState({ layers: [projectionLayer, ...] })` に載せる流れを検討します。`deltaPose` は前フレームからの application-applied transform の差分なので、頭部 pose そのものではなく、人工 locomotion、world origin の補正、低頻度 world update の差分として扱うのが要点です。",
+      "bodyEn": "A real implementation should check whether Space Warp can be requested with a shape such as `navigator.xr.requestSession(\"immersive-vr\", { optionalFeatures: [\"layers\", \"space-warp\"] })`, create a projection layer with `XRWebGLBinding.createProjectionLayer()`, and place it in `XRSession.updateRenderState({ layers: [projectionLayer, ...] })`. `deltaPose` is an application-applied transform difference since the previous frame, so the key is to treat it as artificial locomotion, world-origin correction, or low-rate world-update delta rather than the raw head pose itself.",
+      "links": [
+        {
+          "label": "MDN: XRProjectionLayer",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRProjectionLayer"
+        },
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は Space Warp と depth sorting の組み合わせ、特に projection layer が補正される一方で、前景の pointer、hand mesh、quad layer が別タイミングで更新される場合の破綻を見たいです。`ignoreDepthValues`、foreground object の depth、foveation、static annotation の redraw が同時に絡むと、どの layer を信用して合成するかが設計課題になります。",
+      "bodyEn": "Next, it is worth watching Space Warp together with depth sorting, especially cases where a projection layer is compensated while foreground pointers, hand meshes, or quad layers update on different schedules. When `ignoreDepthValues`, foreground depth, foveation, and static annotation redraw all interact, the main design question becomes which layer should be trusted during composition.",
+      "links": [
+        {
+          "label": "WebXR Layers API: Depth sorting between layers",
+          "url": "https://immersive-web.github.io/layers/#depth-sorting-between-layers"
+        }
+      ]
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Delta Pose Space Warp Lab` を開き、Render rate を 12Hz まで下げてから Warp on/off を切り替えてください。Warp on では green の補正フレームが white の現在 pose に近づき、Warp off では cyan の app-rendered pose に残るため、Residual error が大きくなります。Drag で head yaw を手動追加すると、deltaPose の増減も読みやすくなります。",
+      "bodyEn": "Open Delta Pose Space Warp Lab, lower Render rate to 12 Hz, then toggle Warp on and off. With Warp on, the green compensated frame approaches the white current pose; with Warp off, it stays near the cyan app-rendered pose and residual error grows. Dragging adds manual head yaw and makes the deltaPose readout easier to read.",
+      "links": [
+        {
+          "label": "Open Delta Pose Space Warp Lab",
+          "url": "../outputs/2026-07-16_html_delta_pose_space_warp_lab.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Layers API の Space Warp、XRProjectionLayer.deltaPose、fixedFoveation、updateRenderState、MDN の XRProjectionLayer 解説を確認。アイデア: projection layer の低頻度描画と compositor 補正を HMD なしで観察する。実装: render rate、head yaw、motion、warp gain、depth grid、app/synth frame counters、residual error readout を持つ canvas サンプルを作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。",
+      "bodyEn": "Research: reviewed Space Warp, XRProjectionLayer.deltaPose, fixedFoveation, updateRenderState, and MDN's XRProjectionLayer page. Idea: observe low-rate projection rendering and compositor-style compensation without a headset. Implementation: built a canvas sample with render rate, head yaw, motion, warp gain, depth grid, app/synth frame counters, and residual error readout. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        }
+      ]
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion、lighting estimation、hand input、layer + hand/depth、曲面 layer、360 media + annotation layer、static layer redraw、そして deltaPose / Space Warp です。空間体験を構成する『見える』『置く』『隠れる』『なじむ』『触る』『重ねる』『包む』『更新する』『補間する』を、自作の最小サンプルとして積み上げています。",
+      "bodyEn": "The sequence so far is depth HUD, hit test and anchors, depth occlusion, lighting estimation, hand input, layer plus hand/depth, curved layers, 360 media plus annotation layers, static layer redraw, and now deltaPose / Space Warp. The archive is building original minimal samples around seeing, placing, hiding, blending, touching, layering, wrapping, updating, and synthesizing."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Delta Pose Space Warp Lab` です。実機 API を直接使わず、projection layer が低頻度でしか描けない状態を canvas 上で擬似化し、最後に描いた pose、現在 pose、deltaPose 風の補正 pose を重ねて表示します。次に発展させるなら、手前の pointer/hand layer を追加し、補正された projection layer と未補正 foreground layer の depth mismatch を観察します。",
+      "bodyEn": "The selected prototype is Delta Pose Space Warp Lab. Without directly using hardware XR APIs, it simulates a projection layer that renders at a low rate and overlays the last rendered pose, the current pose, and a deltaPose-style compensated pose. A natural next step is adding a foreground pointer or hand layer to inspect depth mismatch between a compensated projection layer and an uncompensated foreground layer."
+    }
+  ]
+}

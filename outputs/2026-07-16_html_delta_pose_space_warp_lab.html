@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Delta Pose Space Warp Lab</title>
+  <style>
+    :root {
+      --bg: #07100f;
+      --ink: #eef8f4;
+      --muted: #9eb6ad;
+      --panel: rgba(9, 21, 19, 0.8);
+      --line: rgba(132, 226, 196, 0.28);
+      --green: #79e8ba;
+      --yellow: #f0c15b;
+      --coral: #ff7c75;
+      --cyan: #72d8ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Avenir Next", "Hiragino Sans", system-ui, sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+      cursor: grab;
+    }
+
+    canvas:active { cursor: grabbing; }
+
+    .hud,
+    .readout {
+      position: fixed;
+      z-index: 4;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 22px 72px rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(18px) saturate(130%);
+    }
+
+    .hud {
+      top: 16px;
+      left: 16px;
+      width: min(500px, calc(100vw - 32px));
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .control {
+      display: grid;
+      grid-template-columns: 126px 1fr 62px;
+      gap: 10px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--green);
+    }
+
+    .value {
+      color: var(--ink);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+      color: var(--ink);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(121, 232, 186, 0.85);
+      background: rgba(121, 232, 186, 0.16);
+      box-shadow: 0 0 22px rgba(121, 232, 186, 0.18) inset;
+    }
+
+    .readout {
+      right: 18px;
+      bottom: 18px;
+      width: min(440px, calc(100vw - 36px));
+      padding: 14px;
+      pointer-events: none;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .cell {
+      min-height: 54px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .metric {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 4;
+      max-width: calc(100vw - 36px);
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(9, 21, 19, 0.7);
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    @media (max-width: 760px) {
+      .hud {
+        top: 10px;
+        left: 10px;
+        width: calc(100vw - 20px);
+        padding: 12px;
+      }
+
+      h1 { font-size: 15px; }
+      p { font-size: 11px; }
+
+      .control {
+        grid-template-columns: 96px 1fr 48px;
+        gap: 7px;
+        font-size: 10px;
+      }
+
+      .chips { grid-template-columns: repeat(2, 1fr); }
+      button { min-height: 34px; font-size: 10px; }
+
+      .readout {
+        right: 10px;
+        bottom: 46px;
+        width: calc(100vw - 20px);
+        padding: 10px;
+      }
+
+      .readout-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .cell {
+        min-height: 44px;
+        padding: 6px;
+      }
+
+      .metric { font-size: 11px; }
+      .label { font-size: 8px; }
+      .hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="Simulated WebXR projection layer with delta pose compensation"></canvas>
+
+  <section class="hud">
+    <h1>Delta Pose Space Warp Lab</h1>
+    <p>
+      A browser-safe miniature of WebXR Layers space-warp thinking: render a low-rate projection layer, then compare raw pose drift with a deltaPose-style compensated preview.
+    </p>
+
+    <div class="controls">
+      <label class="control">
+        <span>Head yaw</span>
+        <input id="yaw" type="range" min="-32" max="32" value="14" step="1">
+        <span id="yawValue" class="value">14 deg</span>
+      </label>
+      <label class="control">
+        <span>Render rate</span>
+        <input id="rate" type="range" min="12" max="90" value="24" step="6">
+        <span id="rateValue" class="value">24 Hz</span>
+      </label>
+      <label class="control">
+        <span>Motion</span>
+        <input id="motion" type="range" min="0" max="100" value="58" step="1">
+        <span id="motionValue" class="value">58%</span>
+      </label>
+      <label class="control">
+        <span>Warp gain</span>
+        <input id="gain" type="range" min="0" max="130" value="92" step="1">
+        <span id="gainValue" class="value">92%</span>
+      </label>
+    </div>
+
+    <div class="chips" role="group" aria-label="Scene presets">
+      <button id="warp" type="button" aria-pressed="true">Warp on</button>
+      <button id="grid" type="button" aria-pressed="true">Depth grid</button>
+      <button id="reset" type="button">Reset pose</button>
+    </div>
+  </section>
+
+  <section class="readout">
+    <p>Projection layer is intentionally redrawn slowly; the cyan frame shows the last app-rendered pose, while the green frame estimates compositor compensation.</p>
+    <div class="readout-grid">
+      <div class="cell">
+        <span class="label">Delta pose</span>
+        <span id="deltaMetric" class="metric">0.0 deg</span>
+      </div>
+      <div class="cell">
+        <span class="label">Residual error</span>
+        <span id="errorMetric" class="metric">0 px</span>
+      </div>
+      <div class="cell">
+        <span class="label">App frames</span>
+        <span id="appMetric" class="metric">0</span>
+      </div>
+      <div class="cell">
+        <span class="label">Synth frames</span>
+        <span id="synthMetric" class="metric">0</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="hint">Drag the scene to add head movement. Lower render rate and toggle Warp off to see pose judder.</div>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      yaw: document.getElementById("yaw"),
+      rate: document.getElementById("rate"),
+      motion: document.getElementById("motion"),
+      gain: document.getElementById("gain"),
+      warp: document.getElementById("warp"),
+      grid: document.getElementById("grid"),
+      reset: document.getElementById("reset")
+    };
+    const labels = {
+      yaw: document.getElementById("yawValue"),
+      rate: document.getElementById("rateValue"),
+      motion: document.getElementById("motionValue"),
+      gain: document.getElementById("gainValue"),
+      delta: document.getElementById("deltaMetric"),
+      error: document.getElementById("errorMetric"),
+      app: document.getElementById("appMetric"),
+      synth: document.getElementById("synthMetric")
+    };
+
+    const state = {
+      dpr: 1,
+      width: 1,
+      height: 1,
+      yaw: 14,
+      renderedYaw: 14,
+      lastRenderTime: 0,
+      appFrames: 0,
+      synthFrames: 0,
+      warp: true,
+      grid: true,
+      dragging: false,
+      pointerX: 0,
+      pointerY: 0,
+      lastPointerX: 0
+    };
+
+    function resize() {
+      state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      state.width = window.innerWidth;
+      state.height = window.innerHeight;
+      canvas.width = Math.floor(state.width * state.dpr);
+      canvas.height = Math.floor(state.height * state.dpr);
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    }
+
+    function updateLabels() {
+      labels.yaw.textContent = `${Number(controls.yaw.value).toFixed(0)} deg`;
+      labels.rate.textContent = `${controls.rate.value} Hz`;
+      labels.motion.textContent = `${controls.motion.value}%`;
+      labels.gain.textContent = `${controls.gain.value}%`;
+    }
+
+    function projectPoint(x, y, z, yawDeg) {
+      const yaw = yawDeg * Math.PI / 180;
+      const cos = Math.cos(yaw);
+      const sin = Math.sin(yaw);
+      const rx = x * cos - z * sin;
+      const rz = x * sin + z * cos + 5.2;
+      const scale = Math.min(state.width, state.height) * 0.72 / Math.max(0.8, rz);
+      return {
+        x: state.width * 0.5 + rx * scale,
+        y: state.height * 0.55 + y * scale,
+        scale,
+        depth: rz
+      };
+    }
+
+    function drawBackground(now) {
+      const grd = ctx.createLinearGradient(0, 0, 0, state.height);
+      grd.addColorStop(0, "#0d1717");
+      grd.addColorStop(0.52, "#081111");
+      grd.addColorStop(1, "#050909");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, state.width, state.height);
+
+      ctx.globalAlpha = 0.18;
+      ctx.strokeStyle = "#87f0c2";
+      ctx.lineWidth = 1;
+      const step = 56;
+      const offset = (now * 0.018) % step;
+      for (let x = -step; x < state.width + step; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x + offset, 0);
+        ctx.lineTo(x - offset * 0.55, state.height);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawWorld(yawDeg, color, alpha, lineWidth, showFilled) {
+      const nodes = [
+        [-1.9, -1.0, 0.8], [-0.6, -1.0, 0.2], [0.9, -1.0, 0.6], [2.0, -1.0, 1.4],
+        [-1.7, 0.05, -0.2], [-0.25, 0.18, -0.8], [1.25, 0.02, -0.25], [2.0, 0.16, 0.35],
+        [-1.2, 1.0, 0.9], [0.1, 1.08, 0.3], [1.3, 1.0, 0.85]
+      ];
+      const edges = [[0,1], [1,2], [2,3], [0,4], [1,5], [2,6], [3,7], [4,5], [5,6], [6,7], [4,8], [5,9], [6,10], [8,9], [9,10]];
+      const points = nodes.map((node) => projectPoint(node[0], node[1], node[2], yawDeg));
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = lineWidth;
+      ctx.strokeStyle = color;
+      ctx.lineJoin = "round";
+      edges.forEach(([a, b]) => {
+        ctx.beginPath();
+        ctx.moveTo(points[a].x, points[a].y);
+        ctx.lineTo(points[b].x, points[b].y);
+        ctx.stroke();
+      });
+
+      points.forEach((point, index) => {
+        const radius = Math.max(3, point.scale * 0.028);
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = index === 5 ? "#f0c15b" : color;
+        ctx.fill();
+      });
+
+      if (showFilled) {
+        const left = projectPoint(-0.85, -0.48, -0.35, yawDeg);
+        const right = projectPoint(0.9, -0.38, -0.35, yawDeg);
+        const top = projectPoint(0.05, -1.25, -0.32, yawDeg);
+        ctx.beginPath();
+        ctx.moveTo(left.x, left.y);
+        ctx.lineTo(right.x, right.y);
+        ctx.lineTo(top.x, top.y);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(255, 124, 117, 0.2)";
+        ctx.fill();
+        ctx.strokeStyle = "#ff7c75";
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawDepthGrid(yawDeg) {
+      if (!state.grid) return;
+      ctx.save();
+      ctx.globalAlpha = 0.36;
+      ctx.strokeStyle = "rgba(240, 193, 91, 0.55)";
+      ctx.lineWidth = 1;
+      for (let z = -1.5; z <= 2.5; z += 0.5) {
+        const a = projectPoint(-2.4, 1.4, z, yawDeg);
+        const b = projectPoint(2.4, 1.4, z, yawDeg);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+      for (let x = -2.5; x <= 2.5; x += 0.5) {
+        const a = projectPoint(x, 1.4, -1.5, yawDeg);
+        const b = projectPoint(x, 1.4, 2.5, yawDeg);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawPoseFrames(currentYaw, compensatedYaw) {
+      drawWorld(state.renderedYaw, "#72d8ff", 0.36, 1.4, false);
+      drawWorld(compensatedYaw, "#79e8ba", state.warp ? 0.92 : 0.22, 2.6, true);
+      drawWorld(currentYaw, "rgba(255,255,255,0.9)", 0.22, 1, false);
+    }
+
+    function drawDeltaBar(deltaYaw, residualPx) {
+      const x = state.width * 0.5;
+      const y = Math.max(96, state.height * 0.18);
+      const max = Math.min(180, state.width * 0.24);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+      ctx.strokeStyle = "rgba(132, 226, 196, 0.42)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(-max - 16, -18, max * 2 + 32, 36, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#72d8ff";
+      ctx.fillRect(0, -4, Math.max(-max, Math.min(max, deltaYaw * 5)), 8);
+      ctx.fillStyle = residualPx > 18 ? "#ff7c75" : "#79e8ba";
+      ctx.beginPath();
+      ctx.arc(Math.max(-max, Math.min(max, deltaYaw * 5)), 0, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(238, 248, 244, 0.86)";
+      ctx.font = "12px Avenir Next, system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("deltaPose estimate", 0, 34);
+      ctx.restore();
+    }
+
+    function tick(now) {
+      const rate = Number(controls.rate.value);
+      const motion = Number(controls.motion.value) / 100;
+      const baseYaw = Number(controls.yaw.value);
+      const auto = Math.sin(now * 0.0012) * 18 * motion + Math.sin(now * 0.0021) * 5 * motion;
+      state.yaw = baseYaw + auto;
+
+      const minFrameMs = 1000 / rate;
+      if (!state.lastRenderTime || now - state.lastRenderTime >= minFrameMs) {
+        state.renderedYaw = state.yaw;
+        state.lastRenderTime = now;
+        state.appFrames += 1;
+      } else {
+        state.synthFrames += 1;
+      }
+
+      const deltaYaw = state.yaw - state.renderedYaw;
+      const gain = Number(controls.gain.value) / 100;
+      const compensatedYaw = state.warp ? state.renderedYaw + deltaYaw * gain : state.renderedYaw;
+      const residual = Math.abs(state.yaw - compensatedYaw);
+      const residualPx = residual * Math.min(state.width, state.height) * 0.012;
+
+      drawBackground(now);
+      drawDepthGrid(compensatedYaw);
+      drawPoseFrames(state.yaw, compensatedYaw);
+      drawDeltaBar(deltaYaw, residualPx);
+
+      labels.delta.textContent = `${deltaYaw.toFixed(1)} deg`;
+      labels.error.textContent = `${Math.round(residualPx)} px`;
+      labels.app.textContent = String(state.appFrames);
+      labels.synth.textContent = String(state.synthFrames);
+
+      requestAnimationFrame(tick);
+    }
+
+    function setPressed(button, value) {
+      button.setAttribute("aria-pressed", String(value));
+    }
+
+    Object.values(controls).forEach((control) => {
+      if (control instanceof HTMLInputElement) {
+        control.addEventListener("input", updateLabels);
+      }
+    });
+
+    controls.warp.addEventListener("click", () => {
+      state.warp = !state.warp;
+      setPressed(controls.warp, state.warp);
+    });
+
+    controls.grid.addEventListener("click", () => {
+      state.grid = !state.grid;
+      setPressed(controls.grid, state.grid);
+    });
+
+    controls.reset.addEventListener("click", () => {
+      controls.yaw.value = "0";
+      state.renderedYaw = 0;
+      state.lastRenderTime = 0;
+      updateLabels();
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.dragging = true;
+      state.lastPointerX = event.clientX;
+      canvas.setPointerCapture(event.pointerId);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!state.dragging) return;
+      const dx = event.clientX - state.lastPointerX;
+      state.lastPointerX = event.clientX;
+      const nextYaw = Math.max(-32, Math.min(32, Number(controls.yaw.value) + dx * 0.16));
+      controls.yaw.value = String(nextYaw);
+      updateLabels();
+    });
+
+    function endDrag(event) {
+      state.dragging = false;
+      if (canvas.hasPointerCapture(event.pointerId)) {
+        canvas.releasePointerCapture(event.pointerId);
+      }
+    }
+
+    canvas.addEventListener("pointerup", endDrag);
+    canvas.addEventListener("pointercancel", endDrag);
+    window.addEventListener("resize", resize);
+
+    resize();
+    updateLabels();
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
