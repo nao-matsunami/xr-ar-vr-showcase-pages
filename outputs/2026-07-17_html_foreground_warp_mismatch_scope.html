@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Foreground Warp Mismatch Scope</title>
+  <style>
+    :root {
+      --bg: #071014;
+      --ink: #f2f7f1;
+      --muted: #a8b7b2;
+      --panel: rgba(8, 18, 22, 0.82);
+      --line: rgba(171, 221, 209, 0.28);
+      --cyan: #6fd5ff;
+      --mint: #7be6a7;
+      --amber: #ffc65a;
+      --rose: #ff7f8f;
+      --violet: #b9a2ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Avenir Next", "Hiragino Sans", system-ui, sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .hud,
+    .readout {
+      position: fixed;
+      z-index: 3;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(18px) saturate(130%);
+    }
+
+    .hud {
+      top: 16px;
+      left: 16px;
+      width: min(520px, calc(100vw - 32px));
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .control {
+      display: grid;
+      grid-template-columns: 132px 1fr 66px;
+      gap: 10px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--mint);
+    }
+
+    .value {
+      color: var(--ink);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+      color: var(--ink);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(123, 230, 167, 0.9);
+      background: rgba(123, 230, 167, 0.16);
+      box-shadow: 0 0 22px rgba(123, 230, 167, 0.18) inset;
+    }
+
+    .readout {
+      right: 18px;
+      bottom: 18px;
+      width: min(460px, calc(100vw - 36px));
+      padding: 14px;
+      pointer-events: none;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .cell {
+      min-height: 56px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .metric {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 3;
+      max-width: calc(100vw - 36px);
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(8, 18, 22, 0.72);
+      color: var(--muted);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 720px) {
+      .hud {
+        top: 10px;
+        left: 10px;
+        width: calc(100vw - 20px);
+        padding: 12px;
+      }
+
+      h1 { font-size: 15px; }
+
+      .control {
+        grid-template-columns: 104px 1fr 54px;
+        gap: 8px;
+        font-size: 10px;
+      }
+
+      .chips { grid-template-columns: repeat(2, 1fr); }
+
+      button {
+        min-height: 34px;
+        font-size: 10px;
+      }
+
+      .readout {
+        right: 10px;
+        bottom: 10px;
+        width: calc(100vw - 20px);
+        padding: 10px;
+      }
+
+      .hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="Foreground warp mismatch visualizer"></canvas>
+
+  <section class="hud" aria-label="controls">
+    <h1>Foreground Warp Mismatch Scope</h1>
+    <p>
+      A headset-free sketch of a compensated projection layer under a live foreground pointer.
+      Drag the canvas to steer the foreground ray and watch the alignment error change.
+    </p>
+    <div class="controls">
+      <label class="control">
+        <span>Render rate</span>
+        <input id="renderRate" type="range" min="8" max="72" value="18" step="1">
+        <span id="renderRateValue" class="value">18Hz</span>
+      </label>
+      <label class="control">
+        <span>Warp gain</span>
+        <input id="warpGain" type="range" min="0" max="140" value="86" step="1">
+        <span id="warpGainValue" class="value">0.86</span>
+      </label>
+      <label class="control">
+        <span>Hand depth</span>
+        <input id="handDepth" type="range" min="34" max="150" value="74" step="1">
+        <span id="handDepthValue" class="value">0.74m</span>
+      </label>
+      <label class="control">
+        <span>Panel depth</span>
+        <input id="panelDepth" type="range" min="48" max="180" value="112" step="1">
+        <span id="panelDepthValue" class="value">1.12m</span>
+      </label>
+      <label class="control">
+        <span>Head motion</span>
+        <input id="headMotion" type="range" min="0" max="160" value="82" step="1">
+        <span id="headMotionValue" class="value">0.82</span>
+      </label>
+    </div>
+    <div class="chips">
+      <button id="warpToggle" type="button" aria-pressed="true">Warp</button>
+      <button id="depthToggle" type="button" aria-pressed="true">Depth</button>
+      <button id="motionToggle" type="button" aria-pressed="true">Vectors</button>
+      <button id="freezeButton" type="button" aria-pressed="false">Freeze</button>
+    </div>
+  </section>
+
+  <section class="readout" aria-label="readout">
+    <p>
+      Cyan: last app-rendered projection. Green: warped projection estimate.
+      Rose: live foreground hand/pointer layer.
+    </p>
+    <div class="readout-grid">
+      <div class="cell">
+        <span class="label">Screen mismatch</span>
+        <span id="mismatchMetric" class="metric">0.0px</span>
+      </div>
+      <div class="cell">
+        <span class="label">Depth decision</span>
+        <span id="depthMetric" class="metric">foreground</span>
+      </div>
+      <div class="cell">
+        <span class="label">deltaPose yaw</span>
+        <span id="deltaMetric" class="metric">0.0deg</span>
+      </div>
+      <div class="cell">
+        <span class="label">App / synth frames</span>
+        <span id="frameMetric" class="metric">0 / 0</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="hint">Drag to move the foreground ray. Lower render rate or warp gain to reveal foreground/projection disagreement.</div>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      renderRate: document.getElementById("renderRate"),
+      warpGain: document.getElementById("warpGain"),
+      handDepth: document.getElementById("handDepth"),
+      panelDepth: document.getElementById("panelDepth"),
+      headMotion: document.getElementById("headMotion")
+    };
+    const values = {
+      renderRate: document.getElementById("renderRateValue"),
+      warpGain: document.getElementById("warpGainValue"),
+      handDepth: document.getElementById("handDepthValue"),
+      panelDepth: document.getElementById("panelDepthValue"),
+      headMotion: document.getElementById("headMotionValue")
+    };
+    const metrics = {
+      mismatch: document.getElementById("mismatchMetric"),
+      depth: document.getElementById("depthMetric"),
+      delta: document.getElementById("deltaMetric"),
+      frames: document.getElementById("frameMetric")
+    };
+    const buttons = {
+      warp: document.getElementById("warpToggle"),
+      depth: document.getElementById("depthToggle"),
+      motion: document.getElementById("motionToggle"),
+      freeze: document.getElementById("freezeButton")
+    };
+
+    const state = {
+      width: 0,
+      height: 0,
+      dpr: 1,
+      pointerX: 0.58,
+      pointerY: 0.53,
+      dragging: false,
+      headYaw: 0,
+      renderedYaw: 0,
+      lastRender: 0,
+      appFrames: 0,
+      synthFrames: 0,
+      manualYaw: 0,
+      frozen: false
+    };
+
+    function resize() {
+      state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      state.width = window.innerWidth;
+      state.height = window.innerHeight;
+      canvas.width = Math.floor(state.width * state.dpr);
+      canvas.height = Math.floor(state.height * state.dpr);
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    }
+
+    function controlValue(name) {
+      return Number(controls[name].value);
+    }
+
+    function updateLabels() {
+      values.renderRate.textContent = `${controlValue("renderRate")}Hz`;
+      values.warpGain.textContent = (controlValue("warpGain") / 100).toFixed(2);
+      values.handDepth.textContent = `${(controlValue("handDepth") / 100).toFixed(2)}m`;
+      values.panelDepth.textContent = `${(controlValue("panelDepth") / 100).toFixed(2)}m`;
+      values.headMotion.textContent = (controlValue("headMotion") / 100).toFixed(2);
+    }
+
+    function setPointer(event) {
+      const rect = canvas.getBoundingClientRect();
+      state.pointerX = Math.max(0.12, Math.min(0.88, (event.clientX - rect.left) / rect.width));
+      state.pointerY = Math.max(0.18, Math.min(0.86, (event.clientY - rect.top) / rect.height));
+      state.manualYaw = (state.pointerX - 0.5) * 0.34;
+    }
+
+    function drawRoundedRect(x, y, w, h, r) {
+      const radius = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.arcTo(x + w, y, x + w, y + h, radius);
+      ctx.arcTo(x + w, y + h, x, y + h, radius);
+      ctx.arcTo(x, y + h, x, y, radius);
+      ctx.arcTo(x, y, x + w, y, radius);
+      ctx.closePath();
+    }
+
+    function projectPoint(x, y, depth, yaw) {
+      const focal = Math.min(state.width, state.height) * 0.72;
+      const perspective = focal / (focal + depth * 360);
+      const yawShift = Math.sin(yaw) * focal * (1.15 / Math.max(depth, 0.2));
+      return {
+        x: state.width * 0.5 + x * perspective + yawShift,
+        y: state.height * 0.5 + y * perspective,
+        scale: perspective
+      };
+    }
+
+    function drawGrid(yaw, color, alpha, depth) {
+      const left = -state.width * 0.52;
+      const right = state.width * 0.52;
+      const top = -state.height * 0.34;
+      const bottom = state.height * 0.34;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 12; i += 1) {
+        const x = left + (right - left) * i / 12;
+        const a = projectPoint(x, top, depth, yaw);
+        const b = projectPoint(x, bottom, depth, yaw);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+      for (let i = 0; i <= 8; i += 1) {
+        const y = top + (bottom - top) * i / 8;
+        const a = projectPoint(left, y, depth, yaw);
+        const b = projectPoint(right, y, depth, yaw);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawPanel(yaw, color, alpha, depth, label) {
+      const center = projectPoint(0, -10, depth, yaw);
+      const w = 300 * center.scale;
+      const h = 150 * center.scale;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      drawRoundedRect(center.x - w / 2, center.y - h / 2, w, h, 8);
+      ctx.fillStyle = "rgba(255,255,255,0.055)";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.font = `${Math.max(11, 16 * center.scale)}px Avenir Next, system-ui`;
+      ctx.textAlign = "center";
+      ctx.fillText(label, center.x, center.y - h * 0.18);
+      ctx.fillStyle = "rgba(242,247,241,0.78)";
+      ctx.fillText("depth-sorted target", center.x, center.y + h * 0.18);
+      ctx.restore();
+      return center;
+    }
+
+    function drawForeground(panelLive, panelWarped, handDepth, panelDepth, depthEnabled, mismatch) {
+      const hand = projectPoint((state.pointerX - 0.5) * state.width * 0.82, (state.pointerY - 0.5) * state.height * 0.72, handDepth, state.headYaw);
+      const target = depthEnabled && handDepth > panelDepth ? panelWarped : panelLive;
+      const occluded = depthEnabled && handDepth > panelDepth;
+
+      ctx.save();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = occluded ? "rgba(255,198,90,0.52)" : "rgba(255,127,143,0.85)";
+      ctx.beginPath();
+      ctx.moveTo(hand.x, hand.y);
+      ctx.lineTo(target.x, target.y);
+      ctx.stroke();
+
+      ctx.fillStyle = occluded ? "rgba(255,198,90,0.26)" : "rgba(255,127,143,0.26)";
+      ctx.strokeStyle = occluded ? "rgba(255,198,90,0.95)" : "rgba(255,127,143,0.95)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(hand.x, hand.y, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = occluded ? "#ffc65a" : "#ff7f8f";
+      ctx.font = "12px Avenir Next, system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText(occluded ? "behind panel" : "foreground", hand.x, hand.y + 40);
+
+      ctx.strokeStyle = "rgba(185,162,255,0.75)";
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(panelLive.x, panelLive.y);
+      ctx.lineTo(panelWarped.x, panelWarped.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "rgba(185,162,255,0.86)";
+      ctx.fillText(`${mismatch.toFixed(1)}px`, (panelLive.x + panelWarped.x) / 2, (panelLive.y + panelWarped.y) / 2 - 12);
+      ctx.restore();
+      return { hand, occluded };
+    }
+
+    function drawVectors(yawDelta) {
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      ctx.strokeStyle = "rgba(255,198,90,0.78)";
+      ctx.fillStyle = "rgba(255,198,90,0.78)";
+      ctx.lineWidth = 2;
+      const count = 7;
+      for (let i = 0; i < count; i += 1) {
+        const x = state.width * (0.22 + i * 0.095);
+        const y = state.height * 0.76 + Math.sin(i * 1.3) * 18;
+        const dx = yawDelta * 720 * (0.55 + i / count);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + dx, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x + dx, y);
+        ctx.lineTo(x + dx - Math.sign(dx || 1) * 8, y - 5);
+        ctx.lineTo(x + dx - Math.sign(dx || 1) * 8, y + 5);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function render(time) {
+      requestAnimationFrame(render);
+      updateLabels();
+
+      const renderInterval = 1000 / controlValue("renderRate");
+      const handDepth = controlValue("handDepth") / 100;
+      const panelDepth = controlValue("panelDepth") / 100;
+      const headMotion = controlValue("headMotion") / 100;
+      const warpGain = controlValue("warpGain") / 100;
+      const warpEnabled = buttons.warp.getAttribute("aria-pressed") === "true";
+      const depthEnabled = buttons.depth.getAttribute("aria-pressed") === "true";
+      const vectorsEnabled = buttons.motion.getAttribute("aria-pressed") === "true";
+
+      if (!state.frozen) {
+        state.headYaw = Math.sin(time * 0.00135) * 0.28 * headMotion + state.manualYaw;
+      }
+
+      if (time - state.lastRender > renderInterval) {
+        state.lastRender = time;
+        state.renderedYaw = state.headYaw;
+        state.appFrames += 1;
+      } else {
+        state.synthFrames += 1;
+      }
+
+      const yawDelta = state.headYaw - state.renderedYaw;
+      const warpedYaw = state.renderedYaw + (warpEnabled ? yawDelta * warpGain : 0);
+
+      ctx.clearRect(0, 0, state.width, state.height);
+
+      const gradient = ctx.createRadialGradient(state.width * 0.6, state.height * 0.38, 60, state.width * 0.5, state.height * 0.5, Math.max(state.width, state.height) * 0.76);
+      gradient.addColorStop(0, "#17312d");
+      gradient.addColorStop(0.45, "#0b1b24");
+      gradient.addColorStop(1, "#05080d");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, state.width, state.height);
+
+      drawGrid(state.renderedYaw, "rgba(111,213,255,0.7)", 0.45, panelDepth);
+      drawGrid(warpedYaw, "rgba(123,230,167,0.86)", 0.42, panelDepth);
+      const panelRendered = drawPanel(state.renderedYaw, "#6fd5ff", 0.44, panelDepth, "last app frame");
+      const panelWarped = drawPanel(warpedYaw, "#7be6a7", 0.78, panelDepth, warpEnabled ? "warped estimate" : "warp disabled");
+      const panelLive = drawPanel(state.headYaw, "#f2f7f1", 0.18, panelDepth, "true current pose");
+
+      const mismatch = Math.hypot(panelLive.x - panelWarped.x, panelLive.y - panelWarped.y);
+      const fg = drawForeground(panelLive, panelWarped, handDepth, panelDepth, depthEnabled, mismatch);
+      if (vectorsEnabled) drawVectors(yawDelta);
+
+      metrics.mismatch.textContent = `${mismatch.toFixed(1)}px`;
+      metrics.depth.textContent = fg.occluded ? "panel first" : "foreground";
+      metrics.delta.textContent = `${(yawDelta * 180 / Math.PI).toFixed(1)}deg`;
+      metrics.frames.textContent = `${state.appFrames} / ${state.synthFrames}`;
+    }
+
+    Object.values(controls).forEach((input) => input.addEventListener("input", updateLabels));
+    Object.entries(buttons).forEach(([key, button]) => {
+      button.addEventListener("click", () => {
+        if (key === "freeze") state.frozen = !state.frozen;
+        const next = button.getAttribute("aria-pressed") !== "true";
+        button.setAttribute("aria-pressed", String(next));
+      });
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.dragging = true;
+      canvas.setPointerCapture(event.pointerId);
+      setPointer(event);
+    });
+    canvas.addEventListener("pointermove", (event) => {
+      if (state.dragging) setPointer(event);
+    });
+    canvas.addEventListener("pointerup", (event) => {
+      state.dragging = false;
+      canvas.releasePointerCapture(event.pointerId);
+    });
+    canvas.addEventListener("pointercancel", () => {
+      state.dragging = false;
+    });
+
+    window.addEventListener("resize", resize);
+    resize();
+    updateLabels();
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>

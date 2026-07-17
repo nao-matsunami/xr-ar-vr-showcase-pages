@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>補正された投影とライブ前景のズレを測る | 2026-07-17</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.17</p>
+      <h1>補正された投影とライブ前景のズレを測る</h1>
+      <p class="hero-subtitle">Measuring mismatch between warped projection and live foreground layers</p>
+      <p>WebXR Layers API の depth sorting と Space Warp、Immersive Web の Input Selection Space Warp sample を確認し、今日は補正済み projection layer と未補正の前景 pointer/hand layer のスクリーン位置・奥行き判定のズレを観察する自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing depth sorting and Space Warp in the WebXR Layers API plus the Immersive Web Input Selection Space Warp sample, today's original HTML sample visualizes screen-space and depth-order mismatch between a compensated projection layer and an uncompensated foreground pointer/hand layer.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-17_html_foreground_warp_mismatch_scope.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-16.html">← 2026.07.16</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Foreground Warp Mismatch Scope</h3>
+              <p>A headset-free sketch of a compensated projection layer under a live foreground pointer. Drag the canvas to steer the foreground ray and watch the alignment error change.</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-17_html_foreground_warp_mismatch_scope.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Layers API Level 1 の 2026-06-12 版 Editor's Draft は composition layer の利点として、compositor frame rate での提示、再投影、低遅延、可読性、電力効率を整理している。</span>
+              <span class="en-copy">The WebXR Layers API Level 1 Editor's Draft dated 2026-06-12 frames composition layers around compositor-rate presentation, reprojection, lower latency, legibility, and power efficiency.</span>
+            </li>
+          
+            <li>
+              <span>同仕様では XRProjectionLayer が全視野を埋める layer とされ、fixedFoveation、ignoreDepthValues、deltaPose などが depth と補間の設計点になる。</span>
+              <span class="en-copy">The same specification defines XRProjectionLayer as a full-view layer, with fixedFoveation, ignoreDepthValues, and deltaPose becoming important design points for depth and synthesis.</span>
+            </li>
+          
+            <li>
+              <span>Depth sorting between layers は projection layer、quad/cylinder/media layer、前景 input 表現を同時に扱うときの破綻点になりやすく、どの layer の depth を compositor が信用するかが重要になる。</span>
+              <span class="en-copy">Depth sorting between layers is a likely failure point when projection layers, quad/cylinder/media layers, and foreground input visualization are composed together.</span>
+            </li>
+          
+            <li>
+              <span>Space Warp では projection layer に color だけでなく motion vector や depth が絡むため、前景 pointer や hand mesh が別タイミングで更新されると、背景だけが補正されて相対位置がずれる可能性がある。</span>
+              <span class="en-copy">Space Warp can involve color, motion vectors, and depth for projection layers, so foreground pointers or hand meshes updated on another schedule can drift relative to a compensated background.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の Input Selection Space Warp sample は、入力イベントと projection layer、Space Warp、motion vector、depth を組み合わせる実装例として、今日の前景レイヤー観察のよい参照になる。</span>
+              <span class="en-copy">The Immersive Web Input Selection Space Warp sample is a useful implementation reference because it combines input events with a projection layer, Space Warp, motion vectors, and depth.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は Immersive Web の Input Selection Space Warp sample です。入力イベント、projection layer、Space Warp、motion vector、depth を同時に扱う点が面白く、昨日の deltaPose 風サンプルを一段進めて『背景だけが補正され、手前の入力表現はライブ更新される』状況を考えるきっかけになります。実機ではこの差が小さく抑えられるべきですが、UI の hit target、手の前後関係、ポインタの接地点には違和感として現れやすいはずです。</p>
+          <p class="en-copy">Today's notable reference is the Immersive Web Input Selection Space Warp sample. It is interesting because it combines input events, a projection layer, Space Warp, motion vectors, and depth. It extends yesterday's deltaPose-style idea toward the situation where a background is compensated while foreground input visualization remains live. On actual devices this difference should be minimized, but it can show up as discomfort around UI hit targets, hand ordering, and pointer contact points.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://chromium.googlesource.com/external/github.com/immersive-web/webxr-samples/+/733150e0057a53c112e8cb3bb07dc75821d4f34b/layers-samples/input-selection-spacewarp.html" target="_blank" rel="noreferrer">Immersive Web: Input Selection Space Warp source</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web Layers Samples</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>背景の projection layer は cyan の最後に app が描いた pose と green の補正 pose で表示し、前景の pointer/hand layer は rose で毎フレーム現在 pose に合わせます。ユーザーがドラッグすると前景 ray が動き、Render rate や Warp gain を下げると green の補正位置と white の現在 pose のズレが広がります。空間 UI の接地点が『見た目は当たっているのに depth 判定はずれる』状態を短時間で確認できます。</p>
+          <p class="en-copy">The background projection layer is shown as cyan for the last app-rendered pose and green for the compensated pose, while the foreground pointer/hand layer is drawn in rose at the current pose every frame. Dragging moves the foreground ray, and lowering render rate or warp gain increases the gap between the green compensated position and the white current pose. This makes it quick to inspect cases where a spatial UI contact point appears aligned but depth judgment disagrees.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-17_html_foreground_warp_mismatch_scope.html" target="_blank" rel="noreferrer">Open today's sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では `XRProjectionLayer.deltaPose`、`ignoreDepthValues`、Space Warp 用の `motionVectorTexture` / `depthStencilTexture` の有無、そして `XRSession.updateRenderState({ layers })` の layer 順序を一緒に見る必要があります。前景 pointer を projection layer 内に描くのか、別の quad/cylinder layer や通常 scene geometry として扱うのかで、補間・depth sorting・hit test の基準が変わります。今日のサンプルはその判断を HMD なしで試すため、panel depth と hand depth をスライダー化しました。</p>
+          <p class="en-copy">A real implementation should consider `XRProjectionLayer.deltaPose`, `ignoreDepthValues`, the availability of Space Warp `motionVectorTexture` / `depthStencilTexture`, and layer ordering via `XRSession.updateRenderState({ layers })` together. The interpolation, depth sorting, and hit-test basis changes depending on whether the foreground pointer is drawn inside the projection layer, as another quad/cylinder layer, or as ordinary scene geometry. Today's sample exposes panel depth and hand depth as sliders to explore that decision without a headset.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRProjectionLayer" target="_blank" rel="noreferrer">MDN: XRProjectionLayer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>次は WebXR WebGPU Binding と Layers / Depth の接続、または手入力の関節メッシュを foreground layer として扱う場合の実装パターンを見たいです。特に depth texture を compositor に渡す path と、アプリ側の hit test / reticle 表示が同じ depth 前提で動いているかを確認したいです。</p>
+          <p class="en-copy">Next, it is worth watching WebXR WebGPU Binding connections to Layers / Depth, or implementation patterns for treating hand-joint meshes as foreground layers. The key question is whether the path that submits depth textures to the compositor and the app-side hit-test / reticle visualization share the same depth assumptions.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/#space-warp" target="_blank" rel="noreferrer">WebXR Layers API: Space warp</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Foreground Warp Mismatch Scope` を開き、Render rate を 8Hz 付近、Warp gain を 0.4 付近まで下げてから canvas を左右にドラッグしてください。Screen mismatch が増え、rose の前景 pointer と green の補正済み panel の接地点が離れます。Hand depth を Panel depth より奥にすると depth decision が `panel first` に切り替わり、前後関係の違和感も観察できます。</p>
+          <p class="en-copy">Open Foreground Warp Mismatch Scope, lower Render rate near 8 Hz and Warp gain near 0.4, then drag the canvas left and right. Screen mismatch increases and the rose foreground pointer separates from the green compensated panel contact point. Moving Hand depth behind Panel depth switches the depth decision to `panel first`, making ordering problems visible too.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-17_html_foreground_warp_mismatch_scope.html" target="_blank" rel="noreferrer">Open Foreground Warp Mismatch Scope</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Layers API の introduction、XRProjectionLayer、depth sorting、Space Warp、MDN XRProjectionLayer、Immersive Web Layers Samples を確認。アイデア: 補正済み projection layer と live foreground input のズレを HMD なしで観察する。実装: render rate、warp gain、hand depth、panel depth、head motion、depth toggle、motion vector toggle、freeze を持つ canvas サンプルを作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。</p>
+          <p class="en-copy">Research: reviewed the WebXR Layers API introduction, XRProjectionLayer, depth sorting, Space Warp, MDN XRProjectionLayer, and Immersive Web Layers Samples. Idea: observe mismatch between a compensated projection layer and live foreground input without a headset. Implementation: built a canvas sample with render rate, warp gain, hand depth, panel depth, head motion, depth toggle, motion-vector toggle, and freeze. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion、lighting estimation、hand input、layer + hand/depth、曲面 layer、360 media + annotation、static layer redraw、deltaPose / Space Warp、そして今日の foreground mismatch です。空間体験の主要な不具合は、個別機能そのものより、機能を重ねたときの座標・depth・更新頻度の不一致に現れます。今日のサンプルは、その合成面のズレを明示的に測るための足場です。</p>
+          <p class="en-copy">The sequence so far is depth HUD, hit test and anchors, depth occlusion, lighting estimation, hand input, layer plus hand/depth, curved layers, 360 media plus annotations, static layer redraw, deltaPose / Space Warp, and today's foreground mismatch. Major spatial-experience defects often appear less in individual features than in coordinate, depth, and update-rate disagreement when features are combined. Today's sample is a foothold for explicitly measuring that composition mismatch.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Foreground Warp Mismatch Scope` です。projection layer の低頻度描画と Space Warp 風補正、live foreground pointer、depth ordering を一画面にまとめ、Screen mismatch、deltaPose yaw、depth decision、app/synth frame count を読み取れるようにしました。次に発展させるなら、手の 25 joint skeleton を前景として戻し、指先だけ補正 projection layer と別 depth で判定するモードを追加します。</p>
+          <p class="en-copy">The selected prototype is Foreground Warp Mismatch Scope. It combines low-rate projection rendering, Space Warp-style compensation, a live foreground pointer, and depth ordering in one screen, exposing screen mismatch, deltaPose yaw, depth decision, and app/synth frame count. A natural next step is bringing back the 25-joint hand skeleton as the foreground and adding a mode where only the fingertip is tested against a differently compensated projection layer.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-17_html_foreground_warp_mismatch_scope.html" target="_blank" rel="noreferrer">Today's sample: Foreground Warp Mismatch Scope</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/#depth-sorting-between-layers" target="_blank" rel="noreferrer">WebXR Layers API: Depth sorting between layers</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/#space-warp" target="_blank" rel="noreferrer">WebXR Layers API: Space warp</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRProjectionLayer" target="_blank" rel="noreferrer">MDN: XRProjectionLayer</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web Layers Samples</a></li>
+          
+            <li><a href="https://chromium.googlesource.com/external/github.com/immersive-web/webxr-samples/+/733150e0057a53c112e8cb3bb07dc75821d4f34b/layers-samples/input-selection-spacewarp.html" target="_blank" rel="noreferrer">Immersive Web: Input Selection Space Warp source</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-17_html_foreground_warp_mismatch_scope.html" loading="lazy" title="Foreground Warp Mismatch Scope"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
