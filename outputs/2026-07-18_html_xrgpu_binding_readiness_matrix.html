@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XRGPUBinding Readiness Matrix</title>
+  <style>
+    :root {
+      --bg: #08100f;
+      --ink: #edf6ed;
+      --muted: #9fb2a9;
+      --panel: rgba(10, 22, 20, 0.84);
+      --line: rgba(178, 220, 204, 0.24);
+      --mint: #78e7ae;
+      --cyan: #69cfff;
+      --amber: #ffd36d;
+      --rose: #ff7d96;
+      --steel: #a9bbff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Avenir Next", "Hiragino Sans", system-ui, sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .hud,
+    .readout {
+      position: fixed;
+      z-index: 3;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.44);
+      backdrop-filter: blur(18px) saturate(130%);
+    }
+
+    .hud {
+      top: 16px;
+      left: 16px;
+      width: min(560px, calc(100vw - 32px));
+      padding: 16px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 14px;
+      margin-top: 14px;
+    }
+
+    .control {
+      display: grid;
+      grid-template-columns: 116px 1fr 54px;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .wide { grid-column: 1 / -1; }
+
+    input[type="range"],
+    select {
+      width: 100%;
+      accent-color: var(--mint);
+    }
+
+    select {
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--ink);
+      padding: 0 8px;
+    }
+
+    .value {
+      color: var(--ink);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+      color: var(--ink);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(120, 231, 174, 0.9);
+      background: rgba(120, 231, 174, 0.16);
+      box-shadow: 0 0 22px rgba(120, 231, 174, 0.18) inset;
+    }
+
+    .readout {
+      right: 18px;
+      bottom: 18px;
+      width: min(460px, calc(100vw - 36px));
+      padding: 14px;
+      pointer-events: none;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .cell {
+      min-height: 56px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .metric {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 3;
+      max-width: calc(100vw - 36px);
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(10, 22, 20, 0.72);
+      color: var(--muted);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 760px) {
+      .hud {
+        top: 10px;
+        left: 10px;
+        width: calc(100vw - 20px);
+        padding: 12px;
+      }
+
+      h1 { font-size: 15px; }
+
+      .controls { grid-template-columns: 1fr; }
+
+      .control {
+        grid-template-columns: 102px 1fr 48px;
+        font-size: 10px;
+      }
+
+      .chips { grid-template-columns: repeat(2, 1fr); }
+
+      button {
+        min-height: 34px;
+        font-size: 10px;
+      }
+
+      .readout {
+        right: 10px;
+        bottom: 10px;
+        width: calc(100vw - 20px);
+        padding: 10px;
+      }
+
+      .hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="XRGPUBinding readiness visualizer"></canvas>
+
+  <section class="hud" aria-label="controls">
+    <h1>XRGPUBinding Readiness Matrix</h1>
+    <p>
+      A headset-free probe for the WebXR + WebGPU handoff: browser capabilities,
+      projection-layer texture format, depth path, and compositor cost are shown as a moving pipeline.
+    </p>
+
+    <div class="controls">
+      <label class="control">
+        Foveation
+        <input id="foveation" type="range" min="0" max="1" step="0.01" value="0.38">
+        <span id="foveationValue" class="value">0.38</span>
+      </label>
+      <label class="control">
+        Depth bits
+        <input id="depthBits" type="range" min="16" max="32" step="8" value="24">
+        <span id="depthBitsValue" class="value">24</span>
+      </label>
+      <label class="control">
+        Layer count
+        <input id="layerCount" type="range" min="1" max="5" step="1" value="3">
+        <span id="layerCountValue" class="value">3</span>
+      </label>
+      <label class="control">
+        Eye scale
+        <input id="eyeScale" type="range" min="0.5" max="1.5" step="0.01" value="1">
+        <span id="eyeScaleValue" class="value">1.00</span>
+      </label>
+      <label class="control wide">
+        Format
+        <select id="format">
+          <option value="bgra8unorm">bgra8unorm</option>
+          <option value="rgba8unorm">rgba8unorm</option>
+          <option value="rgba16float">rgba16float</option>
+        </select>
+        <span id="formatValue" class="value">LDR</span>
+      </label>
+    </div>
+
+    <div class="chips" aria-label="scenario presets">
+      <button type="button" data-mode="webgpu" aria-pressed="true">WebGPU</button>
+      <button type="button" data-mode="fallback" aria-pressed="false">Fallback</button>
+      <button type="button" data-mode="stress" aria-pressed="false">Stress</button>
+      <button type="button" data-mode="mobile" aria-pressed="false">Mobile</button>
+    </div>
+  </section>
+
+  <section class="readout" aria-label="metrics">
+    <p id="supportLine">Checking browser capability...</p>
+    <div class="readout-grid">
+      <div class="cell">
+        <span class="label">GPU path</span>
+        <span id="gpuPath" class="metric">probing</span>
+      </div>
+      <div class="cell">
+        <span class="label">XR path</span>
+        <span id="xrPath" class="metric">probing</span>
+      </div>
+      <div class="cell">
+        <span class="label">Frame budget</span>
+        <span id="budget" class="metric">0.0 ms</span>
+      </div>
+      <div class="cell">
+        <span class="label">Readiness</span>
+        <span id="readiness" class="metric">0%</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="hint">Drag to move the gaze point. Change format and foveation to see texture pressure shift.</div>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      foveation: document.getElementById("foveation"),
+      depthBits: document.getElementById("depthBits"),
+      layerCount: document.getElementById("layerCount"),
+      eyeScale: document.getElementById("eyeScale"),
+      format: document.getElementById("format")
+    };
+    const labels = {
+      foveation: document.getElementById("foveationValue"),
+      depthBits: document.getElementById("depthBitsValue"),
+      layerCount: document.getElementById("layerCountValue"),
+      eyeScale: document.getElementById("eyeScaleValue"),
+      format: document.getElementById("formatValue"),
+      supportLine: document.getElementById("supportLine"),
+      gpuPath: document.getElementById("gpuPath"),
+      xrPath: document.getElementById("xrPath"),
+      budget: document.getElementById("budget"),
+      readiness: document.getElementById("readiness")
+    };
+
+    const state = {
+      mode: "webgpu",
+      pointer: { x: 0.54, y: 0.53 },
+      dragging: false,
+      dpr: 1,
+      time: 0,
+      support: {
+        webgpu: false,
+        adapter: "unknown",
+        xr: false,
+        xrgpu: false
+      }
+    };
+
+    const steps = [
+      { name: "Browser", key: "webgpu", color: "#69cfff" },
+      { name: "XRSession", key: "xr", color: "#a9bbff" },
+      { name: "XRGPUBinding", key: "xrgpu", color: "#78e7ae" },
+      { name: "Projection", key: "projection", color: "#ffd36d" },
+      { name: "Compositor", key: "compositor", color: "#ff7d96" }
+    ];
+
+    function resize() {
+      state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(innerWidth * state.dpr);
+      canvas.height = Math.floor(innerHeight * state.dpr);
+      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function updateLabels() {
+      labels.foveation.textContent = Number(controls.foveation.value).toFixed(2);
+      labels.depthBits.textContent = controls.depthBits.value;
+      labels.layerCount.textContent = controls.layerCount.value;
+      labels.eyeScale.textContent = Number(controls.eyeScale.value).toFixed(2);
+      labels.format.textContent = controls.format.value === "rgba16float" ? "HDR" : "LDR";
+    }
+
+    async function probeSupport() {
+      state.support.webgpu = "gpu" in navigator;
+      state.support.xr = "xr" in navigator;
+      state.support.xrgpu = "XRGPUBinding" in window;
+
+      if (state.support.webgpu) {
+        try {
+          const adapter = await navigator.gpu.requestAdapter();
+          state.support.adapter = adapter?.info?.architecture || adapter?.info?.vendor || "adapter ready";
+        } catch {
+          state.support.adapter = "adapter blocked";
+          state.support.webgpu = false;
+        }
+      }
+    }
+
+    function scenarioStatus(step) {
+      if (state.mode === "fallback") {
+        return step.key === "webgpu" || step.key === "xrgpu" ? 0.25 : 0.68;
+      }
+      if (state.mode === "mobile") {
+        if (step.key === "xrgpu") return state.support.xrgpu ? 0.75 : 0.38;
+        if (step.key === "projection") return 0.7;
+        return 0.62;
+      }
+      if (state.mode === "stress") {
+        return step.key === "compositor" ? 0.45 : 0.7;
+      }
+      if (step.key === "webgpu") return state.support.webgpu ? 1 : 0.34;
+      if (step.key === "xr") return state.support.xr ? 0.86 : 0.4;
+      if (step.key === "xrgpu") return state.support.xrgpu ? 0.92 : 0.46;
+      return 0.82;
+    }
+
+    function computeMetrics() {
+      const foveation = Number(controls.foveation.value);
+      const depth = Number(controls.depthBits.value);
+      const layers = Number(controls.layerCount.value);
+      const scale = Number(controls.eyeScale.value);
+      const formatWeight = controls.format.value === "rgba16float" ? 1.72 : 1;
+      const modeWeight = state.mode === "stress" ? 1.45 : state.mode === "mobile" ? 0.86 : state.mode === "fallback" ? 1.18 : 1;
+      const texturePressure = formatWeight * layers * scale * scale * (1 - foveation * 0.42);
+      const depthPressure = layers * (depth / 24) * 0.55;
+      const budget = 3.6 + texturePressure * 1.25 + depthPressure * modeWeight;
+      const capability = steps.reduce((sum, step) => sum + scenarioStatus(step), 0) / steps.length;
+      const readiness = clamp((capability * 0.78 + (1 - clamp((budget - 7) / 11, 0, 1)) * 0.22) * 100, 0, 100);
+      return { foveation, depth, layers, scale, formatWeight, texturePressure, budget, readiness };
+    }
+
+    function drawRoundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function drawBackground(w, h, metrics) {
+      ctx.fillStyle = "#08100f";
+      ctx.fillRect(0, 0, w, h);
+
+      const cx = w * state.pointer.x;
+      const cy = h * state.pointer.y;
+      const grid = 46;
+      ctx.strokeStyle = "rgba(178, 220, 204, 0.11)";
+      ctx.lineWidth = 1;
+      for (let x = -grid; x < w + grid; x += grid) {
+        const warp = Math.sin((x * 0.01) + state.time) * 8 * (1 - metrics.foveation);
+        ctx.beginPath();
+        ctx.moveTo(x + warp, 0);
+        ctx.lineTo(x - warp, h);
+        ctx.stroke();
+      }
+      for (let y = -grid; y < h + grid; y += grid) {
+        const warp = Math.cos((y * 0.012) - state.time) * 7 * (1 - metrics.foveation);
+        ctx.beginPath();
+        ctx.moveTo(0, y + warp);
+        ctx.lineTo(w, y - warp);
+        ctx.stroke();
+      }
+
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * 0.68);
+      grad.addColorStop(0, "rgba(120, 231, 174, 0.18)");
+      grad.addColorStop(0.32, "rgba(105, 207, 255, 0.08)");
+      grad.addColorStop(1, "rgba(8, 16, 15, 0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    function drawPipeline(w, h, metrics) {
+      const top = clamp(h * 0.36, 210, h - 250);
+      const left = Math.max(22, w * 0.08);
+      const usable = w - left * 2;
+      const cardW = clamp(usable / steps.length - 18, 118, 190);
+      const gap = (usable - cardW * steps.length) / Math.max(1, steps.length - 1);
+
+      steps.forEach((step, index) => {
+        const x = left + index * (cardW + gap);
+        const status = scenarioStatus(step);
+        const y = top + Math.sin(state.time * 1.4 + index) * 6;
+        drawRoundRect(x, y, cardW, 128, 8);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.055)";
+        ctx.fill();
+        ctx.strokeStyle = `rgba(178, 220, 204, ${0.25 + status * 0.45})`;
+        ctx.stroke();
+
+        ctx.fillStyle = step.color;
+        ctx.globalAlpha = 0.2 + status * 0.7;
+        ctx.beginPath();
+        ctx.arc(x + 24, y + 28, 9 + status * 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        ctx.fillStyle = "#edf6ed";
+        ctx.font = "700 13px Avenir Next, system-ui, sans-serif";
+        ctx.fillText(step.name, x + 16, y + 62);
+        ctx.fillStyle = "#9fb2a9";
+        ctx.font = "11px Avenir Next, system-ui, sans-serif";
+        const statusText = status > 0.85 ? "ready" : status > 0.6 ? "probable" : status > 0.4 ? "partial" : "fallback";
+        ctx.fillText(statusText, x + 16, y + 82);
+
+        const barW = (cardW - 32) * status;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+        ctx.fillRect(x + 16, y + 100, cardW - 32, 8);
+        ctx.fillStyle = step.color;
+        ctx.fillRect(x + 16, y + 100, barW, 8);
+
+        if (index < steps.length - 1) {
+          const ax = x + cardW + 4;
+          const bx = x + cardW + gap - 6;
+          const ay = y + 64;
+          ctx.strokeStyle = `rgba(120, 231, 174, ${0.2 + status * 0.45})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(bx, ay);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(bx - 8, ay - 5);
+          ctx.lineTo(bx, ay);
+          ctx.lineTo(bx - 8, ay + 5);
+          ctx.stroke();
+        }
+      });
+    }
+
+    function drawTextureStack(w, h, metrics) {
+      const cx = w * state.pointer.x;
+      const cy = h * state.pointer.y;
+      const baseW = clamp(w * 0.34 * metrics.scale, 190, 470);
+      const baseH = baseW * 0.56;
+
+      for (let i = 0; i < metrics.layers; i += 1) {
+        const depth = i / Math.max(1, metrics.layers - 1);
+        const x = cx - baseW / 2 + i * 18 - metrics.foveation * 24;
+        const y = cy - baseH / 2 + i * 16;
+        const alpha = 0.2 + (1 - depth) * 0.24;
+        drawRoundRect(x, y, baseW, baseH, 8);
+        ctx.fillStyle = `rgba(105, 207, 255, ${alpha})`;
+        ctx.fill();
+        ctx.strokeStyle = i === 0 ? "rgba(255, 211, 109, 0.9)" : "rgba(178, 220, 204, 0.32)";
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(237, 246, 237, 0.9)";
+        ctx.font = "700 12px Avenir Next, system-ui, sans-serif";
+        ctx.fillText(i === 0 ? "XRProjectionLayer color" : `composition layer ${i + 1}`, x + 14, y + 24);
+        ctx.fillStyle = "rgba(159, 178, 169, 0.92)";
+        ctx.font = "11px Avenir Next, system-ui, sans-serif";
+        ctx.fillText(`${controls.format.value} / depth ${metrics.depth}`, x + 14, y + 43);
+      }
+
+      ctx.strokeStyle = "rgba(255, 125, 150, 0.9)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx - 30, cy);
+      ctx.lineTo(cx + 30, cy);
+      ctx.moveTo(cx, cy - 30);
+      ctx.lineTo(cx, cy + 30);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+    }
+
+    function drawBudget(w, h, metrics) {
+      const x = Math.max(20, w - 320);
+      const y = clamp(h * 0.23, 140, h - 260);
+      const rows = [
+        ["color texture", metrics.texturePressure * 1.1, "#69cfff"],
+        ["depth stencil", metrics.depth / 32 * metrics.layers, "#ffd36d"],
+        ["compositor", metrics.budget / 12, "#78e7ae"],
+        ["copy risk", controls.format.value === "rgba16float" ? 0.8 : 0.38, "#ff7d96"]
+      ];
+
+      drawRoundRect(x, y, 278, 144, 8);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.055)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(178, 220, 204, 0.24)";
+      ctx.stroke();
+      ctx.fillStyle = "#edf6ed";
+      ctx.font = "700 13px Avenir Next, system-ui, sans-serif";
+      ctx.fillText("Texture pressure", x + 14, y + 24);
+
+      rows.forEach((row, i) => {
+        const yy = y + 46 + i * 22;
+        const amount = clamp(row[1], 0, 1);
+        ctx.fillStyle = "#9fb2a9";
+        ctx.font = "11px Avenir Next, system-ui, sans-serif";
+        ctx.fillText(row[0], x + 14, yy);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+        ctx.fillRect(x + 118, yy - 9, 132, 8);
+        ctx.fillStyle = row[2];
+        ctx.fillRect(x + 118, yy - 9, 132 * amount, 8);
+      });
+    }
+
+    function render(now) {
+      state.time = now * 0.001;
+      updateLabels();
+      const metrics = computeMetrics();
+      const w = innerWidth;
+      const h = innerHeight;
+
+      drawBackground(w, h, metrics);
+      drawTextureStack(w, h, metrics);
+      drawPipeline(w, h, metrics);
+      drawBudget(w, h, metrics);
+
+      labels.gpuPath.textContent = state.support.webgpu ? `WebGPU ${state.support.adapter}` : "WebGPU unavailable";
+      labels.xrPath.textContent = state.support.xrgpu ? "XRGPUBinding present" : state.support.xr ? "WebXR only" : "inline only";
+      labels.budget.textContent = `${metrics.budget.toFixed(1)} ms`;
+      labels.readiness.textContent = `${Math.round(metrics.readiness)}%`;
+      labels.supportLine.textContent = `Mode: ${state.mode}. ${state.support.webgpu ? "navigator.gpu detected" : "navigator.gpu not detected"}; ${state.support.xrgpu ? "XRGPUBinding detected" : "XRGPUBinding not detected"}.`;
+
+      requestAnimationFrame(render);
+    }
+
+    function setPointer(event) {
+      const rect = canvas.getBoundingClientRect();
+      state.pointer.x = clamp((event.clientX - rect.left) / rect.width, 0.08, 0.92);
+      state.pointer.y = clamp((event.clientY - rect.top) / rect.height, 0.18, 0.82);
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.dragging = true;
+      canvas.setPointerCapture(event.pointerId);
+      setPointer(event);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (state.dragging) setPointer(event);
+    });
+
+    function endDrag(event) {
+      state.dragging = false;
+      if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    }
+
+    canvas.addEventListener("pointerup", endDrag);
+    canvas.addEventListener("pointercancel", endDrag);
+
+    document.querySelectorAll("button[data-mode]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.mode = button.dataset.mode;
+        document.querySelectorAll("button[data-mode]").forEach((item) => {
+          item.setAttribute("aria-pressed", String(item === button));
+        });
+        if (state.mode === "stress") {
+          controls.layerCount.value = 5;
+          controls.eyeScale.value = 1.28;
+          controls.format.value = "rgba16float";
+        } else if (state.mode === "mobile") {
+          controls.layerCount.value = 2;
+          controls.eyeScale.value = 0.82;
+          controls.foveation.value = 0.62;
+        } else if (state.mode === "fallback") {
+          controls.layerCount.value = 3;
+          controls.eyeScale.value = 0.92;
+          controls.format.value = "rgba8unorm";
+        }
+      });
+    });
+
+    addEventListener("resize", resize);
+    resize();
+    probeSupport();
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>

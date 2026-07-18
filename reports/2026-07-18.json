@@ -1,0 +1,131 @@
+{
+  "date": "2026-07-18",
+  "headline": "WebXR と WebGPU の接続準備を一画面で測る",
+  "headlineEn": "Measuring WebXR and WebGPU binding readiness in one screen",
+  "summary": "WebXR Device API の 2026-03-16 Candidate Recommendation Draft、WebXR Layers API Level 1 の 2026-06-12 Editor's Draft、Immersive Web の WebGPU samples を確認し、今日は XRGPUBinding と projection layer の導入準備を HMD なしで観察する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Device API Candidate Recommendation Draft dated 2026-03-16, the WebXR Layers API Level 1 Editor's Draft dated 2026-06-12, and the Immersive Web WebGPU samples, today's original HTML sample visualizes XRGPUBinding and projection-layer readiness without requiring a headset.",
+  "keyTopics": [
+    "WebXR Device API の最新公開版は 2026-03-16 の Candidate Recommendation Draft で、VR/AR デバイスへの入力・出力、session、frame loop、pose、input source の基礎を定義している。",
+    "WebXR Layers API Level 1 の 2026-06-12 Editor's Draft は、composition layer の利点として compositor frame rate、再投影、可読性、電力効率、低遅延を整理している。",
+    "同 Layers API では XRProjectionLayer が全視野 layer として定義され、fixedFoveation、deltaPose、depthStencilTexture、motionVectorTexture が描画品質と補間の判断点になる。",
+    "Immersive Web の WebGPU samples には XRGPUBinding と XRProjectionLayer を使う immersive VR / AR の例が並び、WebGL とは別の描画経路を試す入口になっている。",
+    "ImmersiveWeb.dev の対応表では WebXR/WebGPU Bindings は未対応扱いのままで、現時点では実装状況の確認 UI と graceful fallback が重要になる。"
+  ],
+  "keyTopicsEn": [
+    "The latest published WebXR Device API is the Candidate Recommendation Draft dated 2026-03-16, defining the basics of input, output, sessions, frame loops, poses, and input sources for VR/AR devices.",
+    "The WebXR Layers API Level 1 Editor's Draft dated 2026-06-12 frames composition layers around compositor frame rate, reprojection, legibility, power efficiency, and low latency.",
+    "In the Layers API, XRProjectionLayer is the full-view layer, with fixedFoveation, deltaPose, depthStencilTexture, and motionVectorTexture becoming important quality and synthesis decisions.",
+    "The Immersive Web WebGPU samples include immersive VR / AR examples using XRGPUBinding and XRProjectionLayer, making them a practical entry point for the WebGPU rendering path.",
+    "ImmersiveWeb.dev still marks WebXR/WebGPU Bindings as unsupported, so capability checks and graceful fallback remain central design work."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: XRGPUBinding Readiness Matrix",
+      "url": "../outputs/2026-07-18_html_xrgpu_binding_readiness_matrix.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "Immersive Web: WebGPU Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+    },
+    {
+      "label": "Immersive Web overview",
+      "url": "https://immersiveweb.dev/"
+    },
+    {
+      "label": "WebXR/WebGPU Binding GitHub issue: texture formats",
+      "url": "https://github.com/immersive-web/WebXR-WebGPU-Binding/issues/10"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は Immersive Web の WebGPU samples です。WebXR の immersive VR / AR session を WebGPU 経由で描画し、XRGPUBinding と XRProjectionLayer を使う例が用意されています。前日まで見てきた Space Warp、depth、foreground layer の話は WebGL 前提でも考えられますが、WebGPU 経路では texture format、depth attachment、描画負荷、対応ブラウザの判定をより明示的に扱う必要があります。",
+      "bodyEn": "Today's notable reference is the Immersive Web WebGPU samples. They include immersive VR / AR sessions rendered through WebGPU using XRGPUBinding and XRProjectionLayer. The Space Warp, depth, and foreground-layer questions from previous days can be reasoned about in WebGL too, but the WebGPU path makes texture format, depth attachments, rendering pressure, and browser capability checks more explicit.",
+      "links": [
+        {
+          "label": "Immersive Web: WebGPU Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "ブラウザ、XRSession、XRGPUBinding、Projection、Compositor を横並びの pipeline として描き、各段階の readiness を色とバーで見せます。ユーザーは gaze point をドラッグし、texture format、foveation、depth bits、layer count、eye scale を変えることで、WebGPU 経路でどこに圧力が寄るかを観察できます。WebGPU が未検出でも UI は動き、fallback として設計判断を試せるようにしました。",
+      "bodyEn": "The sample draws Browser, XRSession, XRGPUBinding, Projection, and Compositor as a horizontal pipeline, using color and bars to show readiness at each stage. Users can drag the gaze point and change texture format, foveation, depth bits, layer count, and eye scale to inspect where pressure moves in a WebGPU path. Even when WebGPU is not detected, the UI still runs as a fallback design probe.",
+      "links": [
+        {
+          "label": "Open today's sample",
+          "url": "../outputs/2026-07-18_html_xrgpu_binding_readiness_matrix.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は `navigator.gpu`、`navigator.xr`、`XRGPUBinding` の有無を別々に見ます。WebGPU があるだけでは WebXR に WebGPU texture を渡せるとは限らず、XRGPUBinding と XRProjectionLayer を使う path が必要です。texture format は `bgra8unorm` / `rgba8unorm` / `rgba16float` の議論があり、HDR や copy cost、runtime の native support を見ながら選ぶことになります。",
+      "bodyEn": "A practical implementation should check `navigator.gpu`, `navigator.xr`, and `XRGPUBinding` separately. Having WebGPU does not necessarily mean WebGPU textures can be submitted to WebXR; the XRGPUBinding and XRProjectionLayer path is needed. Texture format discussions around `bgra8unorm`, `rgba8unorm`, and `rgba16float` imply that HDR, copy cost, and native runtime support must be considered together.",
+      "links": [
+        {
+          "label": "WebXR/WebGPU Binding texture format issue",
+          "url": "https://github.com/immersive-web/WebXR-WebGPU-Binding/issues/10"
+        },
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR/WebGPU Binding の仕様化・実装状況、Chromium 系の XRGPUBinding 実装、texture format と depth direction の issue、WebGPU での hand mesh / input selection sample を継続して見ます。次に作るなら、WebGPU 風の compute pass で手の joint confidence や reticle stability を評価するミニ試作がよさそうです。",
+      "bodyEn": "Watch the WebXR/WebGPU Binding specification and implementation status, Chromium-side XRGPUBinding work, texture format and depth direction issues, and WebGPU hand mesh / input selection samples. A good next prototype would simulate a WebGPU-style compute pass that scores hand-joint confidence or reticle stability.",
+      "links": [
+        {
+          "label": "W3C Immersive Web Working Group",
+          "url": "https://immersive-web.github.io/"
+        }
+      ]
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`XRGPUBinding Readiness Matrix` を開き、Stress を押してから Format を `rgba16float`、Layer count を 5、Eye scale を 1.3 付近にしてください。Texture pressure と frame budget が増え、WebGPU 経路で HDR layer や高解像度 projection layer を入れると compositor までの余裕が減ることを確認できます。Mobile preset では foveation を強めた設計の見え方を試せます。",
+      "bodyEn": "Open XRGPUBinding Readiness Matrix, press Stress, set Format to `rgba16float`, Layer count to 5, and Eye scale near 1.3. Texture pressure and frame budget rise, showing how HDR layers or high-resolution projection layers can reduce compositor headroom in a WebGPU path. The Mobile preset lets you inspect a stronger foveation design.",
+      "links": [
+        {
+          "label": "Open XRGPUBinding Readiness Matrix",
+          "url": "../outputs/2026-07-18_html_xrgpu_binding_readiness_matrix.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Device API、WebXR Layers API、Immersive Web WebGPU samples、ImmersiveWeb.dev の対応表、WebXR/WebGPU Binding の texture format issue を確認。アイデア: XRGPUBinding の有無と projection layer の描画負荷を HMD なしで測る。実装: capability probe、pipeline 可視化、texture stack、format/foveation/depth/layer/eye scale controls、scenario preset を持つ canvas サンプルを作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。",
+      "bodyEn": "Research: reviewed the WebXR Device API, WebXR Layers API, Immersive Web WebGPU samples, the ImmersiveWeb.dev support table, and a WebXR/WebGPU Binding texture format issue. Idea: measure XRGPUBinding availability and projection-layer pressure without a headset. Implementation: created a canvas sample with capability probing, pipeline visualization, texture stack, format/foveation/depth/layer/eye scale controls, and scenario presets. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでのサンプルは、奥行き HUD、hit test / anchor、depth occlusion、lighting、hand input、Layers、360 media、redraw、Space Warp、foreground mismatch と進み、今日 WebGPU binding の入口に来ました。体験側の問題は相変わらず『何をどの layer で、どの depth と更新頻度で渡すか』ですが、WebGPU 経路では format と attachment の選択がそのまま品質・遅延・電力に跳ね返ります。",
+      "bodyEn": "The sequence has moved through depth HUD, hit test and anchors, depth occlusion, lighting, hand input, Layers, 360 media, redraw, Space Warp, foreground mismatch, and now the WebGPU binding entry point. The experience-level problem is still what to submit in which layer, with which depth and update cadence, but the WebGPU path makes format and attachment choices directly affect quality, latency, and power."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `XRGPUBinding Readiness Matrix` です。実ブラウザの `navigator.gpu` / `navigator.xr` / `XRGPUBinding` を確認しつつ、WebGPU がない環境でも texture pressure、frame budget、readiness を操作できるようにしました。次に発展させるなら、WebGPU compute pass 風の joint confidence filter を足し、手入力と projection layer の depth / format 設計を同じ画面で比べます。",
+      "bodyEn": "The selected prototype is XRGPUBinding Readiness Matrix. It checks real `navigator.gpu`, `navigator.xr`, and `XRGPUBinding` availability while still allowing texture pressure, frame budget, and readiness to be manipulated without WebGPU support. A natural extension is adding a WebGPU compute-pass-style joint confidence filter and comparing hand input with projection-layer depth / format design in the same screen."
+    }
+  ]
+}
