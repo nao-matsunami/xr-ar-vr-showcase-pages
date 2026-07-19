@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>手関節入力の信頼度を compute pass 風に整える | 2026-07-19</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.19</p>
+      <h1>手関節入力の信頼度を compute pass 風に整える</h1>
+      <p class="hero-subtitle">Filtering hand-joint confidence like a compute pass</p>
+      <p>WebXR Hand Input Module、MDN XRJointSpace、Immersive Web の WebGPU samples、WebXR Layers API を確認し、今日は 25 joint の欠損・jitter・depth mismatch を HMD なしで観察できる自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the WebXR Hand Input Module, MDN XRJointSpace, Immersive Web WebGPU samples, and the WebXR Layers API, today's original HTML sample visualizes 25-joint dropout, jitter, and depth mismatch without requiring a headset.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-19_html_hand_confidence_compute_filter.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-18.html">← 2026.07.18</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Hand Confidence Compute Filter</h3>
+              <p>25 joint hand input を想定し、欠損・jitter・depth mismatch を compute pass 風に平滑化して、XR layer へ渡す前の信頼度を観察する最小サンプルです。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-19_html_hand_confidence_compute_filter.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Hand Input Module Level 1 は 2024-06-05 の W3C Working Draft が最新公開版で、`hand-tracking` feature descriptor と `XRInputSource.hand` を通じて articulated hand pose を扱う。</span>
+              <span class="en-copy">The latest published WebXR Hand Input Module Level 1 is the W3C Working Draft dated 2024-06-05, using the `hand-tracking` feature descriptor and `XRInputSource.hand` for articulated hand poses.</span>
+            </li>
+          
+            <li>
+              <span>同仕様の skeleton joints は wrist から各指 tip まで 25 joint で、`XRHand` の順序付き map として扱われ、`size` は 25 と定義されている。</span>
+              <span class="en-copy">The specification defines 25 skeleton joints from the wrist to each fingertip, exposed through `XRHand` as an ordered map whose `size` is 25.</span>
+            </li>
+          
+            <li>
+              <span>仕様上、部分的に手が隠れた場合は obscured joints を emulation するか、同じ手の全 joint pose を null にする必要があり、アプリ側には信頼度・補間・hold の設計が必要になる。</span>
+              <span class="en-copy">When a hand is partially obscured, the specification requires either emulating obscured joints or returning null poses for all joints on that hand, so apps need confidence, interpolation, and hold behavior.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の WebGPU samples には immersive hands があり、各 joint を cube として描く実装例が WebGPU 経路の入力可視化として参考になる。</span>
+              <span class="en-copy">The Immersive Web WebGPU samples include immersive hands, showing joints as cubes and serving as a useful input-visualization reference for the WebGPU path.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Layers API 側では projection layer や depth / motion vector / foveation の判断が続くため、手入力を layer へ渡す前段で depth gate と安定度を測る設計が重要になる。</span>
+              <span class="en-copy">Because WebXR Layers still involves projection layers, depth, motion vectors, and foveation choices, measuring depth gates and stability before submitting hand input to layers matters.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は WebXR Hand Input Module と Immersive Web の WebGPU immersive hands sample です。仕様は 25 joint の順序、`XRJointSpace`、`getJointPose()`、`fillJointRadii()` を整理し、隠れた手に対して joint を部分的に雑に返すのではなく emulation か全体 null を求めています。WebGPU sample 側は joint を cube として見せる入口で、描画 API より前に入力の品質をどう扱うかを考える材料になります。</p>
+          <p class="en-copy">Today's notable references are the WebXR Hand Input Module and the Immersive Web WebGPU immersive hands sample. The specification defines the 25-joint order, `XRJointSpace`, `getJointPose()`, and `fillJointRadii()`, and asks user agents to emulate obscured joints or return null for the whole hand rather than exposing arbitrary partial joints. The WebGPU sample shows joints as cubes, making it a useful starting point for thinking about input quality before rendering.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr-hand-input-1/" target="_blank" rel="noreferrer">W3C: WebXR Hand Input Module Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/webgpu/" target="_blank" rel="noreferrer">Immersive Web: WebGPU Samples</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>赤い raw joint と緑の filtered joint を重ね、欠損率、jitter、smoothing、depth gate を動かして、XR UI に投げてよい状態かを `submit` / `reproject` / `hold` で表示します。ドラッグで手全体を動かし、pinch、poke、grab の違いを見られるようにしました。WebGPU の compute shader は使っていませんが、GPU pass のように入力配列をまとめて評価する設計のプロトタイプです。</p>
+          <p class="en-copy">The sample overlays red raw joints and green filtered joints, then uses missing rate, jitter, smoothing, and depth gate controls to decide whether the XR UI should `submit`, `reproject`, or `hold`. Dragging moves the hand, and pinch, poke, and grab gestures can be compared. It does not use a real WebGPU compute shader, but it prototypes the design of evaluating an input array as a GPU-like pass.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-19_html_hand_confidence_compute_filter.html" target="_blank" rel="noreferrer">Open today's sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装時は `navigator.xr`、session optional feature の `hand-tracking`、`inputSource.hand`、`XRFrame.getJointPose()` の null、`fillJointRadii()` の boolean を別々に扱うのがよさそうです。仕様上、同じ手の pose は全部 valid か全部 invalid になり得るため、アプリ内部では前フレームの pose、emulated flag、depth gate、UI submit の状態を分けて持つと破綻しにくくなります。</p>
+          <p class="en-copy">A practical implementation should handle `navigator.xr`, the `hand-tracking` optional feature, `inputSource.hand`, null from `XRFrame.getJointPose()`, and the boolean returned by `fillJointRadii()` as separate states. Since the spec can make all poses for the same hand valid or invalid together, keeping previous-frame pose, emulated state, depth gate, and UI submit state separate helps avoid fragile behavior.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRJointSpace" target="_blank" rel="noreferrer">MDN: XRJointSpace</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Hand Input の open issue、Chromium / Meta Browser / Wolvic などの hand tracking 実装差、WebXR/WebGPU Binding の進展、WebXR Layers の depth / motion vector 周辺を継続して見ます。次は、今日の confidence filter を hit test reticle または foreground layer mismatch に接続し、選択の誤発火を減らす方向へ進めたいです。</p>
+          <p class="en-copy">Continue watching WebXR Hand Input issues, implementation differences across Chromium, Meta Browser, Wolvic, and similar browsers, WebXR/WebGPU Binding progress, and WebXR Layers depth / motion-vector work. Next, connect today's confidence filter to a hit-test reticle or foreground-layer mismatch view to reduce false selection triggers.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Occluded` を押してから Missing joints を 50% 付近、Smoothing を 70% 以上にしてください。赤い raw joint は欠けますが、緑の filtered joint は前フレームを使って持ちこたえます。次に `Depth Gate` を押すと、index tip が UI 面より前後にずれ、confidence が残っていても layer decision が `reproject` や `hold` に落ちる様子を確認できます。</p>
+          <p class="en-copy">Press `Occluded`, then set Missing joints near 50% and Smoothing above 70%. The red raw joints drop out while the green filtered joints hold using previous frames. Then press `Depth Gate` to see the index tip move out of alignment with the UI plane, causing the layer decision to fall to `reproject` or `hold` even when confidence remains present.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-19_html_hand_confidence_compute_filter.html" target="_blank" rel="noreferrer">Open Hand Confidence Compute Filter</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Hand Input Module、MDN XRJointSpace、Immersive Web WebGPU samples、WebXR Layers API を確認。アイデア: 25 joint の入力を layer 送出前に confidence / stability / depth pass で評価する。実装: canvas 上に raw / filtered skeleton、scenario preset、missing / jitter / smoothing / depth gate、capability probe、submit decision を作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。</p>
+          <p class="en-copy">Research: reviewed the WebXR Hand Input Module, MDN XRJointSpace, Immersive Web WebGPU samples, and the WebXR Layers API. Idea: score 25-joint input by confidence, stability, and depth pass before layer submission. Implementation: created a canvas with raw / filtered skeletons, scenario presets, missing / jitter / smoothing / depth-gate controls, capability probe, and submit decision. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>7月前半は depth、lighting、hand、layers、space warp、WebGPU readiness と、描画側の条件を順に分解してきました。今日のサンプルは入力側へ戻り、手の joint がきれいに取れない瞬間をどう UI 送出判断に変換するかを扱います。XR 体験では、見た目の shader や layer 設計だけでなく、入力の信頼度を安定して下流へ渡すことが体験品質を左右します。</p>
+          <p class="en-copy">The first half of July decomposed rendering-side conditions through depth, lighting, hands, layers, space warp, and WebGPU readiness. Today's sample returns to input and focuses on converting imperfect hand joints into a UI submission decision. In XR experiences, not only shaders and layer design but also stable downstream confidence for input has a direct impact on quality.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Hand Confidence Compute Filter` です。25 joint の raw pose、欠損、jitter、depth gate をまとめて評価し、filtered skeleton と layer decision に変換します。次に発展させるなら、WebXR session 実機時に `XRFrame.fillPoses()` / `fillJointRadii()` の結果を同じ UI に流し込み、HMD なし fallback と実機計測を同じコードパスで比べます。</p>
+          <p class="en-copy">The selected prototype is Hand Confidence Compute Filter. It evaluates raw 25-joint poses, dropout, jitter, and depth gate together, then converts them into a filtered skeleton and layer decision. A good extension is feeding real `XRFrame.fillPoses()` / `fillJointRadii()` results into the same UI during an actual WebXR session, allowing the fallback and headset measurement paths to be compared.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-19_html_hand_confidence_compute_filter.html" target="_blank" rel="noreferrer">Today's sample: Hand Confidence Compute Filter</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hand-input-1/" target="_blank" rel="noreferrer">W3C: WebXR Hand Input Module Level 1</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRJointSpace" target="_blank" rel="noreferrer">MDN: XRJointSpace</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/webgpu/" target="_blank" rel="noreferrer">Immersive Web: WebGPU Samples</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-19_html_hand_confidence_compute_filter.html" loading="lazy" title="Hand Confidence Compute Filter"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

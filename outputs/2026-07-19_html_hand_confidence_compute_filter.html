@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hand Confidence Compute Filter</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #091015;
+      --panel: #101a21;
+      --panel2: #15252d;
+      --ink: #eff8f7;
+      --muted: #9eb3b2;
+      --line: rgba(255, 255, 255, 0.13);
+      --cyan: #70e1d4;
+      --lime: #b9ec6a;
+      --amber: #ffcb68;
+      --red: #ff6f6f;
+      --violet: #a99cff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Avenir Next", "Hiragino Sans", sans-serif;
+      background:
+        radial-gradient(circle at 20% 12%, rgba(112, 225, 212, 0.18), transparent 25%),
+        radial-gradient(circle at 78% 8%, rgba(185, 236, 106, 0.12), transparent 23%),
+        linear-gradient(135deg, #091015, #132026 48%, #171722);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 34px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 4vw, 3.4rem);
+      line-height: 1.03;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .badge {
+      min-width: 120px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: rgba(16, 26, 33, 0.78);
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .badge strong {
+      display: block;
+      margin-top: 2px;
+      color: var(--ink);
+      font-size: 1rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 640px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(10, 24, 27, 0.92), rgba(12, 14, 21, 0.94));
+      background-size: 40px 40px, 40px 40px, auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.32);
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 640px;
+    }
+
+    .hint {
+      position: absolute;
+      left: 14px;
+      bottom: 12px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(9, 16, 21, 0.76);
+      color: var(--muted);
+      font-size: 0.84rem;
+      pointer-events: none;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(16, 26, 33, 0.84);
+      padding: 14px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      margin: 12px 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+    }
+
+    select,
+    button {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--ink);
+      padding: 10px 11px;
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: rgba(112, 225, 212, 0.62);
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .meter {
+      display: grid;
+      grid-template-columns: 92px 1fr 44px;
+      gap: 8px;
+      align-items: center;
+      margin: 10px 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .bar {
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      width: 50%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--cyan), var(--lime));
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .readout:last-child { border-bottom: 0; }
+    .readout strong { color: var(--ink); font-weight: 650; }
+
+    @media (max-width: 860px) {
+      header {
+        grid-template-columns: 1fr;
+      }
+
+      .badge-row {
+        justify-content: flex-start;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .stage,
+      canvas {
+        min-height: auto;
+        height: min(74vh, 590px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Hand Confidence Compute Filter</h1>
+        <p>25 joint hand input を想定し、欠損・jitter・depth mismatch を compute pass 風に平滑化して、XR layer へ渡す前の信頼度を観察する最小サンプルです。</p>
+      </div>
+      <div class="badge-row" aria-label="capability probe">
+        <div class="badge">WebGPU<strong id="gpuState">checking</strong></div>
+        <div class="badge">WebXR<strong id="xrState">checking</strong></div>
+        <div class="badge">XRHand<strong id="handState">checking</strong></div>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage" id="stage">
+        <canvas id="canvas" width="980" height="640"></canvas>
+        <div class="hint">ドラッグで手の位置を移動。欠損率と depth gate を上げると、赤い raw joint と緑の filtered joint の差が広がります。</div>
+      </div>
+
+      <aside class="controls">
+        <div class="panel">
+          <h2>Scenario</h2>
+          <div class="button-grid">
+            <button type="button" data-preset="stable">Stable</button>
+            <button type="button" data-preset="occluded">Occluded</button>
+            <button type="button" data-preset="latency">Latency</button>
+            <button type="button" data-preset="depth">Depth Gate</button>
+          </div>
+          <label>Gesture
+            <select id="gesture">
+              <option value="open">Open palm</option>
+              <option value="pinch">Pinch select</option>
+              <option value="poke">Index poke</option>
+              <option value="grab">Grab curl</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="panel">
+          <h2>Filter Controls</h2>
+          <label>Missing joints <span id="missingLabel">22%</span>
+            <input id="missing" type="range" min="0" max="72" value="22" />
+          </label>
+          <label>Jitter <span id="jitterLabel">18 px</span>
+            <input id="jitter" type="range" min="0" max="52" value="18" />
+          </label>
+          <label>Smoothing <span id="smoothLabel">64%</span>
+            <input id="smooth" type="range" min="0" max="92" value="64" />
+          </label>
+          <label>Depth gate <span id="gateLabel">0.18 m</span>
+            <input id="gate" type="range" min="2" max="50" value="18" />
+          </label>
+        </div>
+
+        <div class="panel">
+          <h2>Compute Readout</h2>
+          <div class="meter"><span>confidence</span><div class="bar"><div class="fill" id="confidenceBar"></div></div><strong id="confidenceText">0%</strong></div>
+          <div class="meter"><span>stability</span><div class="bar"><div class="fill" id="stabilityBar"></div></div><strong id="stabilityText">0%</strong></div>
+          <div class="meter"><span>depth pass</span><div class="bar"><div class="fill" id="depthBar"></div></div><strong id="depthText">0%</strong></div>
+          <div class="readout"><span>valid joints</span><strong id="validText">0 / 25</strong></div>
+          <div class="readout"><span>pinch distance</span><strong id="pinchText">0 mm</strong></div>
+          <div class="readout"><span>layer decision</span><strong id="layerText">hold</strong></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const stage = document.getElementById("stage");
+    const controls = {
+      gesture: document.getElementById("gesture"),
+      missing: document.getElementById("missing"),
+      jitter: document.getElementById("jitter"),
+      smooth: document.getElementById("smooth"),
+      gate: document.getElementById("gate")
+    };
+
+    const els = {
+      gpuState: document.getElementById("gpuState"),
+      xrState: document.getElementById("xrState"),
+      handState: document.getElementById("handState"),
+      missingLabel: document.getElementById("missingLabel"),
+      jitterLabel: document.getElementById("jitterLabel"),
+      smoothLabel: document.getElementById("smoothLabel"),
+      gateLabel: document.getElementById("gateLabel"),
+      confidenceBar: document.getElementById("confidenceBar"),
+      stabilityBar: document.getElementById("stabilityBar"),
+      depthBar: document.getElementById("depthBar"),
+      confidenceText: document.getElementById("confidenceText"),
+      stabilityText: document.getElementById("stabilityText"),
+      depthText: document.getElementById("depthText"),
+      validText: document.getElementById("validText"),
+      pinchText: document.getElementById("pinchText"),
+      layerText: document.getElementById("layerText")
+    };
+
+    const jointNames = [
+      "wrist",
+      "thumb-metacarpal", "thumb-phalanx-proximal", "thumb-phalanx-distal", "thumb-tip",
+      "index-finger-metacarpal", "index-finger-phalanx-proximal", "index-finger-phalanx-intermediate", "index-finger-phalanx-distal", "index-finger-tip",
+      "middle-finger-metacarpal", "middle-finger-phalanx-proximal", "middle-finger-phalanx-intermediate", "middle-finger-phalanx-distal", "middle-finger-tip",
+      "ring-finger-metacarpal", "ring-finger-phalanx-proximal", "ring-finger-phalanx-intermediate", "ring-finger-phalanx-distal", "ring-finger-tip",
+      "pinky-finger-metacarpal", "pinky-finger-phalanx-proximal", "pinky-finger-phalanx-intermediate", "pinky-finger-phalanx-distal", "pinky-finger-tip"
+    ];
+    const bones = [
+      [0, 1], [1, 2], [2, 3], [3, 4],
+      [0, 5], [5, 6], [6, 7], [7, 8], [8, 9],
+      [0, 10], [10, 11], [11, 12], [12, 13], [13, 14],
+      [0, 15], [15, 16], [16, 17], [17, 18], [18, 19],
+      [0, 20], [20, 21], [21, 22], [22, 23], [23, 24]
+    ];
+    const state = {
+      handX: 0.5,
+      handY: 0.56,
+      pointerDown: false,
+      filtered: [],
+      lastRaw: [],
+      time: 0,
+      seed: 12
+    };
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(640, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(440, Math.floor(rect.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function noise(index, t) {
+      return Math.sin(index * 17.13 + t * 0.004 + state.seed) * Math.cos(index * 5.37 + t * 0.003);
+    }
+
+    function baseHand(gesture, t) {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const palmX = state.handX * w;
+      const palmY = state.handY * h;
+      const sway = Math.sin(t * 0.0016) * 10;
+      const curlMap = { open: 0.06, pinch: 0.34, poke: 0.14, grab: 0.58 };
+      const curl = curlMap[gesture] || 0.1;
+      const spread = gesture === "grab" ? 0.58 : 1;
+      const joints = [];
+      const bases = [
+        { angle: -2.48, length: 54, curl: gesture === "pinch" ? 0.56 : curl * 0.55 },
+        { angle: -1.96, length: 82, curl: gesture === "pinch" ? 0.24 : curl * 0.4 },
+        { angle: -1.58, length: 92, curl },
+        { angle: -1.22, length: 82, curl: curl * 1.08 },
+        { angle: -0.9, length: 70, curl: curl * 1.16 }
+      ];
+      joints[0] = { x: palmX + sway, y: palmY, z: 0.64, radius: 20, name: jointNames[0] };
+      let index = 1;
+      bases.forEach((finger, fi) => {
+        let x = palmX + (fi - 2) * 20 * spread + (fi === 0 ? -20 : 0) + sway;
+        let y = palmY - 8 - Math.abs(fi - 2) * 2;
+        const segments = fi === 0 ? [0.42, 0.34, 0.24, 0] : [0.3, 0.27, 0.23, 0.2];
+        const start = index;
+        for (let si = 0; si < 4; si += 1) {
+          const bend = finger.curl * (si + 0.6) * 0.74;
+          const angle = finger.angle + (fi - 2) * 0.07 * spread + bend;
+          const len = finger.length * segments[si];
+          if (si > 0) {
+            x += Math.cos(angle) * len;
+            y += Math.sin(angle) * len;
+          }
+          joints[index] = {
+            x,
+            y,
+            z: 0.52 + si * 0.035 + fi * 0.012 + (gesture === "poke" && fi === 1 ? -0.12 * si : 0),
+            radius: si === 3 ? 8 : 11,
+            name: jointNames[index]
+          };
+          index += 1;
+        }
+        if (fi > 0) {
+          joints[start].x = palmX + (fi - 2) * 22 * spread + sway;
+          joints[start].y = palmY - 20;
+        }
+      });
+      if (gesture === "pinch") {
+        joints[4].x = joints[9].x - 4;
+        joints[4].y = joints[9].y + 8;
+        joints[4].z = joints[9].z + 0.01;
+      }
+      return joints;
+    }
+
+    function rawFromBase(base, t) {
+      const missing = Number(controls.missing.value) / 100;
+      const jitter = Number(controls.jitter.value);
+      const gate = Number(controls.gate.value) / 100;
+      return base.map((joint, index) => {
+        const dropoutWave = (noise(index, Math.floor(t / 210) * 210) + 1) / 2;
+        const missingBoost = index > 14 && controls.gesture.value === "occluded" ? 0.1 : 0;
+        const visible = dropoutWave > Math.min(0.9, missing + missingBoost) || index === 0;
+        const depthMismatch = Math.abs(joint.z - 0.58) > gate;
+        const n = noise(index, t);
+        return {
+          ...joint,
+          x: joint.x + n * jitter,
+          y: joint.y + noise(index + 40, t) * jitter,
+          z: joint.z + noise(index + 80, t) * jitter * 0.002,
+          visible,
+          depthPass: !depthMismatch,
+          confidence: visible ? Math.max(0, 1 - Math.abs(n) * 0.38 - (depthMismatch ? 0.42 : 0)) : 0
+        };
+      });
+    }
+
+    function filterJoints(raw) {
+      const smooth = Number(controls.smooth.value) / 100;
+      state.filtered = raw.map((joint, index) => {
+        const prev = state.filtered[index] || joint;
+        const fallback = state.lastRaw[index] || prev;
+        const target = joint.visible ? joint : fallback;
+        const depthWeight = joint.depthPass ? 1 : 0.48;
+        const alpha = (1 - smooth) * Math.max(0.08, joint.confidence * depthWeight);
+        return {
+          ...joint,
+          x: prev.x + (target.x - prev.x) * alpha,
+          y: prev.y + (target.y - prev.y) * alpha,
+          z: prev.z + (target.z - prev.z) * alpha,
+          confidence: prev.confidence * smooth + joint.confidence * (1 - smooth),
+          imputed: !joint.visible
+        };
+      });
+      state.lastRaw = raw.map((joint, index) => joint.visible ? joint : (state.lastRaw[index] || joint));
+    }
+
+    function drawTextBox(x, y, title, body, color) {
+      ctx.fillStyle = "rgba(9, 16, 21, 0.78)";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(x, y, 230, 74, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#eff8f7";
+      ctx.font = "700 15px Inter, sans-serif";
+      ctx.fillText(title, x + 12, y + 25);
+      ctx.fillStyle = "#9eb3b2";
+      ctx.font = "12px Inter, sans-serif";
+      ctx.fillText(body, x + 12, y + 48);
+    }
+
+    function drawLayerPlane(w, h) {
+      const planeY = h * 0.2;
+      const planeH = h * 0.56;
+      ctx.fillStyle = "rgba(169, 156, 255, 0.08)";
+      ctx.strokeStyle = "rgba(169, 156, 255, 0.45)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([8, 8]);
+      ctx.strokeRect(w * 0.08, planeY, w * 0.84, planeH);
+      ctx.setLineDash([]);
+      ctx.fillRect(w * 0.08, planeY, w * 0.84, planeH);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+      for (let i = 0; i < 9; i += 1) {
+        const x = w * 0.13 + i * w * 0.09;
+        ctx.fillRect(x, planeY + 20, 2, planeH - 40);
+      }
+      drawTextBox(w * 0.1, planeY + 16, "Projection layer depth", "target surface z = 0.58 m", "rgba(169,156,255,0.65)");
+    }
+
+    function drawSkeleton(joints, color, alpha, raw) {
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = raw ? 1.2 : 3;
+      bones.forEach(([a, b]) => {
+        const ja = joints[a];
+        const jb = joints[b];
+        if (!ja || !jb) return;
+        ctx.beginPath();
+        ctx.moveTo(ja.x, ja.y);
+        ctx.lineTo(jb.x, jb.y);
+        ctx.stroke();
+      });
+      joints.forEach((joint) => {
+        const r = raw ? 3.5 : Math.max(4, joint.radius * 0.48);
+        ctx.fillStyle = joint.visible === false ? "rgba(255,111,111,0.42)" : color;
+        if (!joint.depthPass) ctx.fillStyle = "rgba(255,203,104,0.7)";
+        if (joint.imputed) ctx.fillStyle = "rgba(112,225,212,0.36)";
+        ctx.beginPath();
+        ctx.arc(joint.x, joint.y, r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    function draw() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+      drawLayerPlane(w, h);
+      const raw = rawFromBase(baseHand(controls.gesture.value, state.time), state.time);
+      filterJoints(raw);
+      drawSkeleton(raw, "rgba(255, 111, 111, 0.86)", 0.62, true);
+      drawSkeleton(state.filtered, "rgba(112, 225, 212, 0.95)", 1, false);
+
+      const indexTip = state.filtered[9];
+      const thumbTip = state.filtered[4];
+      const pinch = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y);
+      const targetX = w * 0.69;
+      const targetY = h * 0.43;
+      const dist = Math.hypot(indexTip.x - targetX, indexTip.y - targetY);
+      ctx.strokeStyle = dist < 70 ? "rgba(185,236,106,0.92)" : "rgba(255,255,255,0.25)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(indexTip.x, indexTip.y);
+      ctx.lineTo(targetX, targetY);
+      ctx.stroke();
+      ctx.fillStyle = dist < 70 ? "rgba(185,236,106,0.22)" : "rgba(255,255,255,0.08)";
+      ctx.strokeStyle = dist < 70 ? "rgba(185,236,106,0.9)" : "rgba(255,255,255,0.22)";
+      ctx.beginPath();
+      ctx.roundRect(targetX - 56, targetY - 42, 112, 84, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#eff8f7";
+      ctx.font = "700 13px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("XR UI", targetX, targetY - 4);
+      ctx.fillStyle = "#9eb3b2";
+      ctx.font = "11px Inter, sans-serif";
+      ctx.fillText("select gate", targetX, targetY + 17);
+      ctx.textAlign = "start";
+
+      const valid = raw.filter((joint) => joint.visible).length;
+      const confidence = state.filtered.reduce((sum, joint) => sum + joint.confidence, 0) / state.filtered.length;
+      const rawMotion = raw.reduce((sum, joint, index) => {
+        const filtered = state.filtered[index];
+        return sum + Math.hypot(joint.x - filtered.x, joint.y - filtered.y);
+      }, 0) / raw.length;
+      const stability = Math.max(0, 1 - rawMotion / 42);
+      const depthPass = raw.filter((joint) => joint.depthPass).length / raw.length;
+      const layerDecision = confidence > 0.68 && stability > 0.52 && depthPass > 0.55 ? "submit" : confidence > 0.44 ? "reproject" : "hold";
+      setMeter(els.confidenceBar, els.confidenceText, confidence);
+      setMeter(els.stabilityBar, els.stabilityText, stability);
+      setMeter(els.depthBar, els.depthText, depthPass);
+      els.validText.textContent = `${valid} / 25`;
+      els.pinchText.textContent = `${Math.round(pinch * 2.8)} mm`;
+      els.layerText.textContent = layerDecision;
+
+      drawTextBox(18, 18, "compute-style pass", `${valid} valid, ${Math.round(confidence * 100)}% confidence`, "rgba(112,225,212,0.7)");
+      state.time += 16.67;
+      requestAnimationFrame(draw);
+    }
+
+    function setMeter(bar, text, value) {
+      const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
+      bar.style.width = `${pct}%`;
+      bar.style.background = pct < 45 ? "linear-gradient(90deg, #ff6f6f, #ffcb68)" : "linear-gradient(90deg, #70e1d4, #b9ec6a)";
+      text.textContent = `${pct}%`;
+    }
+
+    function syncLabels() {
+      els.missingLabel.textContent = `${controls.missing.value}%`;
+      els.jitterLabel.textContent = `${controls.jitter.value} px`;
+      els.smoothLabel.textContent = `${controls.smooth.value}%`;
+      els.gateLabel.textContent = `${(Number(controls.gate.value) / 100).toFixed(2)} m`;
+    }
+
+    function applyPreset(name) {
+      const presets = {
+        stable: ["open", 8, 7, 70, 24],
+        occluded: ["grab", 48, 22, 72, 18],
+        latency: ["pinch", 22, 34, 88, 15],
+        depth: ["poke", 28, 16, 64, 8]
+      };
+      const [gesture, missing, jitter, smooth, gate] = presets[name];
+      controls.gesture.value = gesture;
+      controls.missing.value = missing;
+      controls.jitter.value = jitter;
+      controls.smooth.value = smooth;
+      controls.gate.value = gate;
+      syncLabels();
+    }
+
+    function updateProbe() {
+      els.gpuState.textContent = "gpu" in navigator ? "available" : "missing";
+      els.xrState.textContent = "xr" in navigator ? "available" : "missing";
+      els.handState.textContent = "XRHand" in window ? "available" : "fallback";
+    }
+
+    Object.values(controls).forEach((control) => {
+      control.addEventListener("input", syncLabels);
+    });
+    document.querySelectorAll("[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => applyPreset(button.dataset.preset));
+    });
+    stage.addEventListener("pointerdown", (event) => {
+      state.pointerDown = true;
+      stage.setPointerCapture(event.pointerId);
+    });
+    stage.addEventListener("pointermove", (event) => {
+      if (!state.pointerDown) return;
+      const rect = stage.getBoundingClientRect();
+      state.handX = Math.max(0.15, Math.min(0.85, (event.clientX - rect.left) / rect.width));
+      state.handY = Math.max(0.28, Math.min(0.84, (event.clientY - rect.top) / rect.height));
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach((type) => {
+      stage.addEventListener(type, () => {
+        state.pointerDown = false;
+      });
+    });
+    window.addEventListener("resize", resize);
+    resize();
+    syncLabels();
+    updateProbe();
+    draw();
+  </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+{
+  "date": "2026-07-19",
+  "headline": "手関節入力の信頼度を compute pass 風に整える",
+  "headlineEn": "Filtering hand-joint confidence like a compute pass",
+  "summary": "WebXR Hand Input Module、MDN XRJointSpace、Immersive Web の WebGPU samples、WebXR Layers API を確認し、今日は 25 joint の欠損・jitter・depth mismatch を HMD なしで観察できる自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Hand Input Module, MDN XRJointSpace, Immersive Web WebGPU samples, and the WebXR Layers API, today's original HTML sample visualizes 25-joint dropout, jitter, and depth mismatch without requiring a headset.",
+  "keyTopics": [
+    "WebXR Hand Input Module Level 1 は 2024-06-05 の W3C Working Draft が最新公開版で、`hand-tracking` feature descriptor と `XRInputSource.hand` を通じて articulated hand pose を扱う。",
+    "同仕様の skeleton joints は wrist から各指 tip まで 25 joint で、`XRHand` の順序付き map として扱われ、`size` は 25 と定義されている。",
+    "仕様上、部分的に手が隠れた場合は obscured joints を emulation するか、同じ手の全 joint pose を null にする必要があり、アプリ側には信頼度・補間・hold の設計が必要になる。",
+    "Immersive Web の WebGPU samples には immersive hands があり、各 joint を cube として描く実装例が WebGPU 経路の入力可視化として参考になる。",
+    "WebXR Layers API 側では projection layer や depth / motion vector / foveation の判断が続くため、手入力を layer へ渡す前段で depth gate と安定度を測る設計が重要になる。"
+  ],
+  "keyTopicsEn": [
+    "The latest published WebXR Hand Input Module Level 1 is the W3C Working Draft dated 2024-06-05, using the `hand-tracking` feature descriptor and `XRInputSource.hand` for articulated hand poses.",
+    "The specification defines 25 skeleton joints from the wrist to each fingertip, exposed through `XRHand` as an ordered map whose `size` is 25.",
+    "When a hand is partially obscured, the specification requires either emulating obscured joints or returning null poses for all joints on that hand, so apps need confidence, interpolation, and hold behavior.",
+    "The Immersive Web WebGPU samples include immersive hands, showing joints as cubes and serving as a useful input-visualization reference for the WebGPU path.",
+    "Because WebXR Layers still involves projection layers, depth, motion vectors, and foveation choices, measuring depth gates and stability before submitting hand input to layers matters."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Hand Confidence Compute Filter",
+      "url": "../outputs/2026-07-19_html_hand_confidence_compute_filter.html"
+    },
+    {
+      "label": "W3C: WebXR Hand Input Module Level 1",
+      "url": "https://www.w3.org/TR/webxr-hand-input-1/"
+    },
+    {
+      "label": "MDN: XRJointSpace",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRJointSpace"
+    },
+    {
+      "label": "Immersive Web: WebGPU Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+    },
+    {
+      "label": "WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Hand Input Module と Immersive Web の WebGPU immersive hands sample です。仕様は 25 joint の順序、`XRJointSpace`、`getJointPose()`、`fillJointRadii()` を整理し、隠れた手に対して joint を部分的に雑に返すのではなく emulation か全体 null を求めています。WebGPU sample 側は joint を cube として見せる入口で、描画 API より前に入力の品質をどう扱うかを考える材料になります。",
+      "bodyEn": "Today's notable references are the WebXR Hand Input Module and the Immersive Web WebGPU immersive hands sample. The specification defines the 25-joint order, `XRJointSpace`, `getJointPose()`, and `fillJointRadii()`, and asks user agents to emulate obscured joints or return null for the whole hand rather than exposing arbitrary partial joints. The WebGPU sample shows joints as cubes, making it a useful starting point for thinking about input quality before rendering.",
+      "links": [
+        {
+          "label": "W3C: WebXR Hand Input Module Level 1",
+          "url": "https://www.w3.org/TR/webxr-hand-input-1/"
+        },
+        {
+          "label": "Immersive Web: WebGPU Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "赤い raw joint と緑の filtered joint を重ね、欠損率、jitter、smoothing、depth gate を動かして、XR UI に投げてよい状態かを `submit` / `reproject` / `hold` で表示します。ドラッグで手全体を動かし、pinch、poke、grab の違いを見られるようにしました。WebGPU の compute shader は使っていませんが、GPU pass のように入力配列をまとめて評価する設計のプロトタイプです。",
+      "bodyEn": "The sample overlays red raw joints and green filtered joints, then uses missing rate, jitter, smoothing, and depth gate controls to decide whether the XR UI should `submit`, `reproject`, or `hold`. Dragging moves the hand, and pinch, poke, and grab gestures can be compared. It does not use a real WebGPU compute shader, but it prototypes the design of evaluating an input array as a GPU-like pass.",
+      "links": [
+        {
+          "label": "Open today's sample",
+          "url": "../outputs/2026-07-19_html_hand_confidence_compute_filter.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は `navigator.xr`、session optional feature の `hand-tracking`、`inputSource.hand`、`XRFrame.getJointPose()` の null、`fillJointRadii()` の boolean を別々に扱うのがよさそうです。仕様上、同じ手の pose は全部 valid か全部 invalid になり得るため、アプリ内部では前フレームの pose、emulated flag、depth gate、UI submit の状態を分けて持つと破綻しにくくなります。",
+      "bodyEn": "A practical implementation should handle `navigator.xr`, the `hand-tracking` optional feature, `inputSource.hand`, null from `XRFrame.getJointPose()`, and the boolean returned by `fillJointRadii()` as separate states. Since the spec can make all poses for the same hand valid or invalid together, keeping previous-frame pose, emulated state, depth gate, and UI submit state separate helps avoid fragile behavior.",
+      "links": [
+        {
+          "label": "MDN: XRJointSpace",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRJointSpace"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Hand Input の open issue、Chromium / Meta Browser / Wolvic などの hand tracking 実装差、WebXR/WebGPU Binding の進展、WebXR Layers の depth / motion vector 周辺を継続して見ます。次は、今日の confidence filter を hit test reticle または foreground layer mismatch に接続し、選択の誤発火を減らす方向へ進めたいです。",
+      "bodyEn": "Continue watching WebXR Hand Input issues, implementation differences across Chromium, Meta Browser, Wolvic, and similar browsers, WebXR/WebGPU Binding progress, and WebXR Layers depth / motion-vector work. Next, connect today's confidence filter to a hit-test reticle or foreground-layer mismatch view to reduce false selection triggers."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Occluded` を押してから Missing joints を 50% 付近、Smoothing を 70% 以上にしてください。赤い raw joint は欠けますが、緑の filtered joint は前フレームを使って持ちこたえます。次に `Depth Gate` を押すと、index tip が UI 面より前後にずれ、confidence が残っていても layer decision が `reproject` や `hold` に落ちる様子を確認できます。",
+      "bodyEn": "Press `Occluded`, then set Missing joints near 50% and Smoothing above 70%. The red raw joints drop out while the green filtered joints hold using previous frames. Then press `Depth Gate` to see the index tip move out of alignment with the UI plane, causing the layer decision to fall to `reproject` or `hold` even when confidence remains present.",
+      "links": [
+        {
+          "label": "Open Hand Confidence Compute Filter",
+          "url": "../outputs/2026-07-19_html_hand_confidence_compute_filter.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Hand Input Module、MDN XRJointSpace、Immersive Web WebGPU samples、WebXR Layers API を確認。アイデア: 25 joint の入力を layer 送出前に confidence / stability / depth pass で評価する。実装: canvas 上に raw / filtered skeleton、scenario preset、missing / jitter / smoothing / depth gate、capability probe、submit decision を作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。",
+      "bodyEn": "Research: reviewed the WebXR Hand Input Module, MDN XRJointSpace, Immersive Web WebGPU samples, and the WebXR Layers API. Idea: score 25-joint input by confidence, stability, and depth pass before layer submission. Implementation: created a canvas with raw / filtered skeletons, scenario presets, missing / jitter / smoothing / depth-gate controls, capability probe, and submit decision. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "7月前半は depth、lighting、hand、layers、space warp、WebGPU readiness と、描画側の条件を順に分解してきました。今日のサンプルは入力側へ戻り、手の joint がきれいに取れない瞬間をどう UI 送出判断に変換するかを扱います。XR 体験では、見た目の shader や layer 設計だけでなく、入力の信頼度を安定して下流へ渡すことが体験品質を左右します。",
+      "bodyEn": "The first half of July decomposed rendering-side conditions through depth, lighting, hands, layers, space warp, and WebGPU readiness. Today's sample returns to input and focuses on converting imperfect hand joints into a UI submission decision. In XR experiences, not only shaders and layer design but also stable downstream confidence for input has a direct impact on quality."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Hand Confidence Compute Filter` です。25 joint の raw pose、欠損、jitter、depth gate をまとめて評価し、filtered skeleton と layer decision に変換します。次に発展させるなら、WebXR session 実機時に `XRFrame.fillPoses()` / `fillJointRadii()` の結果を同じ UI に流し込み、HMD なし fallback と実機計測を同じコードパスで比べます。",
+      "bodyEn": "The selected prototype is Hand Confidence Compute Filter. It evaluates raw 25-joint poses, dropout, jitter, and depth gate together, then converts them into a filtered skeleton and layer decision. A good extension is feeding real `XRFrame.fillPoses()` / `fillJointRadii()` results into the same UI during an actual WebXR session, allowing the fallback and headset measurement paths to be compared."
+    }
+  ]
+}

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XR / AR / VR Daily Samples</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero {
+      padding: 28px;
+      border-radius: 26px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.9rem, 4vw, 3.2rem);
+      line-height: 1.1;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 780px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .card-subtitle,
+    .en-copy,
+    .bilingual-secondary,
+    .heading-pair-secondary {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .card-subtitle,
+    .heading-pair-secondary {
+      font-size: 0.9rem;
+    }
+
+    .description.en-copy {
+      min-height: 0;
+      margin-top: -4px;
+      font-size: 0.92rem;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .meta span {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .card {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border-radius: 22px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .date {
+      margin: 0 0 6px;
+      color: var(--accent2);
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.15rem;
+      line-height: 1.3;
+    }
+
+    .description {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      min-height: 4.6em;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .primary,
+    .secondary-link,
+    .pager-link,
+    .pager-nav {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .pager-link,
+    .pager-nav {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .pager {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+      padding: 18px;
+      border-radius: 22px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+
+    .pager-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pager-link.is-current {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+      border-color: transparent;
+    }
+
+    .pager-nav.is-disabled {
+      opacity: 0.4;
+    }
+
+    .like-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 40px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      white-space: nowrap;
+    }
+
+    .like-button.is-liked {
+      border-color: rgba(255, 216, 104, 0.32);
+      background: rgba(255, 216, 104, 0.12);
+      color: #fff2c8;
+    }
+
+    .heart {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .footer-note {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <h1>XR / AR / VR Daily Samples</h1>
+      <p>
+        各日付のカードから、その日の内容ページへ進める構成に変えています。
+        サンプル単体ではなく、日ごとのまとまりを見やすくし、件数が増えたらページ送りで辿れるようにしています。
+      </p>
+      <p class="en-copy">
+        Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
+      </p>
+      <div class="meta">
+        <span>days: 13</span>
+        <span>page: 2 / 2</span>
+        <span>storage: localStorage likes</span>
+      </div>
+    </section>
+
+    
+    <nav class="pager" aria-label="ページ送り">
+      <a class="pager-nav" href="../index.html">前のページ / Previous</a>
+      <div class="pager-links">
+      <a class="pager-link" href="../index.html">
+        1
+      </a>
+    
+      <a class="pager-link is-current" href="../pages/2.html">
+        2
+      </a>
+    </div>
+      <span class="pager-nav is-disabled">次のページ / Next</span>
+    </nav>
+  
+
+    <section class="grid">
+      
+        <article class="card" data-slug="2026-07-07">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.07</p>
+              <h2>XR 側を自作日次サンプル形式へ移行</h2>
+              <p class="card-subtitle">XR side moved to original daily-sample format</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-07" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">XR / AR / VR 側の公開面を、既存デモの紹介ではなく自作サンプルの蓄積へ切り替えました。初回として、XR Layers 的な前景 HUD と奥行き面の分離感を、ポインタ視差で試せる最小 HTML サンプルを追加しています。</p>
+          <p class="description en-copy">The XR / AR / VR site has been shifted from listing existing demos to accumulating original samples. As the first entry, it adds a minimal HTML prototype that explores XR-Layers-like separation between foreground HUD and depth planes through pointer-based parallax.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-07.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-07_html_spatial_hud_depth_stack.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+    </section>
+
+    
+    <nav class="pager" aria-label="ページ送り">
+      <a class="pager-nav" href="../index.html">前のページ / Previous</a>
+      <div class="pager-links">
+      <a class="pager-link" href="../index.html">
+        1
+      </a>
+    
+      <a class="pager-link is-current" href="../pages/2.html">
+        2
+      </a>
+    </div>
+      <span class="pager-nav is-disabled">次のページ / Next</span>
+    </nav>
+  
+
+    <p class="footer-note">
+      補足: 現在の「好き」はブラウザごとのローカル保存です。全ユーザー共通のいいね数にしたい場合は、
+      GitHub Pages 単体ではなく外部の保存先や API が必要です。
+    </p>
+  </main>
+
+  <script>
+    const storageKey = "xr-ar-vr-daily-samples-likes";
+    const liked = JSON.parse(localStorage.getItem(storageKey) || "{}");
+
+    function syncButtons() {
+      document.querySelectorAll(".like-button").forEach((button) => {
+        const slug = button.dataset.slug;
+        const isLiked = Boolean(liked[slug]);
+        button.classList.toggle("is-liked", isLiked);
+        button.setAttribute("aria-pressed", String(isLiked));
+        button.querySelector(".heart").textContent = isLiked ? "♥" : "♡";
+        button.querySelector(".label").textContent = isLiked ? "好き済み / Liked" : "好き / Like";
+      });
+    }
+
+    document.querySelectorAll(".like-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        const slug = button.dataset.slug;
+        liked[slug] = !liked[slug];
+        localStorage.setItem(storageKey, JSON.stringify(liked));
+        syncButtons();
+      });
+    });
+
+    syncButtons();
+  </script>
+</body>
+</html>
