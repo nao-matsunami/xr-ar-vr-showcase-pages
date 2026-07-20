@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hand Reticle Stability Gate</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #111816;
+      color: #edf7f2;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 12%, rgba(70, 148, 125, 0.28), transparent 34rem),
+        linear-gradient(135deg, #101715 0%, #151b20 46%, #211916 100%);
+    }
+
+    main {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 18px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      border-bottom: 1px solid rgba(237, 247, 242, 0.14);
+      padding-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 3vw, 3.2rem);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .lede {
+      margin: 10px 0 0;
+      color: #b8cbc4;
+      max-width: 760px;
+      line-height: 1.55;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border: 1px solid rgba(237, 247, 242, 0.16);
+      background: rgba(20, 29, 27, 0.76);
+      color: #a8ead3;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 650px;
+      border: 1px solid rgba(237, 247, 242, 0.15);
+      background: #101413;
+      overflow: hidden;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    aside {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .panel {
+      border: 1px solid rgba(237, 247, 242, 0.15);
+      background: rgba(14, 22, 21, 0.84);
+      padding: 14px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 0.9rem;
+      color: #f2d59e;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      margin: 12px 0;
+      color: #d6e4df;
+      font-size: 0.88rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #64d9b5;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    button {
+      border: 1px solid rgba(237, 247, 242, 0.16);
+      background: #1b2a28;
+      color: #edf7f2;
+      min-height: 38px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button.active {
+      border-color: #71e6c1;
+      background: #24453c;
+      color: #a8ffd9;
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px 12px;
+      margin: 0;
+      font-size: 0.88rem;
+    }
+
+    dt {
+      color: #9fb7b0;
+    }
+
+    dd {
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+      color: #edf7f2;
+    }
+
+    .decision {
+      padding: 12px;
+      border: 1px solid rgba(113, 230, 193, 0.28);
+      background: rgba(23, 45, 39, 0.86);
+      font-size: 1.1rem;
+      color: #b9ffdf;
+    }
+
+    .note {
+      color: #adbfba;
+      line-height: 1.5;
+      font-size: 0.84rem;
+    }
+
+    @media (max-width: 860px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .stage {
+        min-height: 520px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Hand Reticle Stability Gate</h1>
+        <p class="lede">A small WebXR-inspired simulator for connecting filtered hand joints to a hit-test reticle. Drag the canvas to move the hand ray, then tune jitter, joint confidence, plane confidence, and hysteresis.</p>
+      </div>
+      <div class="badge">2026-07-20 original sample</div>
+    </header>
+
+    <section class="stage" aria-label="Hand reticle stability gate canvas">
+      <canvas id="stage"></canvas>
+    </section>
+
+    <aside>
+      <section class="panel">
+        <h2>Scenario</h2>
+        <div class="buttons" id="presets">
+          <button data-preset="steady" class="active">Steady</button>
+          <button data-preset="jitter">Jitter</button>
+          <button data-preset="weakPlane">Weak plane</button>
+          <button data-preset="falseTap">False tap</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Inputs</h2>
+        <label>Joint confidence <input id="jointConfidence" type="range" min="0" max="100" value="82"></label>
+        <label>Hit-test confidence <input id="planeConfidence" type="range" min="0" max="100" value="78"></label>
+        <label>Hand jitter <input id="jitter" type="range" min="0" max="100" value="18"></label>
+        <label>Depth mismatch <input id="depthMismatch" type="range" min="0" max="100" value="22"></label>
+        <label>Gate hysteresis <input id="hysteresis" type="range" min="0" max="100" value="42"></label>
+      </section>
+
+      <section class="panel">
+        <h2>Gate Readout</h2>
+        <div class="decision" id="decision">LOCKED RETICLE</div>
+        <dl>
+          <dt>stability</dt><dd id="stabilityOut">0.00</dd>
+          <dt>placement score</dt><dd id="scoreOut">0.00</dd>
+          <dt>false select risk</dt><dd id="riskOut">0.00</dd>
+          <dt>reticle age</dt><dd id="ageOut">0 frames</dd>
+          <dt>capability path</dt><dd id="capabilityOut">probing</dd>
+        </dl>
+      </section>
+
+      <section class="panel note">
+        The model mirrors WebXR's split between hand joint pose quality and hit-test results. It only places the reticle when both input and surface evidence remain stable long enough.
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      jointConfidence: document.getElementById("jointConfidence"),
+      planeConfidence: document.getElementById("planeConfidence"),
+      jitter: document.getElementById("jitter"),
+      depthMismatch: document.getElementById("depthMismatch"),
+      hysteresis: document.getElementById("hysteresis")
+    };
+    const readouts = {
+      decision: document.getElementById("decision"),
+      stability: document.getElementById("stabilityOut"),
+      score: document.getElementById("scoreOut"),
+      risk: document.getElementById("riskOut"),
+      age: document.getElementById("ageOut"),
+      capability: document.getElementById("capabilityOut")
+    };
+
+    const presets = {
+      steady: { jointConfidence: 82, planeConfidence: 78, jitter: 18, depthMismatch: 22, hysteresis: 42 },
+      jitter: { jointConfidence: 72, planeConfidence: 74, jitter: 78, depthMismatch: 28, hysteresis: 58 },
+      weakPlane: { jointConfidence: 86, planeConfidence: 36, jitter: 20, depthMismatch: 45, hysteresis: 50 },
+      falseTap: { jointConfidence: 47, planeConfidence: 68, jitter: 62, depthMismatch: 72, hysteresis: 74 }
+    };
+
+    const state = {
+      t: 0,
+      hand: { x: 0.58, y: 0.58 },
+      dragging: false,
+      lockFrames: 0,
+      reticle: { x: 0.58, y: 0.56 },
+      smoothed: { x: 0.58, y: 0.58 },
+      mode: "steady"
+    };
+
+    const joints = [
+      ["wrist", 0, 0], ["thumb", -52, -32], ["index", -18, -84],
+      ["middle", 18, -92], ["ring", 48, -78], ["pinky", 72, -54]
+    ];
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.max(1, Math.round(rect.width * ratio));
+      canvas.height = Math.max(1, Math.round(rect.height * ratio));
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function value(name) {
+      return Number(controls[name].value) / 100;
+    }
+
+    function applyPreset(name) {
+      state.mode = name;
+      Object.entries(presets[name]).forEach(([key, val]) => {
+        controls[key].value = val;
+      });
+      document.querySelectorAll("#presets button").forEach((button) => {
+        button.classList.toggle("active", button.dataset.preset === name);
+      });
+    }
+
+    function clamp(num, min, max) {
+      return Math.max(min, Math.min(max, num));
+    }
+
+    function lerp(a, b, amount) {
+      return a + (b - a) * amount;
+    }
+
+    function pointerPosition(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: clamp((event.clientX - rect.left) / rect.width, 0.08, 0.92),
+        y: clamp((event.clientY - rect.top) / rect.height, 0.2, 0.88)
+      };
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.dragging = true;
+      canvas.setPointerCapture(event.pointerId);
+      Object.assign(state.hand, pointerPosition(event));
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!state.dragging) return;
+      Object.assign(state.hand, pointerPosition(event));
+    });
+
+    function endDrag() {
+      state.dragging = false;
+    }
+
+    canvas.addEventListener("pointerup", endDrag);
+    canvas.addEventListener("pointercancel", endDrag);
+    window.addEventListener("resize", resize);
+    document.getElementById("presets").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-preset]");
+      if (button) applyPreset(button.dataset.preset);
+    });
+
+    function probeCapabilities() {
+      const hasXR = "xr" in navigator;
+      const hasHand = "XRHand" in window || "XRJointSpace" in window;
+      readouts.capability.textContent = hasXR ? (hasHand ? "WebXR + hand API" : "WebXR fallback") : "inline simulator";
+    }
+
+    function drawGrid(w, h) {
+      ctx.fillStyle = "#101413";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "rgba(237,247,242,0.08)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= w; x += 48) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= h; y += 48) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "rgba(242,213,158,0.25)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(w * 0.52, h * 0.58, w * 0.26, h * 0.13, -0.18, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(242,213,158,0.06)";
+      ctx.fill();
+      ctx.fillStyle = "#f2d59e";
+      ctx.font = "13px system-ui";
+      ctx.fillText("candidate real-world surface", w * 0.35, h * 0.58);
+    }
+
+    function compute() {
+      const joint = value("jointConfidence");
+      const plane = value("planeConfidence");
+      const jitter = value("jitter");
+      const depth = value("depthMismatch");
+      const hysteresis = value("hysteresis");
+      const wave = Math.sin(state.t * 0.043) * jitter * 0.08;
+      const raw = {
+        x: clamp(state.hand.x + Math.sin(state.t * 0.071) * jitter * 0.065, 0.05, 0.95),
+        y: clamp(state.hand.y + wave, 0.12, 0.92)
+      };
+      const smoothAmount = lerp(0.33, 0.08, hysteresis);
+      state.smoothed.x = lerp(state.smoothed.x, raw.x, smoothAmount);
+      state.smoothed.y = lerp(state.smoothed.y, raw.y, smoothAmount);
+
+      const target = {
+        x: clamp(state.smoothed.x + 0.02 + depth * 0.1, 0.08, 0.92),
+        y: clamp(state.smoothed.y - 0.18 + depth * 0.12, 0.16, 0.88)
+      };
+      const stability = clamp((joint * 0.48) + (plane * 0.42) + ((1 - jitter) * 0.26) - (depth * 0.32), 0, 1);
+      const score = clamp(stability - Math.abs(target.y - 0.58) * 0.5 + (state.lockFrames > 20 ? 0.08 : 0), 0, 1);
+      const risk = clamp((1 - joint) * 0.36 + jitter * 0.34 + depth * 0.45 + (1 - plane) * 0.24, 0, 1);
+      const threshold = 0.56 + hysteresis * 0.2;
+
+      if (score > threshold && risk < 0.52) {
+        state.lockFrames += 1;
+        state.reticle.x = lerp(state.reticle.x, target.x, 0.16);
+        state.reticle.y = lerp(state.reticle.y, target.y, 0.16);
+      } else {
+        state.lockFrames = Math.max(0, state.lockFrames - 2);
+      }
+
+      const locked = state.lockFrames > 14;
+      const decision = locked ? "LOCKED RETICLE" : (risk > 0.62 ? "HOLD SELECT" : "SEARCHING SURFACE");
+      return { raw, target, stability, score, risk, locked, decision };
+    }
+
+    function drawHand(w, h, metrics) {
+      const baseX = metrics.raw.x * w;
+      const baseY = metrics.raw.y * h;
+      const filterX = state.smoothed.x * w;
+      const filterY = state.smoothed.y * h;
+
+      ctx.lineCap = "round";
+      joints.slice(1).forEach((joint) => {
+        const pulse = Math.sin(state.t * 0.05 + joint[1] * 0.05) * value("jitter") * 16;
+        ctx.strokeStyle = "rgba(247,111,93,0.34)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(baseX, baseY);
+        ctx.lineTo(baseX + joint[1] + pulse, baseY + joint[2]);
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(113,230,193,0.72)";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(filterX, filterY);
+        ctx.lineTo(filterX + joint[1] * 0.92, filterY + joint[2] * 0.92);
+        ctx.stroke();
+      });
+
+      ctx.fillStyle = "rgba(247,111,93,0.92)";
+      ctx.beginPath();
+      ctx.arc(baseX - 18, baseY - 84, 9, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(113,230,193,0.96)";
+      ctx.beginPath();
+      ctx.arc(filterX - 17, filterY - 77, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = metrics.locked ? "rgba(113,230,193,0.95)" : "rgba(242,213,158,0.64)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 7]);
+      ctx.beginPath();
+      ctx.moveTo(filterX - 17, filterY - 77);
+      ctx.lineTo(metrics.target.x * w, metrics.target.y * h);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawReticle(w, h, metrics) {
+      const x = state.reticle.x * w;
+      const y = state.reticle.y * h;
+      const radius = metrics.locked ? 35 : 24 + Math.sin(state.t * 0.08) * 4;
+      ctx.strokeStyle = metrics.locked ? "#71e6c1" : "#f2d59e";
+      ctx.lineWidth = metrics.locked ? 4 : 2;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - radius - 12, y);
+      ctx.lineTo(x - radius + 6, y);
+      ctx.moveTo(x + radius - 6, y);
+      ctx.lineTo(x + radius + 12, y);
+      ctx.moveTo(x, y - radius - 12);
+      ctx.lineTo(x, y - radius + 6);
+      ctx.moveTo(x, y + radius - 6);
+      ctx.lineTo(x, y + radius + 12);
+      ctx.stroke();
+
+      ctx.fillStyle = metrics.locked ? "rgba(113,230,193,0.16)" : "rgba(242,213,158,0.12)";
+      ctx.beginPath();
+      ctx.arc(x, y, radius - 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawBars(w, h, metrics) {
+      const items = [
+        ["joint", value("jointConfidence"), "#71e6c1"],
+        ["hit", value("planeConfidence"), "#f2d59e"],
+        ["stable", metrics.stability, "#8fb9ff"],
+        ["risk", metrics.risk, "#f76f5d"]
+      ];
+      const x = 24;
+      let y = 30;
+      ctx.font = "13px system-ui";
+      items.forEach(([label, amount, color]) => {
+        ctx.fillStyle = "#b8cbc4";
+        ctx.fillText(label, x, y);
+        ctx.fillStyle = "rgba(237,247,242,0.12)";
+        ctx.fillRect(x + 54, y - 10, 150, 8);
+        ctx.fillStyle = color;
+        ctx.fillRect(x + 54, y - 10, 150 * amount, 8);
+        y += 24;
+      });
+      ctx.fillStyle = "#edf7f2";
+      ctx.font = "15px system-ui";
+      ctx.fillText(metrics.decision, 24, h - 26);
+    }
+
+    function frame() {
+      state.t += 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      const metrics = compute();
+      drawGrid(w, h);
+      drawReticle(w, h, metrics);
+      drawHand(w, h, metrics);
+      drawBars(w, h, metrics);
+
+      readouts.decision.textContent = metrics.decision;
+      readouts.stability.textContent = metrics.stability.toFixed(2);
+      readouts.score.textContent = metrics.score.toFixed(2);
+      readouts.risk.textContent = metrics.risk.toFixed(2);
+      readouts.age.textContent = `${state.lockFrames} frames`;
+      requestAnimationFrame(frame);
+    }
+
+    resize();
+    probeCapabilities();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

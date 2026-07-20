@@ -1,0 +1,119 @@
+{
+  "date": "2026-07-20",
+  "headline": "手入力の信頼度で hit-test reticle を安定化する",
+  "headlineEn": "Stabilizing a hit-test reticle with hand-input confidence",
+  "summary": "WebXR Hit Test Module、WebXR Hand Input Module、WebXR DOM Overlays、Immersive Web の公式 samples を確認し、今日は hand joint の安定度と hit-test confidence を組み合わせて reticle の lock / search / hold を判断する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Hit Test Module, WebXR Hand Input Module, WebXR DOM Overlays, and Immersive Web official samples, today's original HTML sample combines hand-joint stability and hit-test confidence to decide reticle lock, search, or hold states.",
+  "keyTopics": [
+    "WebXR Hit Test Module の最新 Editor's Draft は 2025-12-11 で、`hit-test` feature descriptor、`XRHitTestSource`、`XRTransientInputHitTestSource`、`XRFrame.getHitTestResults()` / `getHitTestResultsForTransientInput()` を中心に現実空間との交差結果を扱う。",
+    "Hit Test はアプリ側の仮想シーンへの raycast ではなく、AR デバイスが理解している現実世界 geometry への問い合わせとして定義されているため、reticle の信頼度は surface 側の更新品質にも依存する。",
+    "WebXR Hand Input Module は `XRInputSource.hand` と 25 joint の `XRJointSpace` を定義しており、隠れた joint の扱いは emulation または手全体の null pose になり得るため、選択 UI には hold / hysteresis が必要になる。",
+    "WebXR DOM Overlays は immersive session 中に単一 DOM element を透明背景の 2D rectangle として表示する仕組みで、AR reticle や hand UI の debug / control layer と組み合わせやすい。",
+    "Immersive Web の公式 samples は Hit Test、Hit Test with Anchors、Hand Tracking、Input Selection を分けて示しており、今日の試作ではそれらの入力経路を HMD 不要の最小モデルとして接続した。"
+  ],
+  "keyTopicsEn": [
+    "The latest WebXR Hit Test Module Editor's Draft is dated 2025-12-11 and centers on the `hit-test` feature descriptor, `XRHitTestSource`, `XRTransientInputHitTestSource`, and `XRFrame.getHitTestResults()` / `getHitTestResultsForTransientInput()`.",
+    "Hit Test is defined as querying real-world geometry understood by the AR device, not raycasting against the application's virtual scene, so reticle confidence depends on surface update quality.",
+    "The WebXR Hand Input Module defines `XRInputSource.hand` and 25 `XRJointSpace` joints; obscured joints can be emulated or represented by null poses for the whole hand, so selection UI needs hold and hysteresis behavior.",
+    "WebXR DOM Overlays can show a single transparent 2D DOM rectangle during an immersive session, making it useful as a debug or control layer around AR reticles and hand UI.",
+    "Immersive Web's official samples separate Hit Test, Hit Test with Anchors, Hand Tracking, and Input Selection; today's prototype connects those input paths as a headset-free minimal model."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Hand Reticle Stability Gate",
+      "url": "../outputs/2026-07-20_html_hand_reticle_stability_gate.html"
+    },
+    {
+      "label": "W3C: WebXR Hit Test Module",
+      "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Hit Test Editor's Draft",
+      "url": "https://immersive-web.github.io/hit-test/"
+    },
+    {
+      "label": "W3C: WebXR Hand Input Module Level 1",
+      "url": "https://www.w3.org/TR/webxr-hand-input-1/"
+    },
+    {
+      "label": "W3C: WebXR DOM Overlays Module",
+      "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Hit Test Module と Immersive Web の Hit Test / Hand Tracking / Input Selection samples の組み合わせです。Hit Test は reticle を現実面へ吸着させる入口で、Hand Input は 25 joint の姿勢から選択意図を読む入口です。面の confidence と手の confidence を別々に扱うと、surface は見えているが手が荒れている、手は安定しているが hit-test 面が弱い、という失敗状態を UI に反映できます。",
+      "bodyEn": "Today's notable combination is the WebXR Hit Test Module plus the Immersive Web Hit Test, Hand Tracking, and Input Selection samples. Hit Test is the path for attaching a reticle to a real-world surface, while Hand Input is the path for interpreting selection intent from 25 hand joints. Keeping surface confidence and hand confidence separate lets the UI represent failure states such as a good surface with noisy hands or stable hands with a weak hit-test plane.",
+      "links": [
+        {
+          "label": "W3C: WebXR Hit Test Module",
+          "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+        },
+        {
+          "label": "Immersive Web: WebXR Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "手先から surface へ伸びる ray、surface 上の reticle、joint / hit / stability / risk の 4 本メーターを同時に表示します。`Steady`、`Jitter`、`Weak plane`、`False tap` の preset と slider で、reticle が lock する条件と hold へ落ちる条件を観察できます。表現としては、reticle を常に描くのではなく、条件が揃った時だけ太く緑にして、危険時は search / hold の見た目へ戻します。",
+      "bodyEn": "The sample displays a ray from the hand tip to the surface, a reticle on the surface, and four meters for joint, hit, stability, and risk. Presets and sliders for `Steady`, `Jitter`, `Weak plane`, and `False tap` make it easy to observe when the reticle locks or falls back to hold. The visual approach avoids treating the reticle as always valid: it becomes thick and green only when evidence is stable, otherwise it returns to search or hold."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機実装では `requestHitTestSource()` や `requestHitTestSourceForTransientInput()` の結果を frame ごとに読む経路と、`inputSource.hand` / `XRFrame.getJointPose()` の経路を同じ state machine に入れると扱いやすいです。`score > threshold` だけで即配置せず、数 frame の lock age と hysteresis を持たせると、手の一瞬の欠損や面推定の揺れで false select が起きにくくなります。",
+      "bodyEn": "On a real device, feeding both the per-frame hit-test path from `requestHitTestSource()` or `requestHitTestSourceForTransientInput()` and the hand path from `inputSource.hand` / `XRFrame.getJointPose()` into the same state machine should be manageable. Instead of placing immediately when `score > threshold`, keeping a lock age and hysteresis over several frames helps avoid false selects caused by brief joint dropout or surface-estimation jitter.",
+      "links": [
+        {
+          "label": "Immersive Web: Hit Testing Explainer",
+          "url": "https://immersive-web.github.io/hit-test/hit-testing-explainer.html"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Hit Test の transient input 経路、Anchors と組み合わせた placed object の寿命管理、DOM Overlay を使った AR debug UI、Hand Input の実装差、WebXR Layers / Depth Sensing との depth conflict を続けて見ます。次は lock した reticle から anchor preview へ進め、placement 後の drift と再固定を扱う候補がよさそうです。",
+      "bodyEn": "Keep watching transient-input hit testing, placed-object lifetime when combined with Anchors, AR debug UI through DOM Overlay, implementation differences in Hand Input, and depth conflicts with WebXR Layers / Depth Sensing. A good next step is moving from a locked reticle to anchor preview, then handling drift and re-lock after placement."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Steady` で reticle が緑に lock することを確認し、次に `False tap` を押してください。joint confidence と hit-test confidence が残っていても、jitter と depth mismatch が大きいと false select risk が上がり、decision が `HOLD SELECT` へ落ちます。最後に Hysteresis を下げると復帰は速くなりますが、揺れへの耐性が落ちることが分かります。",
+      "bodyEn": "Start with `Steady` and confirm that the reticle locks in green, then press `False tap`. Even when some joint and hit-test confidence remain, high jitter and depth mismatch increase false-select risk and push the decision to `HOLD SELECT`. Lowering Hysteresis makes recovery faster but reduces resistance to noisy input.",
+      "links": [
+        {
+          "label": "Open Hand Reticle Stability Gate",
+          "url": "../outputs/2026-07-20_html_hand_reticle_stability_gate.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Hit Test、Hand Input、DOM Overlays、Immersive Web samples を確認。アイデア: 手入力 confidence と hit-test confidence を同じ reticle state machine に入れる。実装: canvas 上に hand ray、surface ellipse、reticle、risk / stability meter、preset / slider を作成。検証: JSON parse、HTML script 構文、gallery 再生成、公開 URL を確認する。",
+      "bodyEn": "Research: reviewed WebXR Hit Test, Hand Input, DOM Overlays, and Immersive Web samples. Idea: feed hand-input confidence and hit-test confidence into the same reticle state machine. Implementation: created a canvas with hand ray, surface ellipse, reticle, risk / stability meters, presets, and sliders. Validation: JSON parsing, HTML script syntax, gallery regeneration, and public URLs are checked."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまで depth、lighting、hand、layers、space warp、WebGPU readiness、hand confidence filter を分解してきました。今日のサンプルは入力の品質評価を placement UX へ戻し、AR で最初に触る reticle の信頼性を扱います。XR UI は華やかな表現よりも、置いてよい時と待つべき時をユーザーへ誤解なく返す小さな feedback が効きます。",
+      "bodyEn": "The previous samples decomposed depth, lighting, hands, layers, space warp, WebGPU readiness, and hand-confidence filtering. Today's sample routes input-quality evaluation back into placement UX and focuses on the reliability of the first AR reticle users touch. For XR UI, small feedback that clearly distinguishes when placement is allowed from when it should wait often matters more than flashy rendering."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Hand Reticle Stability Gate` です。手先 ray、surface confidence、depth mismatch、hysteresis をまとめて、`LOCKED RETICLE`、`SEARCHING SURFACE`、`HOLD SELECT` の 3 状態へ落とし込みます。次に足すなら、lock 後に anchor candidate を複数保存し、drift が一定以上になった時だけ再 hit-test する比較表示です。",
+      "bodyEn": "The selected prototype is `Hand Reticle Stability Gate`. It combines hand-tip ray, surface confidence, depth mismatch, and hysteresis into three states: `LOCKED RETICLE`, `SEARCHING SURFACE`, and `HOLD SELECT`. A useful extension would save multiple anchor candidates after lock and compare re-hit-testing only when drift passes a threshold."
+    }
+  ]
+}
