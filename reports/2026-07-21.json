@@ -1,0 +1,113 @@
+{
+  "date": "2026-07-21",
+  "headline": "anchor の drift を見て必要な時だけ再 hit-test する",
+  "headlineEn": "Re-hit-testing only when anchor drift calls for it",
+  "summary": "WebXR Anchors Module、WebXR Hit Test Module、WebXR Device API、DOM Overlays、Immersive Web 公式 samples を確認し、今日は hit-test で保存した anchor 候補の drift を可視化し、しきい値を超えた anchor だけ再 hit-test する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Anchors Module, WebXR Hit Test Module, WebXR Device API, DOM Overlays, and Immersive Web official samples, today's original HTML sample visualizes drift on hit-test-created anchor candidates and re-runs hit tests only for anchors that exceed a threshold.",
+  "keyTopics": [
+    "WebXR Anchors Module の Editor's Draft は 2026-04-27 で、`anchors` feature descriptor、`XRAnchor`、`XRFrame.trackedAnchors`、anchor pose の更新と削除を中心に、基盤システムに特定 pose の追跡を依頼する仕組みを定義している。",
+    "Anchors は hit-test の瞬間的な交差点を長く使うための橋渡しになるが、デバイス側の world understanding が変わると anchor pose も更新されるため、配置 UI には drift の観測と再固定の方針が必要になる。",
+    "WebXR Hit Test Module は plane / point / mesh などの trackable type と `XRHitTestSource` を扱うため、anchor 作成前の新鮮な surface estimate と anchor 作成後の tracked pose を分けて考えやすい。",
+    "WebXR Device API の 2026-03-16 Candidate Recommendation Draft は frame loop、reference space、pose、feature descriptor の土台で、anchor / hit-test / DOM overlay などの module はこのセッションモデルに乗る。",
+    "Immersive Web の公式 samples には Anchors、Hit Test、Hit Test with Anchors が分かれており、今日の試作では公開カードの中心を外部デモではなく、自作の drift / re-hit 判断モデルにした。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Anchors Module Editor's Draft is dated 2026-04-27 and defines the `anchors` feature descriptor, `XRAnchor`, `XRFrame.trackedAnchors`, and anchor pose update/removal concepts for asking the underlying system to track a specific pose.",
+    "Anchors bridge a momentary hit-test intersection into longer-lived placement, but the anchor pose can update as the device's world understanding changes, so placement UI needs a policy for observing drift and re-locking.",
+    "The WebXR Hit Test Module covers trackable types such as plane, point, and mesh plus `XRHitTestSource`, which makes it useful to separate fresh surface estimates before anchor creation from tracked poses after anchor creation.",
+    "The 2026-03-16 WebXR Device API Candidate Recommendation Draft provides the frame loop, reference space, pose, and feature descriptor foundation that modules such as anchors, hit test, and DOM overlay build on.",
+    "Immersive Web's official samples split Anchors, Hit Test, and Hit Test with Anchors; today's prototype keeps the public card centered on an original drift / re-hit decision model rather than external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Anchor Drift Re-hit Lab",
+      "url": "../outputs/2026-07-21_html_anchor_drift_rehit_lab.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "W3C: WebXR Hit Test Module",
+      "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: WebXR DOM Overlays Module",
+      "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は Immersive Web の Hit Test with Anchors sample と WebXR Anchors Module の組み合わせです。Hit Test は「今見えている面」への交差を返し、Anchors は「この pose を追跡し続けたい」という依頼に変わります。面推定が更新されるほど anchor の pose も微妙に動くため、置いた後に drift をどう UI 化するかが実アプリの質に直結します。",
+      "bodyEn": "Today's notable combination is the Immersive Web Hit Test with Anchors sample and the WebXR Anchors Module. Hit Test returns an intersection with the currently understood surface, while Anchors turn that into a request to keep tracking a pose. As surface estimation updates, anchor poses can move subtly, so the way an app surfaces drift after placement directly affects quality.",
+      "links": [
+        {
+          "label": "Immersive Web: Hit Test with Anchors",
+          "url": "https://immersive-web.github.io/webxr-samples/hit-test-anchors.html"
+        },
+        {
+          "label": "Immersive Web: WebXR Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "fresh hit-test の reticle、保存した anchor pose、現在追跡されている live pose を 1 画面に分けて描きます。anchor から live pose へ点線を伸ばし、drift がしきい値を超えると黄色の警告表示に変えます。`Save anchor`、`Re-hit worst`、`Auto re-hit` を用意し、置いた object を無条件に信用するのではなく、必要な時だけ surface を取り直す流れを見せます。",
+      "bodyEn": "The sample draws the fresh hit-test reticle, saved anchor pose, and currently tracked live pose separately. A dashed line connects the anchor to its live pose, and anchors turn into a yellow warning state when drift passes the threshold. With `Save anchor`, `Re-hit worst`, and `Auto re-hit`, the interaction shows a flow that refreshes the surface only when needed instead of blindly trusting placed objects."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機では `requestHitTestSource()` の結果から anchor を作成し、frame ごとに `XRFrame.trackedAnchors` と `XRFrame.getPose(anchor.anchorSpace, referenceSpace)` を読む構成が基本になります。drift は過去 pose と現在 pose の距離だけでなく、surface confidence、tracking loss、user motion、object の重要度で重み付けすると扱いやすいです。再 hit-test は毎 frame ではなく、一定距離、一定時間、またはユーザー注視時に限定すると UX と負荷のバランスが取りやすくなります。",
+      "bodyEn": "On a real device, the basic path is to create anchors from `requestHitTestSource()` results, then read `XRFrame.trackedAnchors` and `XRFrame.getPose(anchor.anchorSpace, referenceSpace)` each frame. Drift works better when weighted by surface confidence, tracking loss, user motion, and object importance rather than just previous-versus-current pose distance. Re-hit testing should be limited by distance, time, or user focus instead of running every frame."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Anchors の feature descriptor と実装差、hit-test の entityTypes、DOM Overlay 上の beforexrselect、placed object の寿命、Depth Sensing と anchor depth の conflict を続けて見ます。次は anchor を複数置いた後、近い object だけ depth / occlusion 検査を強める方向がよさそうです。",
+      "bodyEn": "Keep watching the Anchors feature descriptor and implementation differences, hit-test `entityTypes`, `beforexrselect` in DOM Overlay, placed-object lifetime, and conflicts between Depth Sensing and anchor depth. A good next step is placing multiple anchors and increasing depth / occlusion checks only for nearby objects."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Stable table` で anchor を保存し、`Walk around` に切り替えて drift が増える様子を見てください。`Auto re-hit on` のままだと stale anchor が周期的に再固定され、off にすると黄色い queue が溜まります。`Re-hit threshold` を下げると安全寄り、上げると anchor を信用する寄りの挙動になります。",
+      "bodyEn": "Save an anchor in `Stable table`, then switch to `Walk around` and watch drift rise. With `Auto re-hit on`, stale anchors are periodically re-locked; with it off, the yellow queue accumulates. Lowering `Re-hit threshold` makes the policy more conservative, while raising it trusts anchors longer.",
+      "links": [
+        {
+          "label": "Open Anchor Drift Re-hit Lab",
+          "url": "../outputs/2026-07-21_html_anchor_drift_rehit_lab.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Anchors、Hit Test、Device API、DOM Overlays、Immersive Web samples を確認。アイデア: reticle lock の次段として anchor 候補、live pose、drift、再 hit-test queue を作る。実装: canvas に床面グリッド、reticle、anchor card、live pose marker、drift line、preset / slider / action button を実装。検証: JSON parse、HTML script 構文、gallery 再生成、GitHub Pages 公開 URL を確認する。",
+      "bodyEn": "Research: reviewed Anchors, Hit Test, Device API, DOM Overlays, and Immersive Web samples. Idea: extend reticle lock into anchor candidates, live poses, drift, and a re-hit queue. Implementation: built a canvas with floor grid, reticle, anchor cards, live pose markers, drift lines, presets, sliders, and action buttons. Validation: JSON parsing, HTML script syntax, gallery regeneration, and GitHub Pages public URLs are checked."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまで入力 confidence、hit-test reticle、hand stability まで見てきました。今日のサンプルは「置く瞬間」から「置いた後」へ焦点を移し、AR object が現実面と一緒に更新される不安定さを扱います。XR の配置 UX は、配置成功の演出だけでなく、後から静かにずれていく object をいつ直すかまで設計対象になります。",
+      "bodyEn": "The prior samples covered input confidence, hit-test reticles, and hand stability. Today's sample moves from the moment of placement to what happens after placement, addressing the instability of AR objects updating along with real-world surface understanding. XR placement UX must design not only the success moment but also when to repair objects that slowly drift afterward."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Anchor Drift Re-hit Lab` です。複数 anchor を保存し、surface confidence、tracking noise、world drift、anchor memory、re-hit threshold を変えながら、stale anchor だけを queue に入れます。次に足すなら、anchor の近さと object サイズに応じて depth occlusion の検査頻度を変える scheduler です。",
+      "bodyEn": "The selected prototype is `Anchor Drift Re-hit Lab`. It saves multiple anchors and queues only stale anchors while varying surface confidence, tracking noise, world drift, anchor memory, and re-hit threshold. A useful extension would be a scheduler that changes depth-occlusion check frequency based on anchor proximity and object size."
+    }
+  ]
+}

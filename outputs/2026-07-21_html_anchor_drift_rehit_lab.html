@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anchor Drift Re-hit Lab</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #121617;
+      color: #eef6f3;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 18% 10%, rgba(77, 184, 156, 0.22), transparent 30rem),
+        radial-gradient(circle at 86% 8%, rgba(244, 184, 92, 0.16), transparent 25rem),
+        linear-gradient(135deg, #111718 0%, #182023 48%, #201a18 100%);
+    }
+
+    main {
+      width: min(1190px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 18px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      border-bottom: 1px solid rgba(238, 246, 243, 0.14);
+      padding-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.65rem, 3vw, 3.1rem);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .lede {
+      margin: 10px 0 0;
+      color: #b7c9c5;
+      max-width: 760px;
+      line-height: 1.55;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border: 1px solid rgba(238, 246, 243, 0.16);
+      background: rgba(19, 28, 29, 0.76);
+      color: #a7f0d6;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 650px;
+      border: 1px solid rgba(238, 246, 243, 0.15);
+      background: #101415;
+      overflow: hidden;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    aside {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .panel {
+      border: 1px solid rgba(238, 246, 243, 0.15);
+      background: rgba(15, 23, 24, 0.86);
+      padding: 14px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 0.9rem;
+      color: #f1cd8a;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      margin: 12px 0;
+      color: #d7e4df;
+      font-size: 0.88rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #62d8b4;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    button {
+      border: 1px solid rgba(238, 246, 243, 0.16);
+      background: #1c2a2b;
+      color: #eef6f3;
+      min-height: 38px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button.active {
+      border-color: #72e0bf;
+      background: #24463e;
+      color: #b2ffdf;
+    }
+
+    button.warning {
+      border-color: rgba(241, 205, 138, 0.5);
+      background: #362918;
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px 12px;
+      margin: 0;
+      font-size: 0.88rem;
+    }
+
+    dt { color: #9fb5b0; }
+
+    dd {
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+      color: #eef6f3;
+    }
+
+    .decision {
+      padding: 12px;
+      border: 1px solid rgba(114, 224, 191, 0.28);
+      background: rgba(28, 51, 45, 0.9);
+      font-size: 1.04rem;
+      color: #b2ffdf;
+    }
+
+    .note {
+      color: #adbfba;
+      line-height: 1.5;
+      font-size: 0.84rem;
+    }
+
+    @media (max-width: 860px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .stage {
+        min-height: 520px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Anchor Drift Re-hit Lab</h1>
+        <p class="lede">A WebXR-inspired placement simulator for saving hit-test anchors, watching drift, and re-running hit tests only when the anchor pose becomes unreliable.</p>
+      </div>
+      <div class="badge">2026-07-21 original sample</div>
+    </header>
+
+    <section class="stage" aria-label="Anchor drift and re-hit canvas">
+      <canvas id="stage"></canvas>
+    </section>
+
+    <aside>
+      <section class="panel">
+        <h2>Scenario</h2>
+        <div class="buttons" id="presets">
+          <button data-preset="stable" class="active">Stable table</button>
+          <button data-preset="walk">Walk around</button>
+          <button data-preset="weak">Weak plane</button>
+          <button data-preset="recover">Re-map</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Controls</h2>
+        <label>Surface confidence <input id="surfaceConfidence" type="range" min="0" max="100" value="84"></label>
+        <label>Tracking noise <input id="trackingNoise" type="range" min="0" max="100" value="18"></label>
+        <label>World drift <input id="worldDrift" type="range" min="0" max="100" value="26"></label>
+        <label>Re-hit threshold <input id="rehitThreshold" type="range" min="5" max="90" value="38"></label>
+        <label>Anchor memory <input id="anchorMemory" type="range" min="10" max="100" value="72"></label>
+      </section>
+
+      <section class="panel">
+        <h2>Anchor actions</h2>
+        <div class="buttons">
+          <button id="saveAnchor">Save anchor</button>
+          <button id="rehitWorst" class="warning">Re-hit worst</button>
+          <button id="clearAnchors">Clear</button>
+          <button id="autoRehit">Auto re-hit on</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Readout</h2>
+        <div class="decision" id="decision">ANCHOR READY</div>
+        <dl>
+          <dt>Anchors</dt><dd id="anchorCount">0</dd>
+          <dt>Worst drift</dt><dd id="worstDrift">0.0 cm</dd>
+          <dt>Reticle score</dt><dd id="reticleScore">0%</dd>
+          <dt>Re-hit queue</dt><dd id="rehitQueue">0</dd>
+          <dt>Last action</dt><dd id="lastAction">waiting</dd>
+        </dl>
+      </section>
+
+      <section class="panel">
+        <h2>Model</h2>
+        <p class="note">The sample treats hit-test results as fresh surface estimates and anchors as remembered poses. Higher drift or lower memory pushes anchors into a re-hit queue instead of blindly trusting old placement.</p>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      surfaceConfidence: document.getElementById("surfaceConfidence"),
+      trackingNoise: document.getElementById("trackingNoise"),
+      worldDrift: document.getElementById("worldDrift"),
+      rehitThreshold: document.getElementById("rehitThreshold"),
+      anchorMemory: document.getElementById("anchorMemory")
+    };
+    const readout = {
+      decision: document.getElementById("decision"),
+      anchorCount: document.getElementById("anchorCount"),
+      worstDrift: document.getElementById("worstDrift"),
+      reticleScore: document.getElementById("reticleScore"),
+      rehitQueue: document.getElementById("rehitQueue"),
+      lastAction: document.getElementById("lastAction")
+    };
+
+    const state = {
+      pointer: { x: 0.52, y: 0.54 },
+      anchors: [],
+      autoRehit: true,
+      lastAction: "waiting",
+      preset: "stable",
+      time: 0
+    };
+
+    const presets = {
+      stable: { surfaceConfidence: 84, trackingNoise: 18, worldDrift: 26, rehitThreshold: 38, anchorMemory: 72 },
+      walk: { surfaceConfidence: 76, trackingNoise: 36, worldDrift: 58, rehitThreshold: 42, anchorMemory: 62 },
+      weak: { surfaceConfidence: 44, trackingNoise: 46, worldDrift: 52, rehitThreshold: 34, anchorMemory: 48 },
+      recover: { surfaceConfidence: 88, trackingNoise: 24, worldDrift: 18, rehitThreshold: 30, anchorMemory: 84 }
+    };
+
+    function value(id) {
+      return Number(controls[id].value);
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function surfacePoint(anchor, t) {
+      const drift = value("worldDrift") / 100;
+      const noise = value("trackingNoise") / 100;
+      const phase = t * 0.001 + anchor.phase;
+      return {
+        x: anchor.x + Math.sin(phase * 1.5) * 0.055 * drift + Math.cos(phase * 2.3) * 0.018 * noise,
+        y: anchor.y + Math.cos(phase * 1.1) * 0.042 * drift + Math.sin(phase * 2.8) * 0.018 * noise
+      };
+    }
+
+    function currentReticle() {
+      const noise = value("trackingNoise") / 100;
+      const confidence = value("surfaceConfidence") / 100;
+      const wobble = (1 - confidence) * 0.08 + noise * 0.04;
+      return {
+        x: state.pointer.x + Math.sin(state.time * 0.0023) * wobble,
+        y: state.pointer.y + Math.cos(state.time * 0.0019) * wobble,
+        score: Math.max(0, Math.min(1, confidence - noise * 0.22))
+      };
+    }
+
+    function saveAnchor() {
+      const reticle = currentReticle();
+      const id = state.anchors.length + 1;
+      state.anchors.push({
+        id,
+        x: reticle.x,
+        y: reticle.y,
+        createdAt: state.time,
+        phase: Math.random() * Math.PI * 2,
+        rehitCount: 0
+      });
+      state.lastAction = `saved #${id}`;
+    }
+
+    function anchorDrift(anchor) {
+      const live = surfacePoint(anchor, state.time);
+      const dx = live.x - anchor.x;
+      const dy = live.y - anchor.y;
+      const raw = Math.hypot(dx, dy) * 100;
+      const memoryPenalty = (100 - value("anchorMemory")) * 0.22;
+      return raw + memoryPenalty;
+    }
+
+    function rehitAnchor(anchor) {
+      const live = surfacePoint(anchor, state.time);
+      const reticle = currentReticle();
+      const blend = reticle.score * 0.66 + 0.18;
+      anchor.x = live.x * blend + reticle.x * (1 - blend);
+      anchor.y = live.y * blend + reticle.y * (1 - blend);
+      anchor.createdAt = state.time;
+      anchor.rehitCount += 1;
+      state.lastAction = `re-hit #${anchor.id}`;
+    }
+
+    function rehitWorst() {
+      const worst = state.anchors
+        .map((anchor) => ({ anchor, drift: anchorDrift(anchor) }))
+        .sort((a, b) => b.drift - a.drift)[0];
+      if (worst) rehitAnchor(worst.anchor);
+    }
+
+    function drawGrid(width, height) {
+      ctx.fillStyle = "#101415";
+      ctx.fillRect(0, 0, width, height);
+
+      const horizon = height * 0.34;
+      const floorTop = height * 0.38;
+      const grad = ctx.createLinearGradient(0, floorTop, 0, height);
+      grad.addColorStop(0, "#152426");
+      grad.addColorStop(1, "#1e1d19");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, floorTop, width, height - floorTop);
+
+      ctx.strokeStyle = "rgba(238, 246, 243, 0.08)";
+      ctx.lineWidth = 1;
+      for (let i = -8; i <= 8; i += 1) {
+        const x = width * 0.5 + i * width * 0.07;
+        ctx.beginPath();
+        ctx.moveTo(width * 0.5, horizon);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let j = 0; j < 12; j += 1) {
+        const y = floorTop + j * j * height * 0.006;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawReticle(reticle, width, height) {
+      const x = reticle.x * width;
+      const y = reticle.y * height;
+      const valid = reticle.score > 0.58;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(Math.sin(state.time * 0.002) * 0.18);
+      ctx.strokeStyle = valid ? "#72e0bf" : "#f1cd8a";
+      ctx.lineWidth = valid ? 4 : 2;
+      ctx.globalAlpha = valid ? 0.95 : 0.65;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 46, 16, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-58, 0);
+      ctx.lineTo(-26, 0);
+      ctx.moveTo(26, 0);
+      ctx.lineTo(58, 0);
+      ctx.moveTo(0, -28);
+      ctx.lineTo(0, -10);
+      ctx.moveTo(0, 10);
+      ctx.lineTo(0, 28);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawAnchor(anchor, drift, threshold, width, height) {
+      const live = surfacePoint(anchor, state.time);
+      const x = anchor.x * width;
+      const y = anchor.y * height;
+      const lx = live.x * width;
+      const ly = live.y * height;
+      const stale = drift > threshold;
+
+      ctx.strokeStyle = stale ? "rgba(241, 205, 138, 0.82)" : "rgba(114, 224, 191, 0.72)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(lx, ly);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = stale ? "rgba(91, 56, 25, 0.92)" : "rgba(28, 67, 57, 0.92)";
+      ctx.strokeStyle = stale ? "#f1cd8a" : "#72e0bf";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(x - 34, y - 42, 68, 46, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#eef6f3";
+      ctx.font = "13px ui-sans-serif, system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText(`#${anchor.id}`, x, y - 23);
+      ctx.fillStyle = stale ? "#ffd796" : "#b2ffdf";
+      ctx.fillText(`${drift.toFixed(1)}cm`, x, y - 8);
+
+      ctx.fillStyle = stale ? "#f1cd8a" : "#72e0bf";
+      ctx.beginPath();
+      ctx.arc(lx, ly, stale ? 8 : 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawHud(width, height, queue, worstDrift, threshold) {
+      ctx.fillStyle = "rgba(14, 22, 22, 0.76)";
+      ctx.fillRect(18, 18, Math.min(360, width - 36), 104);
+      ctx.fillStyle = "#eef6f3";
+      ctx.font = "14px ui-sans-serif, system-ui";
+      ctx.textAlign = "left";
+      ctx.fillText("fresh hit-test result -> saved anchor pose -> live tracked pose", 34, 48);
+      ctx.fillStyle = queue ? "#f1cd8a" : "#72e0bf";
+      ctx.fillText(`queue ${queue} / worst ${worstDrift.toFixed(1)}cm / threshold ${threshold.toFixed(0)}cm`, 34, 76);
+      ctx.fillStyle = "#adbfba";
+      ctx.fillText("Drag reticle, save anchors, then increase drift or use re-hit.", 34, 102);
+    }
+
+    function render(t) {
+      state.time = t;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      const threshold = value("rehitThreshold");
+      const reticle = currentReticle();
+      const stats = state.anchors.map((anchor) => ({ anchor, drift: anchorDrift(anchor) }));
+      const queue = stats.filter((item) => item.drift > threshold).length;
+      const worstDrift = stats.reduce((max, item) => Math.max(max, item.drift), 0);
+
+      if (state.autoRehit && queue > 0 && Math.floor(t / 900) !== Math.floor((t - 16) / 900)) {
+        const stale = stats.filter((item) => item.drift > threshold).sort((a, b) => b.drift - a.drift)[0];
+        if (stale) rehitAnchor(stale.anchor);
+      }
+
+      drawGrid(width, height);
+      drawReticle(reticle, width, height);
+      stats.forEach((item) => drawAnchor(item.anchor, item.drift, threshold, width, height));
+      drawHud(width, height, queue, worstDrift, threshold);
+
+      const decision = state.anchors.length === 0
+        ? "PLACE FIRST ANCHOR"
+        : queue > 0
+          ? "RE-HIT STALE ANCHOR"
+          : reticle.score > 0.58
+            ? "ANCHOR READY"
+            : "WAIT FOR SURFACE";
+      readout.decision.textContent = decision;
+      readout.anchorCount.textContent = String(state.anchors.length);
+      readout.worstDrift.textContent = `${worstDrift.toFixed(1)} cm`;
+      readout.reticleScore.textContent = `${Math.round(reticle.score * 100)}%`;
+      readout.rehitQueue.textContent = String(queue);
+      readout.lastAction.textContent = state.lastAction;
+
+      requestAnimationFrame(render);
+    }
+
+    function setPreset(name) {
+      state.preset = name;
+      Object.entries(presets[name]).forEach(([key, next]) => {
+        controls[key].value = next;
+      });
+      document.querySelectorAll("[data-preset]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.preset === name);
+      });
+      state.lastAction = name;
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      canvas.setPointerCapture(event.pointerId);
+      updatePointer(event);
+    });
+    canvas.addEventListener("pointermove", updatePointer);
+    canvas.addEventListener("pointerup", (event) => {
+      if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    });
+    canvas.addEventListener("pointercancel", (event) => {
+      if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    });
+
+    function updatePointer(event) {
+      if (event.buttons === 0 && event.type === "pointermove") return;
+      const rect = canvas.getBoundingClientRect();
+      state.pointer.x = Math.max(0.08, Math.min(0.92, (event.clientX - rect.left) / rect.width));
+      state.pointer.y = Math.max(0.42, Math.min(0.88, (event.clientY - rect.top) / rect.height));
+    }
+
+    document.getElementById("saveAnchor").addEventListener("click", saveAnchor);
+    document.getElementById("rehitWorst").addEventListener("click", rehitWorst);
+    document.getElementById("clearAnchors").addEventListener("click", () => {
+      state.anchors = [];
+      state.lastAction = "cleared";
+    });
+    document.getElementById("autoRehit").addEventListener("click", (event) => {
+      state.autoRehit = !state.autoRehit;
+      event.currentTarget.textContent = state.autoRehit ? "Auto re-hit on" : "Auto re-hit off";
+      event.currentTarget.classList.toggle("active", state.autoRehit);
+      state.lastAction = state.autoRehit ? "auto on" : "auto off";
+    });
+    document.getElementById("autoRehit").classList.add("active");
+    document.getElementById("presets").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-preset]");
+      if (button) setPreset(button.dataset.preset);
+    });
+
+    window.addEventListener("resize", resize);
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function roundRect(x, y, w, h, r) {
+        const radius = Math.min(r, w / 2, h / 2);
+        this.beginPath();
+        this.moveTo(x + radius, y);
+        this.arcTo(x + w, y, x + w, y + h, radius);
+        this.arcTo(x + w, y + h, x, y + h, radius);
+        this.arcTo(x, y + h, x, y, radius);
+        this.arcTo(x, y, x + w, y, radius);
+        this.closePath();
+        return this;
+      };
+    }
+    resize();
+    saveAnchor();
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
