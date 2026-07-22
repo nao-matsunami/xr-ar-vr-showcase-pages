@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anchor Occlusion Scheduler</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #101415;
+      color: #eef7f4;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 14% 12%, rgba(82, 190, 154, 0.2), transparent 28rem),
+        radial-gradient(circle at 88% 16%, rgba(244, 198, 94, 0.15), transparent 24rem),
+        linear-gradient(135deg, #101415 0%, #172021 52%, #211d19 100%);
+    }
+
+    main {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 18px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(238, 247, 244, 0.14);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 3vw, 3.1rem);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .lede {
+      max-width: 760px;
+      margin: 10px 0 0;
+      color: #b8cac6;
+      line-height: 1.55;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border: 1px solid rgba(238, 247, 244, 0.16);
+      background: rgba(16, 22, 23, 0.75);
+      color: #a9f0d6;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      min-height: 650px;
+      border: 1px solid rgba(238, 247, 244, 0.15);
+      background: #0f1415;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    aside {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .panel {
+      border: 1px solid rgba(238, 247, 244, 0.15);
+      background: rgba(15, 23, 24, 0.86);
+      padding: 14px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      color: #f2ce8a;
+      font-size: 0.9rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      margin: 12px 0;
+      color: #d8e5e1;
+      font-size: 0.88rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #64d8b4;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid rgba(238, 247, 244, 0.16);
+      background: #1b292a;
+      color: #eef7f4;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button.active {
+      border-color: #73dfbe;
+      background: #254840;
+      color: #b7ffdf;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      min-height: 66px;
+      border: 1px solid rgba(238, 247, 244, 0.12);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 10px;
+    }
+
+    .metric span {
+      display: block;
+      color: #9db5af;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 1.2rem;
+    }
+
+    .legend {
+      display: grid;
+      gap: 8px;
+      color: #b8cac6;
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    .swatch {
+      display: inline-block;
+      width: 11px;
+      height: 11px;
+      margin-right: 7px;
+      border-radius: 50%;
+      vertical-align: -1px;
+    }
+
+    @media (max-width: 860px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
+
+      header {
+        display: block;
+      }
+
+      .badge {
+        display: inline-block;
+        margin-top: 14px;
+      }
+
+      .stage {
+        min-height: 540px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Anchor Occlusion Scheduler</h1>
+        <p class="lede">A tiny WebXR-inspired scheduling model: multiple anchors compete for a limited depth/occlusion check budget based on distance, size, drift, and recent confidence.</p>
+      </div>
+      <div class="badge">original daily sample · 2026-07-22</div>
+    </header>
+
+    <section class="stage" aria-label="Anchor occlusion scheduler stage">
+      <canvas id="stage"></canvas>
+    </section>
+
+    <aside>
+      <section class="panel">
+        <h2>Scheduler</h2>
+        <div class="buttons">
+          <button class="active" data-mode="balanced" type="button">Balanced</button>
+          <button data-mode="near" type="button">Near first</button>
+          <button data-mode="drift" type="button">Drift risk</button>
+          <button data-mode="quiet" type="button">Quiet scene</button>
+        </div>
+        <label>
+          Depth checks per second <output id="budgetOut">5</output>
+          <input id="budget" type="range" min="1" max="12" step="1" value="5">
+        </label>
+        <label>
+          Viewer distance weight <output id="distanceOut">1.4</output>
+          <input id="distanceWeight" type="range" min="0.4" max="2.4" step="0.1" value="1.4">
+        </label>
+        <label>
+          Drift risk weight <output id="driftOut">1.2</output>
+          <input id="driftWeight" type="range" min="0.2" max="2.8" step="0.1" value="1.2">
+        </label>
+      </section>
+
+      <section class="panel">
+        <h2>Actions</h2>
+        <div class="buttons">
+          <button id="addAnchor" type="button">Add anchor</button>
+          <button id="burstDrift" type="button">Burst drift</button>
+          <button id="toggleRun" class="active" type="button">Running</button>
+          <button id="reset" type="button">Reset</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Readout</h2>
+        <div class="metrics">
+          <div class="metric"><span>Checked now</span><strong id="checkedNow">0</strong></div>
+          <div class="metric"><span>Skipped</span><strong id="skipped">0</strong></div>
+          <div class="metric"><span>Avg confidence</span><strong id="confidence">0%</strong></div>
+          <div class="metric"><span>Worst risk</span><strong id="risk">0.00</strong></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Legend</h2>
+        <div class="legend">
+          <div><span class="swatch" style="background:#75e0bf"></span>Checked this frame window</div>
+          <div><span class="swatch" style="background:#f2ce8a"></span>Queued because risk is rising</div>
+          <div><span class="swatch" style="background:#ef7e6d"></span>Likely occlusion mismatch</div>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const budget = document.getElementById("budget");
+    const distanceWeight = document.getElementById("distanceWeight");
+    const driftWeight = document.getElementById("driftWeight");
+    const budgetOut = document.getElementById("budgetOut");
+    const distanceOut = document.getElementById("distanceOut");
+    const driftOut = document.getElementById("driftOut");
+    const checkedNow = document.getElementById("checkedNow");
+    const skipped = document.getElementById("skipped");
+    const confidence = document.getElementById("confidence");
+    const risk = document.getElementById("risk");
+    const toggleRun = document.getElementById("toggleRun");
+    const modeButtons = [...document.querySelectorAll("[data-mode]")];
+
+    const colors = {
+      checked: "#75e0bf",
+      queued: "#f2ce8a",
+      stale: "#ef7e6d",
+      muted: "rgba(238,247,244,0.28)",
+      text: "#eef7f4"
+    };
+
+    let mode = "balanced";
+    let running = true;
+    let lastTime = performance.now();
+    let checkAccumulator = 0;
+    let pointer = { x: 0.5, y: 0.5 };
+    let anchors = [];
+
+    function makeAnchor(index, forced) {
+      const z = forced?.z ?? (0.9 + Math.random() * 3.8);
+      return {
+        id: index,
+        x: forced?.x ?? (0.16 + Math.random() * 0.68),
+        y: forced?.y ?? (0.18 + Math.random() * 0.62),
+        z,
+        size: forced?.size ?? (0.35 + Math.random() * 1.15),
+        drift: forced?.drift ?? Math.random() * 0.22,
+        confidence: forced?.confidence ?? (0.7 + Math.random() * 0.24),
+        lastCheck: -Math.random() * 1.8,
+        lastCheckedFlash: 0,
+        mismatch: 0,
+        skipped: 0,
+        vx: (Math.random() - 0.5) * 0.018,
+        vy: (Math.random() - 0.5) * 0.014
+      };
+    }
+
+    function seedAnchors() {
+      anchors = [
+        makeAnchor(1, { x: 0.28, y: 0.34, z: 1.2, size: 0.95, drift: 0.18, confidence: 0.84 }),
+        makeAnchor(2, { x: 0.58, y: 0.28, z: 2.4, size: 1.3, drift: 0.1, confidence: 0.9 }),
+        makeAnchor(3, { x: 0.72, y: 0.55, z: 3.4, size: 0.7, drift: 0.28, confidence: 0.72 }),
+        makeAnchor(4, { x: 0.36, y: 0.7, z: 1.8, size: 0.55, drift: 0.08, confidence: 0.88 }),
+        makeAnchor(5, { x: 0.8, y: 0.24, z: 4.1, size: 1.0, drift: 0.2, confidence: 0.76 })
+      ];
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function modeWeights() {
+      const dw = Number(distanceWeight.value);
+      const rw = Number(driftWeight.value);
+      if (mode === "near") return { distance: dw * 1.8, drift: rw * 0.75, size: 1.1, quiet: 1 };
+      if (mode === "drift") return { distance: dw * 0.8, drift: rw * 2.0, size: 1.0, quiet: 1 };
+      if (mode === "quiet") return { distance: dw * 0.8, drift: rw * 0.6, size: 0.8, quiet: 0.52 };
+      return { distance: dw, drift: rw, size: 1.05, quiet: 1 };
+    }
+
+    function priority(anchor, now) {
+      const weights = modeWeights();
+      const near = Math.pow(1 / anchor.z, weights.distance);
+      const size = Math.pow(anchor.size, weights.size);
+      const age = Math.min(2.4, Math.max(0, now - anchor.lastCheck)) / 2.4;
+      const driftRisk = Math.pow(anchor.drift + anchor.mismatch * 0.55, weights.drift);
+      const confidencePenalty = 1.15 - anchor.confidence;
+      return (near * 1.3 + size * 0.42 + age * 0.72 + driftRisk * 1.55 + confidencePenalty * 0.7) * weights.quiet;
+    }
+
+    function updateScheduler(dt, now) {
+      const perSecond = Number(budget.value);
+      checkAccumulator += dt * perSecond;
+      const checks = Math.floor(checkAccumulator);
+      checkAccumulator -= checks;
+
+      const ranked = anchors
+        .map((anchor) => ({ anchor, score: priority(anchor, now) }))
+        .sort((a, b) => b.score - a.score);
+
+      const selected = new Set(ranked.slice(0, checks).map((entry) => entry.anchor.id));
+
+      for (const anchor of anchors) {
+        anchor.lastCheckedFlash = Math.max(0, anchor.lastCheckedFlash - dt * 1.6);
+        anchor.drift = Math.min(1, Math.max(0, anchor.drift + dt * (0.018 + anchor.z * 0.006) + Math.sin(now + anchor.id) * dt * 0.014));
+        anchor.confidence = Math.max(0.28, Math.min(0.98, anchor.confidence - dt * anchor.drift * 0.018 + dt * 0.006));
+        anchor.x = Math.min(0.9, Math.max(0.1, anchor.x + anchor.vx * dt));
+        anchor.y = Math.min(0.82, Math.max(0.14, anchor.y + anchor.vy * dt));
+        if (anchor.x <= 0.1 || anchor.x >= 0.9) anchor.vx *= -1;
+        if (anchor.y <= 0.14 || anchor.y >= 0.82) anchor.vy *= -1;
+
+        if (selected.has(anchor.id)) {
+          const checkQuality = Math.max(0.18, anchor.confidence - anchor.drift * 0.35);
+          anchor.mismatch = Math.max(0, anchor.mismatch * 0.38 + (1 - checkQuality) * 0.18);
+          anchor.drift *= 0.55;
+          anchor.confidence = Math.min(0.98, anchor.confidence + 0.09);
+          anchor.lastCheck = now;
+          anchor.lastCheckedFlash = 1;
+        } else if (checks > 0) {
+          anchor.skipped += 1;
+          anchor.mismatch = Math.min(1, anchor.mismatch + dt * (anchor.drift + 0.08) * 0.035);
+        }
+      }
+    }
+
+    function drawGrid(w, h) {
+      ctx.fillStyle = "#0f1415";
+      ctx.fillRect(0, 0, w, h);
+      const horizon = h * 0.28;
+      const floorH = h - horizon;
+      const grad = ctx.createLinearGradient(0, horizon, 0, h);
+      grad.addColorStop(0, "#172321");
+      grad.addColorStop(1, "#111514");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, horizon, w, floorH);
+
+      ctx.strokeStyle = "rgba(238,247,244,0.08)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 12; i += 1) {
+        const y = horizon + Math.pow(i / 12, 1.7) * floorH;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      for (let i = -9; i <= 9; i += 1) {
+        const x = w * 0.5 + i * w * 0.065;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.5, horizon);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+    }
+
+    function project(anchor, w, h) {
+      const depthScale = 1 / anchor.z;
+      const x = w * (0.5 + (anchor.x - 0.5) * (0.68 + depthScale * 0.5));
+      const y = h * (0.28 + anchor.y * 0.62 + (anchor.z - 1) * 0.035);
+      const r = Math.max(16, anchor.size * 22 * (1.5 / anchor.z + 0.55));
+      return { x, y, r };
+    }
+
+    function drawAnchor(anchor, now, w, h) {
+      const p = project(anchor, w, h);
+      const score = priority(anchor, now);
+      const stale = anchor.mismatch > 0.34 || anchor.drift > 0.46;
+      const queued = score > 1.45 && anchor.lastCheckedFlash <= 0.08;
+      const color = anchor.lastCheckedFlash > 0.08 ? colors.checked : stale ? colors.stale : queued ? colors.queued : colors.muted;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.globalAlpha = 0.9;
+      ctx.strokeStyle = "rgba(238,247,244,0.16)";
+      ctx.beginPath();
+      ctx.arc(0, 0, p.r + 13 + score * 4, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(8,12,12,0.78)";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(-p.r * 1.2, -p.r * 0.74, p.r * 2.4, p.r * 1.48, 7);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(-p.r * 0.78, 0, Math.max(4, p.r * 0.18), 0, Math.PI * 2);
+      ctx.fill();
+
+      const barW = p.r * 1.1;
+      ctx.fillStyle = "rgba(238,247,244,0.12)";
+      ctx.fillRect(-barW * 0.15, -7, barW, 5);
+      ctx.fillStyle = color;
+      ctx.fillRect(-barW * 0.15, -7, barW * Math.max(0.05, anchor.confidence), 5);
+
+      ctx.fillStyle = colors.text;
+      ctx.font = "12px Inter, sans-serif";
+      ctx.fillText(`#${anchor.id} ${anchor.z.toFixed(1)}m`, -p.r * 0.6, p.r * 0.45);
+      ctx.fillStyle = "#9db5af";
+      ctx.fillText(`risk ${score.toFixed(2)}`, -p.r * 0.6, p.r * 0.75);
+
+      if (anchor.lastCheckedFlash > 0.08) {
+        ctx.globalAlpha = anchor.lastCheckedFlash * 0.75;
+        ctx.strokeStyle = colors.checked;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, p.r + 26 * (1 - anchor.lastCheckedFlash), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawPointer(w, h) {
+      const x = pointer.x * w;
+      const y = pointer.y * h;
+      ctx.strokeStyle = "rgba(117,224,191,0.42)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.5, h * 0.18);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.fillStyle = "#75e0bf";
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function draw() {
+      const now = performance.now() / 1000;
+      const dt = Math.min(0.05, Math.max(0, now - lastTime / 1000));
+      lastTime = performance.now();
+      if (running) updateScheduler(dt, now);
+
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      drawGrid(w, h);
+      drawPointer(w, h);
+      anchors
+        .slice()
+        .sort((a, b) => b.z - a.z)
+        .forEach((anchor) => drawAnchor(anchor, now, w, h));
+
+      const recent = anchors.filter((anchor) => anchor.lastCheckedFlash > 0.08).length;
+      const totalSkipped = anchors.reduce((sum, anchor) => sum + anchor.skipped, 0);
+      const avgConfidence = anchors.reduce((sum, anchor) => sum + anchor.confidence, 0) / anchors.length;
+      const worstRisk = Math.max(...anchors.map((anchor) => priority(anchor, now)));
+      checkedNow.textContent = String(recent);
+      skipped.textContent = String(totalSkipped);
+      confidence.textContent = `${Math.round(avgConfidence * 100)}%`;
+      risk.textContent = worstRisk.toFixed(2);
+      budgetOut.textContent = budget.value;
+      distanceOut.textContent = Number(distanceWeight.value).toFixed(1);
+      driftOut.textContent = Number(driftWeight.value).toFixed(1);
+
+      requestAnimationFrame(draw);
+    }
+
+    modeButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        mode = button.dataset.mode;
+        modeButtons.forEach((item) => item.classList.toggle("active", item === button));
+      });
+    });
+
+    document.getElementById("addAnchor").addEventListener("click", () => {
+      anchors.push(makeAnchor(anchors.length + 1));
+    });
+
+    document.getElementById("burstDrift").addEventListener("click", () => {
+      anchors.forEach((anchor) => {
+        anchor.drift = Math.min(1, anchor.drift + 0.24 + Math.random() * 0.16);
+        anchor.confidence = Math.max(0.34, anchor.confidence - 0.1);
+      });
+    });
+
+    toggleRun.addEventListener("click", () => {
+      running = !running;
+      toggleRun.textContent = running ? "Running" : "Paused";
+      toggleRun.classList.toggle("active", running);
+    });
+
+    document.getElementById("reset").addEventListener("click", seedAnchors);
+
+    canvas.addEventListener("pointermove", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      pointer = {
+        x: Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)),
+        y: Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height))
+      };
+    });
+
+    window.addEventListener("resize", resize);
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function roundRect(x, y, width, height, radius) {
+        const r = Math.min(radius, width / 2, height / 2);
+        this.beginPath();
+        this.moveTo(x + r, y);
+        this.arcTo(x + width, y, x + width, y + height, r);
+        this.arcTo(x + width, y + height, x, y + height, r);
+        this.arcTo(x, y + height, x, y, r);
+        this.arcTo(x, y, x + width, y, r);
+        this.closePath();
+      };
+    }
+    seedAnchors();
+    resize();
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>

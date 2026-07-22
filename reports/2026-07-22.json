@@ -1,0 +1,117 @@
+{
+  "date": "2026-07-22",
+  "headline": "anchor ごとに depth / occlusion 検査頻度を変える",
+  "headlineEn": "Scheduling depth and occlusion checks per anchor",
+  "summary": "WebXR Anchors、Depth Sensing、Hit Test、Device API、Immersive Web 公式 samples を確認し、今日は複数 anchor の距離・サイズ・drift・confidence から depth / occlusion 検査の優先度を決める自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing WebXR Anchors, Depth Sensing, Hit Test, the Device API, and Immersive Web official samples, today's original HTML sample schedules depth and occlusion checks across multiple anchors using distance, size, drift, and confidence.",
+  "keyTopics": [
+    "WebXR Depth Sensing Module は `depth-sensing` feature descriptor、`usagePreference`、`dataFormatPreference`、`matchDepthView` を通じて、XRSession ごとの depth 取得方針を指定する。",
+    "Depth 情報は CPU access と WebGL texture access の経路があり、`rawValueToMeters` や `normDepthBufferFromNormView` を使って depth buffer の値を実空間の距離解釈へつなげる。",
+    "WebXR Anchors Module は `XRFrame.trackedAnchors` と anchor space の pose 更新を前提にしているため、配置済み object は anchor pose の drift と depth/occlusion の stale 状態を別々に見る必要がある。",
+    "Hit Test は現時点の real-world surface との交差を返すが、配置後の object すべてに毎 frame hit-test / depth 検査をかけると負荷が膨らむため、距離・サイズ・risk に応じた検査 cadence が重要になる。",
+    "Immersive Web の proposal samples には AR Depth Sensing CPU/GPU、Plane Detection、Mesh Detection が並び、anchor と depth を組み合わせる時の実装差を追う起点になる。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Depth Sensing Module uses the `depth-sensing` feature descriptor plus `usagePreference`, `dataFormatPreference`, and `matchDepthView` to describe how an XRSession wants depth data.",
+    "Depth data can be exposed through CPU access or WebGL texture access, with `rawValueToMeters` and `normDepthBufferFromNormView` connecting depth-buffer values to real-space interpretation.",
+    "The WebXR Anchors Module assumes `XRFrame.trackedAnchors` and updated poses for anchor spaces, so placed objects need separate handling for anchor drift and stale depth/occlusion state.",
+    "Hit Test returns intersections against the current real-world surface estimate, but running hit-test or depth checks for every placed object every frame can be expensive, so cadence based on distance, size, and risk matters.",
+    "Immersive Web proposal samples include AR Depth Sensing CPU/GPU, Plane Detection, and Mesh Detection, making them useful references for implementation differences when combining anchors and depth."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Anchor Occlusion Scheduler",
+      "url": "../outputs/2026-07-22_html_anchor_occlusion_scheduler.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "W3C: WebXR Depth Sensing Module",
+      "url": "https://www.w3.org/TR/webxr-depth-sensing-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Depth Sensing Module",
+      "url": "https://immersive-web.github.io/depth-sensing/"
+    },
+    {
+      "label": "Immersive Web: WebXR proposals and samples",
+      "url": "https://immersive-web.github.io/webxr-samples/proposals/"
+    },
+    {
+      "label": "W3C: WebXR Hit Test Module",
+      "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+    },
+    {
+      "label": "W3C: WebXR Device API publication history",
+      "url": "https://www.w3.org/standards/history/webxr/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は Immersive Web の AR Depth Sensing CPU/GPU proposal samples と、Anchors / Hit Test の組み合わせです。Depth Sensing は real world geometry との前後関係を作るために必要ですが、anchor が増えた場面で全 object を同じ頻度で検査すると、見た目に効く object と遠くて小さい object が同じ予算を奪い合います。そこで「近い・大きい・drift が増えた・confidence が低い」anchor へ検査を寄せる設計が面白い点です。",
+      "bodyEn": "Today's notable reference is the combination of Immersive Web's AR Depth Sensing CPU/GPU proposal samples with Anchors and Hit Test. Depth sensing is needed for real-world front/back relationships, but once many anchors exist, checking every object at the same rate lets small distant objects consume the same budget as visually important ones. The interesting design is to bias checks toward anchors that are near, large, drifting, or low-confidence.",
+      "links": [
+        {
+          "label": "Immersive Web: WebXR proposals and samples",
+          "url": "https://immersive-web.github.io/webxr-samples/proposals/"
+        },
+        {
+          "label": "Immersive Web: WebXR Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "画面上に複数の placed anchor card を置き、各 card の depth/occlusion 検査状態を緑、黄、赤で表示します。`Balanced`、`Near first`、`Drift risk`、`Quiet scene` を切り替えると、同じ anchors でも検査対象が変わります。`Burst drift` で tracking が一気に悪化した状態を作り、限られた depth check budget がどの anchor に回るかを観察します。",
+      "bodyEn": "The screen places multiple anchor cards and marks each card's depth/occlusion check state in green, yellow, or red. Switching `Balanced`, `Near first`, `Drift risk`, and `Quiet scene` changes which anchors get checked. `Burst drift` simulates sudden tracking degradation so the limited depth-check budget visibly moves to the riskiest anchors."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機実装では anchor pose の更新、depth buffer の取得、object bounds の screen-space 投影を分け、scheduler が `次に depth を読む object` を決める形が扱いやすいです。優先度は `1 / distance`、screen area、anchor drift、last check age、tracking confidence、user gaze / pointer proximity を足し合わせます。Depth Sensing の `matchDepthView` が false の場合は古い depth frame の再投影を考える必要があるため、scheduler 側でも depth timestamp の古さを risk に入れると破綻を見つけやすくなります。",
+      "bodyEn": "On real devices, it is useful to separate anchor-pose updates, depth-buffer acquisition, and screen-space projection of object bounds, then let a scheduler choose which object should read depth next. Priority can combine `1 / distance`, screen area, anchor drift, last-check age, tracking confidence, and user gaze or pointer proximity. If Depth Sensing's `matchDepthView` is false, older depth frames may need reprojection, so adding depth timestamp age to scheduler risk makes failures easier to catch."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Depth Sensing の CPU/GPU access 実装差、WebXR Anchors の tracked pose 更新、Plane/Mesh Detection proposal samples、Layers API の real-world pixel occlusion sample、XRGPUBinding の texture path を続けて見ます。次は scheduler の結果を layers の redraw / fixed foveation とつなぎ、重要 object だけ高品質 layer 更新にする方向を試したいです。",
+      "bodyEn": "Keep watching CPU/GPU access differences in Depth Sensing, tracked-pose updates in WebXR Anchors, Plane/Mesh Detection proposal samples, Layers API real-world pixel occlusion samples, and XRGPUBinding texture paths. A good next step is connecting scheduler output to Layers redraw and fixed foveation so only important objects get high-quality layer updates."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、`Depth checks per second` を 2 まで下げてから `Burst drift` を押してください。`Balanced` では近さ・大きさ・drift の混合で検査され、`Near first` では手前の anchor が優先され、`Drift risk` では奥でも不安定な anchor が拾われます。budget を上げるほど赤い mismatch が減る一方、現実の実装では GPU/CPU 負荷が増える想定です。",
+      "bodyEn": "Open the sample, lower `Depth checks per second` to 2, then press `Burst drift`. `Balanced` mixes proximity, size, and drift; `Near first` prioritizes foreground anchors; `Drift risk` catches unstable anchors even when they are farther away. Raising the budget reduces red mismatch states, but a real implementation would pay more GPU/CPU cost.",
+      "links": [
+        {
+          "label": "Open Anchor Occlusion Scheduler",
+          "url": "../outputs/2026-07-22_html_anchor_occlusion_scheduler.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Depth Sensing、Anchors、Hit Test、Device API publication history、Immersive Web proposal samples を確認。アイデア: anchor drift の次段として、複数 anchor の depth/occlusion 検査 cadence を決める。実装: canvas に床面グリッド、anchor cards、risk ring、depth check flash、scheduler controls、readout を追加。検証: JSON parse、HTML script 構文、gallery 再生成、GitHub Pages 公開 URL を確認する。",
+      "bodyEn": "Research: reviewed Depth Sensing, Anchors, Hit Test, the Device API publication history, and Immersive Web proposal samples. Idea: follow anchor drift with a cadence model for depth/occlusion checks across multiple anchors. Implementation: added a canvas floor grid, anchor cards, risk rings, depth-check flashes, scheduler controls, and readouts. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and GitHub Pages public URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日は hand confidence、reticle stability、anchor drift と、入力から配置後の維持へ進んできました。今日のサンプルは「維持する object が増えた時、何をどの頻度で信じ直すか」を扱います。XR のリアリティは API 単体ではなく、pose、depth、hit-test、layer 更新の予算配分で作られる、という視点に寄せています。",
+      "bodyEn": "The recent run moved from hand confidence to reticle stability and anchor drift, shifting from input to post-placement maintenance. Today's sample asks what should be re-validated, and how often, once many objects are being maintained. It frames XR realism as a budget allocation problem across pose, depth, hit-test, and layer updates rather than a single API feature."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Anchor Occlusion Scheduler` です。複数 anchor の距離、見かけサイズ、drift、confidence、last check age から risk を計算し、限られた depth check budget を割り当てます。次に足すなら、実際の screen-space bounds と hand / real object mask を重ね、scheduler が選ばなかった object の破綻をユーザー視点で見えるようにします。",
+      "bodyEn": "The selected prototype is `Anchor Occlusion Scheduler`. It computes risk from distance, apparent size, drift, confidence, and last-check age, then allocates a limited depth-check budget. A useful extension would overlay real screen-space bounds and a hand or real-object mask so the user can see failures on objects the scheduler skipped."
+    }
+  ]
+}

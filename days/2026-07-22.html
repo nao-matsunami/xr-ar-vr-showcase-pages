@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>anchor ごとに depth / occlusion 検査頻度を変える | 2026-07-22</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.22</p>
+      <h1>anchor ごとに depth / occlusion 検査頻度を変える</h1>
+      <p class="hero-subtitle">Scheduling depth and occlusion checks per anchor</p>
+      <p>WebXR Anchors、Depth Sensing、Hit Test、Device API、Immersive Web 公式 samples を確認し、今日は複数 anchor の距離・サイズ・drift・confidence から depth / occlusion 検査の優先度を決める自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing WebXR Anchors, Depth Sensing, Hit Test, the Device API, and Immersive Web official samples, today's original HTML sample schedules depth and occlusion checks across multiple anchors using distance, size, drift, and confidence.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-22_html_anchor_occlusion_scheduler.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-21.html">← 2026.07.21</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Anchor Occlusion Scheduler</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-22_html_anchor_occlusion_scheduler.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Depth Sensing Module は `depth-sensing` feature descriptor、`usagePreference`、`dataFormatPreference`、`matchDepthView` を通じて、XRSession ごとの depth 取得方針を指定する。</span>
+              <span class="en-copy">The WebXR Depth Sensing Module uses the `depth-sensing` feature descriptor plus `usagePreference`, `dataFormatPreference`, and `matchDepthView` to describe how an XRSession wants depth data.</span>
+            </li>
+          
+            <li>
+              <span>Depth 情報は CPU access と WebGL texture access の経路があり、`rawValueToMeters` や `normDepthBufferFromNormView` を使って depth buffer の値を実空間の距離解釈へつなげる。</span>
+              <span class="en-copy">Depth data can be exposed through CPU access or WebGL texture access, with `rawValueToMeters` and `normDepthBufferFromNormView` connecting depth-buffer values to real-space interpretation.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Anchors Module は `XRFrame.trackedAnchors` と anchor space の pose 更新を前提にしているため、配置済み object は anchor pose の drift と depth/occlusion の stale 状態を別々に見る必要がある。</span>
+              <span class="en-copy">The WebXR Anchors Module assumes `XRFrame.trackedAnchors` and updated poses for anchor spaces, so placed objects need separate handling for anchor drift and stale depth/occlusion state.</span>
+            </li>
+          
+            <li>
+              <span>Hit Test は現時点の real-world surface との交差を返すが、配置後の object すべてに毎 frame hit-test / depth 検査をかけると負荷が膨らむため、距離・サイズ・risk に応じた検査 cadence が重要になる。</span>
+              <span class="en-copy">Hit Test returns intersections against the current real-world surface estimate, but running hit-test or depth checks for every placed object every frame can be expensive, so cadence based on distance, size, and risk matters.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の proposal samples には AR Depth Sensing CPU/GPU、Plane Detection、Mesh Detection が並び、anchor と depth を組み合わせる時の実装差を追う起点になる。</span>
+              <span class="en-copy">Immersive Web proposal samples include AR Depth Sensing CPU/GPU, Plane Detection, and Mesh Detection, making them useful references for implementation differences when combining anchors and depth.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は Immersive Web の AR Depth Sensing CPU/GPU proposal samples と、Anchors / Hit Test の組み合わせです。Depth Sensing は real world geometry との前後関係を作るために必要ですが、anchor が増えた場面で全 object を同じ頻度で検査すると、見た目に効く object と遠くて小さい object が同じ予算を奪い合います。そこで「近い・大きい・drift が増えた・confidence が低い」anchor へ検査を寄せる設計が面白い点です。</p>
+          <p class="en-copy">Today's notable reference is the combination of Immersive Web's AR Depth Sensing CPU/GPU proposal samples with Anchors and Hit Test. Depth sensing is needed for real-world front/back relationships, but once many anchors exist, checking every object at the same rate lets small distant objects consume the same budget as visually important ones. The interesting design is to bias checks toward anchors that are near, large, drifting, or low-confidence.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-samples/proposals/" target="_blank" rel="noreferrer">Immersive Web: WebXR proposals and samples</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>画面上に複数の placed anchor card を置き、各 card の depth/occlusion 検査状態を緑、黄、赤で表示します。`Balanced`、`Near first`、`Drift risk`、`Quiet scene` を切り替えると、同じ anchors でも検査対象が変わります。`Burst drift` で tracking が一気に悪化した状態を作り、限られた depth check budget がどの anchor に回るかを観察します。</p>
+          <p class="en-copy">The screen places multiple anchor cards and marks each card's depth/occlusion check state in green, yellow, or red. Switching `Balanced`, `Near first`, `Drift risk`, and `Quiet scene` changes which anchors get checked. `Burst drift` simulates sudden tracking degradation so the limited depth-check budget visibly moves to the riskiest anchors.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実機実装では anchor pose の更新、depth buffer の取得、object bounds の screen-space 投影を分け、scheduler が `次に depth を読む object` を決める形が扱いやすいです。優先度は `1 / distance`、screen area、anchor drift、last check age、tracking confidence、user gaze / pointer proximity を足し合わせます。Depth Sensing の `matchDepthView` が false の場合は古い depth frame の再投影を考える必要があるため、scheduler 側でも depth timestamp の古さを risk に入れると破綻を見つけやすくなります。</p>
+          <p class="en-copy">On real devices, it is useful to separate anchor-pose updates, depth-buffer acquisition, and screen-space projection of object bounds, then let a scheduler choose which object should read depth next. Priority can combine `1 / distance`, screen area, anchor drift, last-check age, tracking confidence, and user gaze or pointer proximity. If Depth Sensing's `matchDepthView` is false, older depth frames may need reprojection, so adding depth timestamp age to scheduler risk makes failures easier to catch.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>Depth Sensing の CPU/GPU access 実装差、WebXR Anchors の tracked pose 更新、Plane/Mesh Detection proposal samples、Layers API の real-world pixel occlusion sample、XRGPUBinding の texture path を続けて見ます。次は scheduler の結果を layers の redraw / fixed foveation とつなぎ、重要 object だけ高品質 layer 更新にする方向を試したいです。</p>
+          <p class="en-copy">Keep watching CPU/GPU access differences in Depth Sensing, tracked-pose updates in WebXR Anchors, Plane/Mesh Detection proposal samples, Layers API real-world pixel occlusion samples, and XRGPUBinding texture paths. A good next step is connecting scheduler output to Layers redraw and fixed foveation so only important objects get high-quality layer updates.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルを開き、`Depth checks per second` を 2 まで下げてから `Burst drift` を押してください。`Balanced` では近さ・大きさ・drift の混合で検査され、`Near first` では手前の anchor が優先され、`Drift risk` では奥でも不安定な anchor が拾われます。budget を上げるほど赤い mismatch が減る一方、現実の実装では GPU/CPU 負荷が増える想定です。</p>
+          <p class="en-copy">Open the sample, lower `Depth checks per second` to 2, then press `Burst drift`. `Balanced` mixes proximity, size, and drift; `Near first` prioritizes foreground anchors; `Drift risk` catches unstable anchors even when they are farther away. Raising the budget reduces red mismatch states, but a real implementation would pay more GPU/CPU cost.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-22_html_anchor_occlusion_scheduler.html" target="_blank" rel="noreferrer">Open Anchor Occlusion Scheduler</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Depth Sensing、Anchors、Hit Test、Device API publication history、Immersive Web proposal samples を確認。アイデア: anchor drift の次段として、複数 anchor の depth/occlusion 検査 cadence を決める。実装: canvas に床面グリッド、anchor cards、risk ring、depth check flash、scheduler controls、readout を追加。検証: JSON parse、HTML script 構文、gallery 再生成、GitHub Pages 公開 URL を確認する。</p>
+          <p class="en-copy">Research: reviewed Depth Sensing, Anchors, Hit Test, the Device API publication history, and Immersive Web proposal samples. Idea: follow anchor drift with a cadence model for depth/occlusion checks across multiple anchors. Implementation: added a canvas floor grid, anchor cards, risk rings, depth-check flashes, scheduler controls, and readouts. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and GitHub Pages public URLs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>ここ数日は hand confidence、reticle stability、anchor drift と、入力から配置後の維持へ進んできました。今日のサンプルは「維持する object が増えた時、何をどの頻度で信じ直すか」を扱います。XR のリアリティは API 単体ではなく、pose、depth、hit-test、layer 更新の予算配分で作られる、という視点に寄せています。</p>
+          <p class="en-copy">The recent run moved from hand confidence to reticle stability and anchor drift, shifting from input to post-placement maintenance. Today's sample asks what should be re-validated, and how often, once many objects are being maintained. It frames XR realism as a budget allocation problem across pose, depth, hit-test, and layer updates rather than a single API feature.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Anchor Occlusion Scheduler` です。複数 anchor の距離、見かけサイズ、drift、confidence、last check age から risk を計算し、限られた depth check budget を割り当てます。次に足すなら、実際の screen-space bounds と hand / real object mask を重ね、scheduler が選ばなかった object の破綻をユーザー視点で見えるようにします。</p>
+          <p class="en-copy">The selected prototype is `Anchor Occlusion Scheduler`. It computes risk from distance, apparent size, drift, confidence, and last-check age, then allocates a limited depth-check budget. A useful extension would overlay real screen-space bounds and a hand or real-object mask so the user can see failures on objects the scheduler skipped.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-22_html_anchor_occlusion_scheduler.html" target="_blank" rel="noreferrer">Today's sample: Anchor Occlusion Scheduler</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-depth-sensing-1/" target="_blank" rel="noreferrer">W3C: WebXR Depth Sensing Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/depth-sensing/" target="_blank" rel="noreferrer">Immersive Web: WebXR Depth Sensing Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/proposals/" target="_blank" rel="noreferrer">Immersive Web: WebXR proposals and samples</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hit-test-1/" target="_blank" rel="noreferrer">W3C: WebXR Hit Test Module</a></li>
+          
+            <li><a href="https://www.w3.org/standards/history/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API publication history</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-22_html_anchor_occlusion_scheduler.html" loading="lazy" title="Anchor Occlusion Scheduler"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
