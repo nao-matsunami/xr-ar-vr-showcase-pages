@@ -1,0 +1,117 @@
+{
+  "date": "2026-07-23",
+  "headline": "foveation と depth stale を同じ予算表で見る",
+  "headlineEn": "Mixing foveation and stale depth in one budget view",
+  "summary": "WebXR Layers、Depth Sensing、Anchors、Device API、Immersive Web 公式 samples を確認し、今日は視線位置・head motion・depth の古さ・layer 更新コストから、どの layer / anchor を更新するかを決める自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing WebXR Layers, Depth Sensing, Anchors, the Device API, and Immersive Web official samples, today's original HTML sample chooses which layers and anchors to refresh from gaze position, head motion, stale depth, and layer update cost.",
+  "keyTopics": [
+    "WebXR Layers API Level 1 は composition layer により、アプリ frame rate と compositor の提示を分け、重要な text / map layer を高解像度に保つ設計を明示している。",
+    "`XRProjectionLayer.fixedFoveation` は compositor 側の foveation 量を調整する入口で、周辺視野のコストを下げながら中央の可読性を残す予算設計に使える。",
+    "Layers API の depth-sorted-layers は projection / quad / cylinder layer の深度順合成を扱うが、depth 情報が古い layer は正しい順序でも現実との前後関係が破綻しやすい。",
+    "Depth Sensing Module は `raw` / `smooth` の depth type、CPU / GPU の data usage、`matchDepthView` など、depth の品質と同期を選ぶための判断点が多い。",
+    "Anchors Module は session 内で更新される anchor pose を前提にしているため、anchor drift と layer redraw / depth refresh の優先度を同じ scheduler で見る価値がある。"
+  ],
+  "keyTopicsEn": [
+    "WebXR Layers API Level 1 describes composition layers that separate application frame rate from compositor presentation and keep important text or map layers at higher resolution.",
+    "`XRProjectionLayer.fixedFoveation` is an entry point for compositor foveation, useful for reducing peripheral cost while preserving central legibility.",
+    "The Layers API depth-sorted-layers feature addresses depth ordering among projection, quad, and cylinder layers, but layers with stale depth can still mismatch the real scene.",
+    "The Depth Sensing Module exposes several quality and synchronization choices, including `raw` / `smooth` depth types, CPU / GPU data usage, and `matchDepthView`.",
+    "The Anchors Module assumes anchor poses update within a session, so anchor drift, layer redraw, and depth refresh priority are worth viewing through one scheduler."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Foveated Depth Budget Mixer",
+      "url": "../outputs/2026-07-23_html_foveated_depth_budget_mixer.html"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "W3C: WebXR Depth Sensing Module",
+      "url": "https://www.w3.org/TR/webxr-depth-sensing-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "W3C: WebXR Device API publication history",
+      "url": "https://www.w3.org/standards/history/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は Immersive Web の Layers samples と、W3C Layers API の composition layer / fixedFoveation / depth-sorted-layers です。layer は単に描画面を増やす仕組みではなく、可読性、compositor への再投影、depth 合成、更新頻度を分けるための設計単位になります。前日の anchor occlusion scheduler と組み合わせると、配置済み object の depth 検査と layer 品質を同じ予算表で扱える点が面白いです。",
+      "bodyEn": "Today's notable references are the Immersive Web Layers samples and the W3C Layers API concepts around composition layers, fixedFoveation, and depth-sorted-layers. Layers are not just extra drawing surfaces; they are design units for legibility, compositor reprojection, depth composition, and update cadence. Combined with yesterday's anchor occlusion scheduler, depth checks for placed objects and layer quality can be handled in the same budget table.",
+      "links": [
+        {
+          "label": "Immersive Web: WebXR Layers Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+        },
+        {
+          "label": "W3C: WebXR Layers API Level 1",
+          "url": "https://www.w3.org/TR/webxrlayers-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "画面上の gaze point をドラッグすると、中央に近い text / map / tool layer の優先度が上がります。`GPU budget per frame`、`Depth reads per second`、`Head motion`、`Foveation gain` を変えると、緑の更新 layer、黄色の foveated / stale layer、赤の mismatch risk が切り替わります。`Gaze first`、`Depth stale`、`Battery saver` で同じ scene の意思決定が変わるようにしました。",
+      "bodyEn": "Dragging the gaze point raises the priority of nearby text, map, and tool layers. Changing `GPU budget per frame`, `Depth reads per second`, `Head motion`, and `Foveation gain` switches layers between green updated, amber foveated or stale, and red mismatch risk. `Gaze first`, `Depth stale`, and `Battery saver` show different decisions on the same scene."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では layer ごとに screen-space area、gaze distance、last depth timestamp、anchor drift、draw cost を持ち、frame ごとに priority queue を作る構成がよさそうです。`fixedFoveation` は単体の見た目設定ではなく、gaze から遠い layer の draw cost を下げる budget knob として扱えます。Depth の `matchDepthView` が成り立たない環境では、depth age を risk に加え、古い depth に頼る layer を早めに再検査対象へ戻す設計が必要です。",
+      "bodyEn": "A practical implementation can track screen-space area, gaze distance, last depth timestamp, anchor drift, and draw cost per layer, then build a priority queue each frame. `fixedFoveation` is better treated as a budget knob that lowers draw cost for layers far from gaze, not just as a visual setting. When `matchDepthView` is unavailable, depth age should feed into risk so layers relying on old depth return to the refresh queue sooner."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Layers API の Space Warp / motion vectors、ProjectionLayer の depthStencilTexture、Depth Sensing の GPU texture access、WebXR WebGPU Binding、Immersive Web の Input Selection Space Warp sample を続けて見ます。次は今回の scheduler に foreground hand ray を足し、入力 layer だけは foveation しない、あるいは depth stale 時に selection を hold する挙動を試したいです。",
+      "bodyEn": "Continue watching Layers API Space Warp and motion vectors, ProjectionLayer depthStencilTexture, Depth Sensing GPU texture access, WebXR WebGPU Binding, and the Immersive Web Input Selection Space Warp sample. Next, add a foreground hand ray to this scheduler and test keeping input layers unfoveated or holding selection when depth is stale."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルで `GPU budget per frame` を 45、`Depth reads per second` を 2、`Head motion` を高めにしてから gaze point を動かしてください。視線近傍だけ緑が残り、遠い layer は foveation によってコストを下げても depth age が伸びると黄色や赤に変わります。`Depth stale` に切り替えると、視線外でも古い depth を持つ layer が優先されます。",
+      "bodyEn": "Set `GPU budget per frame` to 45, `Depth reads per second` to 2, raise `Head motion`, then move the gaze point. Only near-gaze layers stay green; distant layers get cheaper through foveation but turn amber or red as depth age grows. Switching to `Depth stale` prioritizes old-depth layers even outside gaze.",
+      "links": [
+        {
+          "label": "Open Foveated Depth Budget Mixer",
+          "url": "../outputs/2026-07-23_html_foveated_depth_budget_mixer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Layers API、Depth Sensing、Anchors、Device API publication history、Immersive Web Layers samples を確認。アイデア: anchor occlusion の次段として、depth refresh と layer redraw / foveation を同じ budget scheduler にまとめる。実装: canvas に床面グリッド、gaze ring、複数 layer、priority modes、motion burst、readout を追加。検証: JSON parse、HTML script 構文、gallery 再生成、GitHub Pages 公開 URL を確認する。",
+      "bodyEn": "Research: reviewed Layers API, Depth Sensing, Anchors, Device API publication history, and Immersive Web Layers samples. Idea: follow anchor occlusion by combining depth refresh, layer redraw, and foveation in one budget scheduler. Implementation: added a canvas floor grid, gaze ring, multiple layers, priority modes, motion burst, and readouts. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and GitHub Pages public URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここまでの流れは、depth occlusion、lighting、hand input、layers、space warp、anchor drift、occlusion scheduling と続いています。今日のサンプルは、個別 API の足し算ではなく、XR 体験を維持するための予算管理へ視点を引き上げる回です。どの object を高品質に保ち、どれを foveate / defer するかを明示すると、破綻の見つけ方が具体的になります。",
+      "bodyEn": "The progression so far has moved through depth occlusion, lighting, hand input, layers, space warp, anchor drift, and occlusion scheduling. Today's sample shifts from adding individual APIs to managing the budget that keeps an XR experience stable. Making high-quality, foveated, and deferred objects explicit makes failure modes easier to find."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Foveated Depth Budget Mixer` です。gaze、head motion、depth age、anchor drift、draw cost から各 layer の更新可否を決め、緑・黄・赤で表示します。次に足すなら、hand ray と selection gate を加えて、入力対象 layer だけは更新優先度を強制的に上げる挙動を検証します。",
+      "bodyEn": "The selected prototype is `Foveated Depth Budget Mixer`. It decides whether each layer should update from gaze, head motion, depth age, anchor drift, and draw cost, then marks the result in green, amber, or red. A useful extension is adding a hand ray and selection gate so target input layers can force higher update priority."
+    }
+  ]
+}

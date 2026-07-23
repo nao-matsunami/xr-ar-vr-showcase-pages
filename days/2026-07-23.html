@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>foveation と depth stale を同じ予算表で見る | 2026-07-23</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.23</p>
+      <h1>foveation と depth stale を同じ予算表で見る</h1>
+      <p class="hero-subtitle">Mixing foveation and stale depth in one budget view</p>
+      <p>WebXR Layers、Depth Sensing、Anchors、Device API、Immersive Web 公式 samples を確認し、今日は視線位置・head motion・depth の古さ・layer 更新コストから、どの layer / anchor を更新するかを決める自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing WebXR Layers, Depth Sensing, Anchors, the Device API, and Immersive Web official samples, today's original HTML sample chooses which layers and anchors to refresh from gaze position, head motion, stale depth, and layer update cost.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-23_html_foveated_depth_budget_mixer.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-22.html">← 2026.07.22</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Foveated Depth Budget Mixer</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-23_html_foveated_depth_budget_mixer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Layers API Level 1 は composition layer により、アプリ frame rate と compositor の提示を分け、重要な text / map layer を高解像度に保つ設計を明示している。</span>
+              <span class="en-copy">WebXR Layers API Level 1 describes composition layers that separate application frame rate from compositor presentation and keep important text or map layers at higher resolution.</span>
+            </li>
+          
+            <li>
+              <span>`XRProjectionLayer.fixedFoveation` は compositor 側の foveation 量を調整する入口で、周辺視野のコストを下げながら中央の可読性を残す予算設計に使える。</span>
+              <span class="en-copy">`XRProjectionLayer.fixedFoveation` is an entry point for compositor foveation, useful for reducing peripheral cost while preserving central legibility.</span>
+            </li>
+          
+            <li>
+              <span>Layers API の depth-sorted-layers は projection / quad / cylinder layer の深度順合成を扱うが、depth 情報が古い layer は正しい順序でも現実との前後関係が破綻しやすい。</span>
+              <span class="en-copy">The Layers API depth-sorted-layers feature addresses depth ordering among projection, quad, and cylinder layers, but layers with stale depth can still mismatch the real scene.</span>
+            </li>
+          
+            <li>
+              <span>Depth Sensing Module は `raw` / `smooth` の depth type、CPU / GPU の data usage、`matchDepthView` など、depth の品質と同期を選ぶための判断点が多い。</span>
+              <span class="en-copy">The Depth Sensing Module exposes several quality and synchronization choices, including `raw` / `smooth` depth types, CPU / GPU data usage, and `matchDepthView`.</span>
+            </li>
+          
+            <li>
+              <span>Anchors Module は session 内で更新される anchor pose を前提にしているため、anchor drift と layer redraw / depth refresh の優先度を同じ scheduler で見る価値がある。</span>
+              <span class="en-copy">The Anchors Module assumes anchor poses update within a session, so anchor drift, layer redraw, and depth refresh priority are worth viewing through one scheduler.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は Immersive Web の Layers samples と、W3C Layers API の composition layer / fixedFoveation / depth-sorted-layers です。layer は単に描画面を増やす仕組みではなく、可読性、compositor への再投影、depth 合成、更新頻度を分けるための設計単位になります。前日の anchor occlusion scheduler と組み合わせると、配置済み object の depth 検査と layer 品質を同じ予算表で扱える点が面白いです。</p>
+          <p class="en-copy">Today's notable references are the Immersive Web Layers samples and the W3C Layers API concepts around composition layers, fixedFoveation, and depth-sorted-layers. Layers are not just extra drawing surfaces; they are design units for legibility, compositor reprojection, depth composition, and update cadence. Combined with yesterday's anchor occlusion scheduler, depth checks for placed objects and layer quality can be handled in the same budget table.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers Samples</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>画面上の gaze point をドラッグすると、中央に近い text / map / tool layer の優先度が上がります。`GPU budget per frame`、`Depth reads per second`、`Head motion`、`Foveation gain` を変えると、緑の更新 layer、黄色の foveated / stale layer、赤の mismatch risk が切り替わります。`Gaze first`、`Depth stale`、`Battery saver` で同じ scene の意思決定が変わるようにしました。</p>
+          <p class="en-copy">Dragging the gaze point raises the priority of nearby text, map, and tool layers. Changing `GPU budget per frame`, `Depth reads per second`, `Head motion`, and `Foveation gain` switches layers between green updated, amber foveated or stale, and red mismatch risk. `Gaze first`, `Depth stale`, and `Battery saver` show different decisions on the same scene.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では layer ごとに screen-space area、gaze distance、last depth timestamp、anchor drift、draw cost を持ち、frame ごとに priority queue を作る構成がよさそうです。`fixedFoveation` は単体の見た目設定ではなく、gaze から遠い layer の draw cost を下げる budget knob として扱えます。Depth の `matchDepthView` が成り立たない環境では、depth age を risk に加え、古い depth に頼る layer を早めに再検査対象へ戻す設計が必要です。</p>
+          <p class="en-copy">A practical implementation can track screen-space area, gaze distance, last depth timestamp, anchor drift, and draw cost per layer, then build a priority queue each frame. `fixedFoveation` is better treated as a budget knob that lowers draw cost for layers far from gaze, not just as a visual setting. When `matchDepthView` is unavailable, depth age should feed into risk so layers relying on old depth return to the refresh queue sooner.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>Layers API の Space Warp / motion vectors、ProjectionLayer の depthStencilTexture、Depth Sensing の GPU texture access、WebXR WebGPU Binding、Immersive Web の Input Selection Space Warp sample を続けて見ます。次は今回の scheduler に foreground hand ray を足し、入力 layer だけは foveation しない、あるいは depth stale 時に selection を hold する挙動を試したいです。</p>
+          <p class="en-copy">Continue watching Layers API Space Warp and motion vectors, ProjectionLayer depthStencilTexture, Depth Sensing GPU texture access, WebXR WebGPU Binding, and the Immersive Web Input Selection Space Warp sample. Next, add a foreground hand ray to this scheduler and test keeping input layers unfoveated or holding selection when depth is stale.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルで `GPU budget per frame` を 45、`Depth reads per second` を 2、`Head motion` を高めにしてから gaze point を動かしてください。視線近傍だけ緑が残り、遠い layer は foveation によってコストを下げても depth age が伸びると黄色や赤に変わります。`Depth stale` に切り替えると、視線外でも古い depth を持つ layer が優先されます。</p>
+          <p class="en-copy">Set `GPU budget per frame` to 45, `Depth reads per second` to 2, raise `Head motion`, then move the gaze point. Only near-gaze layers stay green; distant layers get cheaper through foveation but turn amber or red as depth age grows. Switching to `Depth stale` prioritizes old-depth layers even outside gaze.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-23_html_foveated_depth_budget_mixer.html" target="_blank" rel="noreferrer">Open Foveated Depth Budget Mixer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Layers API、Depth Sensing、Anchors、Device API publication history、Immersive Web Layers samples を確認。アイデア: anchor occlusion の次段として、depth refresh と layer redraw / foveation を同じ budget scheduler にまとめる。実装: canvas に床面グリッド、gaze ring、複数 layer、priority modes、motion burst、readout を追加。検証: JSON parse、HTML script 構文、gallery 再生成、GitHub Pages 公開 URL を確認する。</p>
+          <p class="en-copy">Research: reviewed Layers API, Depth Sensing, Anchors, Device API publication history, and Immersive Web Layers samples. Idea: follow anchor occlusion by combining depth refresh, layer redraw, and foveation in one budget scheduler. Implementation: added a canvas floor grid, gaze ring, multiple layers, priority modes, motion burst, and readouts. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and GitHub Pages public URLs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>ここまでの流れは、depth occlusion、lighting、hand input、layers、space warp、anchor drift、occlusion scheduling と続いています。今日のサンプルは、個別 API の足し算ではなく、XR 体験を維持するための予算管理へ視点を引き上げる回です。どの object を高品質に保ち、どれを foveate / defer するかを明示すると、破綻の見つけ方が具体的になります。</p>
+          <p class="en-copy">The progression so far has moved through depth occlusion, lighting, hand input, layers, space warp, anchor drift, and occlusion scheduling. Today's sample shifts from adding individual APIs to managing the budget that keeps an XR experience stable. Making high-quality, foveated, and deferred objects explicit makes failure modes easier to find.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Foveated Depth Budget Mixer` です。gaze、head motion、depth age、anchor drift、draw cost から各 layer の更新可否を決め、緑・黄・赤で表示します。次に足すなら、hand ray と selection gate を加えて、入力対象 layer だけは更新優先度を強制的に上げる挙動を検証します。</p>
+          <p class="en-copy">The selected prototype is `Foveated Depth Budget Mixer`. It decides whether each layer should update from gaze, head motion, depth age, anchor drift, and draw cost, then marks the result in green, amber, or red. A useful extension is adding a hand ray and selection gate so target input layers can force higher update priority.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-23_html_foveated_depth_budget_mixer.html" target="_blank" rel="noreferrer">Today's sample: Foveated Depth Budget Mixer</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-depth-sensing-1/" target="_blank" rel="noreferrer">W3C: WebXR Depth Sensing Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+            <li><a href="https://www.w3.org/standards/history/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API publication history</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-23_html_foveated_depth_budget_mixer.html" loading="lazy" title="Foveated Depth Budget Mixer"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Foveated Depth Budget Mixer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #121412;
+      color: #f3f7ed;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(120deg, rgba(20, 83, 90, 0.32), transparent 42%),
+        linear-gradient(290deg, rgba(166, 75, 56, 0.25), transparent 48%),
+        #121412;
+    }
+
+    main {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 18px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      border-bottom: 1px solid rgba(243, 247, 237, 0.16);
+      padding-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 3vw, 3rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .lede {
+      max-width: 760px;
+      margin: 10px 0 0;
+      color: #c6d2c2;
+      line-height: 1.55;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border: 1px solid rgba(243, 247, 237, 0.18);
+      background: rgba(18, 20, 18, 0.76);
+      color: #9fe7d5;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      min-height: 650px;
+      border: 1px solid rgba(243, 247, 237, 0.16);
+      background: #101311;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    aside {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    section {
+      border: 1px solid rgba(243, 247, 237, 0.16);
+      background: rgba(18, 20, 18, 0.82);
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      letter-spacing: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      margin: 12px 0;
+      color: #c6d2c2;
+      font-size: 0.86rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #9fe7d5;
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid rgba(243, 247, 237, 0.18);
+      background: rgba(243, 247, 237, 0.08);
+      color: #f3f7ed;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button.active {
+      background: #9fe7d5;
+      border-color: #9fe7d5;
+      color: #12201d;
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      border: 1px solid rgba(243, 247, 237, 0.13);
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      min-height: 68px;
+    }
+
+    .metric span {
+      display: block;
+      color: #96a59a;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 1.25rem;
+      line-height: 1.1;
+    }
+
+    .note {
+      margin: 0;
+      color: #aebbae;
+      line-height: 1.5;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 860px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .stage {
+        min-height: 520px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Foveated Depth Budget Mixer</h1>
+        <p class="lede">A browser-only WebXR planning sketch: drag the gaze point, then watch layer quality, depth refresh, and anchor stability compete for a small frame budget.</p>
+      </div>
+      <div class="badge">Original minimal sample</div>
+    </header>
+
+    <div class="stage">
+      <canvas id="stage" width="980" height="650" aria-label="Foveated depth budget simulation"></canvas>
+    </div>
+
+    <aside>
+      <section>
+        <h2>Mode</h2>
+        <div class="seg" id="modeButtons">
+          <button data-mode="balanced" class="active">Balanced</button>
+          <button data-mode="gaze">Gaze first</button>
+          <button data-mode="depth">Depth stale</button>
+          <button data-mode="battery">Battery saver</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Budget</h2>
+        <label>GPU budget per frame <input id="gpuBudget" type="range" min="35" max="120" value="72"></label>
+        <label>Depth reads per second <input id="depthRate" type="range" min="1" max="12" value="5"></label>
+        <label>Head motion <input id="headMotion" type="range" min="0" max="100" value="42"></label>
+        <label>Foveation gain <input id="foveation" type="range" min="0" max="100" value="64"></label>
+      </section>
+
+      <section>
+        <h2>Actions</h2>
+        <div class="seg">
+          <button id="burst">Motion burst</button>
+          <button id="shuffle">Shuffle layers</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Readout</h2>
+        <div class="readout">
+          <div class="metric"><span>Selected</span><strong id="selected">0</strong></div>
+          <div class="metric"><span>Deferred</span><strong id="deferred">0</strong></div>
+          <div class="metric"><span>Quality</span><strong id="quality">0%</strong></div>
+          <div class="metric"><span>Stale depth</span><strong id="stale">0</strong></div>
+        </div>
+      </section>
+
+      <section>
+        <p class="note">Green layers are updated this frame. Amber layers are foveated or depth-stale. Red layers are likely to visibly mismatch the real scene.</p>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      gpuBudget: document.getElementById("gpuBudget"),
+      depthRate: document.getElementById("depthRate"),
+      headMotion: document.getElementById("headMotion"),
+      foveation: document.getElementById("foveation")
+    };
+    const readout = {
+      selected: document.getElementById("selected"),
+      deferred: document.getElementById("deferred"),
+      quality: document.getElementById("quality"),
+      stale: document.getElementById("stale")
+    };
+    const palette = ["#9fe7d5", "#f4c95d", "#ef7665", "#a8c7ff", "#dad6a2"];
+    let mode = "balanced";
+    let gaze = { x: 0.52, y: 0.48 };
+    let drag = false;
+    let burst = 0;
+    let lastTime = 0;
+    let depthBank = 0;
+
+    const layers = [
+      { name: "Text HUD", x: 0.28, y: 0.30, z: 1.2, w: 0.18, cost: 18, quality: 1, age: 0.1, drift: 0.08, kind: "quad" },
+      { name: "Map Quad", x: 0.66, y: 0.32, z: 1.8, w: 0.22, cost: 24, quality: 1, age: 0.4, drift: 0.14, kind: "quad" },
+      { name: "Pinned Note", x: 0.42, y: 0.64, z: 2.4, w: 0.14, cost: 15, quality: 1, age: 0.9, drift: 0.18, kind: "anchor" },
+      { name: "Near Tool", x: 0.75, y: 0.66, z: 0.9, w: 0.13, cost: 21, quality: 1, age: 0.2, drift: 0.1, kind: "hand" },
+      { name: "Room Label", x: 0.18, y: 0.72, z: 3.2, w: 0.2, cost: 14, quality: 1, age: 1.3, drift: 0.22, kind: "anchor" },
+      { name: "Video Layer", x: 0.57, y: 0.52, z: 2.0, w: 0.26, cost: 31, quality: 1, age: 0.6, drift: 0.16, kind: "media" }
+    ];
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+      canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function layerPriority(layer, motion, foveationGain) {
+      const dx = layer.x - gaze.x;
+      const dy = layer.y - gaze.y;
+      const gazeWeight = 1 - clamp(Math.hypot(dx, dy) / 0.62, 0, 1);
+      const sizeWeight = clamp(layer.w * 3.2 / layer.z, 0, 1);
+      const depthRisk = clamp(layer.age / 2.4, 0, 1);
+      const driftRisk = clamp(layer.drift + motion * 0.45, 0, 1);
+      const near = clamp(1.25 / layer.z, 0, 1);
+      let score = gazeWeight * 0.35 + sizeWeight * 0.18 + depthRisk * 0.2 + driftRisk * 0.17 + near * 0.1;
+      if (mode === "gaze") score += gazeWeight * 0.38 - depthRisk * 0.08;
+      if (mode === "depth") score += depthRisk * 0.42 + driftRisk * 0.2;
+      if (mode === "battery") score += sizeWeight * 0.12 - layer.cost / 180 - foveationGain * 0.24;
+      return score;
+    }
+
+    function schedule(dt) {
+      const gpuBudget = Number(controls.gpuBudget.value);
+      const depthRate = Number(controls.depthRate.value);
+      const motion = clamp((Number(controls.headMotion.value) / 100) + burst, 0, 1);
+      const foveationGain = Number(controls.foveation.value) / 100;
+      depthBank += dt * depthRate;
+      let budgetLeft = gpuBudget;
+      let depthReads = Math.floor(depthBank);
+      const ordered = layers
+        .map((layer) => ({ layer, score: layerPriority(layer, motion, foveationGain) }))
+        .sort((a, b) => b.score - a.score);
+
+      for (const item of ordered) {
+        const layer = item.layer;
+        const gazeDistance = Math.hypot(layer.x - gaze.x, layer.y - gaze.y);
+        const foveatedCost = layer.cost * (1 - foveationGain * clamp(gazeDistance / 0.72, 0, 0.55));
+        layer.updated = budgetLeft >= foveatedCost && item.score > 0.12;
+        layer.drawCost = foveatedCost;
+        if (layer.updated) {
+          budgetLeft -= foveatedCost;
+          layer.quality = clamp(layer.quality + dt * (1.6 - gazeDistance), 0.28, 1);
+        } else {
+          layer.quality = clamp(layer.quality - dt * (0.18 + motion * 0.3), 0.25, 1);
+        }
+        layer.depthChecked = depthReads > 0 && (layer.age > 0.55 || item.score > 0.72);
+        if (layer.depthChecked) {
+          layer.age = 0;
+          depthReads -= 1;
+          depthBank -= 1;
+        } else {
+          layer.age += dt * (0.52 + motion * 0.72);
+        }
+        layer.risk = clamp((1 - layer.quality) * 0.42 + layer.age * 0.24 + layer.drift * 0.9 + motion * 0.18, 0, 1);
+      }
+      burst = Math.max(0, burst - dt * 0.42);
+    }
+
+    function drawGrid(width, height, time) {
+      ctx.fillStyle = "#101311";
+      ctx.fillRect(0, 0, width, height);
+      ctx.strokeStyle = "rgba(243,247,237,0.08)";
+      ctx.lineWidth = 1;
+      const horizon = height * 0.42 + Math.sin(time * 0.0007) * 8;
+      for (let i = 0; i < 14; i += 1) {
+        const y = horizon + Math.pow(i / 13, 1.7) * height * 0.58;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+      for (let i = -9; i <= 9; i += 1) {
+        const x = width * 0.5 + i * width * 0.065;
+        ctx.beginPath();
+        ctx.moveTo(x, horizon);
+        ctx.lineTo(width * 0.5 + i * width * 0.18, height);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = "rgba(159,231,213,0.2)";
+      ctx.beginPath();
+      ctx.arc(gaze.x * width, gaze.y * height, 72, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "#9fe7d5";
+      ctx.beginPath();
+      ctx.arc(gaze.x * width, gaze.y * height, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawLayer(layer, width, height) {
+      const x = layer.x * width;
+      const y = layer.y * height;
+      const scale = 1 / layer.z;
+      const w = layer.w * width * (0.72 + scale);
+      const h = w * 0.58;
+      const status = layer.risk > 0.68 ? "#ef7665" : layer.age > 0.95 || !layer.updated ? "#f4c95d" : "#9fe7d5";
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((layer.drift - 0.15) * 0.18);
+      ctx.globalAlpha = 0.72 + layer.quality * 0.28;
+      ctx.fillStyle = "rgba(20, 27, 24, 0.92)";
+      ctx.strokeStyle = status;
+      ctx.lineWidth = layer.updated ? 3 : 1.5;
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+      ctx.strokeRect(-w / 2, -h / 2, w, h);
+
+      ctx.fillStyle = status;
+      ctx.font = "700 14px system-ui, sans-serif";
+      ctx.fillText(layer.name, -w / 2 + 12, -h / 2 + 24);
+      ctx.fillStyle = "#c6d2c2";
+      ctx.font = "12px system-ui, sans-serif";
+      ctx.fillText(`${layer.kind} z:${layer.z.toFixed(1)} cost:${Math.round(layer.drawCost)}`, -w / 2 + 12, -h / 2 + 46);
+      ctx.fillText(`quality ${Math.round(layer.quality * 100)}% depth age ${layer.age.toFixed(1)}s`, -w / 2 + 12, -h / 2 + 66);
+
+      if (layer.depthChecked) {
+        ctx.strokeStyle = "rgba(255,255,255,0.7)";
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.max(w, h) * 0.62, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function render(time) {
+      if (!lastTime) lastTime = time;
+      const dt = Math.min((time - lastTime) / 1000, 0.05);
+      lastTime = time;
+      const rect = canvas.getBoundingClientRect();
+      schedule(dt);
+      drawGrid(rect.width, rect.height, time);
+      layers
+        .slice()
+        .sort((a, b) => b.z - a.z)
+        .forEach((layer) => drawLayer(layer, rect.width, rect.height));
+
+      const selected = layers.filter((layer) => layer.updated).length;
+      const stale = layers.filter((layer) => layer.age > 1).length;
+      const quality = layers.reduce((sum, layer) => sum + layer.quality, 0) / layers.length;
+      readout.selected.textContent = String(selected);
+      readout.deferred.textContent = String(layers.length - selected);
+      readout.quality.textContent = `${Math.round(quality * 100)}%`;
+      readout.stale.textContent = String(stale);
+      requestAnimationFrame(render);
+    }
+
+    function setPointer(event) {
+      const rect = canvas.getBoundingClientRect();
+      gaze.x = clamp((event.clientX - rect.left) / rect.width, 0.04, 0.96);
+      gaze.y = clamp((event.clientY - rect.top) / rect.height, 0.08, 0.92);
+    }
+
+    document.getElementById("modeButtons").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-mode]");
+      if (!button) return;
+      mode = button.dataset.mode;
+      document.querySelectorAll("button[data-mode]").forEach((item) => item.classList.toggle("active", item === button));
+    });
+
+    document.getElementById("burst").addEventListener("click", () => {
+      burst = 0.62;
+      layers.forEach((layer) => { layer.drift = clamp(layer.drift + 0.08 + Math.random() * 0.12, 0, 0.8); });
+    });
+
+    document.getElementById("shuffle").addEventListener("click", () => {
+      layers.forEach((layer, index) => {
+        layer.x = 0.16 + Math.random() * 0.68;
+        layer.y = 0.24 + Math.random() * 0.52;
+        layer.z = 0.85 + Math.random() * 2.6;
+        layer.age = Math.random() * 1.4;
+        layer.drift = 0.05 + Math.random() * 0.26;
+        layer.cost = 13 + Math.random() * 22 + index;
+      });
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      drag = true;
+      canvas.setPointerCapture(event.pointerId);
+      setPointer(event);
+    });
+    canvas.addEventListener("pointermove", (event) => {
+      if (drag) setPointer(event);
+    });
+    canvas.addEventListener("pointerup", () => { drag = false; });
+    canvas.addEventListener("pointercancel", () => { drag = false; });
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
