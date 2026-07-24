@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DOM Overlay Select Gate Lab</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #111411;
+      color: #f3f6ed;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(140deg, rgba(30, 98, 91, 0.28), transparent 44%),
+        linear-gradient(320deg, rgba(149, 63, 53, 0.24), transparent 50%),
+        #111411;
+    }
+
+    main {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 18px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      border-bottom: 1px solid rgba(243, 246, 237, 0.16);
+      padding-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 3vw, 3rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .lede {
+      max-width: 770px;
+      margin: 10px 0 0;
+      color: #c8d1c2;
+      line-height: 1.55;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border: 1px solid rgba(243, 246, 237, 0.18);
+      background: rgba(17, 20, 17, 0.76);
+      color: #9de3d0;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 650px;
+      border: 1px solid rgba(243, 246, 237, 0.16);
+      background: #0f130f;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      inset: 18px auto auto 18px;
+      width: min(260px, calc(100% - 36px));
+      padding: 12px;
+      border: 1px solid rgba(243, 246, 237, 0.2);
+      background: rgba(15, 19, 15, 0.74);
+      backdrop-filter: blur(10px);
+    }
+
+    .hud.blocking {
+      border-color: rgba(252, 188, 89, 0.74);
+      background: rgba(45, 32, 20, 0.78);
+    }
+
+    .hud h2 {
+      margin: 0 0 8px;
+      font-size: 0.93rem;
+    }
+
+    .hud p {
+      margin: 0;
+      color: #c8d1c2;
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    aside {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    section {
+      border: 1px solid rgba(243, 246, 237, 0.16);
+      background: rgba(17, 20, 17, 0.82);
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      letter-spacing: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      margin: 12px 0;
+      color: #c8d1c2;
+      font-size: 0.86rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #9de3d0;
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid rgba(243, 246, 237, 0.18);
+      background: rgba(243, 246, 237, 0.08);
+      color: #f3f6ed;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button.active {
+      background: #9de3d0;
+      border-color: #9de3d0;
+      color: #10211d;
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      border: 1px solid rgba(243, 246, 237, 0.13);
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      min-height: 68px;
+    }
+
+    .metric span {
+      display: block;
+      color: #98a597;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 1.2rem;
+      line-height: 1.1;
+    }
+
+    .note {
+      margin: 0;
+      color: #adbaac;
+      line-height: 1.5;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 860px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .stage {
+        min-height: 540px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>DOM Overlay Select Gate Lab</h1>
+        <p class="lede">A browser-only WebXR planning sketch: move the transient touch ray, then decide when a DOM overlay should suppress XR world select and when hit testing should pass through.</p>
+      </div>
+      <div class="badge">Original minimal sample</div>
+    </header>
+
+    <div class="stage" id="stageWrap">
+      <canvas id="stage" width="980" height="650" aria-label="DOM overlay and transient hit test simulation"></canvas>
+      <div class="hud" id="overlay">
+        <h2>Overlay panel</h2>
+        <p id="overlayText">Panel controls block XR select while world notes pass through. Drag or tap across the stage.</p>
+      </div>
+    </div>
+
+    <aside>
+      <section>
+        <h2>Gate Mode</h2>
+        <div class="seg" id="modeButtons">
+          <button data-mode="balanced" class="active">Balanced</button>
+          <button data-mode="ui">UI strict</button>
+          <button data-mode="world">World first</button>
+          <button data-mode="audit">Audit trail</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Input</h2>
+        <label>Touch jitter <input id="jitter" type="range" min="0" max="100" value="28"></label>
+        <label>Overlay opacity <input id="opacity" type="range" min="18" max="92" value="74"></label>
+        <label>Ray depth bias <input id="depthBias" type="range" min="0" max="100" value="42"></label>
+        <label>Duplicate tolerance <input id="tolerance" type="range" min="0" max="100" value="54"></label>
+      </section>
+
+      <section>
+        <h2>Actions</h2>
+        <div class="seg">
+          <button id="toggleBlock" class="active">Block UI</button>
+          <button id="burst">Tap Burst</button>
+          <button id="moveOverlay">Move UI</button>
+          <button id="reset">Reset</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Readout</h2>
+        <div class="readout">
+          <div class="metric"><span>Gate</span><strong id="gateReadout">World</strong></div>
+          <div class="metric"><span>Hit</span><strong id="hitReadout">Plane</strong></div>
+          <div class="metric"><span>Suppressed</span><strong id="suppressedReadout">0</strong></div>
+          <div class="metric"><span>Duplicates</span><strong id="duplicateReadout">0</strong></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Focus</h2>
+        <p class="note">The sample mirrors WebXR DOM Overlay's `beforexrselect` decision: UI regions can keep DOM pointer events while cancelling XR select events so a transient hit test does not place objects by accident.</p>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const wrap = document.getElementById("stageWrap");
+    const overlay = document.getElementById("overlay");
+    const overlayText = document.getElementById("overlayText");
+    const controls = {
+      jitter: document.getElementById("jitter"),
+      opacity: document.getElementById("opacity"),
+      depthBias: document.getElementById("depthBias"),
+      tolerance: document.getElementById("tolerance")
+    };
+    const readout = {
+      gate: document.getElementById("gateReadout"),
+      hit: document.getElementById("hitReadout"),
+      suppressed: document.getElementById("suppressedReadout"),
+      duplicate: document.getElementById("duplicateReadout")
+    };
+
+    const state = {
+      mode: "balanced",
+      blockUi: true,
+      pointer: { x: 0.62, y: 0.54 },
+      target: { x: 0.62, y: 0.54 },
+      overlayCorner: 0,
+      suppressed: 0,
+      duplicates: 0,
+      lastGate: "World",
+      lastHit: "Plane",
+      taps: [],
+      log: []
+    };
+
+    const anchors = [
+      { x: 0.22, y: 0.72, r: 42, label: "poster", depth: 0.38 },
+      { x: 0.52, y: 0.62, r: 56, label: "table", depth: 0.58 },
+      { x: 0.77, y: 0.44, r: 48, label: "wall", depth: 0.46 }
+    ];
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.max(320, Math.floor(rect.width * ratio));
+      canvas.height = Math.max(360, Math.floor(rect.height * ratio));
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      positionOverlay();
+    }
+
+    function positionOverlay() {
+      const spots = [
+        { left: 18, top: 18 },
+        { left: Math.max(18, wrap.clientWidth - 278), top: 18 },
+        { left: 18, top: Math.max(18, wrap.clientHeight - 134) },
+        { left: Math.max(18, wrap.clientWidth - 278), top: Math.max(18, wrap.clientHeight - 134) }
+      ];
+      const spot = spots[state.overlayCorner % spots.length];
+      overlay.style.left = `${spot.left}px`;
+      overlay.style.top = `${spot.top}px`;
+      overlay.style.right = "auto";
+      overlay.style.bottom = "auto";
+      overlay.style.background = `rgba(15, 19, 15, ${Number(controls.opacity.value) / 100})`;
+      overlay.classList.toggle("blocking", state.blockUi);
+      overlayText.textContent = state.blockUi
+        ? "Blocking zone: DOM pointer actions continue, XR select is suppressed."
+        : "Pass-through zone: the same touch also creates a world select.";
+    }
+
+    function canvasPoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)),
+        y: Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height))
+      };
+    }
+
+    function overlayContains(point) {
+      const c = canvas.getBoundingClientRect();
+      const o = overlay.getBoundingClientRect();
+      const x = c.left + point.x * c.width;
+      const y = c.top + point.y * c.height;
+      return x >= o.left && x <= o.right && y >= o.top && y <= o.bottom;
+    }
+
+    function evaluateGate(point, isTap = false) {
+      const overUi = overlayContains(point);
+      const jitter = Number(controls.jitter.value) / 100;
+      const tolerance = Number(controls.tolerance.value) / 100;
+      const depthBias = Number(controls.depthBias.value) / 100;
+      let shouldSuppress = overUi && state.blockUi;
+      let duplicateRisk = overUi ? Math.max(0, 1 - tolerance) : 0;
+
+      if (state.mode === "ui") {
+        shouldSuppress = overUi;
+        duplicateRisk += overUi ? 0.28 : 0.04;
+      } else if (state.mode === "world") {
+        shouldSuppress = overUi && state.blockUi && tolerance < 0.28;
+        duplicateRisk += overUi ? 0.42 : 0.08;
+      } else if (state.mode === "audit") {
+        duplicateRisk += 0.18 + jitter * 0.2;
+      }
+
+      const nearest = anchors
+        .map((anchor) => {
+          const dx = point.x - anchor.x;
+          const dy = point.y - anchor.y;
+          const distance = Math.hypot(dx, dy);
+          const score = Math.max(0, 1 - distance * 2.8) * (1 - Math.abs(anchor.depth - depthBias) * 0.72);
+          return { ...anchor, distance, score };
+        })
+        .sort((a, b) => b.score - a.score)[0];
+
+      const hasHit = nearest.score > 0.22;
+      const gate = shouldSuppress ? "UI blocked" : hasHit ? "World select" : "No hit";
+
+      if (isTap) {
+        if (shouldSuppress) state.suppressed += 1;
+        if (!shouldSuppress && duplicateRisk > 0.45) state.duplicates += 1;
+        state.log.unshift({
+          x: point.x,
+          y: point.y,
+          gate,
+          label: hasHit ? nearest.label : "miss",
+          age: 1
+        });
+        state.log = state.log.slice(0, 7);
+      }
+
+      state.lastGate = gate;
+      state.lastHit = hasHit ? nearest.label : "none";
+      return { overUi, shouldSuppress, duplicateRisk, nearest, hasHit, gate };
+    }
+
+    function addTap(point) {
+      const result = evaluateGate(point, true);
+      state.taps.push({
+        x: point.x,
+        y: point.y,
+        gate: result.gate,
+        ui: result.shouldSuppress,
+        hit: result.hasHit,
+        life: 1
+      });
+      state.taps = state.taps.slice(-26);
+    }
+
+    canvas.addEventListener("pointermove", (event) => {
+      state.target = canvasPoint(event);
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      canvas.setPointerCapture(event.pointerId);
+      state.target = canvasPoint(event);
+      addTap(state.target);
+    });
+
+    canvas.addEventListener("pointercancel", () => {});
+    canvas.addEventListener("pointerup", (event) => {
+      try {
+        canvas.releasePointerCapture(event.pointerId);
+      } catch {}
+    });
+
+    document.getElementById("modeButtons").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-mode]");
+      if (!button) return;
+      state.mode = button.dataset.mode;
+      document.querySelectorAll("#modeButtons button").forEach((item) => {
+        item.classList.toggle("active", item === button);
+      });
+    });
+
+    document.getElementById("toggleBlock").addEventListener("click", (event) => {
+      state.blockUi = !state.blockUi;
+      event.currentTarget.classList.toggle("active", state.blockUi);
+      event.currentTarget.textContent = state.blockUi ? "Block UI" : "Pass UI";
+      positionOverlay();
+    });
+
+    document.getElementById("burst").addEventListener("click", () => {
+      for (let i = 0; i < 8; i += 1) {
+        const angle = Math.PI * 2 * (i / 8);
+        addTap({
+          x: Math.min(0.96, Math.max(0.04, state.pointer.x + Math.cos(angle) * 0.09)),
+          y: Math.min(0.96, Math.max(0.04, state.pointer.y + Math.sin(angle) * 0.07))
+        });
+      }
+    });
+
+    document.getElementById("moveOverlay").addEventListener("click", () => {
+      state.overlayCorner += 1;
+      positionOverlay();
+    });
+
+    document.getElementById("reset").addEventListener("click", () => {
+      state.suppressed = 0;
+      state.duplicates = 0;
+      state.taps = [];
+      state.log = [];
+    });
+
+    Object.values(controls).forEach((control) => {
+      control.addEventListener("input", positionOverlay);
+    });
+
+    function drawGrid(w, h) {
+      ctx.fillStyle = "#0f130f";
+      ctx.fillRect(0, 0, w, h);
+      ctx.save();
+      ctx.translate(w * 0.5, h * 0.9);
+      ctx.strokeStyle = "rgba(157, 227, 208, 0.12)";
+      ctx.lineWidth = 1;
+      for (let i = -12; i <= 12; i += 1) {
+        ctx.beginPath();
+        ctx.moveTo(i * 42, 0);
+        ctx.lineTo(i * 86, -h * 0.72);
+        ctx.stroke();
+      }
+      for (let j = 0; j < 12; j += 1) {
+        const y = -j * 44;
+        ctx.beginPath();
+        ctx.moveTo(-w * 0.48 - j * 26, y);
+        ctx.lineTo(w * 0.48 + j * 26, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawAnchor(anchor, active) {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const x = anchor.x * w;
+      const y = anchor.y * h;
+      const radius = anchor.r;
+      ctx.save();
+      ctx.fillStyle = active ? "rgba(157, 227, 208, 0.22)" : "rgba(243, 246, 237, 0.08)";
+      ctx.strokeStyle = active ? "#9de3d0" : "rgba(243, 246, 237, 0.26)";
+      ctx.lineWidth = active ? 3 : 1.4;
+      ctx.beginPath();
+      ctx.roundRect(x - radius, y - radius * 0.55, radius * 2, radius * 1.1, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#f3f6ed";
+      ctx.font = "600 14px Inter, sans-serif";
+      ctx.fillText(anchor.label, x - radius + 12, y - 4);
+      ctx.fillStyle = "#98a597";
+      ctx.font = "12px Inter, sans-serif";
+      ctx.fillText(`depth ${anchor.depth.toFixed(2)}`, x - radius + 12, y + 15);
+      ctx.restore();
+    }
+
+    function drawPointer(result) {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const x = state.pointer.x * w;
+      const y = state.pointer.y * h;
+      const origin = { x: w * 0.5, y: h * 0.12 };
+      ctx.save();
+      ctx.strokeStyle = result.shouldSuppress ? "#fcbc59" : result.hasHit ? "#9de3d0" : "#d66b5f";
+      ctx.lineWidth = 2;
+      ctx.setLineDash(result.shouldSuppress ? [8, 8] : []);
+      ctx.beginPath();
+      ctx.moveTo(origin.x, origin.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(243, 246, 237, 0.9)";
+      ctx.beginPath();
+      ctx.arc(origin.x, origin.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = result.shouldSuppress ? "#fcbc59" : "#9de3d0";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, 18 + result.duplicateRisk * 12, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = result.shouldSuppress ? "#fcbc59" : result.hasHit ? "#9de3d0" : "#d66b5f";
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawTaps() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      for (const tap of state.taps) {
+        tap.life *= 0.975;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, tap.life);
+        ctx.strokeStyle = tap.ui ? "#fcbc59" : tap.hit ? "#9de3d0" : "#d66b5f";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(tap.x * w, tap.y * h, 9 + (1 - tap.life) * 28, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+      state.taps = state.taps.filter((tap) => tap.life > 0.08);
+    }
+
+    function drawLog(w, h) {
+      ctx.save();
+      ctx.fillStyle = "rgba(10, 12, 10, 0.66)";
+      ctx.strokeStyle = "rgba(243, 246, 237, 0.13)";
+      ctx.beginPath();
+      ctx.roundRect(w - 258, h - 188, 238, 166, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#f3f6ed";
+      ctx.font = "600 13px Inter, sans-serif";
+      ctx.fillText("Event queue", w - 240, h - 158);
+      ctx.font = "12px Inter, sans-serif";
+      state.log.forEach((item, index) => {
+        item.age *= 0.992;
+        ctx.fillStyle = item.gate === "UI blocked" ? "#fcbc59" : item.gate === "World select" ? "#9de3d0" : "#d66b5f";
+        ctx.fillText(`${item.gate} -> ${item.label}`, w - 240, h - 132 + index * 18);
+      });
+      ctx.restore();
+    }
+
+    function frame() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const jitter = Number(controls.jitter.value) / 100;
+      state.pointer.x += (state.target.x - state.pointer.x) * (0.18 - jitter * 0.08);
+      state.pointer.y += (state.target.y - state.pointer.y) * (0.18 - jitter * 0.08);
+      state.pointer.x += (Math.random() - 0.5) * jitter * 0.006;
+      state.pointer.y += (Math.random() - 0.5) * jitter * 0.006;
+      state.pointer.x = Math.min(1, Math.max(0, state.pointer.x));
+      state.pointer.y = Math.min(1, Math.max(0, state.pointer.y));
+
+      const result = evaluateGate(state.pointer);
+      drawGrid(w, h);
+      anchors.forEach((anchor) => drawAnchor(anchor, result.hasHit && result.nearest.label === anchor.label));
+      drawTaps();
+      drawPointer(result);
+      drawLog(w, h);
+
+      readout.gate.textContent = state.lastGate;
+      readout.hit.textContent = state.lastHit;
+      readout.suppressed.textContent = String(state.suppressed);
+      readout.duplicate.textContent = String(state.duplicates);
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener("resize", resize);
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function roundRect(x, y, width, height, radius) {
+        const r = Math.min(radius, width / 2, height / 2);
+        this.moveTo(x + r, y);
+        this.arcTo(x + width, y, x + width, y + height, r);
+        this.arcTo(x + width, y + height, x, y + height, r);
+        this.arcTo(x, y + height, x, y, r);
+        this.arcTo(x, y, x + width, y, r);
+        return this;
+      };
+    }
+    resize();
+    frame();
+  </script>
+</body>
+</html>

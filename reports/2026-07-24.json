@@ -1,0 +1,117 @@
+{
+  "date": "2026-07-24",
+  "headline": "DOM Overlay と transient hit test の選択衝突を分ける",
+  "headlineEn": "Separating DOM Overlay and transient hit-test selection conflicts",
+  "summary": "WebXR Hit Test、DOM Overlays、Hand Input、Input Profiles、Immersive Web 公式 samples を確認し、今日は DOM UI 操作と XR ワールド選択が重なる場面で、`beforexrselect` と transient input hit test の判断を可視化する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing WebXR Hit Test, DOM Overlays, Hand Input, Input Profiles, and the Immersive Web official samples, today's original HTML sample visualizes how `beforexrselect` and transient input hit tests arbitrate between DOM UI interaction and XR world selection.",
+  "keyTopics": [
+    "WebXR DOM Overlays Module は、没入セッション中に単一 DOM 要素を透明背景の 2D overlay として表示し、DOM pointer/click と XR input を同じ画面上で扱う前提を整理している。",
+    "`beforexrselect` は DOM overlay 上で primary action が発生したとき、必要なら `preventDefault()` で `selectstart` / `selectend` / `select` を抑止できるため、UI 操作とワールド配置の二重発火を防ぐ要になる。",
+    "WebXR Hit Test Module の transient input hit test は `requestHitTestSourceForTransientInput()` と `getHitTestResultsForTransientInput()` で、画面タップや一時入力源ごとの hit 結果を扱える。",
+    "WebXR Device API の input explainer は、画面上の interaction point から target ray を生成し、select intent を input source ごとに統一して扱う考え方を説明している。",
+    "WebXR Input Profiles は `XRInputSource.profiles` の整合性と fallback を扱う一次情報で、hand、controller、touchscreen を同じ選択ゲートに通す設計の前提になる。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR DOM Overlays Module describes showing a single DOM element as a transparent 2D overlay during an immersive session, where DOM pointer/click handling and XR input share the same screen.",
+    "`beforexrselect` can call `preventDefault()` when a primary action intersects the DOM overlay, suppressing `selectstart`, `selectend`, and `select` to avoid duplicate UI and world actions.",
+    "The WebXR Hit Test Module's transient input hit testing uses `requestHitTestSourceForTransientInput()` and `getHitTestResultsForTransientInput()` for per-transient-input hit results.",
+    "The WebXR Device API input explainer describes target rays generated from screen interaction points and a unified select intent across input sources.",
+    "WebXR Input Profiles provide the conformance and fallback basis behind `XRInputSource.profiles`, useful when routing hand, controller, and touchscreen input through one selection gate."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: DOM Overlay Select Gate Lab",
+      "url": "../outputs/2026-07-24_html_dom_overlay_transient_select_gate.html"
+    },
+    {
+      "label": "W3C: WebXR DOM Overlays Module",
+      "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+    },
+    {
+      "label": "W3C: WebXR Hit Test Module",
+      "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Device API input explainer",
+      "url": "https://immersive-web.github.io/webxr/input-explainer.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Input Profiles",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "MDN: XRTransientInputHitTestSource",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRTransientInputHitTestSource"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR DOM Overlays Module の `beforexrselect` と、Hit Test Module の transient input hit test です。AR で画面上に DOM UI を載せると、同じタップが UI の pointer/click とワールド側の `select` / hit test の両方として解釈される可能性があります。公式仕様は、overlay の交差領域で XR select を抑止する手段と、一時入力源ごとの hit test 結果を分ける手段を用意しており、配置 UI や設定パネルを安全に同居させる上で面白い接点です。",
+      "bodyEn": "Today's notable intersection is `beforexrselect` from the WebXR DOM Overlays Module and transient input hit testing from the Hit Test Module. When a DOM UI sits over AR content, the same tap can be interpreted both as a DOM pointer/click and as a world `select` plus hit test. The specs provide one mechanism to suppress XR select on overlay regions and another to group hit test results by transient input source, which is a useful design point for placement UIs and settings panels.",
+      "links": [
+        {
+          "label": "W3C: WebXR DOM Overlays Module",
+          "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+        },
+        {
+          "label": "W3C: WebXR Hit Test Module",
+          "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "DOM overlay の panel を、ワールド上の透明な安全領域として見せる表現を試しました。ステージ上でドラッグ/タップすると、head 側から伸びる transient touch ray、hit した plane/object、UI によって抑止された select、二重発火リスクが色で切り替わります。`UI strict`、`World first`、`Audit trail` の mode により、同じ入力でも UI 優先、配置優先、監査優先の設計差が見えます。",
+      "bodyEn": "The sample treats the DOM overlay panel as a transparent safety region over the world. Dragging or tapping the stage shows a transient touch ray from the viewer, the hit plane or object, suppressed selects, and duplicate-action risk with color changes. `UI strict`, `World first`, and `Audit trail` reveal how the same input changes under UI-first, placement-first, and logging-first policies."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では、DOM overlay の interactive region を hit map として持ち、`beforexrselect` で抑止した interaction と `XRFrame.getHitTestResultsForTransientInput()` の結果を同じ event queue に記録すると調査しやすそうです。透明な説明文は pass-through、button や slider は block、確認済みの placement area は world select へ通す、という粒度で扱うと誤配置を減らせます。hand / controller / touchscreen は `XRInputSource.profiles` を見て threshold を変えつつ、最後は同じ gate function に通す設計が保守しやすいです。",
+      "bodyEn": "A practical implementation can keep an interactive-region hit map for the DOM overlay, then log interactions suppressed by `beforexrselect` beside results from `XRFrame.getHitTestResultsForTransientInput()`. Transparent explanatory text can pass through, buttons and sliders can block, and confirmed placement regions can route to world select. Hand, controller, and touchscreen inputs can tune thresholds from `XRInputSource.profiles` while still sharing one gate function."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "DOM Overlay の cross-origin event handling、transient input hit test の active source 数制限、Hand Input の pinch / grasp profile、Input Profiles registry の fallback、Layers sample の input selection space warp を続けて見ます。次は今回の gate に anchor drift と depth stale を戻し、UI 操作中は placement を hold しつつ、視線外の anchor refresh は継続する挙動を試したいです。",
+      "bodyEn": "Continue watching DOM Overlay cross-origin event handling, active-source limits for transient input hit testing, Hand Input pinch and grasp profiles, Input Profiles registry fallback behavior, and the Layers input selection space warp sample. Next, bring anchor drift and stale depth back into this gate so placement is held during UI use while off-gaze anchor refresh continues."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルで `Block UI` を有効にしたまま overlay panel の上をタップし、次に `Pass UI` に切り替えて同じ場所をタップしてください。前者は DOM 側の操作として XR select を抑止し、後者は world select として hit test が通ります。`World first` で `Duplicate tolerance` を下げると、UI 上のタップでも二重発火リスクが増える様子が見えます。",
+      "bodyEn": "Tap over the overlay panel with `Block UI` enabled, then switch to `Pass UI` and tap the same spot. The first path suppresses XR select as a DOM interaction; the second lets world hit testing pass through. In `World first`, lowering `Duplicate tolerance` shows duplicate-action risk rising even on UI taps.",
+      "links": [
+        {
+          "label": "Open DOM Overlay Select Gate Lab",
+          "url": "../outputs/2026-07-24_html_dom_overlay_transient_select_gate.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR DOM Overlays、Hit Test、Device API input explainer、Input Profiles、Immersive Web Samples、MDN transient input reference を確認。アイデア: foveated / depth budget の次段として、入力層の誤選択を防ぐ gate に焦点を移す。実装: canvas stage、overlay panel、transient ray、world anchor hit、select 抑止、duplicate risk、event queue を追加。検証: JSON parse、HTML script 構文、gallery 再生成、公開 URL の HTTP 200 を確認する。",
+      "bodyEn": "Research: reviewed WebXR DOM Overlays, Hit Test, the Device API input explainer, Input Profiles, Immersive Web Samples, and MDN's transient input reference. Idea: after foveated and depth budget scheduling, shift focus to the gate that prevents incorrect input-layer selection. Implementation: added a canvas stage, overlay panel, transient ray, world anchor hit, select suppression, duplicate risk, and event queue. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and HTTP 200 for published URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでのサンプルは depth、lighting、hand、layers、space warp、anchor、budget へ進んできました。今日の回は、表示品質ではなく入力の境界に注目しています。XR では見えているもの、触ったつもりのもの、API が select として扱うものがずれやすいため、UI と world の arbitration を早い段階でサンプル化しておく価値があります。",
+      "bodyEn": "The series has moved through depth, lighting, hands, layers, space warp, anchors, and budget scheduling. Today's sample focuses on the boundary of input rather than visual quality. In XR, what is visible, what the user intended to touch, and what the API treats as select can diverge, so it is worth prototyping UI/world arbitration early."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `DOM Overlay Select Gate Lab` です。DOM overlay 上の blocking / pass-through、transient hit test の world hit、二重発火リスク、抑止数を 1 画面で観察できます。次に足すなら、実際の `beforexrselect` handler の疑似コード表示、hand pinch と touchscreen tap の profile 別 threshold、anchor refresh scheduler との連動を追加します。",
+      "bodyEn": "The selected prototype is `DOM Overlay Select Gate Lab`. It shows blocking versus pass-through DOM overlay regions, world hits from transient hit testing, duplicate-action risk, and suppression counts in one screen. Useful extensions include displaying the actual `beforexrselect` handler pseudocode, profile-specific thresholds for hand pinch versus touchscreen tap, and integration with the anchor refresh scheduler."
+    }
+  ]
+}
