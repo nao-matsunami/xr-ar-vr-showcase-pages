@@ -1,0 +1,121 @@
+{
+  "date": "2026-07-25",
+  "headline": "DOM 操作中もアンカー更新を止めない選択ゲート",
+  "headlineEn": "A selection gate that keeps anchor refresh running during DOM interaction",
+  "summary": "WebXR DOM Overlays、Anchors、Hit Test、Depth Sensing、Immersive Web 公式 samples を確認し、今日は overlay 上の UI 操作で world select を保留しながら、stale depth と anchor drift の更新キューだけを継続する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing WebXR DOM Overlays, Anchors, Hit Test, Depth Sensing, and the Immersive Web official samples, today's original HTML sample keeps stale-depth and anchor-drift refresh scheduling alive while DOM overlay interaction holds world selection.",
+  "keyTopics": [
+    "WebXR DOM Overlays Module の `beforexrselect` は、overlay 上の primary action が DOM UI 操作なのか XR world select なのかを分ける実装上の境界になる。",
+    "WebXR Anchors Module は、hit test result から作成した anchor と、frame 上で作成した anchor の両方を扱い、`trackedAnchors` の更新を frame update として扱う。",
+    "WebXR Hit Test Module は real world geometry への ray intersection を返すもので、アプリ内 virtual object への当たり判定とは責務が分かれている。",
+    "WebXR Depth Sensing は CPU / GPU の depth access path があり、毎フレーム全対象を読むより、入力状態や drift risk に応じた scheduling が実装上の焦点になる。",
+    "Immersive Web の Layers / Input Selection Space Warp sample は、projection layer、depth、motion vector、input selection の関係を検証する一次デモとして、入力と表示のタイミング差を考える材料になる。"
+  ],
+  "keyTopicsEn": [
+    "`beforexrselect` in the WebXR DOM Overlays Module is the implementation boundary for deciding whether a primary action over an overlay is DOM UI interaction or XR world selection.",
+    "The WebXR Anchors Module covers anchors created from hit test results and anchors created from a frame, with `trackedAnchors` updated during frame updates.",
+    "The WebXR Hit Test Module returns ray intersections with real-world geometry and explicitly separates that role from hit testing against application-created virtual objects.",
+    "WebXR Depth Sensing exposes CPU and GPU depth access paths, making scheduling by input state and drift risk more practical than reading depth for every target every frame.",
+    "The Immersive Web Layers and Input Selection Space Warp sample is a useful primary demo for studying projection layers, depth, motion vectors, and input selection timing."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Overlay Anchor Refresh Queue",
+      "url": "../outputs/2026-07-25_html_overlay_anchor_refresh_queue.html"
+    },
+    {
+      "label": "W3C: WebXR DOM Overlays Module",
+      "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "W3C: WebXR Hit Test Module",
+      "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+    },
+    {
+      "label": "Immersive Web: Depth Sensing Module",
+      "url": "https://immersive-web.github.io/depth-sensing/"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、DOM Overlay の `beforexrselect`、Anchors の `trackedAnchors`、Depth Sensing の depth read を同じ入力ゲートに入れる設計です。AR の設定 panel を触っている間に world select を止めるだけだと、裏側の anchor drift や stale depth が進み続けます。そこで UI 操作は保留しつつ、anchor refresh queue は止めない、という運用を 1 画面で見えるようにしました。",
+      "bodyEn": "Today's notable design combines DOM Overlay `beforexrselect`, Anchors `trackedAnchors`, and Depth Sensing reads in one input gate. If world selection is merely stopped while the user touches an AR settings panel, anchor drift and stale depth keep accumulating behind it. The prototype visualizes a policy where UI interaction is held but the anchor refresh queue keeps running.",
+      "links": [
+        {
+          "label": "W3C: WebXR DOM Overlays Module",
+          "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+        },
+        {
+          "label": "Immersive Web: WebXR Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        },
+        {
+          "label": "Immersive Web: Depth Sensing Module",
+          "url": "https://immersive-web.github.io/depth-sensing/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "ステージ上の円を anchor、右上の半透明 panel を DOM overlay として扱います。overlay が blocking のときは、panel 上のタップが `beforexrselect` で world select を止めた状態になります。一方で drift noise、depth budget、input pressure に応じて anchor の age / drift / user proximity を評価し、更新優先度の高いものが queue の上に来ます。",
+      "bodyEn": "The stage treats circles as anchors and the translucent panel as the DOM overlay. When the overlay is blocking, taps on the panel model `beforexrselect` suppressing world selection. Meanwhile drift noise, depth budget, and input pressure drive each anchor's age, drift, and user proximity so high-priority items rise in the refresh queue."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では、select gate と refresh scheduler を分けておくと設計しやすそうです。overlay region に入った primary action は DOM 側に吸わせるが、`XRFrame.trackedAnchors` の pose 更新、stale depth の再取得、drift risk の計算は通常 frame loop で続ける。hit test result から新規 anchor を作る経路だけを hold すれば、UI 操作後の再開時に古い深度で配置してしまう事故を減らせます。",
+      "bodyEn": "A practical implementation should separate the select gate from the refresh scheduler. Primary actions inside overlay regions can be consumed by DOM, while `XRFrame.trackedAnchors` pose updates, stale-depth reads, and drift-risk scoring continue in the normal frame loop. Holding only the path that creates new anchors from hit test results reduces the chance of placing against old depth after UI interaction ends."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Anchors の persistent handle、Depth Sensing の GPU path と CPU path の差、DOM Overlay の overlay type、Layers sample の Layer Hit Test workaround、Input Selection Space Warp の motion vector / depth 連携を続けて見ます。次は anchor refresh queue を foveation budget と接続し、視線中心、手の近さ、overlay 操作中のどれを優先するかを比較したいです。",
+      "bodyEn": "Continue watching persistent handles in Anchors, GPU versus CPU paths in Depth Sensing, DOM Overlay overlay types, the Layers sample's Layer Hit Test workaround, and motion-vector/depth coordination in Input Selection Space Warp. Next, connect the anchor refresh queue to a foveation budget and compare priority from gaze center, hand proximity, and overlay interaction."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、`Block UI` のまま右上 panel 上をタップして suppressed count が増えることを確認してください。そのまま `Drift` mode にして drift noise を上げると、world select は保留されても queue の hot anchors は更新されます。次に `Pass UI` に切り替えると、同じ panel 位置の入力が world select として流れ、重複配置の危険が見えます。",
+      "bodyEn": "Open the sample, keep `Block UI` on, and tap the upper-right panel to see the suppressed count increase. Switch to `Drift` mode and raise drift noise; world select remains held but hot anchors still refresh. Then switch to `Pass UI` and the same panel-area input routes as world selection, exposing duplicate placement risk.",
+      "links": [
+        {
+          "label": "Open Overlay Anchor Refresh Queue",
+          "url": "../outputs/2026-07-25_html_overlay_anchor_refresh_queue.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: DOM Overlays、Anchors、Hit Test、Depth Sensing、Immersive Web Samples、Layers Samples を確認。アイデア: 前回の DOM/world select gate に、anchor drift と stale depth scheduling を戻す。実装: canvas stage、DOM overlay panel、anchor risk rings、refresh queue、suppressed select counter、scenario presets を追加。検証: JSON parse、HTML script 構文、gallery 再生成、公開 URL の HTTP 200 を確認する。",
+      "bodyEn": "Research: reviewed DOM Overlays, Anchors, Hit Test, Depth Sensing, Immersive Web Samples, and Layers Samples. Idea: bring anchor drift and stale-depth scheduling back into the previous DOM/world select gate. Implementation: added a canvas stage, DOM overlay panel, anchor risk rings, refresh queue, suppressed-select counter, and scenario presets. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and HTTP 200 for published URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日の流れは、anchor、depth、foveation、DOM Overlay の境界を順に結んでいます。今日の回は、UI が入力を奪う瞬間にも、空間理解の裏タスクは止めないという運用メモです。XR の最小 UI は、見た目の panel だけでなく、入力、hit test、anchor 更新、depth freshness の交通整理まで含めて 1 つの部品になります。",
+      "bodyEn": "The recent sequence connects anchors, depth, foveation, and DOM Overlay boundaries. Today's sample notes that even while UI consumes input, background spatial understanding should continue. A minimal XR UI is not just a visible panel; it is also the traffic control among input, hit testing, anchor refresh, and depth freshness."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Overlay Anchor Refresh Queue` です。DOM overlay の block / pass-through、world select の保留、新規 anchor 配置、stale depth refresh、drift risk queue を 1 つの HTML で観察できます。次に足すなら、hand joint の pinch confidence、gaze-based foveation priority、実際の WebXR feature support probe を同じ readout に重ねます。",
+      "bodyEn": "The selected prototype is `Overlay Anchor Refresh Queue`. It shows DOM overlay block/pass-through behavior, held world selection, new anchor placement, stale-depth refresh, and drift-risk queueing in one HTML file. Useful next additions are hand-joint pinch confidence, gaze-based foveation priority, and a real WebXR feature-support probe in the same readout."
+    }
+  ]
+}
