@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Camera Privacy Foveation Governor</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b0f12;
+      color: #f2f7f4;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(140deg, rgba(37, 144, 127, 0.24), transparent 42%),
+        linear-gradient(320deg, rgba(207, 86, 74, 0.18), transparent 46%),
+        #0b0f12;
+    }
+
+    main {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 18px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      border-bottom: 1px solid rgba(242, 247, 244, 0.15);
+      padding-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.62rem, 3vw, 2.75rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .lede {
+      max-width: 780px;
+      margin: 10px 0 0;
+      color: #bdc9c4;
+      line-height: 1.55;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border: 1px solid rgba(242, 247, 244, 0.18);
+      background: rgba(11, 15, 18, 0.78);
+      color: #8ee8d4;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 650px;
+      border: 1px solid rgba(242, 247, 244, 0.16);
+      background: #080c0e;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .privacy {
+      position: absolute;
+      inset: 18px auto auto 18px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 11px;
+      border: 1px solid rgba(255, 206, 106, 0.62);
+      background: rgba(36, 27, 12, 0.78);
+      backdrop-filter: blur(10px);
+      color: #ffe6a8;
+      font-size: 0.85rem;
+    }
+
+    .privacy::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ff5f56;
+      box-shadow: 0 0 16px rgba(255, 95, 86, 0.9);
+    }
+
+    aside {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    section {
+      border: 1px solid rgba(242, 247, 244, 0.16);
+      background: rgba(11, 15, 18, 0.84);
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      letter-spacing: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      margin: 12px 0;
+      color: #bdc9c4;
+      font-size: 0.86rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #8ee8d4;
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid rgba(242, 247, 244, 0.18);
+      background: rgba(242, 247, 244, 0.08);
+      color: #f2f7f4;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button.active {
+      background: #8ee8d4;
+      border-color: #8ee8d4;
+      color: #0c1b18;
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      border: 1px solid rgba(242, 247, 244, 0.13);
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      min-height: 68px;
+    }
+
+    .metric span {
+      display: block;
+      color: #96a5a0;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 1.1rem;
+      line-height: 1.1;
+    }
+
+    .note {
+      margin: 0;
+      color: #b6c1bc;
+      line-height: 1.5;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 860px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .stage {
+        min-height: 540px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Camera Privacy Foveation Governor</h1>
+        <p class="lede">A browser-only WebXR planning sketch: camera-access, gaze priority, hand proximity, and anchor refresh compete for a small per-frame processing budget.</p>
+      </div>
+      <div class="badge">Raw Camera Access + Foveation</div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="scene" aria-label="Raw camera access privacy and foveation budget simulator"></canvas>
+      <div class="privacy" id="privacy">camera-access indicator</div>
+    </div>
+
+    <aside>
+      <section>
+        <h2>Permission</h2>
+        <div class="seg">
+          <button id="consentBtn" class="active" type="button">Consent</button>
+          <button id="denyBtn" type="button">Deny</button>
+        </div>
+        <label>
+          Camera sampling
+          <input id="sampling" type="range" min="0" max="100" value="58">
+        </label>
+        <label>
+          Privacy mask
+          <input id="mask" type="range" min="0" max="100" value="38">
+        </label>
+        <label>
+          Processing budget
+          <input id="budget" type="range" min="1" max="8" value="4">
+        </label>
+      </section>
+
+      <section>
+        <h2>Priority</h2>
+        <div class="seg">
+          <button data-mode="balanced" class="active" type="button">Balanced</button>
+          <button data-mode="gaze" type="button">Gaze</button>
+          <button data-mode="hand" type="button">Hand</button>
+          <button data-mode="privacy" type="button">Privacy</button>
+        </div>
+        <label>
+          Hand proximity
+          <input id="hand" type="range" min="0" max="100" value="54">
+        </label>
+        <label>
+          Head motion
+          <input id="motion" type="range" min="0" max="100" value="46">
+        </label>
+      </section>
+
+      <section>
+        <h2>Readout</h2>
+        <div class="readout">
+          <div class="metric"><span>Camera</span><strong id="cameraState">active</strong></div>
+          <div class="metric"><span>Pixels</span><strong id="pixelState">58%</strong></div>
+          <div class="metric"><span>Queue</span><strong id="queueState">4 jobs</strong></div>
+          <div class="metric"><span>Risk</span><strong id="riskState">medium</strong></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Use</h2>
+        <p class="note">Drag on the stage to move gaze. Camera jobs near the gaze point and hand cursor rise in priority, while a stronger privacy mask reduces camera texture detail before anchor refresh.</p>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("scene");
+    const ctx = canvas.getContext("2d");
+    const stage = document.getElementById("stage");
+    const privacy = document.getElementById("privacy");
+    const controls = {
+      consentBtn: document.getElementById("consentBtn"),
+      denyBtn: document.getElementById("denyBtn"),
+      sampling: document.getElementById("sampling"),
+      mask: document.getElementById("mask"),
+      budget: document.getElementById("budget"),
+      hand: document.getElementById("hand"),
+      motion: document.getElementById("motion"),
+      cameraState: document.getElementById("cameraState"),
+      pixelState: document.getElementById("pixelState"),
+      queueState: document.getElementById("queueState"),
+      riskState: document.getElementById("riskState")
+    };
+
+    const state = {
+      consent: true,
+      mode: "balanced",
+      gaze: { x: 0.48, y: 0.45 },
+      pointerDown: false,
+      frame: 0,
+      jobs: [
+        { name: "camera texture", x: 0.22, y: 0.28, cost: 2.0, stale: 0.32, type: "camera" },
+        { name: "depth crop", x: 0.52, y: 0.36, cost: 1.6, stale: 0.44, type: "depth" },
+        { name: "anchor refresh", x: 0.70, y: 0.58, cost: 1.3, stale: 0.52, type: "anchor" },
+        { name: "hand pinch", x: 0.42, y: 0.68, cost: 1.0, stale: 0.22, type: "input" },
+        { name: "privacy mask", x: 0.82, y: 0.28, cost: 1.1, stale: 0.16, type: "privacy" },
+        { name: "foveated layer", x: 0.30, y: 0.78, cost: 1.5, stale: 0.38, type: "layer" }
+      ]
+    };
+
+    function resize() {
+      const rect = stage.getBoundingClientRect();
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function setConsent(value) {
+      state.consent = value;
+      controls.consentBtn.classList.toggle("active", value);
+      controls.denyBtn.classList.toggle("active", !value);
+      privacy.style.opacity = value ? "1" : "0.36";
+    }
+
+    function setMode(mode) {
+      state.mode = mode;
+      document.querySelectorAll("[data-mode]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.mode === mode);
+      });
+    }
+
+    controls.consentBtn.addEventListener("click", () => setConsent(true));
+    controls.denyBtn.addEventListener("click", () => setConsent(false));
+    document.querySelectorAll("[data-mode]").forEach((button) => {
+      button.addEventListener("click", () => setMode(button.dataset.mode));
+    });
+
+    function updatePointer(event) {
+      const rect = canvas.getBoundingClientRect();
+      state.gaze.x = Math.max(0.04, Math.min(0.96, (event.clientX - rect.left) / rect.width));
+      state.gaze.y = Math.max(0.08, Math.min(0.94, (event.clientY - rect.top) / rect.height));
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.pointerDown = true;
+      canvas.setPointerCapture(event.pointerId);
+      updatePointer(event);
+    });
+    canvas.addEventListener("pointermove", (event) => {
+      if (state.pointerDown) updatePointer(event);
+    });
+    canvas.addEventListener("pointerup", () => { state.pointerDown = false; });
+    canvas.addEventListener("pointercancel", () => { state.pointerDown = false; });
+
+    function scoreJob(job, handX, handY) {
+      const dx = job.x - state.gaze.x;
+      const dy = job.y - state.gaze.y;
+      const gazeScore = 1 - Math.min(1, Math.hypot(dx, dy) / 0.72);
+      const handScore = 1 - Math.min(1, Math.hypot(job.x - handX, job.y - handY) / 0.6);
+      const mask = Number(controls.mask.value) / 100;
+      const sampling = Number(controls.sampling.value) / 100;
+      let score = job.stale * 1.5 + gazeScore * 0.9 + handScore * 0.45 - job.cost * 0.12;
+      if (job.type === "camera") score += sampling * 0.95 - mask * 0.65;
+      if (job.type === "privacy") score += mask * 1.2;
+      if (job.type === "input") score += Number(controls.hand.value) / 120;
+      if (state.mode === "gaze") score += gazeScore * 0.75;
+      if (state.mode === "hand") score += handScore * 0.95;
+      if (state.mode === "privacy" && (job.type === "privacy" || job.type === "camera")) score += 0.9;
+      if (!state.consent && job.type === "camera") score = -1;
+      return score;
+    }
+
+    function drawBackground(w, h, t) {
+      const mask = Number(controls.mask.value) / 100;
+      const sampling = Number(controls.sampling.value) / 100;
+      const tile = 24 + Math.round(mask * 34);
+      ctx.fillStyle = "#091014";
+      ctx.fillRect(0, 0, w, h);
+
+      for (let y = 0; y < h; y += tile) {
+        for (let x = 0; x < w; x += tile) {
+          const wave = Math.sin(x * 0.025 + y * 0.018 + t * 0.0018);
+          const alpha = state.consent ? 0.05 + sampling * 0.16 : 0.03;
+          ctx.fillStyle = wave > 0
+            ? `rgba(142, 232, 212, ${alpha})`
+            : `rgba(255, 205, 111, ${alpha * 0.62})`;
+          ctx.fillRect(x, y, tile - 2, tile - 2);
+        }
+      }
+
+      if (mask > 0.05) {
+        ctx.fillStyle = `rgba(8, 12, 14, ${0.18 + mask * 0.55})`;
+        for (let y = 0; y < h; y += 18) {
+          ctx.fillRect(0, y, w, 8 + mask * 12);
+        }
+      }
+    }
+
+    function drawRing(x, y, r, color, alpha) {
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    function draw(t) {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      state.frame += 1;
+      drawBackground(w, h, t);
+
+      const motion = Number(controls.motion.value) / 100;
+      const handNear = Number(controls.hand.value) / 100;
+      const handX = 0.5 + Math.sin(t * 0.0014) * (0.18 + motion * 0.12);
+      const handY = 0.62 - handNear * 0.26 + Math.cos(t * 0.0011) * 0.04;
+      const budget = Number(controls.budget.value);
+
+      state.jobs.forEach((job, index) => {
+        job.stale = Math.min(1, job.stale + 0.0018 + motion * 0.0012 + index * 0.00012);
+      });
+
+      const ranked = state.jobs
+        .map((job) => ({ job, score: scoreJob(job, handX, handY) }))
+        .sort((a, b) => b.score - a.score);
+      let spent = 0;
+      const selected = new Set();
+      for (const item of ranked) {
+        if (spent + item.job.cost <= budget && item.score > 0) {
+          selected.add(item.job.name);
+          spent += item.job.cost;
+          item.job.stale *= 0.2;
+        }
+      }
+
+      drawRing(state.gaze.x * w, state.gaze.y * h, 76, "rgba(142, 232, 212, 0.95)", 0.72);
+      drawRing(state.gaze.x * w, state.gaze.y * h, 146, "rgba(142, 232, 212, 0.6)", 0.36);
+      ctx.fillStyle = "#8ee8d4";
+      ctx.beginPath();
+      ctx.arc(state.gaze.x * w, state.gaze.y * h, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      const hx = handX * w;
+      const hy = handY * h;
+      ctx.strokeStyle = "rgba(255, 206, 106, 0.65)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(hx - 28, hy + 24);
+      ctx.lineTo(hx, hy);
+      ctx.lineTo(hx + 34, hy + 18);
+      ctx.stroke();
+      ctx.fillStyle = "#ffce6a";
+      ctx.beginPath();
+      ctx.arc(hx, hy, 8 + handNear * 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      state.jobs.forEach((job) => {
+        const x = job.x * w;
+        const y = job.y * h;
+        const hot = selected.has(job.name);
+        const radius = 22 + job.stale * 30;
+        const color = hot ? "#8ee8d4" : job.type === "privacy" ? "#ffce6a" : "#f2f7f4";
+        ctx.fillStyle = hot ? "rgba(142, 232, 212, 0.2)" : "rgba(255, 255, 255, 0.06)";
+        ctx.strokeStyle = color;
+        ctx.lineWidth = hot ? 3 : 1.5;
+        ctx.beginPath();
+        ctx.roundRect(x - 58, y - 28, 116, 56, 8);
+        ctx.fill();
+        ctx.stroke();
+        drawRing(x, y, radius, color, hot ? 0.36 : 0.18);
+        ctx.fillStyle = color;
+        ctx.font = "12px Inter, system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(job.name, x, y - 4);
+        ctx.fillStyle = "#aab8b2";
+        ctx.fillText(hot ? "run this frame" : `stale ${Math.round(job.stale * 100)}%`, x, y + 14);
+      });
+
+      const panelX = w - 228;
+      const panelY = h - 150;
+      ctx.fillStyle = "rgba(9, 15, 18, 0.78)";
+      ctx.strokeStyle = "rgba(242, 247, 244, 0.18)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(panelX, panelY, 204, 118, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#f2f7f4";
+      ctx.font = "13px Inter, system-ui, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("requestSession features", panelX + 14, panelY + 25);
+      ctx.fillStyle = state.consent ? "#8ee8d4" : "#ff7e72";
+      ctx.fillText(state.consent ? "camera-access granted" : "camera-access denied", panelX + 14, panelY + 52);
+      ctx.fillStyle = "#aab8b2";
+      ctx.fillText(`budget spent ${spent.toFixed(1)} / ${budget}`, panelX + 14, panelY + 78);
+      ctx.fillText(`mode ${state.mode}`, panelX + 14, panelY + 100);
+
+      const risk = !state.consent ? "blocked" : Number(controls.mask.value) < 26 && Number(controls.sampling.value) > 70 ? "high" : spent > budget * 0.82 ? "medium" : "low";
+      controls.cameraState.textContent = state.consent ? "active" : "denied";
+      controls.pixelState.textContent = state.consent ? `${Math.round(Number(controls.sampling.value) * (1 - Number(controls.mask.value) / 130))}%` : "0%";
+      controls.queueState.textContent = `${selected.size} jobs`;
+      controls.riskState.textContent = risk;
+
+      requestAnimationFrame(draw);
+    }
+
+    resize();
+    window.addEventListener("resize", resize);
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>

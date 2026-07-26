@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>カメラ画像アクセスを処理予算とプライバシー表示で制御する | 2026-07-26</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.26</p>
+      <h1>カメラ画像アクセスを処理予算とプライバシー表示で制御する</h1>
+      <p class="hero-subtitle">Governing camera image access with processing budget and privacy indicators</p>
+      <p>WebXR Raw Camera Access、AR secondary views、DOM Overlays、Layers samples、Immersive Web のサポート確認ページを調べ、今日は camera-access の同意、privacy indicator、gaze / hand 優先度、anchor refresh を小さな処理予算で競合させる自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing WebXR Raw Camera Access, AR secondary views, DOM Overlays, Layers samples, and the Immersive Web support page, today's original HTML sample lets camera-access consent, a privacy indicator, gaze and hand priority, and anchor refresh compete for a small processing budget.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-26_html_camera_privacy_foveation_governor.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-25.html">← 2026.07.25</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Camera Privacy Foveation Governor</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-26_html_camera_privacy_foveation_governor.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Raw Camera Access Module は `camera-access` feature descriptor を追加し、immersive-ar session の背後に表示される camera image を `XRView.camera` と `XRWebGLBinding.getCameraImage()` から扱う設計になっている。</span>
+              <span class="en-copy">The WebXR Raw Camera Access Module adds the `camera-access` feature descriptor and exposes the camera image behind an immersive-ar session through `XRView.camera` and `XRWebGLBinding.getCameraImage()`.</span>
+            </li>
+          
+            <li>
+              <span>Raw Camera Access は `xr-spatial-tracking` と `camera` の permissions policy に関係し、同意と privacy indicator が中心的な要件になるため、便利な認識処理より先に露出範囲を絞る設計が必要になる。</span>
+              <span class="en-copy">Raw Camera Access involves both `xr-spatial-tracking` and `camera` permissions policy, with consent and privacy indicators as central requirements, so limiting exposure should come before convenient recognition processing.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Augmented Reality Module の secondary views は、録画や配信用の first-person observer view を扱うための拡張で、通常の左右 eye view だけを前提にしない render loop が必要になる。</span>
+              <span class="en-copy">Secondary views in the WebXR Augmented Reality Module support first-person observer views for capture or streaming, requiring render loops that do not assume only the two eye views.</span>
+            </li>
+          
+            <li>
+              <span>WebXR DOM Overlays は overlay を最上位 content layer として合成するため、camera-access indicator や同意 UI と world input の境界を設計する上で引き続き重要になる。</span>
+              <span class="en-copy">WebXR DOM Overlays composite overlay DOM as the topmost content layer, so they remain important when designing the boundary between camera-access indicators, consent UI, and world input.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の Layers samples は projection / quad / media / occlusion / Input Selection Space Warp を横断的に確認でき、camera texture、depth、foveation、input timing を同じ予算表で見る材料になる。</span>
+              <span class="en-copy">The Immersive Web Layers samples cover projection, quad, media, occlusion, and Input Selection Space Warp, making them useful references for looking at camera texture, depth, foveation, and input timing in one budget table.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は Raw Camera Access です。WebXR の中で camera image の pixel に近づける API は、深度や hit test よりも privacy impact が大きいので、単に texture を取れるかではなく、同意、indicator、mask、処理頻度まで含めて機能として扱う必要があります。そこで、camera texture job を gaze / hand / anchor / depth の queue に入れ、privacy mask が強いほど camera job の有効画素を落とすサンプルにしました。</p>
+          <p class="en-copy">Today's notable item is Raw Camera Access. An API that gets close to camera-image pixels has a larger privacy impact than depth or hit testing, so the feature needs to include consent, indicators, masking, and processing frequency rather than only texture availability. The sample puts the camera texture job into the same queue as gaze, hand, anchor, and depth work, reducing effective pixels as the privacy mask increases.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/raw-camera-access/" target="_blank" rel="noreferrer">Immersive Web: Raw Camera Access</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>画面全体を AR camera background の代わりにした抽象 grid とし、左上の indicator を camera-access の privacy indicator として表示します。stage を drag すると gaze 中心が動き、hand proximity と head motion の値で job priority が変わります。`Consent / Deny` を切り替えると camera texture job だけが停止し、privacy mask、depth crop、anchor refresh、hand pinch は別 job として残ります。</p>
+          <p class="en-copy">The full stage acts as an abstract AR camera background, with the upper-left indicator standing in for the camera-access privacy indicator. Dragging moves the gaze center, while hand proximity and head motion change job priority. Switching `Consent / Deny` stops only the camera texture job; privacy mask, depth crop, anchor refresh, and hand pinch remain separate jobs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では `camera-access` を required feature にする前に、同じ体験を depth sensing、hit test、anchors、lighting estimation で代替できないかを先に判断したいです。使う場合も `XRView.camera` は frame と view に紐づくため、texture を永続保存しない、同一 frame 内の読み回しに閉じる、overlay で indicator を常時見せる、foveation や gaze によって処理領域を限定する、といった制約を scheduler に入れておくと扱いやすそうです。</p>
+          <p class="en-copy">Before making `camera-access` a required feature, implementation should first check whether depth sensing, hit testing, anchors, or lighting estimation can satisfy the experience. If camera access is necessary, `XRView.camera` is tied to frame and view, so the scheduler should avoid persistent texture storage, keep reuse within the same frame, keep an overlay indicator visible, and limit processing regions through foveation or gaze.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>Raw Camera Access の issue、AR Module の secondary views、WebXR Layers の occlusion / Input Selection Space Warp、Depth Sensing の CPU / GPU path、Anchors の persistent handle を続けて見ます。次は camera texture を実際に使う前提ではなく、camera-access を要求しない代替 path を自動選択する capability fallback map を作るとよさそうです。</p>
+          <p class="en-copy">Continue watching Raw Camera Access issues, AR Module secondary views, WebXR Layers occlusion and Input Selection Space Warp, Depth Sensing CPU/GPU paths, and persistent handles in Anchors. A useful next step is a capability fallback map that automatically chooses alternatives before requesting camera access.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルを開き、`Privacy mask` を上げながら `Camera sampling` と `Processing budget` を変えてください。mask が強いほど表示上の camera grid は粗くなり、queue の中で privacy mask job が上がります。次に `Deny` にすると camera job は止まりますが、anchor refresh や hand pinch の job は残るため、camera-access なしで維持できる機能境界が見えます。</p>
+          <p class="en-copy">Open the sample and adjust `Camera sampling`, `Processing budget`, and `Privacy mask`. A stronger mask makes the camera grid coarser and raises the privacy-mask job in the queue. Then switch to `Deny`; the camera job stops while anchor refresh and hand pinch remain, showing the feature boundary that can survive without camera access.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-26_html_camera_privacy_foveation_governor.html" target="_blank" rel="noreferrer">Open Camera Privacy Foveation Governor</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Raw Camera Access、AR secondary views、DOM Overlays、Layers samples、Immersive Web support overview を確認。アイデア: 前日の overlay / anchor refresh queue に、camera-access の同意と privacy indicator を入れる。実装: canvas camera grid、gaze drag、hand proximity、job priority、privacy mask、budget readout を追加。検証: JSON parse、HTML script 構文、gallery 再生成、公開 URL の HTTP 200 を確認する。</p>
+          <p class="en-copy">Research: reviewed Raw Camera Access, AR secondary views, DOM Overlays, Layers samples, and the Immersive Web support overview. Idea: add camera-access consent and a privacy indicator to the previous overlay/anchor refresh queue. Implementation: added a canvas camera grid, gaze drag, hand proximity, job priority, privacy mask, and budget readouts. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and HTTP 200 for published URLs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>このシリーズは、空間 UI を描くことから、入力、深度、アンカー、レイヤー、foveation、overlay の運用設計へ進んできました。今日の camera-access は、技術的には texture 取得ですが、体験設計上は「何を見ないか」「どれだけ細かく見ないか」を決める機能です。XR の最小構成にも、privacy budget を first-class な状態として置く必要があります。</p>
+          <p class="en-copy">This series has moved from drawing spatial UI into operational design across input, depth, anchors, layers, foveation, and overlays. Today's camera-access topic is technically about retrieving a texture, but experientially it is about deciding what not to see and how much detail not to process. Even minimal XR needs privacy budget as a first-class state.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Camera Privacy Foveation Governor` です。Raw Camera Access の同意、privacy indicator、camera sampling、mask、gaze / hand priority、anchor refresh を 1 つの processing queue として観察できます。次に足すなら、WebXR feature support probe、camera-access なしの fallback route、secondary view が増えた場合の view 別 budget を加えます。</p>
+          <p class="en-copy">The selected prototype is `Camera Privacy Foveation Governor`. It visualizes Raw Camera Access consent, a privacy indicator, camera sampling, masking, gaze/hand priority, and anchor refresh as one processing queue. Useful next additions are a WebXR feature support probe, fallback routes without camera access, and per-view budgets when secondary views appear.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-26_html_camera_privacy_foveation_governor.html" target="_blank" rel="noreferrer">Today's sample: Camera Privacy Foveation Governor</a></li>
+          
+            <li><a href="https://immersive-web.github.io/raw-camera-access/" target="_blank" rel="noreferrer">Immersive Web: WebXR Raw Camera Access Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-ar-module/" target="_blank" rel="noreferrer">Immersive Web: WebXR Augmented Reality Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">W3C: WebXR DOM Overlays Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers Samples</a></li>
+          
+            <li><a href="https://immersiveweb.dev/" target="_blank" rel="noreferrer">Immersive Web: WebXR support overview</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-26_html_camera_privacy_foveation_governor.html" loading="lazy" title="Camera Privacy Foveation Governor"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
