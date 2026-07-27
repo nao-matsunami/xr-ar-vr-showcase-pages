@@ -1,0 +1,113 @@
+{
+  "date": "2026-07-27",
+  "headline": "camera-access を要求する前に代替経路へ振り分ける",
+  "headlineEn": "Routing to fallback paths before requesting camera access",
+  "summary": "WebXR Raw Camera Access、WebXR Device API、Layers API、Immersive Web samples と support overview を確認し、今日は camera-access を使う前に depth、hit test、anchors、lighting、overlay へ処理を逃がせるかを可視化する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing WebXR Raw Camera Access, WebXR Device API, the Layers API, Immersive Web samples, and the support overview, today's original HTML sample visualizes whether work can route to depth, hit test, anchors, lighting, or overlay before requesting camera access.",
+  "keyTopics": [
+    "WebXR Raw Camera Access Module は `camera-access` feature descriptor、`XRView.camera`、`XRWebGLBinding.getCameraImage()` を定義し、immersive-ar の camera image を frame と view に結び付けて扱う。",
+    "同仕様は camera image を直接観測できるため privacy impact が高いと位置付け、user consent と privacy indicator を中心的な要件としている。",
+    "WebXR Device API の基本フローは `isSessionSupported()`、user activation、`requestSession()`、frame loop であり、強い feature を required にする前の capability 判定が体験品質と許可率に効く。",
+    "WebXR Layers API の `fixedFoveation` や layer composition は、camera pixels を全面処理する代わりに gaze 周辺や overlay だけへ処理を限定する設計材料になる。",
+    "Immersive Web の WebXR samples / Layers samples は、hand tracking、hit test、anchors、projection layer、occlusion、Input Selection Space Warp などを横断して fallback 設計の比較対象にできる。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Raw Camera Access Module defines the `camera-access` feature descriptor, `XRView.camera`, and `XRWebGLBinding.getCameraImage()`, tying immersive-ar camera images to the current frame and view.",
+    "Because the module exposes direct observation of camera images, it treats privacy impact as high and centers user consent and privacy indicators.",
+    "The WebXR Device API flow moves through `isSessionSupported()`, user activation, `requestSession()`, and a frame loop, so capability checks before requiring powerful features affect both quality and permission success.",
+    "The Layers API's `fixedFoveation` and layer composition provide design material for limiting processing to gaze regions or overlays instead of processing full camera pixels.",
+    "Immersive Web's WebXR samples and Layers samples provide comparison points across hand tracking, hit testing, anchors, projection layers, occlusion, and Input Selection Space Warp for fallback design."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Camera Access Fallback Router",
+      "url": "../outputs/2026-07-27_html_camera_access_fallback_router.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Raw Camera Access Module",
+      "url": "https://immersive-web.github.io/raw-camera-access/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    },
+    {
+      "label": "ImmersiveWeb.dev: WebXR overview",
+      "url": "https://immersiveweb.dev/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は Raw Camera Access を「使う方法」ではなく「要求する前に避ける方法」として読むことです。仕様上、camera image は frame / view と同期し、`camera-access` は privacy indicator と同意が必要な重い権限です。そこで、camera pixels を要求する前に depth crop、hit test、anchors、lighting、DOM overlay 的な表示で足りるかを選ぶ router をサンプル化しました。",
+      "bodyEn": "Today's notable angle is reading Raw Camera Access not only as a way to use camera images, but as a reason to avoid requesting them when possible. The spec ties camera images to frame and view, and `camera-access` is a heavy permission with consent and privacy indicators. The sample therefore routes to depth crop, hit testing, anchors, lighting, or overlay-style UI before asking for camera pixels.",
+      "links": [
+        {
+          "label": "Immersive Web: Raw Camera Access",
+          "url": "https://immersive-web.github.io/raw-camera-access/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "抽象的な camera grid の上に gaze 領域と routing graph を重ね、`Camera OK / Camera off`、privacy sensitivity、scene motion、feature confidence、frame budget を変えると選択経路が切り替わります。camera を off にしても overlay、depth、hit test、anchor の job が残るため、camera-access に依存しない最小体験の境界をその場で確認できます。",
+      "bodyEn": "The sample overlays a gaze region and routing graph on an abstract camera grid. Toggling `Camera OK / Camera off` and adjusting privacy sensitivity, scene motion, feature confidence, and frame budget changes the selected path. Even with camera off, overlay, depth, hit-test, and anchor jobs remain, making the non-camera minimum experience visible."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は、`requiredFeatures: [\"camera-access\"]` を最初から指定するより、目的別に fallback を並べた後で最後に camera-access を選ぶ構造にしたいです。例えば、平面配置は hit test と anchors、手前物体の隠れは depth sensing、明るさ合わせは lighting estimation、同意や状態表示は overlay、画質予算は layers / foveation に寄せられます。camera texture を使う場合も保存せず、同一 frame 内で read-only として扱う設計が安全です。",
+      "bodyEn": "Implementation should list goal-specific fallbacks before adding `requiredFeatures: [\"camera-access\"]`. Plane placement can use hit testing and anchors, foreground hiding can use depth sensing, relighting can use lighting estimation, consent and state can use overlays, and quality budget can use layers and foveation. If camera textures are used, the safer design is to avoid storage and treat them as read-only within the same frame."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Raw Camera Access の issue、WebXR Layers の fixed foveation と occlusion、Depth Sensing の CPU / GPU usage、Hit Test / Anchors の安定化、Immersive Web samples の capability probe を継続して見ます。次は fallback router に実ブラウザの `navigator.xr` / `navigator.gpu` capability probe を足し、選択経路を環境ごとに変える小サンプルへ進めます。",
+      "bodyEn": "Continue watching Raw Camera Access issues, fixed foveation and occlusion in WebXR Layers, CPU/GPU usage in Depth Sensing, Hit Test and Anchors stability, and capability probing in Immersive Web samples. Next, add real `navigator.xr` and `navigator.gpu` probes to the fallback router so route selection changes by environment."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、まず `Camera off` に切り替えてください。camera job が scheduler から落ちても、overlay や depth / hit test / anchors が優先されます。次に privacy sensitivity を上げ、scene motion と feature confidence を動かすと、なぜ camera pixel ではなく depth crop や hit-test + anchors に逃がすべきかが読み取れます。",
+      "bodyEn": "Open the sample and switch to `Camera off` first. The camera job drops out of the scheduler while overlay, depth, hit test, and anchors keep priority. Then raise privacy sensitivity and adjust scene motion and feature confidence to see why the route should move to depth crop or hit-test plus anchors instead of camera pixels.",
+      "links": [
+        {
+          "label": "Open Camera Access Fallback Router",
+          "url": "../outputs/2026-07-27_html_camera_access_fallback_router.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Raw Camera Access、WebXR Device API、Layers API、WebXR samples、Layers samples、ImmersiveWeb.dev を確認。アイデア: 前日の camera privacy governor を一段上げ、camera-access 要求前の fallback decision を作る。実装: canvas grid、gaze drag、routing graph、mode 切替、budget scheduler、risk / useful pixels readout を追加。検証: JSON parse、HTML script 構文、gallery 再生成、公開 URL の HTTP 200 を確認する。",
+      "bodyEn": "Research: reviewed Raw Camera Access, WebXR Device API, Layers API, WebXR samples, Layers samples, and ImmersiveWeb.dev. Idea: move one level above yesterday's camera privacy governor and model fallback decisions before requesting camera access. Implementation: added a canvas grid, gaze dragging, routing graph, mode switching, budget scheduler, and risk/useful-pixels readouts. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and HTTP 200 for published URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの蓄積は、描画、深度、光、手入力、レイヤー、space warp、anchor refresh、privacy indicator へ進んできました。今日の router は、それらを「camera-access を要求しないための代替技術」として再配置します。XR の体験設計では、高機能 API を足すことと同じくらい、不要な強権限を避けるルート選択が重要です。",
+      "bodyEn": "The accumulated samples have moved through rendering, depth, lighting, hand input, layers, space warp, anchor refresh, and privacy indicators. Today's router rearranges them as alternatives that can avoid a camera-access request. In XR experience design, route selection that avoids unnecessary powerful permissions is as important as adding advanced APIs."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Camera Access Fallback Router` です。camera consent の有無、privacy sensitivity、scene motion、feature confidence、frame budget から、camera sample、depth crop、hit-test + anchors、lighting + overlay、no-camera fallback を切り替えます。次に足すなら、実機 capability probe、WebXR session request の疑似ログ、secondary view ごとの routing budget を追加します。",
+      "bodyEn": "The selected prototype is `Camera Access Fallback Router`. It switches between camera sample, depth crop, hit-test plus anchors, lighting plus overlay, and no-camera fallback from camera consent, privacy sensitivity, scene motion, feature confidence, and frame budget. Useful next additions are real device capability probing, simulated WebXR session request logs, and per-secondary-view routing budgets."
+    }
+  ]
+}
