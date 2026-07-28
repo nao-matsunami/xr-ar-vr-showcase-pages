@@ -1,0 +1,109 @@
+{
+  "date": "2026-07-28",
+  "headline": "capability probe から secondary view 予算を組む",
+  "headlineEn": "Planning secondary-view budgets from capability probes",
+  "summary": "WebXR Device API、WebXR AR Module、Raw Camera Access、Immersive Web WebGPU samples を確認し、今日は権限リクエスト前の `navigator.xr` / `navigator.gpu` 存在確認と、AR の secondary views / first-person observer view 追加時の描画予算を可視化する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Device API, WebXR AR Module, Raw Camera Access, and Immersive Web WebGPU samples, today's original HTML sample visualizes pre-permission `navigator.xr` / `navigator.gpu` checks and render-budget changes when AR secondary views / first-person observer views are enabled.",
+  "keyTopics": [
+    "WebXR Device API は `navigator.xr.isSessionSupported()` を、XR 体験を提示してよいかを早期に判断する非侵襲的なチェックとして位置付けている。",
+    "WebXR AR Module は `immersive-ar`、`environmentBlendMode`、`interactionMode` に加え、first-person observer view を受け取るには `secondary-views` feature descriptor への明示的 opt-in が必要だと定義している。",
+    "secondary view は常時出る前提ではなく、capture など必要な frame にだけ `views` 配列へ現れる可能性があるため、最初の 2 view 固定ではなく全 view を走査する実装が重要になる。",
+    "Raw Camera Access は `camera-access`、`XRView.camera`、`XRWebGLBinding.getCameraImage()` を定義するが、camera image の直接観測は高い privacy impact を持つため、probe と fallback の後段に置くべき機能として扱う。",
+    "Immersive Web の WebGPU samples は、WebXR と WebGPU の両方があっても XRGPUBinding / projection layer 対応が別条件になることを示すため、`navigator.gpu` だけで XR 描画経路を確定しない設計が必要になる。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Device API frames `navigator.xr.isSessionSupported()` as an early, non-intrusive check for whether a page should advertise an XR experience.",
+    "The WebXR AR Module defines `immersive-ar`, `environmentBlendMode`, `interactionMode`, and requires explicit opt-in to the `secondary-views` feature descriptor to receive first-person observer views.",
+    "Secondary views should not be assumed to appear every frame; they may appear only during capture, so render code should iterate every view instead of hard-coding the first two.",
+    "Raw Camera Access defines `camera-access`, `XRView.camera`, and `XRWebGLBinding.getCameraImage()`, but direct camera observation carries high privacy impact and should sit behind probes and fallbacks.",
+    "Immersive Web's WebGPU samples show that WebXR and WebGPU presence does not by itself guarantee XRGPUBinding / projection layer support, so `navigator.gpu` should not finalize the XR rendering path alone."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Capability Probe Secondary View Planner",
+      "url": "../outputs/2026-07-28_html_capability_probe_secondary_view_planner.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: WebXR Augmented Reality Module",
+      "url": "https://www.w3.org/TR/webxr-ar-module-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Raw Camera Access Module",
+      "url": "https://immersive-web.github.io/raw-camera-access/"
+    },
+    {
+      "label": "Immersive Web: WebXR WebGPU Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+    },
+    {
+      "label": "Immersive Web: WebXR Device API Editor's Draft",
+      "url": "https://immersive-web.github.io/webxr/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は AR Module の first-person observer view です。録画や配信用の視点はユーザーの左右眼 view と完全には一致しないため、`secondary-views` を optional feature として有効にし、`view.isFirstPersonObserver` を見て別扱いする設計が求められます。これは camera-access より軽い情報でも、capture 用の追加 view が frame budget を食うという実装上の論点を作ります。",
+      "bodyEn": "Today's notable example is the AR Module's first-person observer view. A capture or streaming viewpoint may not match the user's eye views, so applications opt into `secondary-views` and treat `view.isFirstPersonObserver` separately. Even without raw camera access, this creates a concrete render-budget concern because capture views add work.",
+      "links": [
+        {
+          "label": "W3C: WebXR AR Module - First Person Observer Views",
+          "url": "https://www.w3.org/TR/webxr-ar-module-1/#first-person-observer-views"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "画面上部に capability graph、中央に primary view と observer view、下部に view ごとの ms 予算バーを置きました。`Run probe` は実ブラウザの `navigator.xr` / `navigator.gpu` の有無だけを確認し、`Simulate request` は `secondary-views` を optional feature に入れた場合のログを表示します。ステージをドラッグすると capture の注視領域が動き、secondary view load や privacy の値で経路が切り替わります。",
+      "bodyEn": "The screen combines a capability graph, primary and observer views, and per-view millisecond budget bars. `Run probe` only checks the presence of `navigator.xr` and `navigator.gpu`; `Simulate request` displays a planned optional-feature log with `secondary-views`. Dragging the stage moves capture emphasis, and route selection changes with secondary-view load and privacy values."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では `navigator.xr` の存在確認、`isSessionSupported(\"immersive-ar\")`、user activation 内の `requestSession()` を段階化し、`optionalFeatures` に `secondary-views` を入れても view 数を固定しないことが重要です。WebGPU 経路は `navigator.gpu` の有無だけでなく、XRGPUBinding と XRProjectionLayer の対応を別に判定します。camera-access は必要性が説明できる最後の経路として扱い、observer view の描画は overlay や安定化処理と同じ予算表に載せて管理します。",
+      "bodyEn": "Implementation should stage `navigator.xr` presence checks, `isSessionSupported(\"immersive-ar\")`, and `requestSession()` inside user activation, while never assuming a fixed view count when `secondary-views` is optional. WebGPU routing needs separate checks for XRGPUBinding and XRProjectionLayer rather than `navigator.gpu` alone. Treat camera-access as the final path that must justify its need, and track observer-view rendering in the same budget table as overlays and stabilization."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Device API の secondary view まわり、AR Module の first-person observer view、Raw Camera Access の privacy indicator、WebGPU Binding の XRGPUBinding 対応、Immersive Web samples の capability messaging を継続して見ます。次は今日の planner に、各 view の解像度倍率や foveation、observer view だけ UI を省く判定を追加します。",
+      "bodyEn": "Continue watching secondary views in the WebXR Device API, first-person observer views in the AR Module, Raw Camera Access privacy indicators, XRGPUBinding support in WebGPU Binding, and capability messaging in Immersive Web samples. Next, add per-view resolution scale, foveation, and rules for omitting UI only in observer views."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開いて `Run probe` を押し、現在のブラウザが `navigator.xr` と `navigator.gpu` を露出しているかを見てください。その後 `Capture` mode に切り替え、secondary view load を上げて `Simulate request` を押すと、`secondary-views` を optional feature に入れた場合の view count と予算配分が変わります。",
+      "bodyEn": "Open the sample and press `Run probe` to see whether the current browser exposes `navigator.xr` and `navigator.gpu`. Then switch to `Capture`, raise secondary-view load, and press `Simulate request` to see how optional `secondary-views` changes the view count and budget distribution.",
+      "links": [
+        {
+          "label": "Open Capability Probe Secondary View Planner",
+          "url": "../outputs/2026-07-28_html_capability_probe_secondary_view_planner.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Device API、AR Module、Raw Camera Access、WebGPU samples、Device API editor's draft を確認。アイデア: 前日の camera-access fallback router に、実ブラウザ capability probe と secondary view 予算を足す。実装: canvas の view planner、実在 API の presence check、疑似 requestSession log、observer view 追加、per-view budget bar、drag focus を追加。検証: JSON parse、HTML script 構文、gallery 再生成、公開 URL の HTTP 200 を確認する。",
+      "bodyEn": "Research: reviewed the WebXR Device API, AR Module, Raw Camera Access, WebGPU samples, and Device API editor's draft. Idea: add real browser capability probing and secondary-view budgeting to yesterday's camera-access fallback router. Implementation: added a canvas view planner, real API presence checks, simulated requestSession logs, observer-view insertion, per-view budget bars, and drag focus. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and HTTP 200 for published URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日の流れは camera pixel そのものから、同意、fallback、capability probe、capture view へ移っています。XR の公開サンプルでは派手な描画より、起動前に何を確認し、どの feature を optional にし、view 数が変わっても壊れないかを可視化する小さな道具が役に立ちます。今日のサンプルはその診断層を独立した体験として切り出しました。",
+      "bodyEn": "The recent progression has moved from camera pixels themselves to consent, fallbacks, capability probes, and capture views. For XR samples, a small tool that visualizes what to check before launch, which features stay optional, and whether changing view counts breaks rendering can be more useful than flashy rendering. Today's sample isolates that diagnostic layer as its own experience."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Capability Probe Secondary View Planner` です。権限を要求せずに `navigator.xr` / `navigator.gpu` の存在を確認し、phone / headset / capture の想定で primary view と first-person observer view の構成、optional features、描画予算、fallback route を可視化します。次に足すなら、実際の `isSessionSupported()` 結果、XRGPUBinding の段階的 probe、observer view だけに watermark / privacy indicator を載せる分岐を追加します。",
+      "bodyEn": "The selected prototype is `Capability Probe Secondary View Planner`. Without requesting permissions, it checks `navigator.xr` / `navigator.gpu` presence and visualizes primary views, first-person observer views, optional features, render budgets, and fallback routes for phone, headset, and capture scenarios. Useful next additions are real `isSessionSupported()` results, staged XRGPUBinding probes, and branches that add watermark or privacy indicators only to observer views."
+    }
+  ]
+}
