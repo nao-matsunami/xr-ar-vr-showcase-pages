@@ -1,0 +1,113 @@
+{
+  "date": "2026-07-29",
+  "headline": "Permissions-Policy と optional feature で XR 起動を守る",
+  "headlineEn": "Guarding XR launch with Permissions-Policy and optional features",
+  "summary": "WebXR Device API、MDN の permissions/security と `xr-spatial-tracking`、`requestSession()`、Immersive Web の explainer / samples を確認し、今日は XR 起動前に policy、user activation、required/optional feature、fallback route を可視化する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Device API, MDN permissions/security docs, `xr-spatial-tracking`, `requestSession()`, and Immersive Web explainers/samples, today's original HTML sample visualizes policy, user activation, required/optional features, and fallback routes before launching XR.",
+  "keyTopics": [
+    "WebXR Device API の `isSessionSupported()` は `inline` 以外では `xr-spatial-tracking` Permissions-Policy にブロックされると `SecurityError` で reject されるため、XR CTA の表示設計にも policy 起因の失敗を織り込む必要がある。",
+    "MDN は `xr-spatial-tracking` directive が `navigator.xr.isSessionSupported()`、`requestSession()`、`devicechange` に影響し、既定 allowlist は `self` だと整理している。",
+    "`requestSession()` は session feature ごとに user consent や Permissions-Policy の要件が異なり、`hit-test` や `depth-sensing` は `xr-spatial-tracking` の対象として扱われる。",
+    "Immersive Web の explainer は `requiredFeatures` が満たされないと session 作成を止め、`optionalFeatures` は使えれば有効化されるが欠けても session 作成を止めないという progressive enhancement の使い分けを明確にしている。",
+    "実装上は `navigator.xr` の存在確認、`isSessionSupported()`、user activation 内の `requestSession()`、session 後の reference space / feature 使用失敗を、1 つの例外処理ではなく段階別ログとして扱うのがよい。"
+  ],
+  "keyTopicsEn": [
+    "For non-inline modes, the WebXR Device API rejects `isSessionSupported()` with `SecurityError` when `xr-spatial-tracking` Permissions-Policy blocks the document, so XR CTA design needs to account for policy-driven failure.",
+    "MDN documents that the `xr-spatial-tracking` directive affects `navigator.xr.isSessionSupported()`, `requestSession()`, and `devicechange`, with a default allowlist of `self`.",
+    "`requestSession()` has different user-consent and Permissions-Policy requirements per session feature; `hit-test` and `depth-sensing` are covered by `xr-spatial-tracking`.",
+    "The Immersive Web explainer clarifies that missing `requiredFeatures` blocks session creation while missing `optionalFeatures` should not, making progressive enhancement a launch-time design tool.",
+    "Implementation should treat `navigator.xr` presence, `isSessionSupported()`, user-activated `requestSession()`, and post-session reference-space/feature failures as staged logs rather than one generic catch block."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: XR Permission Policy Launch Gate",
+      "url": "../outputs/2026-07-29_html_xr_permission_policy_launch_gate.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "MDN: Permissions-Policy xr-spatial-tracking",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy/xr-spatial-tracking"
+    },
+    {
+      "label": "MDN: WebXR permissions and security",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Permissions_and_security"
+    },
+    {
+      "label": "MDN: XRSystem.requestSession()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession"
+    },
+    {
+      "label": "Immersive Web: WebXR Device API Explainer",
+      "url": "https://immersive-web.github.io/webxr/explainer.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は派手なレンダリング API ではなく、`xr-spatial-tracking` と feature negotiation です。XR 体験は、デバイスがない、iframe やヘッダで policy が閉じている、ユーザー操作ではない、必須 feature が強すぎる、という複数の段階で失敗します。ここを UI とログで分けて扱うと、ユーザーには次に押すべき CTA や 2D fallback を出し、開発者にはどの gate で止まったかを明示できます。",
+      "bodyEn": "Today's notable point is not a flashy rendering API but `xr-spatial-tracking` and feature negotiation. XR launch can fail because there is no device, policy blocks the document, the call lacks user activation, or required features are too strict. Separating these gates in UI and logs lets users see the right CTA or 2D fallback while developers see exactly where launch stopped.",
+      "links": [
+        {
+          "label": "MDN: Permissions-Policy xr-spatial-tracking",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy/xr-spatial-tracking"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルでは API、POLICY、INTENT、FEATURES、SESSION を横一列の gate として描き、失敗した段階だけ赤い経路に変えます。右側の slider で policy allowance、user activation、optional feature confidence、required feature strictness を変えると、中央の decision ring と fallback card が更新されます。`Probe browser` は `navigator.xr` の presence だけを実測し、`Simulate tap request` は実際の permission prompt を出さずに requestSession 結果ログを疑似生成します。",
+      "bodyEn": "The sample draws API, POLICY, INTENT, FEATURES, and SESSION as a horizontal gate pipeline, turning only the failing stage red. Sliders adjust policy allowance, user activation, optional feature confidence, and required feature strictness, which updates the decision ring and fallback card. `Probe browser` only checks `navigator.xr` presence, while `Simulate tap request` creates a requestSession-style log without showing a real permission prompt."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では `requiredFeatures` を最小にし、`hit-test`、`anchors`、`depth-sensing`、`dom-overlay` のような feature は、体験の成立条件でない限り `optionalFeatures` に寄せます。`isSessionSupported()` は `XRSessionInit` を受け取らないため、session mode の可否と feature 可否を混同しないことが重要です。例外は `SecurityError`、`NotAllowedError`、`NotSupportedError` などを gate 名に変換して、iframe 埋め込み、user activation、feature strictness のどこを直すべきか出します。",
+      "bodyEn": "Keep `requiredFeatures` minimal, and put features like `hit-test`, `anchors`, `depth-sensing`, and `dom-overlay` in `optionalFeatures` unless they are essential. Since `isSessionSupported()` does not take `XRSessionInit`, do not confuse session-mode support with feature support. Map exceptions such as `SecurityError`, `NotAllowedError`, and `NotSupportedError` into gate names so the UI can point to iframe policy, user activation, or feature strictness."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Device API の permissions / fingerprinting 章、MDN の `requestSession()` feature 要件表、Immersive Web samples の feature request 実装、AR Module の secondary views、Raw Camera Access の privacy indicator を継続して見ます。次は今日の launch gate に、実際の `isSessionSupported(\"immersive-ar\")` / `isSessionSupported(\"immersive-vr\")` をユーザー操作後に安全に追加し、結果をローカル diagnostic として保存しない設計を試します。",
+      "bodyEn": "Continue watching the WebXR Device API permissions/fingerprinting sections, MDN's `requestSession()` feature requirement table, feature request patterns in Immersive Web samples, AR Module secondary views, and Raw Camera Access privacy indicators. Next, add real user-activated `isSessionSupported(\"immersive-ar\")` / `isSessionSupported(\"immersive-vr\")` checks to this launch gate without persisting diagnostic results."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、`Probe browser` で `navigator.xr` があるか確認してください。次に AR または VR mode に切り替え、Permissions-Policy allowance を下げる、User activation clarity を下げる、Required feature strictness を上げる、という順で gate がどのように `SecurityError`、`NotAllowedError`、`NotSupportedError` に変わるかを見ます。",
+      "bodyEn": "Open the sample and press `Probe browser` to see whether `navigator.xr` exists. Then switch to AR or VR mode and lower Permissions-Policy allowance, lower User activation clarity, and raise Required feature strictness to see how the gate changes into `SecurityError`, `NotAllowedError`, and `NotSupportedError`.",
+      "links": [
+        {
+          "label": "Open XR Permission Policy Launch Gate",
+          "url": "../outputs/2026-07-29_html_xr_permission_policy_launch_gate.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Device API、MDN Permissions-Policy / permissions and security / requestSession、Immersive Web explainer と samples を確認。アイデア: 昨日の capability probe を、起動時の policy / intent / feature gate まで細分化する。実装: canvas pipeline、実 API presence probe、疑似 requestSession log、fallback card、required/optional feature slider、pointer drag decision ring を追加。検証: JSON parse、HTML script 構文、gallery 再生成、公開 URL の HTTP 200 を確認する。",
+      "bodyEn": "Research: reviewed the WebXR Device API, MDN Permissions-Policy / permissions and security / requestSession, and Immersive Web explainer/samples. Idea: extend yesterday's capability probe into policy, intent, and feature gates at launch time. Implementation: added a canvas pipeline, real API presence probe, simulated requestSession log, fallback card, required/optional feature sliders, and draggable decision ring. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and HTTP 200 for published URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "この数日の流れは camera access、fallback router、secondary view planner から、さらに手前の launch gate へ戻りました。XR の実運用では、描画中の最適化より先に、起動できない環境でどれだけ明確に別経路へ誘導できるかが体験品質を左右します。今日の試作は、仕様の security / permissions 周辺を UI として見える化するための基礎部品です。",
+      "bodyEn": "The recent progression moved from camera access, fallback routing, and secondary-view planning back to an earlier launch gate. In practical XR deployment, guiding unsupported environments into clear alternate routes often matters before render-time optimization. Today's prototype is a base component for making the security and permissions side of the specs visible in UI."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `XR Permission Policy Launch Gate` です。`navigator.xr` の presence check と、policy / user activation / required feature / optional feature の疑似 gate を 1 画面にまとめ、XR 起動前の failure mode と fallback route を操作できるようにしました。次に足すなら、実 `isSessionSupported()` の async check、iframe 埋め込み時の説明コピー、optional feature ごとの degraded rendering preview を追加します。",
+      "bodyEn": "The selected prototype is `XR Permission Policy Launch Gate`. It combines `navigator.xr` presence checking with simulated policy, user activation, required-feature, and optional-feature gates so launch failure modes and fallback routes can be operated in one screen. Next additions should include real async `isSessionSupported()` checks, iframe-embed guidance copy, and degraded rendering previews for each optional feature."
+    }
+  ]
+}

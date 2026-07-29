@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Permissions-Policy と optional feature で XR 起動を守る | 2026-07-29</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.29</p>
+      <h1>Permissions-Policy と optional feature で XR 起動を守る</h1>
+      <p class="hero-subtitle">Guarding XR launch with Permissions-Policy and optional features</p>
+      <p>WebXR Device API、MDN の permissions/security と `xr-spatial-tracking`、`requestSession()`、Immersive Web の explainer / samples を確認し、今日は XR 起動前に policy、user activation、required/optional feature、fallback route を可視化する自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the WebXR Device API, MDN permissions/security docs, `xr-spatial-tracking`, `requestSession()`, and Immersive Web explainers/samples, today's original HTML sample visualizes policy, user activation, required/optional features, and fallback routes before launching XR.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-29_html_xr_permission_policy_launch_gate.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-28.html">← 2026.07.28</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>XR Permission Policy Launch Gate</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-29_html_xr_permission_policy_launch_gate.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Device API の `isSessionSupported()` は `inline` 以外では `xr-spatial-tracking` Permissions-Policy にブロックされると `SecurityError` で reject されるため、XR CTA の表示設計にも policy 起因の失敗を織り込む必要がある。</span>
+              <span class="en-copy">For non-inline modes, the WebXR Device API rejects `isSessionSupported()` with `SecurityError` when `xr-spatial-tracking` Permissions-Policy blocks the document, so XR CTA design needs to account for policy-driven failure.</span>
+            </li>
+          
+            <li>
+              <span>MDN は `xr-spatial-tracking` directive が `navigator.xr.isSessionSupported()`、`requestSession()`、`devicechange` に影響し、既定 allowlist は `self` だと整理している。</span>
+              <span class="en-copy">MDN documents that the `xr-spatial-tracking` directive affects `navigator.xr.isSessionSupported()`, `requestSession()`, and `devicechange`, with a default allowlist of `self`.</span>
+            </li>
+          
+            <li>
+              <span>`requestSession()` は session feature ごとに user consent や Permissions-Policy の要件が異なり、`hit-test` や `depth-sensing` は `xr-spatial-tracking` の対象として扱われる。</span>
+              <span class="en-copy">`requestSession()` has different user-consent and Permissions-Policy requirements per session feature; `hit-test` and `depth-sensing` are covered by `xr-spatial-tracking`.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の explainer は `requiredFeatures` が満たされないと session 作成を止め、`optionalFeatures` は使えれば有効化されるが欠けても session 作成を止めないという progressive enhancement の使い分けを明確にしている。</span>
+              <span class="en-copy">The Immersive Web explainer clarifies that missing `requiredFeatures` blocks session creation while missing `optionalFeatures` should not, making progressive enhancement a launch-time design tool.</span>
+            </li>
+          
+            <li>
+              <span>実装上は `navigator.xr` の存在確認、`isSessionSupported()`、user activation 内の `requestSession()`、session 後の reference space / feature 使用失敗を、1 つの例外処理ではなく段階別ログとして扱うのがよい。</span>
+              <span class="en-copy">Implementation should treat `navigator.xr` presence, `isSessionSupported()`, user-activated `requestSession()`, and post-session reference-space/feature failures as staged logs rather than one generic catch block.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は派手なレンダリング API ではなく、`xr-spatial-tracking` と feature negotiation です。XR 体験は、デバイスがない、iframe やヘッダで policy が閉じている、ユーザー操作ではない、必須 feature が強すぎる、という複数の段階で失敗します。ここを UI とログで分けて扱うと、ユーザーには次に押すべき CTA や 2D fallback を出し、開発者にはどの gate で止まったかを明示できます。</p>
+          <p class="en-copy">Today's notable point is not a flashy rendering API but `xr-spatial-tracking` and feature negotiation. XR launch can fail because there is no device, policy blocks the document, the call lacks user activation, or required features are too strict. Separating these gates in UI and logs lets users see the right CTA or 2D fallback while developers see exactly where launch stopped.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy/xr-spatial-tracking" target="_blank" rel="noreferrer">MDN: Permissions-Policy xr-spatial-tracking</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>サンプルでは API、POLICY、INTENT、FEATURES、SESSION を横一列の gate として描き、失敗した段階だけ赤い経路に変えます。右側の slider で policy allowance、user activation、optional feature confidence、required feature strictness を変えると、中央の decision ring と fallback card が更新されます。`Probe browser` は `navigator.xr` の presence だけを実測し、`Simulate tap request` は実際の permission prompt を出さずに requestSession 結果ログを疑似生成します。</p>
+          <p class="en-copy">The sample draws API, POLICY, INTENT, FEATURES, and SESSION as a horizontal gate pipeline, turning only the failing stage red. Sliders adjust policy allowance, user activation, optional feature confidence, and required feature strictness, which updates the decision ring and fallback card. `Probe browser` only checks `navigator.xr` presence, while `Simulate tap request` creates a requestSession-style log without showing a real permission prompt.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では `requiredFeatures` を最小にし、`hit-test`、`anchors`、`depth-sensing`、`dom-overlay` のような feature は、体験の成立条件でない限り `optionalFeatures` に寄せます。`isSessionSupported()` は `XRSessionInit` を受け取らないため、session mode の可否と feature 可否を混同しないことが重要です。例外は `SecurityError`、`NotAllowedError`、`NotSupportedError` などを gate 名に変換して、iframe 埋め込み、user activation、feature strictness のどこを直すべきか出します。</p>
+          <p class="en-copy">Keep `requiredFeatures` minimal, and put features like `hit-test`, `anchors`, `depth-sensing`, and `dom-overlay` in `optionalFeatures` unless they are essential. Since `isSessionSupported()` does not take `XRSessionInit`, do not confuse session-mode support with feature support. Map exceptions such as `SecurityError`, `NotAllowedError`, and `NotSupportedError` into gate names so the UI can point to iframe policy, user activation, or feature strictness.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Device API の permissions / fingerprinting 章、MDN の `requestSession()` feature 要件表、Immersive Web samples の feature request 実装、AR Module の secondary views、Raw Camera Access の privacy indicator を継続して見ます。次は今日の launch gate に、実際の `isSessionSupported(&quot;immersive-ar&quot;)` / `isSessionSupported(&quot;immersive-vr&quot;)` をユーザー操作後に安全に追加し、結果をローカル diagnostic として保存しない設計を試します。</p>
+          <p class="en-copy">Continue watching the WebXR Device API permissions/fingerprinting sections, MDN's `requestSession()` feature requirement table, feature request patterns in Immersive Web samples, AR Module secondary views, and Raw Camera Access privacy indicators. Next, add real user-activated `isSessionSupported(&quot;immersive-ar&quot;)` / `isSessionSupported(&quot;immersive-vr&quot;)` checks to this launch gate without persisting diagnostic results.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルを開き、`Probe browser` で `navigator.xr` があるか確認してください。次に AR または VR mode に切り替え、Permissions-Policy allowance を下げる、User activation clarity を下げる、Required feature strictness を上げる、という順で gate がどのように `SecurityError`、`NotAllowedError`、`NotSupportedError` に変わるかを見ます。</p>
+          <p class="en-copy">Open the sample and press `Probe browser` to see whether `navigator.xr` exists. Then switch to AR or VR mode and lower Permissions-Policy allowance, lower User activation clarity, and raise Required feature strictness to see how the gate changes into `SecurityError`, `NotAllowedError`, and `NotSupportedError`.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-29_html_xr_permission_policy_launch_gate.html" target="_blank" rel="noreferrer">Open XR Permission Policy Launch Gate</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Device API、MDN Permissions-Policy / permissions and security / requestSession、Immersive Web explainer と samples を確認。アイデア: 昨日の capability probe を、起動時の policy / intent / feature gate まで細分化する。実装: canvas pipeline、実 API presence probe、疑似 requestSession log、fallback card、required/optional feature slider、pointer drag decision ring を追加。検証: JSON parse、HTML script 構文、gallery 再生成、公開 URL の HTTP 200 を確認する。</p>
+          <p class="en-copy">Research: reviewed the WebXR Device API, MDN Permissions-Policy / permissions and security / requestSession, and Immersive Web explainer/samples. Idea: extend yesterday's capability probe into policy, intent, and feature gates at launch time. Implementation: added a canvas pipeline, real API presence probe, simulated requestSession log, fallback card, required/optional feature sliders, and draggable decision ring. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and HTTP 200 for published URLs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>この数日の流れは camera access、fallback router、secondary view planner から、さらに手前の launch gate へ戻りました。XR の実運用では、描画中の最適化より先に、起動できない環境でどれだけ明確に別経路へ誘導できるかが体験品質を左右します。今日の試作は、仕様の security / permissions 周辺を UI として見える化するための基礎部品です。</p>
+          <p class="en-copy">The recent progression moved from camera access, fallback routing, and secondary-view planning back to an earlier launch gate. In practical XR deployment, guiding unsupported environments into clear alternate routes often matters before render-time optimization. Today's prototype is a base component for making the security and permissions side of the specs visible in UI.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `XR Permission Policy Launch Gate` です。`navigator.xr` の presence check と、policy / user activation / required feature / optional feature の疑似 gate を 1 画面にまとめ、XR 起動前の failure mode と fallback route を操作できるようにしました。次に足すなら、実 `isSessionSupported()` の async check、iframe 埋め込み時の説明コピー、optional feature ごとの degraded rendering preview を追加します。</p>
+          <p class="en-copy">The selected prototype is `XR Permission Policy Launch Gate`. It combines `navigator.xr` presence checking with simulated policy, user activation, required-feature, and optional-feature gates so launch failure modes and fallback routes can be operated in one screen. Next additions should include real async `isSessionSupported()` checks, iframe-embed guidance copy, and degraded rendering previews for each optional feature.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-29_html_xr_permission_policy_launch_gate.html" target="_blank" rel="noreferrer">Today's sample: XR Permission Policy Launch Gate</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy/xr-spatial-tracking" target="_blank" rel="noreferrer">MDN: Permissions-Policy xr-spatial-tracking</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Permissions_and_security" target="_blank" rel="noreferrer">MDN: WebXR permissions and security</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession" target="_blank" rel="noreferrer">MDN: XRSystem.requestSession()</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr/explainer.html" target="_blank" rel="noreferrer">Immersive Web: WebXR Device API Explainer</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-29_html_xr_permission_policy_launch_gate.html" loading="lazy" title="XR Permission Policy Launch Gate"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

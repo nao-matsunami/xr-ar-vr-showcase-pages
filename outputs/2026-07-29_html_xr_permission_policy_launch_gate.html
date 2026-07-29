@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XR Permission Policy Launch Gate</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #06090d;
+      color: #f5f7fb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(130deg, rgba(40, 210, 190, 0.18), transparent 34%),
+        linear-gradient(300deg, rgba(255, 205, 96, 0.12), transparent 38%),
+        #06090d;
+    }
+
+    main {
+      width: min(1220px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 352px;
+      gap: 18px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      border-bottom: 1px solid rgba(245, 247, 251, 0.14);
+      padding-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.55rem, 3vw, 2.7rem);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    .lede {
+      max-width: 780px;
+      margin-top: 10px;
+      color: #b8c7c9;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border: 1px solid rgba(125, 245, 224, 0.35);
+      background: rgba(3, 20, 24, 0.78);
+      color: #87fff0;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 660px;
+      border: 1px solid rgba(245, 247, 251, 0.14);
+      background: #05080b;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .status-strip {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      top: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .step {
+      min-height: 44px;
+      border: 1px solid rgba(245, 247, 251, 0.14);
+      background: rgba(5, 12, 17, 0.78);
+      padding: 8px 9px;
+      backdrop-filter: blur(10px);
+    }
+
+    .step span {
+      display: block;
+      color: #8da0a6;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+    }
+
+    .step strong {
+      display: block;
+      margin-top: 4px;
+      color: #f5f7fb;
+      font-size: 0.86rem;
+      overflow-wrap: anywhere;
+    }
+
+    aside {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    section {
+      border: 1px solid rgba(245, 247, 251, 0.14);
+      background: rgba(6, 11, 16, 0.84);
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 0.96rem;
+      letter-spacing: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      margin: 12px 0;
+      color: #b8c7c9;
+      font-size: 0.86rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #87fff0;
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .seg.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid rgba(245, 247, 251, 0.18);
+      background: rgba(245, 247, 251, 0.08);
+      color: #f5f7fb;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button.active {
+      background: #87fff0;
+      border-color: #87fff0;
+      color: #052520;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      min-height: 70px;
+      border: 1px solid rgba(245, 247, 251, 0.13);
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .metric span {
+      display: block;
+      color: #8da0a6;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.02rem;
+      line-height: 1.12;
+      overflow-wrap: anywhere;
+    }
+
+    .log {
+      display: grid;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .entry {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 8px;
+      align-items: center;
+      min-height: 30px;
+      color: #b8c7c9;
+      font-size: 0.8rem;
+    }
+
+    .chip {
+      display: inline-flex;
+      justify-content: center;
+      min-height: 22px;
+      padding: 3px 7px;
+      border: 1px solid rgba(245, 247, 251, 0.14);
+      background: rgba(255, 255, 255, 0.06);
+      color: #87fff0;
+      font-size: 0.72rem;
+    }
+
+    footer {
+      grid-column: 1 / -1;
+      border-top: 1px solid rgba(245, 247, 251, 0.12);
+      padding-top: 12px;
+      color: #8da0a6;
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 880px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .stage {
+        min-height: 560px;
+      }
+
+      .status-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>XR Permission Policy Launch Gate</h1>
+        <p class="lede">A self-made WebXR launch diagnostic that models Permissions-Policy, user activation, required/optional features, and recovery routing before an immersive session is requested.</p>
+      </div>
+      <div class="badge">2026-07-29 original sample</div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="view" width="940" height="690"></canvas>
+      <div class="status-strip">
+        <div class="step"><span>Policy</span><strong id="policyOut">self allowed</strong></div>
+        <div class="step"><span>Intent</span><strong id="intentOut">tap required</strong></div>
+        <div class="step"><span>Features</span><strong id="featureOut">optional first</strong></div>
+        <div class="step"><span>Route</span><strong id="routeOut">inline preview</strong></div>
+      </div>
+    </div>
+
+    <aside>
+      <section>
+        <h2>Launch gate</h2>
+        <div class="seg">
+          <button id="probeButton" type="button">Probe browser</button>
+          <button id="requestButton" type="button">Simulate tap request</button>
+        </div>
+        <div class="seg three" style="margin-top: 8px;">
+          <button class="mode active" data-mode="inline" type="button">Inline</button>
+          <button class="mode" data-mode="ar" type="button">AR</button>
+          <button class="mode" data-mode="vr" type="button">VR</button>
+        </div>
+        <label>Permissions-Policy allowance <input id="policy" type="range" min="0" max="100" value="82"></label>
+        <label>User activation clarity <input id="activation" type="range" min="0" max="100" value="58"></label>
+        <label>Optional feature confidence <input id="optional" type="range" min="0" max="100" value="54"></label>
+        <label>Required feature strictness <input id="required" type="range" min="0" max="100" value="34"></label>
+      </section>
+
+      <section>
+        <h2>Runtime readout</h2>
+        <div class="metrics">
+          <div class="metric"><span>navigator.xr</span><strong id="xrOut">unchecked</strong></div>
+          <div class="metric"><span>isSession</span><strong id="sessionOut">simulated</strong></div>
+          <div class="metric"><span>Exception</span><strong id="errorOut">none</strong></div>
+          <div class="metric"><span>Fallback</span><strong id="fallbackOut">viewer UI</strong></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Gate log</h2>
+        <div class="log" id="log"></div>
+      </section>
+    </aside>
+
+    <footer>
+      This diagnostic checks API presence only. It does not call <code>navigator.xr.requestSession()</code>. The request button simulates outcomes so the fallback design can be tested on desktop and mobile browsers.
+    </footer>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("view");
+    const ctx = canvas.getContext("2d");
+    const stage = document.getElementById("stage");
+    const logEl = document.getElementById("log");
+
+    const ids = ["policy", "activation", "optional", "required"];
+    const inputs = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
+    const outs = {
+      policy: document.getElementById("policyOut"),
+      intent: document.getElementById("intentOut"),
+      feature: document.getElementById("featureOut"),
+      route: document.getElementById("routeOut"),
+      xr: document.getElementById("xrOut"),
+      session: document.getElementById("sessionOut"),
+      error: document.getElementById("errorOut"),
+      fallback: document.getElementById("fallbackOut")
+    };
+
+    const state = {
+      mode: "inline",
+      t: 0,
+      xrPresent: null,
+      stageX: 0.55,
+      stageY: 0.54,
+      dragging: false,
+      simulated: false,
+      log: [
+        ["idle", "probe before showing XR CTA"],
+        ["policy", "xr-spatial-tracking defaults to self"],
+        ["plan", "keep depth/hit-test optional unless essential"]
+      ]
+    };
+
+    function value(id) {
+      return Number(inputs[id].value);
+    }
+
+    function resizeCanvas() {
+      const rect = stage.getBoundingClientRect();
+      const scale = window.devicePixelRatio || 1;
+      canvas.width = Math.max(320, Math.floor(rect.width * scale));
+      canvas.height = Math.max(430, Math.floor(rect.height * scale));
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    }
+
+    function plan() {
+      const policy = value("policy");
+      const activation = value("activation");
+      const optional = value("optional");
+      const required = value("required");
+      const xrMissing = state.xrPresent === false;
+      let exception = "none";
+      let route = "inline preview";
+      let featureLabel = "viewer only";
+      let fallback = "viewer UI";
+      let support = "not requested";
+
+      if (xrMissing) {
+        route = "2D fallback";
+        fallback = "mouse/touch";
+        support = "missing API";
+      } else if (policy < 36) {
+        exception = "SecurityError";
+        route = "policy blocked";
+        fallback = "embed help";
+        support = "rejected";
+      } else if (activation < 42 && state.mode !== "inline") {
+        exception = "NotAllowedError";
+        route = "wait for tap";
+        fallback = "CTA retry";
+        support = "deferred";
+      } else if (required > 72) {
+        exception = "NotSupportedError";
+        route = "trim required";
+        fallback = "optional retry";
+        support = "strict fail";
+      } else if (state.mode === "ar" && optional > 58) {
+        route = "AR + optional";
+        featureLabel = "hit-test depth anchors";
+        fallback = "no-depth anchor";
+        support = "maybe";
+      } else if (state.mode === "vr") {
+        route = "immersive VR";
+        featureLabel = optional > 52 ? "local-floor layers" : "local only";
+        fallback = "inline mirror";
+        support = "maybe";
+      } else {
+        route = "inline XR";
+        featureLabel = optional > 50 ? "local optional" : "viewer required";
+        support = "safe";
+      }
+
+      return {
+        policyLabel: policy < 36 ? "blocked" : policy < 66 ? "limited" : "self allowed",
+        intentLabel: activation < 42 && state.mode !== "inline" ? "needs tap" : "clear",
+        featureLabel,
+        route,
+        exception,
+        fallback,
+        support
+      };
+    }
+
+    function runProbe() {
+      state.xrPresent = Boolean(navigator.xr);
+      state.simulated = false;
+      state.log = [
+        ["probe", `navigator.xr: ${state.xrPresent ? "present" : "missing"}`],
+        ["policy", "cannot read server policy from JS"],
+        ["next", "call isSessionSupported after policy check"],
+        ["safe", "no permission prompt issued"]
+      ];
+      render();
+    }
+
+    function simulateRequest() {
+      const p = plan();
+      state.simulated = true;
+      const requiredFeatures = state.mode === "vr" ? ["local-floor"] : state.mode === "ar" ? ["local"] : ["viewer"];
+      const optionalFeatures = state.mode === "ar" ? ["hit-test", "anchors", "depth-sensing", "dom-overlay"] : ["local"];
+      if (value("optional") < 38) optionalFeatures.length = 1;
+      state.log = [
+        ["mode", state.mode === "ar" ? "immersive-ar" : state.mode === "vr" ? "immersive-vr" : "inline"],
+        ["required", requiredFeatures.join(", ")],
+        ["optional", optionalFeatures.join(", ")],
+        [p.exception === "none" ? "route" : "error", p.exception === "none" ? p.route : p.exception]
+      ];
+      render();
+    }
+
+    function roundedRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function drawBackground(w, h) {
+      ctx.fillStyle = "#05080b";
+      ctx.fillRect(0, 0, w, h);
+      for (let y = -40; y < h + 40; y += 34) {
+        ctx.strokeStyle = "rgba(135, 255, 240, 0.045)";
+        ctx.beginPath();
+        ctx.moveTo(0, y + Math.sin(state.t + y * 0.03) * 4);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      for (let x = -40; x < w + 40; x += 42) {
+        ctx.strokeStyle = "rgba(255, 205, 96, 0.032)";
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + Math.cos(state.t + x * 0.03) * 5, h);
+        ctx.stroke();
+      }
+    }
+
+    function drawPipeline(w, h) {
+      const p = plan();
+      const items = [
+        { label: "API", value: state.xrPresent === null ? "unknown" : state.xrPresent ? "present" : "missing", ok: state.xrPresent !== false },
+        { label: "POLICY", value: p.policyLabel, ok: p.exception !== "SecurityError" },
+        { label: "INTENT", value: p.intentLabel, ok: p.exception !== "NotAllowedError" },
+        { label: "FEATURES", value: p.featureLabel, ok: p.exception !== "NotSupportedError" },
+        { label: "SESSION", value: p.route, ok: p.exception === "none" }
+      ];
+      const margin = 44;
+      const nodeW = Math.min(138, (w - margin * 2) / items.length - 10);
+      const gap = (w - margin * 2 - nodeW * items.length) / Math.max(1, items.length - 1);
+      const y = h * 0.28;
+
+      items.forEach((item, index) => {
+        const x = margin + index * (nodeW + gap);
+        if (index > 0) {
+          const prevX = margin + (index - 1) * (nodeW + gap) + nodeW;
+          ctx.strokeStyle = items[index - 1].ok && item.ok ? "rgba(135, 255, 240, 0.68)" : "rgba(255, 95, 110, 0.55)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(prevX + 6, y + 42);
+          ctx.lineTo(x - 6, y + 42);
+          ctx.stroke();
+        }
+        roundedRect(x, y, nodeW, 84, 8);
+        ctx.fillStyle = item.ok ? "rgba(10, 52, 54, 0.74)" : "rgba(70, 18, 24, 0.78)";
+        ctx.fill();
+        ctx.strokeStyle = item.ok ? "rgba(135, 255, 240, 0.78)" : "rgba(255, 95, 110, 0.78)";
+        ctx.stroke();
+        ctx.fillStyle = "#8da0a6";
+        ctx.font = "700 11px system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText(item.label, x + nodeW / 2, y + 25);
+        ctx.fillStyle = "#f5f7fb";
+        ctx.font = "650 14px system-ui";
+        wrapText(item.value, x + 12, y + 50, nodeW - 24, 16, "center");
+      });
+    }
+
+    function drawFallbackMap(w, h) {
+      const p = plan();
+      const cx = state.stageX * w;
+      const cy = state.stageY * h;
+      const lanes = [
+        { label: "permission policy", score: value("policy") / 100, color: "#87fff0" },
+        { label: "user activation", score: value("activation") / 100, color: "#ffcd60" },
+        { label: "optional confidence", score: value("optional") / 100, color: "#9aa8ff" },
+        { label: "required risk", score: 1 - value("required") / 100, color: "#ff6b7a" }
+      ];
+      const baseY = h * 0.55;
+      ctx.textAlign = "left";
+      lanes.forEach((lane, i) => {
+        const y = baseY + i * 42;
+        ctx.fillStyle = "rgba(245, 247, 251, 0.075)";
+        ctx.fillRect(44, y, w - 88, 18);
+        ctx.fillStyle = lane.color;
+        ctx.fillRect(44, y, (w - 88) * lane.score, 18);
+        ctx.fillStyle = "#f5f7fb";
+        ctx.font = "650 12px system-ui";
+        ctx.fillText(lane.label, 44, y - 7);
+        ctx.fillText(`${Math.round(lane.score * 100)}%`, w - 86, y - 7);
+      });
+
+      ctx.strokeStyle = p.exception === "none" ? "rgba(135, 255, 240, 0.86)" : "rgba(255, 95, 110, 0.86)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 50 + Math.sin(state.t * 2) * 4, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(135, 255, 240, 0.14)";
+      ctx.beginPath();
+      ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+      ctx.fill();
+
+      const cardW = Math.min(330, w - 88);
+      roundedRect(cx - cardW / 2, Math.min(h - 108, cy + 72), cardW, 76, 8);
+      ctx.fillStyle = "rgba(5, 12, 17, 0.86)";
+      ctx.fill();
+      ctx.strokeStyle = p.exception === "none" ? "rgba(135, 255, 240, 0.58)" : "rgba(255, 95, 110, 0.58)";
+      ctx.stroke();
+      ctx.fillStyle = "#8da0a6";
+      ctx.font = "700 11px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("CURRENT DECISION", cx, Math.min(h - 108, cy + 72) + 24);
+      ctx.fillStyle = "#f5f7fb";
+      ctx.font = "700 18px system-ui";
+      ctx.fillText(p.exception === "none" ? p.route : `${p.exception} -> ${p.fallback}`, cx, Math.min(h - 108, cy + 72) + 52);
+    }
+
+    function wrapText(text, x, y, maxWidth, lineHeight, align = "left") {
+      const words = String(text).split(" ");
+      let line = "";
+      const lines = [];
+      for (const word of words) {
+        const test = line ? `${line} ${word}` : word;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          lines.push(line);
+          line = word;
+        } else {
+          line = test;
+        }
+      }
+      lines.push(line);
+      lines.slice(0, 2).forEach((part, index) => {
+        const drawX = align === "center" ? x + maxWidth / 2 : x;
+        ctx.fillText(part, drawX, y + index * lineHeight);
+      });
+    }
+
+    function renderLog() {
+      logEl.innerHTML = state.log.map(([type, text]) => `
+        <div class="entry">
+          <span class="chip">${type}</span>
+          <span>${text}</span>
+        </div>
+      `).join("");
+    }
+
+    function updateReadouts() {
+      const p = plan();
+      outs.policy.textContent = p.policyLabel;
+      outs.intent.textContent = p.intentLabel;
+      outs.feature.textContent = p.featureLabel;
+      outs.route.textContent = p.route;
+      outs.xr.textContent = state.xrPresent === null ? "unchecked" : state.xrPresent ? "present" : "missing";
+      outs.session.textContent = p.support;
+      outs.error.textContent = p.exception;
+      outs.fallback.textContent = p.fallback;
+    }
+
+    function render() {
+      const rect = stage.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      drawBackground(w, h);
+      drawPipeline(w, h);
+      drawFallbackMap(w, h);
+      updateReadouts();
+      renderLog();
+    }
+
+    function animate() {
+      state.t += 0.016;
+      render();
+      requestAnimationFrame(animate);
+    }
+
+    document.getElementById("probeButton").addEventListener("click", runProbe);
+    document.getElementById("requestButton").addEventListener("click", simulateRequest);
+    document.querySelectorAll(".mode").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".mode").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        state.mode = button.dataset.mode;
+        render();
+      });
+    });
+
+    Object.values(inputs).forEach((input) => input.addEventListener("input", render));
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.dragging = true;
+      canvas.setPointerCapture(event.pointerId);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!state.dragging) return;
+      const rect = canvas.getBoundingClientRect();
+      state.stageX = Math.max(0.12, Math.min(0.88, (event.clientX - rect.left) / rect.width));
+      state.stageY = Math.max(0.28, Math.min(0.78, (event.clientY - rect.top) / rect.height));
+      render();
+    });
+
+    function stopDrag(event) {
+      state.dragging = false;
+      if (event?.pointerId && canvas.hasPointerCapture(event.pointerId)) {
+        canvas.releasePointerCapture(event.pointerId);
+      }
+    }
+
+    canvas.addEventListener("pointerup", stopDrag);
+    canvas.addEventListener("pointercancel", stopDrag);
+    window.addEventListener("resize", () => {
+      resizeCanvas();
+      render();
+    });
+
+    resizeCanvas();
+    animate();
+  </script>
+</body>
+</html>
