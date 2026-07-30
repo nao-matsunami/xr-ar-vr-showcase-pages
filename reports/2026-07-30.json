@@ -1,0 +1,117 @@
+{
+  "date": "2026-07-30",
+  "headline": "実測 isSessionSupported で XR 起動前の分岐を読む",
+  "headlineEn": "Reading XR launch branches with live isSessionSupported checks",
+  "summary": "WebXR Device API、AR Module、MDN の `requestSession()` / permissions、Immersive Web samples / report を確認し、今日は実際の `navigator.xr.isSessionSupported()` 結果と、policy、user activation、optional feature、privacy 期待値を重ねて起動ルートを選ぶ自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Device API, AR Module, MDN `requestSession()` and permissions docs, plus Immersive Web samples/report, today's original HTML sample combines live `navigator.xr.isSessionSupported()` results with policy, activation, optional-feature, and privacy expectations to choose a launch route.",
+  "keyTopics": [
+    "WebXR Device API の `isSessionSupported(mode)` は XR 体験を広告してよいかを事前確認する API で、仕様上は device selection UI や他の XR アプリへの干渉を起こさない軽い問い合わせとして扱われる。",
+    "`immersive-ar` は AR Module が追加する session mode で、互換ハードウェアでは `immersive-vr` と同じ immersive session の仕組みを使いながら現実世界との合成を意図する。",
+    "MDN の `requestSession()` は session feature ごとの user consent と Permissions-Policy 要件を整理しており、`hit-test` や `depth-sensing` は `xr-spatial-tracking` の policy 影響を受ける。",
+    "Immersive Web の report / samples は、モード別 support と session 開始後の情報を切り分けて見せているため、公開サイト側でも demo list ではなく診断パネルの UX 参考として有用。",
+    "`isSessionSupported()` が true でも、user activation、exclusive device 使用中、強すぎる `requiredFeatures`、privacy copy 不足で `requestSession()` が失敗しうるため、結果表示は確定判定ではなく launch readiness として扱う。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Device API treats `isSessionSupported(mode)` as a preflight query for whether XR should be advertised, and the spec frames it as a lightweight check that should not trigger device-selection UI or interfere with other XR apps.",
+    "`immersive-ar` is a session mode added by the AR Module; on compatible hardware it uses the same immersive-session machinery as `immersive-vr` while intending real-world blending.",
+    "MDN's `requestSession()` documentation summarizes user-consent and Permissions-Policy requirements per session feature; features such as `hit-test` and `depth-sensing` are affected by `xr-spatial-tracking`.",
+    "The Immersive Web report and samples separate mode support from information available after session start, making them useful UX references for diagnostic panels rather than archive cards.",
+    "Even when `isSessionSupported()` returns true, `requestSession()` may still fail due to user activation, exclusive device use, strict `requiredFeatures`, or insufficient privacy messaging, so the result should be shown as launch readiness rather than a final guarantee."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Immersive Session Support Radar",
+      "url": "../outputs/2026-07-30_html_immersive_session_support_radar.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR Device API Editor's Draft",
+      "url": "https://immersive-web.github.io/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR Augmented Reality Module",
+      "url": "https://immersive-web.github.io/webxr-ar-module/"
+    },
+    {
+      "label": "MDN: XRSystem.requestSession()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession"
+    },
+    {
+      "label": "MDN: Permissions-Policy xr-spatial-tracking",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy/xr-spatial-tracking"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Web: WebXR Report",
+      "url": "https://immersive-web.github.io/webxr-samples/report/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、Immersive Web の report ページが WebXR modules、session modes、session properties、input sources を段階別に見せる点です。これは派手なデモではありませんが、実運用の XR サイトでは「AR ボタンを出すか」「VR ボタンを出すか」「inline preview に逃がすか」を決める最初の画面になります。自作サンプルでは、この考え方を公開診断 UI として縮小し、実 `isSessionSupported()` と手動調整する policy / activation / privacy リスクを同じ radar に載せました。",
+      "bodyEn": "Today's notable example is the Immersive Web report page, which separates WebXR modules, session modes, session properties, and input sources. It is not a flashy demo, but in production XR sites this is the first screen that decides whether to show an AR button, a VR button, or an inline preview. The original sample compresses that idea into a public diagnostic UI, placing live `isSessionSupported()` results and manually adjustable policy, activation, and privacy risk on the same radar.",
+      "links": [
+        {
+          "label": "Immersive Web: WebXR Report",
+          "url": "https://immersive-web.github.io/webxr-samples/report/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルは API、POLICY、ACTIVATION、FEATURES、PRIVACY、SUPPORT の 6 軸 radar と、AR / VR / inline / 2D の route card で構成しています。`Run support probe` は user gesture から `inline`、`immersive-ar`、`immersive-vr` の `isSessionSupported()` を実行し、`Simulate request` は Permissions-Policy、transient activation、optional feature load、privacy sensitivity を組み合わせて想定ログを出します。canvas 上の黄色い tap origin はドラッグでき、起動ボタンの視線・タップ位置を表す小さなインタラクションとして置いています。",
+      "bodyEn": "The sample is built around a six-axis radar for API, policy, activation, features, privacy, and support, plus route cards for AR, VR, inline, and 2D. `Run support probe` invokes `isSessionSupported()` for `inline`, `immersive-ar`, and `immersive-vr` from a user gesture, while `Simulate request` emits expected logs from Permissions-Policy, transient activation, optional-feature load, and privacy sensitivity. The yellow tap origin on the canvas can be dragged as a small interaction representing the launch button's gaze/tap position."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "`isSessionSupported()` は `XRSessionInit` を受け取らないので、モード可否と feature 可否を分けて扱う必要があります。実装では `navigator.xr` の存在確認、`isSessionSupported(\"inline\")`、`isSessionSupported(\"immersive-ar\")`、`isSessionSupported(\"immersive-vr\")` を独立した Promise として扱い、`SecurityError` などの exception name も UI に残します。実 `requestSession()` を試す画面では、`requiredFeatures` を最小にし、`hit-test`、`anchors`、`depth-sensing`、`dom-overlay`、`hand-tracking` は体験成立に必須なものだけ required に昇格する設計がよいです。",
+      "bodyEn": "`isSessionSupported()` does not accept `XRSessionInit`, so mode support and feature support should be modeled separately. Implementation should treat `navigator.xr` presence and each of `isSessionSupported(\"inline\")`, `isSessionSupported(\"immersive-ar\")`, and `isSessionSupported(\"immersive-vr\")` as independent promises, preserving exception names such as `SecurityError` in the UI. For screens that call real `requestSession()`, keep `requiredFeatures` minimal and only promote features such as `hit-test`, `anchors`, `depth-sensing`, `dom-overlay`, and `hand-tracking` to required when the experience truly depends on them."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Device API の fingerprinting / permissions 章、AR Module の `immersive-ar` と environment blend の扱い、MDN の feature requirement 表、Immersive Web samples の XRButton / session lifecycle、そして Raw Camera Access の privacy indicator を継続して見ます。次は、今日の support radar に実 `requestSession()` を入れるのではなく、optional feature ごとの degraded rendering preview を足し、起動しない環境でも AR/VR 差分が理解できる画面にします。",
+      "bodyEn": "Continue watching the WebXR Device API fingerprinting/permissions sections, AR Module handling of `immersive-ar` and environment blending, MDN's feature-requirement table, XRButton/session lifecycle patterns in Immersive Web samples, and Raw Camera Access privacy indicators. Next, rather than adding a real `requestSession()` call, extend today's support radar with degraded rendering previews per optional feature so unsupported environments can still understand AR/VR differences."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開いて `Run support probe` を押し、現在のブラウザーで `inline`、`immersive-ar`、`immersive-vr` がどう返るかを見ます。次に AR mode のまま Policy confidence を下げる、Activation clarity を下げる、Optional feature load を上げる、Privacy sensitivity を上げる順に操作し、route が `policy fix`、`wait for tap`、`degraded launch`、`AR with visible consent` へ変わるか確認してください。",
+      "bodyEn": "Open the sample and press `Run support probe` to see how the current browser reports `inline`, `immersive-ar`, and `immersive-vr`. Then keep AR mode selected and lower policy confidence, lower activation clarity, increase optional-feature load, and increase privacy sensitivity to watch the route change into `policy fix`, `wait for tap`, `degraded launch`, or `AR with visible consent`.",
+      "links": [
+        {
+          "label": "Open Immersive Session Support Radar",
+          "url": "../outputs/2026-07-30_html_immersive_session_support_radar.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Device API、WebXR AR Module、MDN `requestSession()` / `xr-spatial-tracking`、Immersive Web samples / report を確認。アイデア: 昨日の Permissions-Policy launch gate を、実 `isSessionSupported()` と AR / VR / inline ルート選択に拡張する。実装: 6 軸 radar、mode cards、実 support probe、疑似 request log、route cards、tap origin drag、responsive layout を追加。検証: JSON parse、HTML script 構文、gallery 再生成、Pages 公開 URL の HTTP 200 を確認する。",
+      "bodyEn": "Research: reviewed the WebXR Device API, WebXR AR Module, MDN `requestSession()` / `xr-spatial-tracking`, and Immersive Web samples/report. Idea: extend yesterday's Permissions-Policy launch gate into live `isSessionSupported()` and AR/VR/inline route selection. Implementation: added a six-axis radar, mode cards, live support probe, simulated request log, route cards, draggable tap origin, and responsive layout. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and HTTP 200 for the published Pages URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "7 月後半の流れは camera access、fallback router、secondary view、permission policy と、実機や権限に依存する入口側へ寄っています。今日の試作はその入口をさらに実測寄りにして、ブラウザーから得られる support signal と、プロダクト側で設計すべき privacy / fallback signal を同じ画面に置きました。ここを整えると、あとで depth、anchors、lighting、layers を盛っても、未対応環境が無言で壊れにくくなります。",
+      "bodyEn": "The late-July sequence has moved toward entry points that depend on devices and permissions: camera access, fallback routing, secondary views, and Permissions-Policy. Today's prototype makes that entry point more measurement-oriented by putting browser support signals and product-level privacy/fallback signals in one screen. Getting this right makes later depth, anchors, lighting, and layers less likely to fail silently on unsupported environments."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Immersive Session Support Radar` です。`navigator.xr.isSessionSupported()` をボタン操作で実行し、その結果を policy、activation、feature load、privacy sensitivity の slider と合わせて、AR / VR / inline / 2D の推奨ルートに変換します。次に足すなら、optional feature ごとの degraded rendering preview、iframe 埋め込み時の Permissions-Policy ヒント、session lifecycle の start / end 疑似タイムラインを追加します。",
+      "bodyEn": "The selected prototype is `Immersive Session Support Radar`. It runs `navigator.xr.isSessionSupported()` from a button interaction and combines the result with sliders for policy, activation, feature load, and privacy sensitivity to choose AR, VR, inline, or 2D routes. Next additions should include degraded rendering previews per optional feature, iframe Permissions-Policy hints, and a simulated start/end session lifecycle timeline."
+    }
+  ]
+}
