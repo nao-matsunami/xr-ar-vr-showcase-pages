@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Input Profile Fallback Router</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #05080b;
+      color: #f7f3e9;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(143, 245, 223, 0.14), transparent 34%),
+        linear-gradient(315deg, rgba(240, 177, 93, 0.12), transparent 42%),
+        #05080b;
+    }
+
+    main {
+      width: min(1240px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 18px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(143, 245, 223, 0.24);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 3vw, 2.7rem);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    .lede {
+      max-width: 790px;
+      margin-top: 10px;
+      color: #a9b9b4;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border: 1px solid rgba(143, 245, 223, 0.34);
+      background: rgba(3, 17, 20, 0.82);
+      color: #8ff5df;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 668px;
+      border: 1px solid rgba(143, 245, 223, 0.2);
+      background: #03070a;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .status-strip {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .status-card {
+      min-height: 56px;
+      border: 1px solid rgba(247, 243, 233, 0.13);
+      background: rgba(4, 12, 18, 0.78);
+      padding: 9px 10px;
+      backdrop-filter: blur(10px);
+    }
+
+    .status-card span {
+      display: block;
+      color: #a9b9b4;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+    }
+
+    .status-card strong {
+      display: block;
+      margin-top: 5px;
+      color: #f7f3e9;
+      font-size: 0.92rem;
+      overflow-wrap: anywhere;
+    }
+
+    aside {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    section {
+      border: 1px solid rgba(143, 245, 223, 0.2);
+      background: rgba(6, 12, 18, 0.84);
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 0.96rem;
+      letter-spacing: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      margin: 12px 0;
+      color: #a9b9b4;
+      font-size: 0.86rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #8ff5df;
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .seg.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid rgba(143, 245, 223, 0.28);
+      background: rgba(143, 245, 223, 0.08);
+      color: #f7f3e9;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button.active {
+      background: #8ff5df;
+      border-color: #8ff5df;
+      color: #06221d;
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      min-height: 70px;
+      border: 1px solid rgba(247, 243, 233, 0.13);
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .metric span {
+      display: block;
+      color: #a9b9b4;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1rem;
+      line-height: 1.12;
+      overflow-wrap: anywhere;
+    }
+
+    .log {
+      display: grid;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .entry {
+      display: grid;
+      grid-template-columns: 74px 1fr;
+      gap: 8px;
+      align-items: center;
+      min-height: 30px;
+      color: #a9b9b4;
+      font-size: 0.8rem;
+    }
+
+    .entry b {
+      color: #f0b15d;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    footer {
+      grid-column: 1 / -1;
+      color: #a9b9b4;
+      font-size: 0.84rem;
+      padding-bottom: 10px;
+    }
+
+    @media (max-width: 920px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .stage {
+        min-height: 560px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .status-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .stage {
+        min-height: 520px;
+      }
+
+      .readout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Input Profile Fallback Router</h1>
+        <p class="lede">A local WebXR input-source simulator that maps screen, gaze, tracked pointer, and hand routes into the right visual hint, profile fallback, and select/squeeze event policy.</p>
+      </div>
+      <div class="badge">2026-07-31 original sample</div>
+    </header>
+
+    <div class="stage">
+      <canvas id="stage" width="1400" height="900" aria-label="Input profile fallback router visualization"></canvas>
+      <div class="status-strip">
+        <div class="status-card"><span>preferred source</span><strong id="sourceReadout">tracked-pointer / right</strong></div>
+        <div class="status-card"><span>profile route</span><strong id="profileReadout">exact asset</strong></div>
+        <div class="status-card"><span>hint policy</span><strong id="hintReadout">ray + cursor + model</strong></div>
+      </div>
+    </div>
+
+    <aside>
+      <section>
+        <h2>Input Source</h2>
+        <div class="seg">
+          <button type="button" data-source="screen">Screen</button>
+          <button type="button" data-source="gaze">Gaze</button>
+          <button type="button" data-source="tracked">Tracked</button>
+          <button type="button" data-source="hand">Hand</button>
+        </div>
+        <label>Profile match
+          <input id="profileMatch" type="range" min="0" max="100" value="74">
+        </label>
+        <label>Tracking quality
+          <input id="tracking" type="range" min="0" max="100" value="86">
+        </label>
+        <label>Input noise
+          <input id="noise" type="range" min="0" max="100" value="24">
+        </label>
+      </section>
+
+      <section>
+        <h2>Event Gate</h2>
+        <div class="seg three">
+          <button type="button" id="selectBtn">Select</button>
+          <button type="button" id="squeezeBtn">Squeeze</button>
+          <button type="button" id="transientBtn">Transient</button>
+        </div>
+        <label>Comfort bias
+          <input id="comfort" type="range" min="0" max="100" value="62">
+        </label>
+        <label>UI distance
+          <input id="distance" type="range" min="0" max="100" value="56">
+        </label>
+      </section>
+
+      <section>
+        <h2>Readout</h2>
+        <div class="readout">
+          <div class="metric"><span>target ray</span><strong id="rayReadout">tracked-pointer</strong></div>
+          <div class="metric"><span>emulated pose</span><strong id="poseReadout">no</strong></div>
+          <div class="metric"><span>select risk</span><strong id="riskReadout">low</strong></div>
+          <div class="metric"><span>rendered hint</span><strong id="renderReadout">model</strong></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Session Event Log</h2>
+        <div class="log" id="log"></div>
+      </section>
+    </aside>
+
+    <footer>
+      References: WebXR Device API input sources, Immersive Web input explainer, WebXR Input Profiles registry, WebXR Gamepads Module, and Immersive Web samples.
+    </footer>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      profileMatch: document.getElementById("profileMatch"),
+      tracking: document.getElementById("tracking"),
+      noise: document.getElementById("noise"),
+      comfort: document.getElementById("comfort"),
+      distance: document.getElementById("distance")
+    };
+    const readouts = {
+      source: document.getElementById("sourceReadout"),
+      profile: document.getElementById("profileReadout"),
+      hint: document.getElementById("hintReadout"),
+      ray: document.getElementById("rayReadout"),
+      pose: document.getElementById("poseReadout"),
+      risk: document.getElementById("riskReadout"),
+      render: document.getElementById("renderReadout")
+    };
+    const logEl = document.getElementById("log");
+    const sourceButtons = [...document.querySelectorAll("[data-source]")];
+    const state = {
+      source: "tracked",
+      pointer: { x: 0.63, y: 0.56 },
+      pulse: 0,
+      selectFlash: 0,
+      squeezeFlash: 0,
+      transientFlash: 0,
+      logs: [
+        ["ready", "inputsourceschange: tracked-pointer right added"],
+        ["route", "profile exact asset selected"]
+      ]
+    };
+
+    const sourceMeta = {
+      screen: {
+        label: "screen / transient",
+        ray: "screen",
+        profile: ["generic-screen", "transient-touch"],
+        hints: ["highlight"],
+        model: "no model"
+      },
+      gaze: {
+        label: "gaze / viewer",
+        ray: "gaze",
+        profile: ["generic-gaze"],
+        hints: ["cursor", "highlight"],
+        model: "no ray"
+      },
+      tracked: {
+        label: "tracked-pointer / right",
+        ray: "tracked-pointer",
+        profile: ["oculus-touch-v3", "generic-trigger-squeeze-thumbstick"],
+        hints: ["ray", "cursor", "model", "highlight"],
+        model: "controller model"
+      },
+      hand: {
+        label: "tracked-pointer / hand",
+        ray: "tracked-pointer",
+        profile: ["generic-hand-select-grasp", "generic-hand"],
+        hints: ["ray", "cursor", "hand mesh", "highlight"],
+        model: "joint hand"
+      }
+    };
+
+    function value(id) {
+      return Number(controls[id].value);
+    }
+
+    function addLog(kind, text) {
+      state.logs.unshift([kind, text]);
+      state.logs = state.logs.slice(0, 5);
+      renderLog();
+    }
+
+    function renderLog() {
+      logEl.innerHTML = state.logs
+        .map(([kind, text]) => `<div class="entry"><b>${kind}</b><span>${text}</span></div>`)
+        .join("");
+    }
+
+    function profileRoute() {
+      const match = value("profileMatch");
+      if (match > 70) return "exact asset";
+      if (match > 38) return "generic fallback";
+      return "abstract silhouette";
+    }
+
+    function riskLevel() {
+      const tracking = value("tracking");
+      const noise = value("noise");
+      const comfort = value("comfort");
+      const base = noise + (100 - tracking) * 0.9 + (state.source === "screen" ? 12 : 0) + (state.source === "gaze" ? 8 : 0) - comfort * 0.35;
+      if (base > 72) return ["high", "#ff6c5f"];
+      if (base > 42) return ["watch", "#f0b15d"];
+      return ["low", "#8ff5df"];
+    }
+
+    function hintPolicy() {
+      const meta = sourceMeta[state.source];
+      if (state.source === "screen") return "highlight only";
+      if (state.source === "gaze") return "cursor + highlight";
+      if (value("tracking") < 35) return "highlight + short ray";
+      return meta.hints.join(" + ");
+    }
+
+    function drawGrid(w, h) {
+      ctx.fillStyle = "#05080b";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "rgba(143,245,223,0.07)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 42) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 42) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawText(text, x, y, size = 16, color = "#f7f3e9", align = "left") {
+      ctx.fillStyle = color;
+      ctx.font = `700 ${size}px Inter, system-ui, sans-serif`;
+      ctx.textAlign = align;
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, x, y);
+    }
+
+    function drawPanel(x, y, w, h, color, label, active) {
+      ctx.save();
+      ctx.fillStyle = active ? "rgba(143,245,223,0.12)" : "rgba(255,255,255,0.045)";
+      ctx.strokeStyle = active ? color : "rgba(247,243,233,0.16)";
+      ctx.lineWidth = active ? 3 : 1;
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+      drawText(label, x + 16, y + 24, 14, active ? color : "#a9b9b4");
+      ctx.restore();
+    }
+
+    function drawEventTimeline(w, h) {
+      const steps = ["inputsourceschange", "selectstart", "select", "selectend"];
+      const x0 = w * 0.1;
+      const y = h - 92;
+      const gap = Math.min(190, (w - x0 * 2) / (steps.length - 1));
+      ctx.strokeStyle = "rgba(143,245,223,0.34)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x0, y);
+      ctx.lineTo(x0 + gap * (steps.length - 1), y);
+      ctx.stroke();
+      steps.forEach((step, i) => {
+        const x = x0 + gap * i;
+        const glow = (state.selectFlash > 0 && i > 0) || (state.transientFlash > 0 && i === 0);
+        ctx.fillStyle = glow ? "#f0b15d" : "#8ff5df";
+        ctx.beginPath();
+        ctx.arc(x, y, glow ? 11 : 7, 0, Math.PI * 2);
+        ctx.fill();
+        drawText(step, x, y + 28, 12, "#a9b9b4", "center");
+      });
+    }
+
+    function drawSourceVisual(w, h, t) {
+      const meta = sourceMeta[state.source];
+      const cx = state.pointer.x * w;
+      const cy = state.pointer.y * h;
+      const center = { x: w * 0.5, y: h * 0.48 };
+      const distance = 0.65 + value("distance") / 100;
+      const targetW = 210 + value("distance") * 1.1;
+      const targetH = 122;
+      const noise = value("noise") / 100;
+      const jitterX = Math.sin(t * 0.005) * 24 * noise;
+      const jitterY = Math.cos(t * 0.004) * 18 * noise;
+      const hit = { x: center.x + jitterX, y: center.y + jitterY };
+      const track = value("tracking") / 100;
+      const [risk, riskColor] = riskLevel();
+
+      drawPanel(center.x - targetW / 2, center.y - targetH / 2, targetW, targetH, riskColor, "virtual target", true);
+      ctx.strokeStyle = "rgba(247,243,233,0.2)";
+      ctx.strokeRect(center.x - targetW / 2 + 18, center.y - targetH / 2 + 48, targetW - 36, 42);
+      drawText("profile-aware action zone", center.x, center.y + 16, 16, "#f7f3e9", "center");
+
+      if (state.source === "screen") {
+        ctx.fillStyle = "rgba(240,177,93,0.86)";
+        ctx.beginPath();
+        ctx.arc(cx, cy, 28 + state.transientFlash * 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#f7f3e9";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(hit.x - 64, hit.y - 38, 128, 76);
+        drawText("screen tap", cx, cy + 48, 14, "#f0b15d", "center");
+      } else if (state.source === "gaze") {
+        ctx.strokeStyle = "rgba(143,245,223,0.36)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(w * 0.5, h * 0.34, 34 + Math.sin(t * 0.003) * 3, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(143,245,223,0.88)";
+        ctx.beginPath();
+        ctx.arc(hit.x, hit.y, 13, 0, Math.PI * 2);
+        ctx.fill();
+        drawText("viewer gaze cursor", w * 0.5, h * 0.34 - 52, 14, "#8ff5df", "center");
+      } else {
+        const origin = state.source === "hand" ? { x: w * 0.24, y: h * 0.72 } : { x: w * 0.25, y: h * 0.62 };
+        const rayEnd = { x: hit.x, y: hit.y };
+        const rayAlpha = Math.max(0.22, track);
+        ctx.strokeStyle = `rgba(143,245,223,${rayAlpha})`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(origin.x, origin.y);
+        ctx.lineTo(rayEnd.x, rayEnd.y);
+        ctx.stroke();
+        ctx.fillStyle = riskColor;
+        ctx.beginPath();
+        ctx.arc(rayEnd.x, rayEnd.y, 11 + state.selectFlash * 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (state.source === "hand") {
+          for (let i = 0; i < 5; i += 1) {
+            const px = origin.x + i * 22;
+            const py = origin.y - Math.sin(i + t * 0.004) * 10 - i * 11;
+            ctx.strokeStyle = "rgba(247,243,233,0.22)";
+            ctx.beginPath();
+            ctx.moveTo(origin.x, origin.y);
+            ctx.lineTo(px, py);
+            ctx.stroke();
+            ctx.fillStyle = "#8ff5df";
+            ctx.beginPath();
+            ctx.arc(px, py, 7, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          drawText("hand mesh fallback", origin.x + 18, origin.y + 34, 14, "#a9b9b4");
+        } else {
+          ctx.fillStyle = "rgba(247,243,233,0.08)";
+          ctx.strokeStyle = "#8ff5df";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(origin.x - 22, origin.y - 58, 44, 112, 12);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = state.squeezeFlash > 0 ? "#f0b15d" : "#8ff5df";
+          ctx.fillRect(origin.x - 13, origin.y - 28, 26, 18);
+          drawText("controller asset", origin.x + 42, origin.y + 2, 14, "#a9b9b4");
+        }
+      }
+
+      const route = profileRoute();
+      const profileX = w * 0.67;
+      const profileY = h * 0.23;
+      drawText("XRInputSource.profiles", profileX, profileY - 44, 15, "#f0b15d");
+      meta.profile.forEach((item, i) => {
+        const matched = (route === "exact asset" && i === 0) || (route === "generic fallback" && i === 1);
+        drawPanel(profileX, profileY + i * 58, 250, 42, matched ? "#8ff5df" : "#f0b15d", item, matched);
+      });
+      if (route === "abstract silhouette") {
+        drawPanel(profileX, profileY + 116, 250, 42, "#ff6c5f", "app-local abstract shape", true);
+      }
+
+      const hintX = w * 0.1;
+      const hintY = h * 0.23;
+      drawText("rendered hint policy", hintX, hintY - 44, 15, "#f0b15d");
+      ["highlight", "cursor", "ray", "model"].forEach((item, i) => {
+        const on = hintPolicy().includes(item) || (item === "model" && hintPolicy().includes("hand mesh"));
+        drawPanel(hintX, hintY + i * 48, 210, 34, on ? "#8ff5df" : "#ff6c5f", item, on);
+      });
+
+      drawText(`targetRayMode: ${meta.ray}`, w * 0.5, h * 0.79, 18, "#f7f3e9", "center");
+      drawText(`distance scale ${distance.toFixed(2)}m / risk ${risk}`, w * 0.5, h * 0.83, 14, riskColor, "center");
+      drawEventTimeline(w, h);
+    }
+
+    function updateReadouts() {
+      const meta = sourceMeta[state.source];
+      const route = profileRoute();
+      const hints = hintPolicy();
+      const [risk] = riskLevel();
+      const emulated = value("tracking") < 42 || state.source === "gaze" ? "yes" : "no";
+      readouts.source.textContent = meta.label;
+      readouts.profile.textContent = route;
+      readouts.hint.textContent = hints;
+      readouts.ray.textContent = meta.ray;
+      readouts.pose.textContent = emulated;
+      readouts.risk.textContent = risk;
+      readouts.render.textContent = route === "abstract silhouette" ? "silhouette" : meta.model;
+      sourceButtons.forEach((button) => button.classList.toggle("active", button.dataset.source === state.source));
+    }
+
+    function draw(t = 0) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(320, Math.floor(rect.width * dpr));
+      const h = Math.max(420, Math.floor(rect.height * dpr));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      drawGrid(w, h);
+      drawSourceVisual(w, h, t);
+      state.pulse = Math.max(0, state.pulse - 0.018);
+      state.selectFlash = Math.max(0, state.selectFlash - 0.03);
+      state.squeezeFlash = Math.max(0, state.squeezeFlash - 0.03);
+      state.transientFlash = Math.max(0, state.transientFlash - 0.025);
+      updateReadouts();
+      requestAnimationFrame(draw);
+    }
+
+    sourceButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        state.source = button.dataset.source;
+        addLog("source", `inputsourceschange: preferred ${sourceMeta[state.source].label}`);
+      });
+    });
+
+    document.getElementById("selectBtn").addEventListener("click", () => {
+      state.selectFlash = 1;
+      addLog("select", `${state.source}: selectstart -> select -> selectend`);
+    });
+
+    document.getElementById("squeezeBtn").addEventListener("click", () => {
+      state.squeezeFlash = 1;
+      addLog("squeeze", state.source === "screen" || state.source === "gaze" ? "no squeeze component; map to secondary UI" : `${state.source}: squeeze event accepted`);
+    });
+
+    document.getElementById("transientBtn").addEventListener("click", () => {
+      state.source = "screen";
+      state.transientFlash = 1;
+      addLog("transient", "temporary screen input source added for one action");
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      canvas.setPointerCapture(event.pointerId);
+      movePointer(event);
+    });
+    canvas.addEventListener("pointermove", (event) => {
+      if (event.buttons) movePointer(event);
+    });
+    canvas.addEventListener("pointerup", (event) => {
+      canvas.releasePointerCapture(event.pointerId);
+    });
+    canvas.addEventListener("pointercancel", () => {});
+
+    function movePointer(event) {
+      const rect = canvas.getBoundingClientRect();
+      state.pointer.x = Math.min(0.96, Math.max(0.04, (event.clientX - rect.left) / rect.width));
+      state.pointer.y = Math.min(0.96, Math.max(0.08, (event.clientY - rect.top) / rect.height));
+    }
+
+    Object.values(controls).forEach((control) => control.addEventListener("input", updateReadouts));
+    renderLog();
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>

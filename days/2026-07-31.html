@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XR 入力ソースを profile と hint で分岐する | 2026-07-31</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.31</p>
+      <h1>XR 入力ソースを profile と hint で分岐する</h1>
+      <p class="hero-subtitle">Routing XR input sources with profiles and visual hints</p>
+      <p>WebXR Device API の入力章、Immersive Web の input explainer、WebXR Input Profiles、WebXR Gamepads Module、公式 samples を確認し、screen / gaze / tracked-pointer / hand を同じ操作系に畳み込む自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing WebXR Device API input handling, the Immersive Web input explainer, WebXR Input Profiles, the WebXR Gamepads Module, and official samples, today's original HTML sample routes screen, gaze, tracked-pointer, and hand input into one interaction policy.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-31_html_input_profile_fallback_router.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-30.html">← 2026.07.30</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Input Profile Fallback Router</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-31_html_input_profile_fallback_router.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR の入力は、デバイス形状より先に `targetRayMode` の `screen` / `gaze` / `tracked-pointer` で整理すると、表示すべき hint を決めやすい。</span>
+              <span class="en-copy">WebXR input becomes easier to route by considering `targetRayMode` values such as `screen`, `gaze`, and `tracked-pointer` before device shape.</span>
+            </li>
+          
+            <li>
+              <span>`XRSession.inputSources` はアクティブな `XRInputSource` の一覧で、追加・削除時には `inputsourceschange` を見てキャッシュを更新する必要がある。</span>
+              <span class="en-copy">`XRSession.inputSources` lists active `XRInputSource` objects, and applications should refresh cached input state on `inputsourceschange`.</span>
+            </li>
+          
+            <li>
+              <span>`selectstart` / `select` / `selectend` と `squeezestart` / `squeeze` / `squeezeend` は primary action と secondary/grab action を分ける軸になる。</span>
+              <span class="en-copy">`selectstart` / `select` / `selectend` and `squeezestart` / `squeeze` / `squeezeend` separate primary action from secondary or grab-style action.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Input Profiles registry は、ハードウェア固有 profile から generic fallback までの ordered list を持ち、モデル表示や gamepad mapping を安定させるための一次情報になる。</span>
+              <span class="en-copy">The WebXR Input Profiles registry provides ordered hardware-specific and generic fallback profiles that stabilize model rendering and gamepad mapping.</span>
+            </li>
+          
+            <li>
+              <span>公式 samples の Input Tracking / Input Profiles は実装確認に有用だが、公開アーカイブでは外部デモを並べず、自作サンプルで fallback policy と見え方の差を可視化する。</span>
+              <span class="en-copy">Official Input Tracking / Input Profiles samples are useful references, but the public archive centers the local original sample that visualizes fallback policy and hint differences.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は WebXR Input Profiles です。これは派手な表示サンプルではなく、`XRInputSource.profiles`、`handedness`、`gamepad` mapping、fallback profile をそろえるための registry / assets / helper library の集合です。面白いのは、アプリが特定コントローラー名に賭けるのではなく、ordered profile list をたどって「正確なモデル」「generic controller」「抽象 silhouette」へ段階的に落とせる点です。今日の自作サンプルでは、この発想を入力ルーターとして可視化しました。</p>
+          <p class="en-copy">Today's notable reference is WebXR Input Profiles. It is not a flashy demo, but a registry/assets/helper-library set for aligning `XRInputSource.profiles`, `handedness`, `gamepad` mapping, and fallback profiles. The useful part is that an app can follow the ordered profile list and degrade from an exact model to a generic controller or abstract silhouette instead of betting on one controller name. Today's original sample turns that idea into an input router.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-input-profiles/" target="_blank" rel="noreferrer">Immersive Web: WebXR Input Profiles</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>サンプルは `screen`、`gaze`、`tracked-pointer`、`hand` の 4 入力を切り替え、中央の仮想ターゲットに対して highlight、cursor、ray、model のどれを出すべきかを表示します。`Profile match` を下げると exact asset から generic fallback、さらに app-local silhouette へ落ちます。`Select`、`Squeeze`、`Transient` を押すと session event log が更新され、screen 入力では一時的な input source と highlight-only の挙動が見えるようにしました。</p>
+          <p class="en-copy">The sample switches between `screen`, `gaze`, `tracked-pointer`, and `hand`, then shows whether the virtual target should render a highlight, cursor, ray, or model. Lowering `Profile match` degrades from exact asset to generic fallback and then to an app-local silhouette. Pressing `Select`, `Squeeze`, or `Transient` updates the session event log, making temporary screen input and highlight-only behavior visible.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では `inputSources` を毎フレーム無条件に信じるより、`inputsourceschange` で preferred source を更新し、`targetRayMode` ごとに表示 hint を決める層を挟むと破綻しにくいです。`screen` は指で隠れるため highlight 中心、`gaze` は ray を出さず cursor / highlight、`tracked-pointer` は ray / cursor / model、hand は joint mesh や短い ray に寄せるとよいです。`XRFrame.getPose(inputSource.targetRaySpace, referenceSpace)` が `null` になる可能性と `XRPose.emulatedPosition` も、UI の信頼度表示に入れる価値があります。</p>
+          <p class="en-copy">In production, route input through an `inputsourceschange`-driven preferred-source layer and decide visual hints per `targetRayMode` rather than trusting all `inputSources` equally every frame. `screen` should lean on highlights because fingers obscure the view, `gaze` should avoid a ray and use cursor/highlight, `tracked-pointer` can use ray/cursor/model, and hand input can use joint meshes or shorter rays. Treat possible `null` poses from `XRFrame.getPose(inputSource.targetRaySpace, referenceSpace)` and `XRPose.emulatedPosition` as part of the UI confidence signal.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>次は WebXR Gamepads Module の `xr-standard` mapping、Input Profiles の registry 更新、Hand Input の joint model、DOM Overlay と transient input の event ordering、そして Immersive Web samples の Input Selection 系を継続して見ます。今日のルーターに、実 `XRInputSource.gamepad.buttons` の状態、axis deadzone、hand-tracking の pinch confidence を追加すると、入力の見た目だけでなく action binding の品質まで扱えます。</p>
+          <p class="en-copy">Next, keep watching the WebXR Gamepads Module `xr-standard` mapping, Input Profiles registry updates, Hand Input joint models, DOM Overlay plus transient input event ordering, and Immersive Web Input Selection samples. Adding live `XRInputSource.gamepad.buttons`, axis deadzones, and hand-tracking pinch confidence to today's router would extend it from visual hints into action-binding quality.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルを開き、`Screen`、`Gaze`、`Tracked`、`Hand` を順に切り替えて、hint policy が highlight-only、cursor + highlight、ray + cursor + model へ変わることを確認してください。次に `Profile match` と `Tracking quality` を下げ、見た目が exact controller から generic fallback / silhouette、さらに emulated pose 警告へ変わるかを見ます。最後に `Transient` と `Select` を押して、短命 input source の event sequence をログで確認します。</p>
+          <p class="en-copy">Open the sample and switch through `Screen`, `Gaze`, `Tracked`, and `Hand` to confirm the hint policy changes from highlight-only to cursor + highlight and then ray + cursor + model. Then lower `Profile match` and `Tracking quality` to watch the visual route degrade from exact controller to generic fallback or silhouette, plus emulated-pose warning. Finally press `Transient` and `Select` to inspect the short-lived input-source event sequence in the log.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-31_html_input_profile_fallback_router.html" target="_blank" rel="noreferrer">Open Input Profile Fallback Router</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Device API の input sources、Immersive Web input explainer、WebXR Input Profiles、WebXR Gamepads Module、MDN 入力ガイド、公式 samples を確認。アイデア: 昨日の session support radar の次段として、session 開始後に入ってくる入力デバイスを profile と hint policy で吸収する。実装: 4 入力モード、profile fallback、tracking / noise / comfort slider、select / squeeze / transient event log、canvas 上の可視化を追加。検証: JSON parse、HTML script 構文、gallery 再生成、Pages 公開 URL の HTTP 200 を確認する。</p>
+          <p class="en-copy">Research: reviewed WebXR Device API input sources, the Immersive Web input explainer, WebXR Input Profiles, the WebXR Gamepads Module, MDN's input guide, and official samples. Idea: follow yesterday's session support radar with a post-session router that absorbs input devices through profiles and hint policy. Implementation: added four input modes, profile fallback, tracking/noise/comfort sliders, select/squeeze/transient event logs, and canvas visualization. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and HTTP 200 for the published Pages URLs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>7 月後半は、permission、capability probe、session support と、XR 体験に入る前の gate を固めてきました。今日の試作は、その次の「入れた後に何で操作しているか」を扱います。デバイスごとの表現を最初から作り込むより、`targetRayMode`、profile fallback、pose confidence の 3 層に分けると、AR phone、VR controller、hand tracking、gaze clicker を同じ設計図で扱えます。</p>
+          <p class="en-copy">Late July has focused on gates before entering XR: permissions, capability probes, and session support. Today's prototype moves one step later and asks what the user is interacting with after entry. Separating input into `targetRayMode`, profile fallback, and pose confidence lets AR phones, VR controllers, hand tracking, and gaze clickers share one design map instead of hardcoding each device up front.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Input Profile Fallback Router` です。実 XR session は開始せず、`XRInputSource` 由来の概念をローカル canvas 上で再現し、入力の種類によって hint と model fallback が変わることを触れるようにしました。次に足すなら、Input Profiles JSON の実 fetch、gamepad button / axes の疑似 binding 表、hand pinch と squeeze action の arbitration、DOM Overlay 上の pointer event との重複抑制を追加します。</p>
+          <p class="en-copy">The selected prototype is `Input Profile Fallback Router`. It does not start a real XR session; instead it recreates `XRInputSource` concepts on a local canvas so the user can see hint and model fallback changes per input type. Next additions should include real fetching of Input Profiles JSON, a simulated gamepad button/axis binding table, arbitration between hand pinch and squeeze action, and duplicate-event suppression with DOM Overlay pointer events.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-31_html_input_profile_fallback_router.html" target="_blank" rel="noreferrer">Today's sample: Input Profile Fallback Router</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr/input-explainer.html" target="_blank" rel="noreferrer">Immersive Web: WebXR Device API Input Explainer</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-input-profiles/" target="_blank" rel="noreferrer">Immersive Web: WebXR Input Profiles</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-gamepads-module/" target="_blank" rel="noreferrer">Immersive Web: WebXR Gamepads Module</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Inputs" target="_blank" rel="noreferrer">MDN: Inputs and input sources</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-31_html_input_profile_fallback_router.html" loading="lazy" title="Input Profile Fallback Router"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
