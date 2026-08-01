@@ -1,0 +1,109 @@
+{
+  "date": "2026-08-01",
+  "headline": "XR コントローラーの profile 取得と action binding を監視する",
+  "headlineEn": "Watching XR controller profile fetch and action binding",
+  "summary": "WebXR Device API の最新 CRD、WebXR Input Profiles、Motion Controllers、Input Profiles assets、公式 samples を確認し、実機なしで profile matching、asset loading、gamepad component、deadzone、action arbitration を観察する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the latest WebXR Device API CRD, WebXR Input Profiles, Motion Controllers, Input Profiles assets, and official samples, today's original HTML sample visualizes profile matching, asset loading, gamepad components, deadzones, and action arbitration without requiring XR hardware.",
+  "keyTopics": [
+    "W3C の WebXR Device API 最新公開版は 2026-06-09 の Candidate Recommendation Draft で、入力章には `XRInputSource`、transient input、`XRInputSourcesChangeEvent` がまとまっている。",
+    "WebXR Input Profiles は、既知ハードウェアの `XRInputSource` conformance 情報、registry、assets、helper library を扱う一次情報で、特定デバイス名への直書きを避けるための土台になる。",
+    "Motion Controllers library は、`XRInputSource.profiles` から最適 profile を探し、trigger / squeeze / thumbstick / button などの component 状態を `gamepad` から更新する設計を示している。",
+    "Input Profiles assets は CDN 経由の profile / model 取得を想定するため、asset が遅い、profile が generic に落ちる、unknown device になる場合の一時表示が必要になる。",
+    "公式 input-profiles sample は controller model 表示の参照に有用だが、今日の公開カードでは外部デモではなく、ワークスペース内の binding watchdog サンプルを中心にした。"
+  ],
+  "keyTopicsEn": [
+    "The latest published W3C WebXR Device API is the 2026-06-09 Candidate Recommendation Draft, whose input chapter covers `XRInputSource`, transient input, and `XRInputSourcesChangeEvent`.",
+    "WebXR Input Profiles provides primary information for known hardware conformance, registries, assets, and helper libraries, reducing the need to hardcode device names.",
+    "The Motion Controllers library shows how to find the best profile from `XRInputSource.profiles` and update trigger, squeeze, thumbstick, and button components from `gamepad` state.",
+    "Input Profiles assets are commonly fetched from a CDN, so apps need temporary visuals for slow assets, generic fallbacks, and unknown devices.",
+    "The official input-profiles sample is useful as a controller-model reference, but today's public card centers the workspace's original binding watchdog sample."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Motion Controller Binding Watch",
+      "url": "../outputs/2026-08-01_html_motion_controller_binding_watch.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR Input Profiles",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/"
+    },
+    {
+      "label": "Immersive Web: Motion Controllers",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/packages/motion-controllers/"
+    },
+    {
+      "label": "Immersive Web: Input Profile Asset Stats",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/packages/assets/stats/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Input Profiles と Motion Controllers の組み合わせです。派手な空間表現ではありませんが、`XRInputSource.profiles` の ordered list から最適な profile を探し、JSON profile と asset path を読み、`gamepad.buttons` / `gamepad.axes` を trigger、squeeze、thumbstick などの component に対応づけるという、実装上かなり重要な部分を扱っています。面白いのは、controller model 表示と action binding を同じ profile 情報から安定化できる点です。",
+      "bodyEn": "Today's notable reference is the combination of WebXR Input Profiles and Motion Controllers. It is not a flashy spatial demo, but it covers a practical core: finding the best profile from the ordered `XRInputSource.profiles` list, loading JSON profile data and asset paths, then mapping `gamepad.buttons` and `gamepad.axes` to trigger, squeeze, thumbstick, and other components. The interesting part is that controller visualization and action binding can be stabilized from the same profile data.",
+      "links": [
+        {
+          "label": "Immersive Web: Motion Controllers",
+          "url": "https://immersive-web.github.io/webxr-input-profiles/packages/motion-controllers/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "今日のサンプルでは、Quest / Generic / Unknown の入力ソースを切り替え、profile match、asset latency、tracking confidence を動かすと、exact asset、generic fallback、local silhouette へ表示経路が変わります。Trigger、Squeeze、Thumbstick、Deadzone を操作すると、select、preselect、grab、move、duplicate suppression の action 状態が中央ターゲットに表示されます。`Probe Profile List` は CDN の `profilesList.json` を実際に取りに行き、失敗時は local fallback を使う判断をログに出します。",
+      "bodyEn": "Today's sample switches between Quest, Generic, and Unknown input sources. Moving profile match, asset latency, and tracking confidence changes the visual route between exact asset, generic fallback, and local silhouette. Trigger, Squeeze, Thumbstick, and Deadzone controls update select, preselect, grab, move, and duplicate-suppression action states on the central target. `Probe Profile List` actually requests the CDN `profilesList.json` and logs whether the app can rely on fetched profile data or must keep a local fallback."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "`inputsourceschange` で MotionController を作成し、削除時に release する流れを基本にすると、session 中の controller 交換に耐えやすくなります。`fetchProfile()` 相当の処理は非同期なので、profile / asset が届くまで silhouette や ray-only 表示を先に出す設計が必要です。`updateFromGamepad()` 相当の component 更新では、button の `pressed` / `touched` / value と axes deadzone を action binding の前段に置き、trigger と squeeze が同時に入る場合は二重発火を抑制する層を挟むと安全です。",
+      "bodyEn": "A robust implementation creates a MotionController on `inputsourceschange` and releases it when the source is removed, which makes controller swapping during a session easier to handle. Because `fetchProfile()`-style work is asynchronous, the app should render silhouettes or ray-only hints before profile and asset data arrive. In an `updateFromGamepad()`-style component update, button `pressed` / `touched` / value and axes deadzones should sit before action binding, with a suppression layer for simultaneous trigger and squeeze input."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は WebXR Gamepads Module の `xr-standard` mapping、Input Profiles registry / assets の version 更新、hand tracking の pinch と controller squeeze の arbitration、DOM Overlay pointer event と XR select event の重複抑制、そして WebXR Samples の input tracking 系を継続して見ます。特に、profile の取得成功だけでなく、component layout が action map と一致しているかを UI 上で検査する導線を足したいです。",
+      "bodyEn": "Next, keep watching the WebXR Gamepads Module `xr-standard` mapping, Input Profiles registry/assets version updates, arbitration between hand-tracking pinch and controller squeeze, duplicate suppression between DOM Overlay pointer events and XR select events, and the input-tracking WebXR samples. The next useful addition is a UI path that checks not only profile fetch success but whether the component layout matches the app's action map."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、`Quest` から `Unknown` に切り替えて `Profile match` を下げ、exact asset から generic fallback、local silhouette に落ちる様子を見てください。次に `Trigger` と `Squeeze` を同時に上げると、二重発火を避ける `suppress duplicate grab` が出ます。最後に `Probe Profile List` を押して、CDN の profile list が見える場合と見えない場合のログを確認します。",
+      "bodyEn": "Open the sample, switch from `Quest` to `Unknown`, and lower `Profile match` to watch the route degrade from exact asset to generic fallback and local silhouette. Then raise both `Trigger` and `Squeeze` to see `suppress duplicate grab`, which prevents duplicate action emission. Finally press `Probe Profile List` and inspect the log for the CDN profile-list path or fallback behavior.",
+      "links": [
+        {
+          "label": "Open Motion Controller Binding Watch",
+          "url": "../outputs/2026-08-01_html_motion_controller_binding_watch.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Device API 最新 CRD、Input Profiles、Motion Controllers、assets stats、公式 samples を確認。設計: 7 月末の input profile fallback router を一段進め、profile の見つかり方と gamepad component から action binding へ渡る部分を分離して観察する。実装: profile route、asset latency、tracking confidence、button / axes / deadzone、source add/remove、profile list fetch、event log、canvas controller 表示を追加。検証: JSON parse、HTML script 構文、全 output script compile、gallery 再生成、Pages 公開 URL を確認する。",
+      "bodyEn": "Research: reviewed the latest WebXR Device API CRD, Input Profiles, Motion Controllers, asset stats, and official samples. Design: extend late July's input profile fallback router by separating profile matching from the path that converts gamepad components into action bindings. Implementation: added profile routing, asset latency, tracking confidence, buttons/axes/deadzones, source add/remove, profile-list fetch, event log, and canvas controller visualization. Validation: parse JSON, check HTML script syntax, compile all output scripts, regenerate the gallery, and verify published Pages URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日は permission、session support、input source routing と、XR 体験の入口から操作の入口へ進めています。今日の試作は「controller が見えた」だけで安心せず、profile 取得、asset availability、component mapping、action arbitration を別々の状態として扱うための小さな監視盤です。AR / VR / hand / gaze が混ざるほど、この分離は後から効いてきます。",
+      "bodyEn": "The recent sequence has moved from permissions and session support into input-source routing. Today's prototype is a small watchdog for treating profile fetch, asset availability, component mapping, and action arbitration as separate states instead of assuming everything is ready once a controller appears. This separation becomes more valuable as AR, VR, hand, and gaze input are mixed."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Motion Controller Binding Watch` です。実 XR session は開始せず、入力 profile と gamepad component の概念をローカル canvas で再現し、fallback と action binding の判断を触れるようにしました。次に足すなら、実 profile JSON の詳細表示、component ごとの visual response、left / right handedness の別管理、hand pinch と controller squeeze の優先順位、DOM Overlay pointer event との重複抑制テーブルを追加します。",
+      "bodyEn": "The selected prototype is `Motion Controller Binding Watch`. It does not start a real XR session; instead it recreates input profile and gamepad component concepts in a local canvas so fallback and action-binding decisions are interactive. Next additions should include detailed real profile JSON inspection, per-component visual responses, separate left/right handedness state, hand-pinch versus controller-squeeze priority, and a duplicate-suppression table for DOM Overlay pointer events."
+    }
+  ]
+}

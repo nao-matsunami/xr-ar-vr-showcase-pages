@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Motion Controller Binding Watch</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #05080b;
+      color: #f7f3e9;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(143, 245, 223, 0.13), transparent 32%),
+        linear-gradient(315deg, rgba(240, 177, 93, 0.12), transparent 40%),
+        #05080b;
+    }
+
+    main {
+      width: min(1240px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 18px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(143, 245, 223, 0.24);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 3vw, 2.65rem);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    .lede {
+      max-width: 800px;
+      margin-top: 10px;
+      color: #a9b9b4;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border: 1px solid rgba(143, 245, 223, 0.34);
+      background: rgba(3, 17, 20, 0.82);
+      color: #8ff5df;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 672px;
+      border: 1px solid rgba(143, 245, 223, 0.2);
+      background: #03070a;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .status-strip {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .status-card {
+      min-height: 56px;
+      border: 1px solid rgba(247, 243, 233, 0.13);
+      background: rgba(4, 12, 18, 0.78);
+      padding: 9px 10px;
+      backdrop-filter: blur(10px);
+    }
+
+    .status-card span {
+      display: block;
+      color: #a9b9b4;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+    }
+
+    .status-card strong {
+      display: block;
+      margin-top: 5px;
+      color: #f7f3e9;
+      font-size: 0.92rem;
+      overflow-wrap: anywhere;
+    }
+
+    aside {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    section {
+      border: 1px solid rgba(143, 245, 223, 0.2);
+      background: rgba(6, 12, 18, 0.84);
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 0.96rem;
+      letter-spacing: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      margin: 12px 0;
+      color: #a9b9b4;
+      font-size: 0.86rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #8ff5df;
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .seg.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid rgba(143, 245, 223, 0.28);
+      background: rgba(143, 245, 223, 0.08);
+      color: #f7f3e9;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button.active {
+      background: #8ff5df;
+      border-color: #8ff5df;
+      color: #06221d;
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      min-height: 70px;
+      border: 1px solid rgba(247, 243, 233, 0.13);
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .metric span {
+      display: block;
+      color: #a9b9b4;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1rem;
+      line-height: 1.12;
+      overflow-wrap: anywhere;
+    }
+
+    .log {
+      display: grid;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .entry {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 8px;
+      align-items: center;
+      min-height: 30px;
+      color: #a9b9b4;
+      font-size: 0.8rem;
+    }
+
+    .entry b {
+      color: #f0b15d;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    footer {
+      grid-column: 1 / -1;
+      color: #a9b9b4;
+      font-size: 0.84rem;
+      padding-bottom: 10px;
+    }
+
+    @media (max-width: 920px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .stage {
+        min-height: 560px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .status-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .stage {
+        min-height: 520px;
+      }
+
+      .readout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Motion Controller Binding Watch</h1>
+      <p class="lede">A local WebXR input-profile lab that simulates profile matching, gamepad component states, deadzones, and action routing before a controller model is trusted.</p>
+    </div>
+    <div class="badge">2026-08-01 / WebXR Input Profiles</div>
+  </header>
+
+  <div class="stage">
+    <canvas id="stage" width="940" height="672" aria-label="Motion controller binding simulator"></canvas>
+    <div class="status-strip">
+      <div class="status-card"><span>Profile route</span><strong id="profileStatus">exact asset</strong></div>
+      <div class="status-card"><span>Action state</span><strong id="actionStatus">idle</strong></div>
+      <div class="status-card"><span>Binding health</span><strong id="healthStatus">stable</strong></div>
+    </div>
+  </div>
+
+  <aside>
+    <section>
+      <h2>Input Source</h2>
+      <div class="seg three" id="sourceButtons">
+        <button data-source="quest" class="active">Quest</button>
+        <button data-source="generic">Generic</button>
+        <button data-source="unknown">Unknown</button>
+      </div>
+      <label>Profile match <input id="profileMatch" type="range" min="0" max="100" value="78"></label>
+      <label>Asset latency <input id="latency" type="range" min="0" max="100" value="35"></label>
+      <label>Tracking confidence <input id="tracking" type="range" min="0" max="100" value="84"></label>
+    </section>
+
+    <section>
+      <h2>Gamepad Components</h2>
+      <label>Trigger <input id="trigger" type="range" min="0" max="100" value="20"></label>
+      <label>Squeeze <input id="squeeze" type="range" min="0" max="100" value="0"></label>
+      <label>Thumbstick X <input id="axisX" type="range" min="-100" max="100" value="28"></label>
+      <label>Thumbstick Y <input id="axisY" type="range" min="-100" max="100" value="-42"></label>
+      <label>Deadzone <input id="deadzone" type="range" min="0" max="45" value="18"></label>
+    </section>
+
+    <section>
+      <h2>Scenario</h2>
+      <div class="seg">
+        <button id="addSource">Add Source</button>
+        <button id="removeSource">Remove</button>
+      </div>
+      <div class="seg">
+        <button id="tapTrigger">Tap Trigger</button>
+        <button id="grabPulse">Grab Pulse</button>
+      </div>
+      <button id="fetchProfiles">Probe Profile List</button>
+    </section>
+
+    <section>
+      <h2>Readout</h2>
+      <div class="readout">
+        <div class="metric"><span>Selected profile</span><strong id="selectedProfile">oculus-touch-v3</strong></div>
+        <div class="metric"><span>Asset state</span><strong id="assetState">ready</strong></div>
+        <div class="metric"><span>Locomotion</span><strong id="locomotion">strafe</strong></div>
+        <div class="metric"><span>Suppressed</span><strong id="suppressed">0</strong></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Event Log</h2>
+      <div class="log" id="log"></div>
+    </section>
+  </aside>
+
+  <footer>
+    References: WebXR Device API input sources, WebXR Input Profiles registry/assets, Motion Controllers component model, and the official input profile sample. This page is an original local simulator and does not require an XR headset.
+  </footer>
+</main>
+
+<script>
+(() => {
+  const canvas = document.getElementById("stage");
+  const ctx = canvas.getContext("2d");
+  const els = {
+    profileStatus: document.getElementById("profileStatus"),
+    actionStatus: document.getElementById("actionStatus"),
+    healthStatus: document.getElementById("healthStatus"),
+    profileMatch: document.getElementById("profileMatch"),
+    latency: document.getElementById("latency"),
+    tracking: document.getElementById("tracking"),
+    trigger: document.getElementById("trigger"),
+    squeeze: document.getElementById("squeeze"),
+    axisX: document.getElementById("axisX"),
+    axisY: document.getElementById("axisY"),
+    deadzone: document.getElementById("deadzone"),
+    selectedProfile: document.getElementById("selectedProfile"),
+    assetState: document.getElementById("assetState"),
+    locomotion: document.getElementById("locomotion"),
+    suppressed: document.getElementById("suppressed"),
+    log: document.getElementById("log")
+  };
+
+  const profiles = {
+    quest: ["oculus-touch-v3", "oculus-touch", "generic-trigger-squeeze-thumbstick"],
+    generic: ["generic-trigger-squeeze-thumbstick", "generic-trigger", "generic-button"],
+    unknown: ["vendor-lab-proto", "generic-trigger", "generic-button"]
+  };
+
+  const state = {
+    source: "quest",
+    events: [],
+    suppressed: 0,
+    pulse: 0,
+    sourcePresent: true,
+    fetchedCount: null,
+    pointer: { x: 0.62, y: 0.54 },
+    drag: false
+  };
+
+  function addEvent(type, detail) {
+    const stamp = new Date().toLocaleTimeString("en-US", { hour12: false });
+    state.events.unshift({ type, detail, stamp });
+    state.events = state.events.slice(0, 7);
+    els.log.innerHTML = state.events.map((event) =>
+      `<div class="entry"><b>${event.type}</b><span>${event.stamp} ${event.detail}</span></div>`
+    ).join("");
+  }
+
+  function num(id) {
+    return Number(els[id].value);
+  }
+
+  function routeProfile() {
+    const match = num("profileMatch");
+    const list = profiles[state.source];
+    if (!state.sourcePresent) return { label: "no source", profile: "none", asset: "released", rank: 0 };
+    if (match > 66) return { label: "exact asset", profile: list[0], asset: "ready", rank: 3 };
+    if (match > 34) return { label: "generic fallback", profile: list[1], asset: state.source === "unknown" ? "schema only" : "generic model", rank: 2 };
+    return { label: "local silhouette", profile: list[2], asset: "app-local hints", rank: 1 };
+  }
+
+  function componentState(value) {
+    if (value >= 82) return "pressed";
+    if (value >= 8) return "touched";
+    return "default";
+  }
+
+  function axisState(value, deadzone) {
+    const abs = Math.abs(value);
+    if (abs < deadzone) return 0;
+    return value / 100;
+  }
+
+  function currentPolicy() {
+    const route = routeProfile();
+    const trigger = num("trigger");
+    const squeeze = num("squeeze");
+    const x = axisState(num("axisX"), num("deadzone"));
+    const y = axisState(num("axisY"), num("deadzone"));
+    const tracking = num("tracking");
+    const latency = num("latency");
+    const bindHealth = Math.max(0, Math.min(100, tracking * 0.55 + num("profileMatch") * 0.35 + (100 - latency) * 0.1));
+
+    let action = "idle";
+    if (!state.sourcePresent) action = "released";
+    else if (squeeze > 70 && trigger > 70) action = "suppress duplicate grab";
+    else if (squeeze > 70) action = "grab";
+    else if (trigger > 82) action = "select";
+    else if (trigger > 8) action = "preselect";
+    else if (Math.abs(x) + Math.abs(y) > 0.15) action = "move";
+
+    let locomotion = "neutral";
+    if (Math.abs(x) > Math.abs(y) && Math.abs(x) > 0) locomotion = x > 0 ? "strafe right" : "strafe left";
+    if (Math.abs(y) > Math.abs(x) && Math.abs(y) > 0) locomotion = y > 0 ? "backpedal" : "forward";
+
+    return { route, trigger, squeeze, x, y, tracking, latency, bindHealth, action, locomotion };
+  }
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(320, Math.round(rect.width * dpr));
+    canvas.height = Math.max(360, Math.round(rect.height * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function line(x1, y1, x2, y2, color, width = 1) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+
+  function rect(x, y, w, h, color, fill = false) {
+    if (fill) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, w, h);
+    } else {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, w, h);
+    }
+  }
+
+  function text(value, x, y, size = 13, color = "#f7f3e9", align = "left") {
+    ctx.fillStyle = color;
+    ctx.font = `600 ${size}px Inter, system-ui, sans-serif`;
+    ctx.textAlign = align;
+    ctx.fillText(value, x, y);
+  }
+
+  function drawController(cx, cy, policy) {
+    const routeColor = policy.route.rank === 3 ? "#8ff5df" : policy.route.rank === 2 ? "#f0b15d" : "#ff6b6b";
+    const bodyAlpha = 0.24 + policy.route.rank * 0.14;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((policy.x * 0.25) + (policy.pulse || 0));
+
+    ctx.fillStyle = `rgba(143, 245, 223, ${bodyAlpha})`;
+    ctx.strokeStyle = routeColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(-58, -92, 116, 184, 28);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(5, 8, 11, 0.78)";
+    ctx.beginPath();
+    ctx.roundRect(-30, -62, 60, 54, 16);
+    ctx.fill();
+    ctx.stroke();
+    text("XR", 0, -28, 18, routeColor, "center");
+
+    const triggerPull = policy.trigger / 100;
+    ctx.fillStyle = "#f0b15d";
+    ctx.fillRect(45, -28, 12 + triggerPull * 30, 30);
+    text(componentState(policy.trigger), 56, -38, 11, "#f0b15d", "center");
+
+    const squeezePull = policy.squeeze / 100;
+    ctx.fillStyle = "#8ff5df";
+    ctx.fillRect(-57, 12, 12 + squeezePull * 26, 72);
+    text(componentState(policy.squeeze), -44, 3, 11, "#8ff5df", "center");
+
+    ctx.strokeStyle = "#f7f3e9";
+    ctx.beginPath();
+    ctx.arc(0, 45, 24, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = "#f0b15d";
+    ctx.beginPath();
+    ctx.arc(policy.x * 18, 45 + policy.y * 18, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (policy.route.rank < 3) {
+      ctx.setLineDash([8, 8]);
+      ctx.strokeStyle = policy.route.rank === 2 ? "rgba(240, 177, 93, 0.8)" : "rgba(255, 107, 107, 0.8)";
+      ctx.strokeRect(-72, -108, 144, 216);
+      ctx.setLineDash([]);
+    }
+
+    ctx.restore();
+  }
+
+  function draw() {
+    const rectBox = canvas.getBoundingClientRect();
+    const w = rectBox.width;
+    const h = rectBox.height;
+    const t = performance.now() * 0.001;
+    const policy = currentPolicy();
+    policy.pulse = Math.sin(t * 8) * 0.02 * state.pulse;
+    state.pulse *= 0.94;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = "#03070a";
+    ctx.fillRect(0, 0, w, h);
+
+    for (let x = 0; x < w; x += 36) line(x, 0, x, h, "rgba(143, 245, 223, 0.045)");
+    for (let y = 0; y < h; y += 36) line(0, y, w, y, "rgba(143, 245, 223, 0.045)");
+
+    const px = w * state.pointer.x;
+    const py = h * state.pointer.y;
+    const controllerX = w * 0.26;
+    const controllerY = h * 0.55;
+    const targetX = w * 0.72;
+    const targetY = h * 0.51;
+
+    line(controllerX + 62, controllerY - 18, targetX, targetY, policy.action.includes("select") ? "rgba(240, 177, 93, 0.86)" : "rgba(143, 245, 223, 0.38)", 2);
+    line(controllerX + 62, controllerY + 26, px, py, "rgba(247, 243, 233, 0.22)");
+
+    ctx.fillStyle = "rgba(143, 245, 223, 0.08)";
+    ctx.strokeStyle = policy.action === "select" ? "#f0b15d" : "#8ff5df";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(targetX - 92, targetY - 70, 184, 140, 12);
+    ctx.fill();
+    ctx.stroke();
+    text("BOUND ACTION", targetX, targetY - 28, 14, "#a9b9b4", "center");
+    text(policy.action.toUpperCase(), targetX, targetY + 5, 24, policy.action.includes("suppress") ? "#ff6b6b" : "#f7f3e9", "center");
+    text(`health ${Math.round(policy.bindHealth)}%`, targetX, targetY + 34, 13, "#8ff5df", "center");
+
+    drawController(controllerX, controllerY, policy);
+
+    ctx.strokeStyle = "#f0b15d";
+    ctx.fillStyle = "rgba(240, 177, 93, 0.22)";
+    ctx.beginPath();
+    ctx.arc(px, py, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    text("targetRaySpace", px + 26, py + 5, 12, "#f0b15d");
+
+    const pipelineY = h - 114;
+    const steps = [
+      ["inputsource", state.sourcePresent ? "active" : "removed"],
+      ["profiles", policy.route.profile],
+      ["gamepad", `${componentState(policy.trigger)} / ${componentState(policy.squeeze)}`],
+      ["binding", policy.action]
+    ];
+    steps.forEach((step, i) => {
+      const x = 34 + i * ((w - 68) / 4);
+      const bw = (w - 88) / 4;
+      rect(x, pipelineY, bw, 62, "rgba(247, 243, 233, 0.16)", true);
+      rect(x, pipelineY, bw, 62, i === 3 ? "rgba(240, 177, 93, 0.9)" : "rgba(143, 245, 223, 0.5)");
+      text(step[0], x + 12, pipelineY + 22, 12, "#a9b9b4");
+      text(String(step[1]).slice(0, 24), x + 12, pipelineY + 46, 13, "#f7f3e9");
+      if (i < steps.length - 1) line(x + bw, pipelineY + 31, x + bw + 14, pipelineY + 31, "#8ff5df", 2);
+    });
+
+    const warnings = [];
+    if (policy.latency > 64) warnings.push("asset fetch delay: use silhouette until profile arrives");
+    if (policy.tracking < 45) warnings.push("pose confidence low: avoid grab-heavy actions");
+    if (policy.action.includes("suppress")) warnings.push("trigger and squeeze conflict: emit one action");
+    if (warnings.length === 0) warnings.push("binding route is stable");
+    warnings.forEach((warning, i) => text(warning, 34, 112 + i * 22, 13, i === 0 && warning.includes("stable") ? "#8ff5df" : "#f0b15d"));
+
+    els.profileStatus.textContent = policy.route.label;
+    els.actionStatus.textContent = policy.action;
+    els.healthStatus.textContent = `${Math.round(policy.bindHealth)}% ${policy.bindHealth > 62 ? "stable" : "watch"}`;
+    els.selectedProfile.textContent = policy.route.profile;
+    els.assetState.textContent = policy.latency > 64 ? "pending" : policy.route.asset;
+    els.locomotion.textContent = policy.locomotion;
+    els.suppressed.textContent = String(state.suppressed);
+
+    requestAnimationFrame(draw);
+  }
+
+  document.getElementById("sourceButtons").addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-source]");
+    if (!button) return;
+    state.source = button.dataset.source;
+    document.querySelectorAll("button[data-source]").forEach((item) => item.classList.toggle("active", item === button));
+    state.sourcePresent = true;
+    addEvent("change", `${state.source} input source selected`);
+  });
+
+  document.getElementById("addSource").addEventListener("click", () => {
+    state.sourcePresent = true;
+    addEvent("add", `inputsourceschange added ${state.source}`);
+  });
+
+  document.getElementById("removeSource").addEventListener("click", () => {
+    state.sourcePresent = false;
+    addEvent("remove", "motion controller released");
+  });
+
+  document.getElementById("tapTrigger").addEventListener("click", () => {
+    els.trigger.value = 100;
+    state.pulse = 1;
+    addEvent("select", "trigger pressed then routed to primary action");
+    window.setTimeout(() => { els.trigger.value = 18; }, 360);
+  });
+
+  document.getElementById("grabPulse").addEventListener("click", () => {
+    els.squeeze.value = 92;
+    state.pulse = 1;
+    if (num("trigger") > 70) state.suppressed += 1;
+    addEvent("squeeze", "grab pulse checked against trigger conflict");
+    window.setTimeout(() => { els.squeeze.value = 0; }, 480);
+  });
+
+  document.getElementById("fetchProfiles").addEventListener("click", async () => {
+    addEvent("fetch", "requesting profilesList.json from CDN");
+    try {
+      const response = await fetch("https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0/dist/profiles/profilesList.json", { cache: "no-store" });
+      const list = await response.json();
+      state.fetchedCount = Object.keys(list).length;
+      addEvent("ok", `${state.fetchedCount} profile entries visible`);
+    } catch (error) {
+      addEvent("fail", "profile list unavailable; keep local fallback");
+    }
+  });
+
+  canvas.addEventListener("pointerdown", (event) => {
+    state.drag = true;
+    canvas.setPointerCapture(event.pointerId);
+  });
+
+  canvas.addEventListener("pointermove", (event) => {
+    if (!state.drag) return;
+    const rect = canvas.getBoundingClientRect();
+    state.pointer.x = Math.max(0.08, Math.min(0.92, (event.clientX - rect.left) / rect.width));
+    state.pointer.y = Math.max(0.18, Math.min(0.82, (event.clientY - rect.top) / rect.height));
+  });
+
+  canvas.addEventListener("pointerup", () => {
+    state.drag = false;
+  });
+
+  window.addEventListener("resize", resize);
+  resize();
+  addEvent("init", "local binding simulator ready");
+  draw();
+})();
+</script>
+</body>
+</html>
