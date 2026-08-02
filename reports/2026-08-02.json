@@ -1,0 +1,117 @@
+{
+  "date": "2026-08-02",
+  "headline": "左右入力と DOM Overlay の action 優先順位を見える化する",
+  "headlineEn": "Visualizing bimanual action priority with DOM Overlay suppression",
+  "summary": "WebXR Gamepads Module、WebXR Device API、Input Profiles / Motion Controllers、DOM Overlays を確認し、左右 controller、hand pinch、thumbstick locomotion、overlay blocking が同時に来たときの action arbitration を観察する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Gamepads Module, WebXR Device API, Input Profiles / Motion Controllers, and DOM Overlays, today's original HTML sample visualizes action arbitration across left/right controllers, hand pinch, thumbstick locomotion, and overlay blocking.",
+  "keyTopics": [
+    "WebXR Gamepads Module Level 1 は 2025-07-07 の Working Draft で、`XRInputSource.gamepad` と `xr-standard` mapping の制約を整理している。",
+    "`xr-standard` では `buttons[0]` が primary trigger、`buttons[1]` が primary squeeze、`axes[2]` / `axes[3]` が primary thumbstick として扱われるため、action map の既定値を作りやすい。",
+    "WebXR Input Profiles / Motion Controllers は、profile matching、component enumeration、asset path、`updateFromGamepad()` による frame 更新を実装の単位として示している。",
+    "DOM Overlays Module の `beforexrselect` は、overlay UI 操作中に WebXR の `selectstart` / `selectend` / `select` を抑制できるため、DOM click と XR select の二重発火を避ける鍵になる。",
+    "公式サンプルや profile viewer は参照として有用だが、今日の公開カードでは、入力の優先順位そのものを触れる自作サンプルに絞った。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Gamepads Module Level 1 Working Draft dated 2025-07-07 defines constraints for `XRInputSource.gamepad` and the `xr-standard` mapping.",
+    "In `xr-standard`, `buttons[0]` maps to the primary trigger, `buttons[1]` to primary squeeze, and `axes[2]` / `axes[3]` to the primary thumbstick, giving apps a useful default action map.",
+    "WebXR Input Profiles / Motion Controllers frame profile matching, component enumeration, asset paths, and `updateFromGamepad()` as practical implementation units.",
+    "The DOM Overlays Module `beforexrselect` event can suppress WebXR `selectstart` / `selectend` / `select` while users interact with overlay UI, avoiding duplicate DOM and XR actions.",
+    "Official samples and profile viewers remain useful references, but today's public card focuses on the original interactive priority-matrix sample."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Bimanual Action Priority Matrix",
+      "url": "../outputs/2026-08-02_html_bimanual_action_priority_matrix.html"
+    },
+    {
+      "label": "W3C: WebXR Gamepads Module - Level 1",
+      "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR Input Profiles",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/"
+    },
+    {
+      "label": "Immersive Web: Motion Controllers",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/packages/motion-controllers/"
+    },
+    {
+      "label": "W3C: WebXR DOM Overlays Module",
+      "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、WebXR Gamepads Module の `xr-standard` mapping と、Input Profiles / Motion Controllers の component abstraction、さらに DOM Overlay の `beforexrselect` を一つの入力経路として並べて見ることです。個別には controller model 表示、button 読み取り、overlay UI 抑制という地味な機能ですが、実際の XR アプリでは「右 trigger の select」「左 squeeze の grab」「手の pinch」「thumbstick の移動」「DOM overlay の click」が同じ瞬間に衝突します。ここを優先順位表として見える化すると、入力バグの再現条件を言語化しやすくなります。",
+      "bodyEn": "Today's notable thread is looking at the WebXR Gamepads Module `xr-standard` mapping, the Input Profiles / Motion Controllers component abstraction, and DOM Overlay `beforexrselect` as one input route. Individually these are quiet primitives, but real XR apps often receive right-trigger select, left-squeeze grab, hand pinch, thumbstick locomotion, and DOM overlay clicks at overlapping times. Visualizing that as a priority matrix makes input bugs easier to reproduce and discuss.",
+      "links": [
+        {
+          "label": "W3C: WebXR Gamepads Module - Level 1",
+          "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+        },
+        {
+          "label": "W3C: WebXR DOM Overlays Module",
+          "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "今日のサンプルでは、左右 controller の trigger / squeeze、左右 thumbstick、hand pinch、tracking confidence、overlay coverage、deadzone を調整できます。中央の target に対して、select、grab、pinch、hover、teleport preview、strafe のどれが勝つかを毎フレーム再計算します。overlay coverage を上げて右側を指すと、`beforexrselect` による select 抑制が発生し、trigger が強くても world select が負ける様子を確認できます。",
+      "bodyEn": "The sample exposes trigger/squeeze values for both controllers, left/right thumbstick axes, hand pinch, tracking confidence, overlay coverage, and deadzone. Each frame recomputes whether select, grab, pinch, hover, teleport preview, or strafe should win against the central target. Increasing overlay coverage while pointing at the right side demonstrates `beforexrselect` suppression, where a strong trigger input can still lose to overlay blocking."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "`XRInputSource.gamepad.mapping === \"xr-standard\"` のときだけ固定 index を信用し、それ以外は Input Profiles の component 情報へ寄せる設計がよさそうです。action binding の直前には deadzone、pressed / touched / value、tracking confidence、handedness、DOM overlay blocking を別々の gate として置き、最後に select / squeeze / pinch の duplicate suppression を走らせると事故が少ないです。DOM Overlay は DOM event と XR event の順序が同期されない前提で、ログや state machine を設計する必要があります。",
+      "bodyEn": "A practical design should trust fixed indices only when `XRInputSource.gamepad.mapping === \"xr-standard\"`, and otherwise lean on Input Profiles component metadata. Before action binding, keep deadzone, pressed/touched/value, tracking confidence, handedness, and DOM overlay blocking as separate gates, then run duplicate suppression for select/squeeze/pinch. DOM Overlay code should assume DOM events and XR events are not synchronized in ordering."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は Input Profiles assets の更新、Motion Controllers の component response、WebXR Gamepads Module の `xr-standard` mapping、DOM Overlay の `beforexrselect` 実装状況、hand tracking pinch と controller squeeze の優先順位を引き続き見ます。特に、左右 handedness の入れ替わり、controller が片方だけ消えるケース、overlay UI 上での transient input の扱いを、サンプル側に小さな状態遷移として足したいです。",
+      "bodyEn": "Next, continue watching Input Profiles asset updates, Motion Controllers component responses, the WebXR Gamepads Module `xr-standard` mapping, DOM Overlay `beforexrselect` implementation status, and priority between hand-tracking pinch and controller squeeze. The next sample addition should model handedness swaps, one-controller removal, and transient input over overlay UI as explicit state transitions."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、`Overlay` preset を押してから `Overlay coverage` と `Right Trigger` を上げてください。右 controller が select しようとしていても、overlay 領域側では `beforexrselect blocks select` が表示されます。次に `Grab` preset で `Hand pinch` と `Right Squeeze` を同時に上げると、hand と controller の grab が二重に発火しないように `pinch/squeeze duplicate guard` が入ります。",
+      "bodyEn": "Open the sample, choose the `Overlay` preset, then raise `Overlay coverage` and `Right Trigger`. Even when the right controller wants to select, the overlay side shows `beforexrselect blocks select`. Then use the `Grab` preset and raise both `Hand pinch` and `Right Squeeze` to see the `pinch/squeeze duplicate guard` prevent duplicate grab emission.",
+      "links": [
+        {
+          "label": "Open Bimanual Action Priority Matrix",
+          "url": "../outputs/2026-08-02_html_bimanual_action_priority_matrix.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Gamepads Module、WebXR Device API、Input Profiles、Motion Controllers、DOM Overlays、公式 samples を確認。設計: 2026-08-01 の motion controller binding watch を、左右 handedness と overlay / hand arbitration まで拡張する。実装: 左右 controller、hand pinch、thumbstick locomotion、overlay blocking、deadzone、tracking confidence、winner score、duplicate guard、event log を canvas + controls で実装。検証: JSON parse、HTML script 構文、全 outputs script compile、gallery 再生成、Pages 公開 URL を確認する。",
+      "bodyEn": "Research: reviewed the WebXR Gamepads Module, WebXR Device API, Input Profiles, Motion Controllers, DOM Overlays, and official samples. Design: extend the 2026-08-01 motion-controller binding watch into handedness plus overlay/hand arbitration. Implementation: built left/right controllers, hand pinch, thumbstick locomotion, overlay blocking, deadzone, tracking confidence, winner scoring, duplicate guards, and an event log with canvas and controls. Validation: parse JSON, check HTML script syntax, compile all output scripts, regenerate the gallery, and verify published Pages URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "7 月後半から permission、session support、input profile、motion controller と、XR 体験の入口部分を固めています。今日の試作はその中でも「入力が存在する」から「どの action として採用するか」への橋渡しです。派手な表現よりも、左右・手・overlay・移動が混ざる時の安全な設計を小さく検査できることを重視しました。",
+      "bodyEn": "Since late July, the sequence has focused on the entry path of XR experiences: permissions, session support, input profiles, and motion controllers. Today's prototype bridges from input existence to action adoption. Instead of focusing on a flashy scene, it tests a safer design for mixing left/right controllers, hands, overlays, and locomotion."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Bimanual Action Priority Matrix` です。実 XR session は開始せず、`xr-standard` 的な button / axis、Input Profiles 的な component、DOM Overlay 的な `beforexrselect` 抑制をローカル canvas で再現しました。次に足すなら、実 `profilesList.json` から取得した profile の component layout 表示、左右 source の add/remove、handedness swap、haptics preview、実機ログを貼り付けて再生する入力リプレイを追加します。",
+      "bodyEn": "The selected prototype is `Bimanual Action Priority Matrix`. It does not start a real XR session; it recreates `xr-standard`-style buttons/axes, Input Profiles-style components, and DOM Overlay-style `beforexrselect` suppression in a local canvas. Useful next additions are real `profilesList.json` component-layout display, left/right source add/remove, handedness swap, haptics preview, and an input replay mode for pasted device logs."
+    }
+  ]
+}

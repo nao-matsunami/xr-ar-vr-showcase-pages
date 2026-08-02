@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>左右入力と DOM Overlay の action 優先順位を見える化する | 2026-08-02</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.08.02</p>
+      <h1>左右入力と DOM Overlay の action 優先順位を見える化する</h1>
+      <p class="hero-subtitle">Visualizing bimanual action priority with DOM Overlay suppression</p>
+      <p>WebXR Gamepads Module、WebXR Device API、Input Profiles / Motion Controllers、DOM Overlays を確認し、左右 controller、hand pinch、thumbstick locomotion、overlay blocking が同時に来たときの action arbitration を観察する自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the WebXR Gamepads Module, WebXR Device API, Input Profiles / Motion Controllers, and DOM Overlays, today's original HTML sample visualizes action arbitration across left/right controllers, hand pinch, thumbstick locomotion, and overlay blocking.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-08-02_html_bimanual_action_priority_matrix.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-08-01.html">← 2026.08.01</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Bimanual Action Priority Matrix</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-02_html_bimanual_action_priority_matrix.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Gamepads Module Level 1 は 2025-07-07 の Working Draft で、`XRInputSource.gamepad` と `xr-standard` mapping の制約を整理している。</span>
+              <span class="en-copy">The WebXR Gamepads Module Level 1 Working Draft dated 2025-07-07 defines constraints for `XRInputSource.gamepad` and the `xr-standard` mapping.</span>
+            </li>
+          
+            <li>
+              <span>`xr-standard` では `buttons[0]` が primary trigger、`buttons[1]` が primary squeeze、`axes[2]` / `axes[3]` が primary thumbstick として扱われるため、action map の既定値を作りやすい。</span>
+              <span class="en-copy">In `xr-standard`, `buttons[0]` maps to the primary trigger, `buttons[1]` to primary squeeze, and `axes[2]` / `axes[3]` to the primary thumbstick, giving apps a useful default action map.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Input Profiles / Motion Controllers は、profile matching、component enumeration、asset path、`updateFromGamepad()` による frame 更新を実装の単位として示している。</span>
+              <span class="en-copy">WebXR Input Profiles / Motion Controllers frame profile matching, component enumeration, asset paths, and `updateFromGamepad()` as practical implementation units.</span>
+            </li>
+          
+            <li>
+              <span>DOM Overlays Module の `beforexrselect` は、overlay UI 操作中に WebXR の `selectstart` / `selectend` / `select` を抑制できるため、DOM click と XR select の二重発火を避ける鍵になる。</span>
+              <span class="en-copy">The DOM Overlays Module `beforexrselect` event can suppress WebXR `selectstart` / `selectend` / `select` while users interact with overlay UI, avoiding duplicate DOM and XR actions.</span>
+            </li>
+          
+            <li>
+              <span>公式サンプルや profile viewer は参照として有用だが、今日の公開カードでは、入力の優先順位そのものを触れる自作サンプルに絞った。</span>
+              <span class="en-copy">Official samples and profile viewers remain useful references, but today's public card focuses on the original interactive priority-matrix sample.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は、WebXR Gamepads Module の `xr-standard` mapping と、Input Profiles / Motion Controllers の component abstraction、さらに DOM Overlay の `beforexrselect` を一つの入力経路として並べて見ることです。個別には controller model 表示、button 読み取り、overlay UI 抑制という地味な機能ですが、実際の XR アプリでは「右 trigger の select」「左 squeeze の grab」「手の pinch」「thumbstick の移動」「DOM overlay の click」が同じ瞬間に衝突します。ここを優先順位表として見える化すると、入力バグの再現条件を言語化しやすくなります。</p>
+          <p class="en-copy">Today's notable thread is looking at the WebXR Gamepads Module `xr-standard` mapping, the Input Profiles / Motion Controllers component abstraction, and DOM Overlay `beforexrselect` as one input route. Individually these are quiet primitives, but real XR apps often receive right-trigger select, left-squeeze grab, hand pinch, thumbstick locomotion, and DOM overlay clicks at overlapping times. Visualizing that as a priority matrix makes input bugs easier to reproduce and discuss.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr-gamepads-module-1/" target="_blank" rel="noreferrer">W3C: WebXR Gamepads Module - Level 1</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">W3C: WebXR DOM Overlays Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>今日のサンプルでは、左右 controller の trigger / squeeze、左右 thumbstick、hand pinch、tracking confidence、overlay coverage、deadzone を調整できます。中央の target に対して、select、grab、pinch、hover、teleport preview、strafe のどれが勝つかを毎フレーム再計算します。overlay coverage を上げて右側を指すと、`beforexrselect` による select 抑制が発生し、trigger が強くても world select が負ける様子を確認できます。</p>
+          <p class="en-copy">The sample exposes trigger/squeeze values for both controllers, left/right thumbstick axes, hand pinch, tracking confidence, overlay coverage, and deadzone. Each frame recomputes whether select, grab, pinch, hover, teleport preview, or strafe should win against the central target. Increasing overlay coverage while pointing at the right side demonstrates `beforexrselect` suppression, where a strong trigger input can still lose to overlay blocking.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>`XRInputSource.gamepad.mapping === &quot;xr-standard&quot;` のときだけ固定 index を信用し、それ以外は Input Profiles の component 情報へ寄せる設計がよさそうです。action binding の直前には deadzone、pressed / touched / value、tracking confidence、handedness、DOM overlay blocking を別々の gate として置き、最後に select / squeeze / pinch の duplicate suppression を走らせると事故が少ないです。DOM Overlay は DOM event と XR event の順序が同期されない前提で、ログや state machine を設計する必要があります。</p>
+          <p class="en-copy">A practical design should trust fixed indices only when `XRInputSource.gamepad.mapping === &quot;xr-standard&quot;`, and otherwise lean on Input Profiles component metadata. Before action binding, keep deadzone, pressed/touched/value, tracking confidence, handedness, and DOM overlay blocking as separate gates, then run duplicate suppression for select/squeeze/pinch. DOM Overlay code should assume DOM events and XR events are not synchronized in ordering.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>次は Input Profiles assets の更新、Motion Controllers の component response、WebXR Gamepads Module の `xr-standard` mapping、DOM Overlay の `beforexrselect` 実装状況、hand tracking pinch と controller squeeze の優先順位を引き続き見ます。特に、左右 handedness の入れ替わり、controller が片方だけ消えるケース、overlay UI 上での transient input の扱いを、サンプル側に小さな状態遷移として足したいです。</p>
+          <p class="en-copy">Next, continue watching Input Profiles asset updates, Motion Controllers component responses, the WebXR Gamepads Module `xr-standard` mapping, DOM Overlay `beforexrselect` implementation status, and priority between hand-tracking pinch and controller squeeze. The next sample addition should model handedness swaps, one-controller removal, and transient input over overlay UI as explicit state transitions.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルを開き、`Overlay` preset を押してから `Overlay coverage` と `Right Trigger` を上げてください。右 controller が select しようとしていても、overlay 領域側では `beforexrselect blocks select` が表示されます。次に `Grab` preset で `Hand pinch` と `Right Squeeze` を同時に上げると、hand と controller の grab が二重に発火しないように `pinch/squeeze duplicate guard` が入ります。</p>
+          <p class="en-copy">Open the sample, choose the `Overlay` preset, then raise `Overlay coverage` and `Right Trigger`. Even when the right controller wants to select, the overlay side shows `beforexrselect blocks select`. Then use the `Grab` preset and raise both `Hand pinch` and `Right Squeeze` to see the `pinch/squeeze duplicate guard` prevent duplicate grab emission.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-02_html_bimanual_action_priority_matrix.html" target="_blank" rel="noreferrer">Open Bimanual Action Priority Matrix</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Gamepads Module、WebXR Device API、Input Profiles、Motion Controllers、DOM Overlays、公式 samples を確認。設計: 2026-08-01 の motion controller binding watch を、左右 handedness と overlay / hand arbitration まで拡張する。実装: 左右 controller、hand pinch、thumbstick locomotion、overlay blocking、deadzone、tracking confidence、winner score、duplicate guard、event log を canvas + controls で実装。検証: JSON parse、HTML script 構文、全 outputs script compile、gallery 再生成、Pages 公開 URL を確認する。</p>
+          <p class="en-copy">Research: reviewed the WebXR Gamepads Module, WebXR Device API, Input Profiles, Motion Controllers, DOM Overlays, and official samples. Design: extend the 2026-08-01 motion-controller binding watch into handedness plus overlay/hand arbitration. Implementation: built left/right controllers, hand pinch, thumbstick locomotion, overlay blocking, deadzone, tracking confidence, winner scoring, duplicate guards, and an event log with canvas and controls. Validation: parse JSON, check HTML script syntax, compile all output scripts, regenerate the gallery, and verify published Pages URLs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>7 月後半から permission、session support、input profile、motion controller と、XR 体験の入口部分を固めています。今日の試作はその中でも「入力が存在する」から「どの action として採用するか」への橋渡しです。派手な表現よりも、左右・手・overlay・移動が混ざる時の安全な設計を小さく検査できることを重視しました。</p>
+          <p class="en-copy">Since late July, the sequence has focused on the entry path of XR experiences: permissions, session support, input profiles, and motion controllers. Today's prototype bridges from input existence to action adoption. Instead of focusing on a flashy scene, it tests a safer design for mixing left/right controllers, hands, overlays, and locomotion.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Bimanual Action Priority Matrix` です。実 XR session は開始せず、`xr-standard` 的な button / axis、Input Profiles 的な component、DOM Overlay 的な `beforexrselect` 抑制をローカル canvas で再現しました。次に足すなら、実 `profilesList.json` から取得した profile の component layout 表示、左右 source の add/remove、handedness swap、haptics preview、実機ログを貼り付けて再生する入力リプレイを追加します。</p>
+          <p class="en-copy">The selected prototype is `Bimanual Action Priority Matrix`. It does not start a real XR session; it recreates `xr-standard`-style buttons/axes, Input Profiles-style components, and DOM Overlay-style `beforexrselect` suppression in a local canvas. Useful next additions are real `profilesList.json` component-layout display, left/right source add/remove, handedness swap, haptics preview, and an input replay mode for pasted device logs.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-02_html_bimanual_action_priority_matrix.html" target="_blank" rel="noreferrer">Today's sample: Bimanual Action Priority Matrix</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-gamepads-module-1/" target="_blank" rel="noreferrer">W3C: WebXR Gamepads Module - Level 1</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-input-profiles/" target="_blank" rel="noreferrer">Immersive Web: WebXR Input Profiles</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-input-profiles/packages/motion-controllers/" target="_blank" rel="noreferrer">Immersive Web: Motion Controllers</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">W3C: WebXR DOM Overlays Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-08-02_html_bimanual_action_priority_matrix.html" loading="lazy" title="Bimanual Action Priority Matrix"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

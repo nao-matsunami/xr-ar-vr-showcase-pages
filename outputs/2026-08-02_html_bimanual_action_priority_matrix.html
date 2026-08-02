@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bimanual Action Priority Matrix</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #05080b;
+      color: #f7f3e9;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(140deg, rgba(143, 245, 223, 0.12), transparent 34%),
+        linear-gradient(320deg, rgba(240, 177, 93, 0.12), transparent 36%),
+        #05080b;
+    }
+
+    main {
+      width: min(1240px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 370px;
+      gap: 18px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(143, 245, 223, 0.24);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 3vw, 2.65rem);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    p { margin: 0; line-height: 1.55; }
+
+    .lede {
+      max-width: 820px;
+      margin-top: 10px;
+      color: #a9b9b4;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border: 1px solid rgba(143, 245, 223, 0.34);
+      background: rgba(3, 17, 20, 0.82);
+      color: #8ff5df;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 690px;
+      border: 1px solid rgba(143, 245, 223, 0.2);
+      background: #03070a;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      top: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .hud-card {
+      min-height: 58px;
+      border: 1px solid rgba(247, 243, 233, 0.13);
+      background: rgba(4, 12, 18, 0.78);
+      padding: 9px 10px;
+      backdrop-filter: blur(10px);
+    }
+
+    .hud-card span {
+      display: block;
+      color: #a9b9b4;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+    }
+
+    .hud-card strong {
+      display: block;
+      margin-top: 5px;
+      color: #f7f3e9;
+      font-size: 0.88rem;
+      overflow-wrap: anywhere;
+    }
+
+    aside {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    section {
+      border: 1px solid rgba(143, 245, 223, 0.2);
+      background: rgba(6, 12, 18, 0.84);
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 0.96rem;
+      letter-spacing: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      margin: 12px 0;
+      color: #a9b9b4;
+      font-size: 0.86rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #8ff5df;
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid rgba(143, 245, 223, 0.28);
+      background: rgba(143, 245, 223, 0.08);
+      color: #f7f3e9;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button.active {
+      background: #8ff5df;
+      border-color: #8ff5df;
+      color: #06221d;
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      min-height: 70px;
+      border: 1px solid rgba(247, 243, 233, 0.13);
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .metric span {
+      display: block;
+      color: #a9b9b4;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1rem;
+      line-height: 1.12;
+      overflow-wrap: anywhere;
+    }
+
+    .log {
+      display: grid;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .entry {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 8px;
+      align-items: center;
+      min-height: 30px;
+      color: #a9b9b4;
+      font-size: 0.78rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      padding-bottom: 6px;
+    }
+
+    .entry b { color: #f7f3e9; font-weight: 650; }
+
+    @media (max-width: 940px) {
+      main { grid-template-columns: 1fr; padding: 14px; }
+      header { align-items: start; flex-direction: column; }
+      .stage { min-height: 620px; }
+    }
+
+    @media (max-width: 620px) {
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .seg { grid-template-columns: 1fr; }
+      .stage { min-height: 560px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Bimanual Action Priority Matrix</h1>
+        <p class="lede">A no-headset WebXR input arbiter. Tune left and right controller components, hand pinch, thumbstick locomotion, and DOM overlay blocking to see which action wins.</p>
+      </div>
+      <div class="badge">WebXR input / gamepad / overlay</div>
+    </header>
+
+    <div class="stage" id="stage">
+      <canvas id="view" width="900" height="690"></canvas>
+      <div class="hud">
+        <div class="hud-card"><span>Winning action</span><strong id="win">select right</strong></div>
+        <div class="hud-card"><span>Suppression</span><strong id="suppression">none</strong></div>
+        <div class="hud-card"><span>Locomotion</span><strong id="locomotion">idle</strong></div>
+        <div class="hud-card"><span>Risk</span><strong id="risk">low</strong></div>
+      </div>
+    </div>
+
+    <aside>
+      <section>
+        <h2>Scenario</h2>
+        <div class="seg">
+          <button data-preset="inspect" class="active">Inspect</button>
+          <button data-preset="grab">Grab</button>
+          <button data-preset="overlay">Overlay</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Right source</h2>
+        <label>Trigger <input id="rTrigger" type="range" min="0" max="1" value="0.72" step="0.01"></label>
+        <label>Squeeze <input id="rSqueeze" type="range" min="0" max="1" value="0.18" step="0.01"></label>
+        <label>Thumbstick Y <input id="rStick" type="range" min="-1" max="1" value="0.18" step="0.01"></label>
+      </section>
+
+      <section>
+        <h2>Left source</h2>
+        <label>Trigger <input id="lTrigger" type="range" min="0" max="1" value="0.24" step="0.01"></label>
+        <label>Squeeze <input id="lSqueeze" type="range" min="0" max="1" value="0.62" step="0.01"></label>
+        <label>Thumbstick X <input id="lStick" type="range" min="-1" max="1" value="-0.35" step="0.01"></label>
+      </section>
+
+      <section>
+        <h2>Hand and overlay</h2>
+        <label>Hand pinch <input id="pinch" type="range" min="0" max="1" value="0.42" step="0.01"></label>
+        <label>Tracking confidence <input id="confidence" type="range" min="0" max="1" value="0.82" step="0.01"></label>
+        <label>Overlay coverage <input id="overlay" type="range" min="0" max="1" value="0.18" step="0.01"></label>
+        <label>Deadzone <input id="deadzone" type="range" min="0" max="0.55" value="0.18" step="0.01"></label>
+      </section>
+
+      <section>
+        <h2>Action state</h2>
+        <div class="readout">
+          <div class="metric"><span>Right</span><strong id="rightState">tracking</strong></div>
+          <div class="metric"><span>Left</span><strong id="leftState">tracking</strong></div>
+          <div class="metric"><span>Hand</span><strong id="handState">candidate</strong></div>
+          <div class="metric"><span>Overlay</span><strong id="overlayState">pass</strong></div>
+        </div>
+        <div class="log" id="log"></div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("view");
+    const ctx = canvas.getContext("2d");
+    const stage = document.getElementById("stage");
+    const ids = ["rTrigger", "rSqueeze", "rStick", "lTrigger", "lSqueeze", "lStick", "pinch", "confidence", "overlay", "deadzone"];
+    const input = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
+    const readout = {
+      win: document.getElementById("win"),
+      suppression: document.getElementById("suppression"),
+      locomotion: document.getElementById("locomotion"),
+      risk: document.getElementById("risk"),
+      rightState: document.getElementById("rightState"),
+      leftState: document.getElementById("leftState"),
+      handState: document.getElementById("handState"),
+      overlayState: document.getElementById("overlayState"),
+      log: document.getElementById("log")
+    };
+
+    const presets = {
+      inspect: { rTrigger: 0.72, rSqueeze: 0.18, rStick: 0.18, lTrigger: 0.24, lSqueeze: 0.62, lStick: -0.35, pinch: 0.42, confidence: 0.82, overlay: 0.18, deadzone: 0.18 },
+      grab: { rTrigger: 0.38, rSqueeze: 0.82, rStick: 0.08, lTrigger: 0.28, lSqueeze: 0.76, lStick: 0.12, pinch: 0.7, confidence: 0.88, overlay: 0.08, deadzone: 0.2 },
+      overlay: { rTrigger: 0.84, rSqueeze: 0.33, rStick: 0.42, lTrigger: 0.16, lSqueeze: 0.18, lStick: 0.7, pinch: 0.52, confidence: 0.74, overlay: 0.76, deadzone: 0.16 }
+    };
+
+    let pointer = { x: 0.64, y: 0.5, active: false };
+    let frame = 0;
+
+    function value(id) {
+      return Number(input[id].value);
+    }
+
+    function applyPreset(name) {
+      const preset = presets[name];
+      for (const [key, val] of Object.entries(preset)) input[key].value = val;
+      document.querySelectorAll("[data-preset]").forEach((button) => button.classList.toggle("active", button.dataset.preset === name));
+    }
+
+    document.querySelectorAll("[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => applyPreset(button.dataset.preset));
+    });
+
+    stage.addEventListener("pointerdown", (event) => {
+      pointer.active = true;
+      updatePointer(event);
+    });
+    stage.addEventListener("pointermove", (event) => {
+      if (pointer.active) updatePointer(event);
+    });
+    stage.addEventListener("pointerup", () => { pointer.active = false; });
+    stage.addEventListener("pointercancel", () => { pointer.active = false; });
+
+    function updatePointer(event) {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+      pointer.y = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
+    }
+
+    function classify() {
+      const deadzone = value("deadzone");
+      const overlayBlock = value("overlay") > 0.58 && pointer.x > 0.5;
+      const confidence = value("confidence");
+      const candidates = [];
+
+      if (value("rTrigger") > 0.55) candidates.push({ name: "select right", side: "right", score: value("rTrigger") * confidence, kind: "select" });
+      if (value("rSqueeze") > 0.55) candidates.push({ name: "grab right", side: "right", score: value("rSqueeze") * confidence + 0.08, kind: "grab" });
+      if (value("lTrigger") > 0.55) candidates.push({ name: "select left", side: "left", score: value("lTrigger") * confidence - 0.04, kind: "select" });
+      if (value("lSqueeze") > 0.55) candidates.push({ name: "grab left", side: "left", score: value("lSqueeze") * confidence + 0.02, kind: "grab" });
+      if (value("pinch") > 0.6) candidates.push({ name: "pinch hand", side: "hand", score: value("pinch") * confidence - 0.02, kind: "grab" });
+
+      const moveX = Math.abs(value("lStick")) > deadzone ? value("lStick") : 0;
+      const moveY = Math.abs(value("rStick")) > deadzone ? value("rStick") : 0;
+      let locomotion = "idle";
+      if (Math.abs(moveX) + Math.abs(moveY) > 0.01) {
+        locomotion = Math.abs(moveY) > Math.abs(moveX) ? (moveY > 0 ? "teleport preview" : "back step") : (moveX > 0 ? "strafe right" : "strafe left");
+      }
+
+      let suppression = "none";
+      if (overlayBlock) {
+        candidates.forEach((candidate) => {
+          if (candidate.kind === "select") candidate.score -= 0.72;
+        });
+        suppression = "beforexrselect blocks select";
+      }
+      if (value("rSqueeze") > 0.55 && value("pinch") > 0.6) {
+        suppression = "pinch/squeeze duplicate guard";
+        candidates.forEach((candidate) => {
+          if (candidate.side === "hand") candidate.score -= 0.18;
+        });
+      }
+      if (confidence < 0.48) {
+        suppression = "low tracking holds actions";
+        candidates.forEach((candidate) => candidate.score -= 0.45);
+      }
+
+      candidates.sort((a, b) => b.score - a.score);
+      const winner = candidates[0]?.score > 0.32 ? candidates[0] : { name: "hover only", side: "system", score: 0, kind: "hover" };
+      const conflict = candidates.filter((candidate) => candidate.score > 0.32).length;
+      const riskScore = Math.min(1, (conflict > 1 ? 0.34 : 0) + value("overlay") * 0.28 + (1 - confidence) * 0.42 + Math.max(0, Math.abs(value("rStick")) - deadzone) * 0.18);
+      const risk = riskScore > 0.66 ? "high" : riskScore > 0.38 ? "medium" : "low";
+
+      return { winner, candidates, locomotion, suppression, overlayBlock, risk, riskScore, confidence, deadzone };
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const scale = window.devicePixelRatio || 1;
+      canvas.width = Math.max(320, Math.floor(rect.width * scale));
+      canvas.height = Math.max(360, Math.floor(rect.height * scale));
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+      return { w: rect.width, h: rect.height };
+    }
+
+    function drawController(x, y, side, trigger, squeeze, stick, active) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = active ? "#8ff5df" : "rgba(247,243,233,.34)";
+      ctx.fillStyle = "rgba(9,22,28,.86)";
+      ctx.beginPath();
+      ctx.roundRect(-38, -78, 76, 156, 28);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = side === "right" ? "#f0b15d" : "#8ff5df";
+      ctx.beginPath();
+      ctx.arc(0, -38, 14 + trigger * 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,.35)";
+      ctx.stroke();
+
+      ctx.fillStyle = squeeze > 0.55 ? "#ff6b6b" : "rgba(143,245,223,.28)";
+      ctx.fillRect(-28, -8, 56 * squeeze, 12);
+
+      ctx.strokeStyle = "#f7f3e9";
+      ctx.beginPath();
+      ctx.moveTo(0, 28);
+      ctx.lineTo(stick * 28, 28);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(stick * 28, 28, 9, 0, Math.PI * 2);
+      ctx.fillStyle = "#d7fff5";
+      ctx.fill();
+
+      ctx.fillStyle = "#a9b9b4";
+      ctx.font = "12px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(side.toUpperCase(), 0, 66);
+      ctx.restore();
+    }
+
+    function drawHand(x, y, pinch, confidence, active) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.strokeStyle = active ? "#8ff5df" : "rgba(247,243,233,.32)";
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i += 1) {
+        const spread = (i - 2) * 15;
+        const curl = 46 - pinch * 24 + i * 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 18);
+        ctx.quadraticCurveTo(spread * 0.65, -18, spread, -curl);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(spread, -curl, 5 + confidence * 3, 0, Math.PI * 2);
+        ctx.fillStyle = i === 1 ? "#f0b15d" : "#8ff5df";
+        ctx.globalAlpha = 0.4 + confidence * 0.55;
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "rgba(9,22,28,.86)";
+      ctx.beginPath();
+      ctx.roundRect(-30, 8, 60, 48, 18);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#a9b9b4";
+      ctx.font = "12px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("HAND", 0, 74);
+      ctx.restore();
+    }
+
+    function draw() {
+      const { w, h } = resizeCanvas();
+      frame += 1;
+      const state = classify();
+      ctx.clearRect(0, 0, w, h);
+
+      const grid = 34;
+      ctx.strokeStyle = "rgba(143,245,223,.07)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += grid) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + Math.sin(frame * 0.01 + x) * 4, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += grid) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      const target = { x: w * 0.55, y: h * 0.46 };
+      const overlayW = w * (0.24 + value("overlay") * 0.28);
+      ctx.fillStyle = state.overlayBlock ? "rgba(255,107,107,.2)" : "rgba(143,245,223,.08)";
+      ctx.strokeStyle = state.overlayBlock ? "#ff6b6b" : "rgba(143,245,223,.4)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(w - overlayW - 24, 112, overlayW, 132, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#f7f3e9";
+      ctx.font = "14px Inter, sans-serif";
+      ctx.fillText("DOM overlay region", w - overlayW - 8, 140);
+      ctx.fillStyle = "#a9b9b4";
+      ctx.fillText(state.overlayBlock ? "beforexrselect: preventDefault()" : "pass-through XR select", w - overlayW - 8, 164);
+
+      ctx.save();
+      ctx.translate(target.x, target.y);
+      ctx.strokeStyle = state.winner.kind === "grab" ? "#ff6b6b" : state.winner.kind === "select" ? "#f0b15d" : "#8ff5df";
+      ctx.fillStyle = "rgba(247,243,233,.06)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(-78, -58, 156, 116, 10);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#f7f3e9";
+      ctx.font = "700 18px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(state.winner.name, 0, -8);
+      ctx.fillStyle = "#a9b9b4";
+      ctx.font = "12px Inter, sans-serif";
+      ctx.fillText(`score ${state.winner.score.toFixed(2)} / risk ${state.risk}`, 0, 18);
+      ctx.restore();
+
+      const rightPos = { x: w * (0.76 + (pointer.x - 0.5) * 0.04), y: h * 0.76 };
+      const leftPos = { x: w * 0.25, y: h * 0.74 };
+      const handPos = { x: w * 0.43, y: h * (0.78 + (pointer.y - 0.5) * 0.05) };
+      drawController(rightPos.x, rightPos.y, "right", value("rTrigger"), value("rSqueeze"), value("rStick"), state.winner.side === "right");
+      drawController(leftPos.x, leftPos.y, "left", value("lTrigger"), value("lSqueeze"), value("lStick"), state.winner.side === "left");
+      drawHand(handPos.x, handPos.y, value("pinch"), state.confidence, state.winner.side === "hand");
+
+      for (const source of [
+        { pos: rightPos, label: "right targetRaySpace", color: "#f0b15d" },
+        { pos: leftPos, label: "left targetRaySpace", color: "#8ff5df" },
+        { pos: handPos, label: "pinch ray", color: "#d7fff5" }
+      ]) {
+        ctx.strokeStyle = source.color;
+        ctx.globalAlpha = 0.42;
+        ctx.beginPath();
+        ctx.moveTo(source.pos.x, source.pos.y - 82);
+        ctx.lineTo(target.x, target.y);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      const rows = [
+        ["buttons[0]", "primary trigger", value("rTrigger"), value("lTrigger")],
+        ["buttons[1]", "primary squeeze", value("rSqueeze"), value("lSqueeze")],
+        ["axes[2/3]", "thumbstick", Math.abs(value("rStick")), Math.abs(value("lStick"))],
+        ["hand pinch", "synthetic grab", value("pinch"), state.confidence]
+      ];
+      const tableX = 28;
+      const tableY = h > 610 ? 122 : 232;
+      ctx.font = "12px Inter, sans-serif";
+      rows.forEach((row, i) => {
+        const y = tableY + i * 35;
+        ctx.fillStyle = "rgba(255,255,255,.045)";
+        ctx.fillRect(tableX, y, 250, 24);
+        ctx.fillStyle = "#a9b9b4";
+        ctx.fillText(row[0], tableX + 10, y + 16);
+        ctx.fillText(row[1], tableX + 90, y + 16);
+        ctx.fillStyle = "#8ff5df";
+        ctx.fillRect(tableX + 190, y + 8, row[2] * 44, 6);
+        ctx.fillStyle = "#f0b15d";
+        ctx.fillRect(tableX + 190, y + 15, row[3] * 44, 6);
+      });
+
+      readout.win.textContent = state.winner.name;
+      readout.suppression.textContent = state.suppression;
+      readout.locomotion.textContent = state.locomotion;
+      readout.risk.textContent = state.risk;
+      readout.rightState.textContent = value("rSqueeze") > 0.55 ? "grab candidate" : value("rTrigger") > 0.55 ? "select candidate" : "tracking";
+      readout.leftState.textContent = value("lSqueeze") > 0.55 ? "grab candidate" : value("lTrigger") > 0.55 ? "select candidate" : "tracking";
+      readout.handState.textContent = value("pinch") > 0.6 ? "pinch candidate" : "hover";
+      readout.overlayState.textContent = state.overlayBlock ? "blocking select" : "pass";
+      readout.log.innerHTML = [
+        ["map", `xr-standard trigger=${value("rTrigger").toFixed(2)} squeeze=${value("rSqueeze").toFixed(2)}`],
+        ["route", `${state.winner.side} -> ${state.winner.kind}`],
+        ["move", `${state.locomotion}; deadzone ${state.deadzone.toFixed(2)}`],
+        ["guard", state.suppression]
+      ].map(([key, text]) => `<div class="entry"><b>${key}</b><span>${text}</span></div>`).join("");
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  </script>
+</body>
+</html>
