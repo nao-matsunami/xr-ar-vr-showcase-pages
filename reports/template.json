@@ -46,6 +46,12 @@
       "bodyEn": "English body."
     },
     {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルから取れる状態、数値、ログ、入力履歴をどのように再利用できるか。画像、音、カメラ、センサー、AI、展示演出、業務UI、既存コンテンツなど何と組み合わせると面白くなるかを整理する。",
+      "bodyEn": "Describe how the states, metrics, logs, and input history from today's sample could be reused, and what becomes more interesting when combined with images, audio, camera input, sensors, AI, installation design, operational UI, or existing content."
+    },
+    {
       "title": "明日以降ウォッチする対象",
       "titleEn": "Watch next",
       "body": "日本語本文。",

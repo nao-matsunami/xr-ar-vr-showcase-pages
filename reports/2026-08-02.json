@@ -78,6 +78,12 @@
       "bodyEn": "A practical design should trust fixed indices only when `XRInputSource.gamepad.mapping === \"xr-standard\"`, and otherwise lean on Input Profiles component metadata. Before action binding, keep deadzone, pressed/touched/value, tracking confidence, handedness, and DOM overlay blocking as separate gates, then run duplicate suppression for select/squeeze/pinch. DOM Overlay code should assume DOM events and XR events are not synchronized in ordering."
     },
     {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルで扱った winner score、入力強度、deadzone、tracking confidence、overlay coverage、duplicate guard のログは、XR 入力設計の「失敗しやすい条件」を集める小さなデータになります。これを実機ログ、ユーザーテスト動画、MediaPipe の手指認識、GLSL の視覚フィードバック、効果音や触覚 feedback と組み合わせると、入力が採用された瞬間・抑制された瞬間を体験として理解しやすくなります。仕事向けには、展示UI、教育用操作訓練、遠隔作業支援、複数入力デバイスのUX診断レポートへ展開できます。",
+      "bodyEn": "The winner scores, input strengths, deadzones, tracking confidence, overlay coverage, and duplicate-guard logs in today's sample form a compact dataset of conditions where XR input tends to fail. Combining it with device logs, user-test video, MediaPipe hand recognition, GLSL visual feedback, audio cues, or haptics would make accepted and suppressed actions easier to understand as an experience. For client-facing work, this can expand into exhibition UI, training tools, remote-assistance interfaces, and UX diagnostics for multi-input devices."
+    },
+    {
       "title": "明日以降ウォッチする対象",
       "titleEn": "Watch next",
       "body": "次は Input Profiles assets の更新、Motion Controllers の component response、WebXR Gamepads Module の `xr-standard` mapping、DOM Overlay の `beforexrselect` 実装状況、hand tracking pinch と controller squeeze の優先順位を引き続き見ます。特に、左右 handedness の入れ替わり、controller が片方だけ消えるケース、overlay UI 上での transient input の扱いを、サンプル側に小さな状態遷移として足したいです。",
