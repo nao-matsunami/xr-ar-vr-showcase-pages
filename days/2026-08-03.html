@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>全身トラッキングを公開する前の匿名化 gate を試す | 2026-08-03</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.08.03</p>
+      <h1>全身トラッキングを公開する前の匿名化 gate を試す</h1>
+      <p class="hero-subtitle">Testing an anonymization gate before publishing full-body tracking</p>
+      <p>WebXR Body Tracking Module、WebXR Device API、Immersive Web の仕様一覧とサンプル群を確認し、全身 joint stream を consent、遮蔽、丸め、保持時間で publish / emulate / null に切り替える自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the WebXR Body Tracking Module, WebXR Device API, Immersive Web specification index, and official sample pages, today's original HTML sample switches a simulated full-body joint stream between publish, emulate, and null based on consent, occlusion, rounding, and retention.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-08-03_html_body_tracking_privacy_pose_limiter.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-08-02.html">← 2026.08.02</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Body Tracking Privacy Pose Limiter</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-03_html_body_tracking_privacy_pose_limiter.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Body Tracking Module Level 1 は 2025-09-05 の Draft Community Group Report で、`body-tracking` feature descriptor と `XRFrame.body` を定義している。</span>
+              <span class="en-copy">The WebXR Body Tracking Module Level 1 Draft Community Group Report dated 2025-09-05 defines the `body-tracking` feature descriptor and `XRFrame.body`.</span>
+            </li>
+          
+            <li>
+              <span>Body Tracking では `XRBody` が body joints の ordered map として扱われ、仕様上の `size` は 83 とされているため、手だけでなく hips、spine、head、legs まで含む入力面として考える必要がある。</span>
+              <span class="en-copy">Body Tracking represents `XRBody` as an ordered map of body joints with a specified `size` of 83, so the input surface includes hips, spine, head, and legs as well as hands.</span>
+            </li>
+          
+            <li>
+              <span>同仕様は privacy risk を強く扱い、session 作成時の explicit consent、個人識別につながる高精度 body data の匿名化、`inline` session での非対応を要求している。</span>
+              <span class="en-copy">The specification treats privacy risk directly, requiring explicit consent at session creation, anonymization of body data that could identify users, and no support in `inline` sessions.</span>
+            </li>
+          
+            <li>
+              <span>部分遮蔽時は個別 joint だけを欠損させるのではなく、UA が obscured joints を emulate するか、全 joint pose を null にするという設計が示されている。</span>
+              <span class="en-copy">For partial occlusion, the design is not per-joint dropout; the UA should emulate obscured joints or report null poses for all joints.</span>
+            </li>
+          
+            <li>
+              <span>公式デモ一覧は引き続き参考リンクに留め、今日の公開カードは body stream をアプリ側でどう絞るかを触れる自作サンプルに限定した。</span>
+              <span class="en-copy">Official demo indexes remain reference links only, while today's public card focuses on the original sample for constraining body streams at the app boundary.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は、WebXR Body Tracking Module が full-body avatar だけでなく、privacy boundary の設計課題を前面に出している点です。`XRFrame.body` で 83 joint の pose を扱えるということは、動きの癖、体格、姿勢、身体可動域が継続的な入力データになるということでもあります。仕様の privacy section は、同意、匿名化、`inline` session 不可、遮蔽時の all-or-emulated 方針まで踏み込んでおり、アプリ側でも「取得できたものを全部 UI に流す」のではなく、公開レベルを明示的に絞る設計が必要だと分かります。</p>
+          <p class="en-copy">Today's notable point is that the WebXR Body Tracking Module foregrounds privacy-boundary design, not just full-body avatars. If `XRFrame.body` can expose poses for 83 joints, then motion habits, body shape, posture, and range of movement become continuous input data. The privacy section covers consent, anonymization, no `inline` support, and all-null-or-emulated handling under occlusion, which suggests applications should deliberately limit publish levels instead of forwarding every available pose into UI logic.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/body-tracking/" target="_blank" rel="noreferrer">Immersive Web: WebXR Body Tracking Module - Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/" target="_blank" rel="noreferrer">Immersive Web at W3C</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>今日のサンプルでは、赤い raw skeleton と水色または黄色の公開 pose を重ねて表示します。Consent を切ると `XRFrame.body` が null になる想定に切り替わり、Occlusion を上げると emulate か all-null のどちらかに分岐します。Rounding granularity は joint を個別にノイズ化するのではなく、静的 body model へ丸めるという考え方を可視化し、Retention window と Motion velocity は、ログを長く保持するほど・動きが細かいほど privacy risk が上がることを示します。</p>
+          <p class="en-copy">The sample overlays a red raw skeleton with a cyan or amber public pose. Turning consent off switches to an `XRFrame.body`-style null output, and increasing occlusion routes to either emulation or all-null behavior. Rounding granularity visualizes mapping to a coarse static body model instead of independently noising each joint, while retention window and motion velocity show how longer logs and more detailed motion raise privacy risk.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では `requiredFeatures: [&quot;body-tracking&quot;]` を本当に要求する前に、UI 上で何を公開するかを決める policy layer を分けておくとよさそうです。アプリの内部 pose、network 送信 pose、録画・解析用 pose、画面表示用 pose を同じ object で扱わず、consent、session mode、occlusion、rounding、retention、feature purpose を別々の gate にします。遮蔽時の挙動も「欠けた joint だけ消す」と骨格が誤解されるので、静的 model への degrade か all-null のどちらかを明示した方が安全です。</p>
+          <p class="en-copy">A production implementation should separate a policy layer before actually requesting `requiredFeatures: [&quot;body-tracking&quot;]`. Internal poses, network poses, recorded analysis poses, and display poses should not share one object without constraints; consent, session mode, occlusion, rounding, retention, and feature purpose should be separate gates. Under occlusion, simply hiding individual joints can misrepresent the body, so explicit degradation to a static model or all-null output is safer.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>このサンプルからは、公開 joint 数、emulated joint 数、privacy risk、k-anonymity 風の粗さ、遮蔽率、保持時間、publish state の履歴が取れます。これを実機の body / hand tracking log、運動フォーム動画、アバター retargeting、空間音響、展示会場の匿名人数カウント、GLSL の body aura 表現、AI による姿勢分類と組み合わせると、体験表現とプライバシー制約を同じ画面で比較できます。業務用途では、トレーニング記録、遠隔支援、VR 会議 avatar、店舗内 AR 誘導のデータ最小化レビューに展開できます。</p>
+          <p class="en-copy">The sample yields publish-state history, exposed joint count, emulated joint count, privacy risk, k-anonymity-like coarseness, occlusion, and retention. Combining those with real device body/hand tracking logs, exercise videos, avatar retargeting, spatial audio, anonymous installation counting, GLSL body-aura visuals, or AI posture classification would let teams compare expression and privacy constraints in one view. Client-facing uses include training records, remote support, VR meeting avatars, and data-minimization reviews for in-store AR guidance.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>Body Tracking の issue、既存 Hand Input との joint 命名・座標系の対応、camera / depth / body を同時に要求する場合の permission surface、avatar retargeting 側の最低限必要な joint subset、`immersive-vr` と `immersive-ar` で期待される body pose の差分を見ます。実機サポート状況が変わった場合は、サンプル側にも `navigator.xr.isSessionSupported()` と optional / required feature の診断を足したいです。</p>
+          <p class="en-copy">Watch Body Tracking issues, alignment between Hand Input and body joint naming/coordinate systems, permission surface when camera/depth/body are requested together, the minimum joint subset needed for avatar retargeting, and differences expected between `immersive-vr` and `immersive-ar`. If device support changes, add `navigator.xr.isSessionSupported()` plus optional/required feature diagnostics to the sample.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルを開き、まず Consent を off にして全 readout が null 側へ倒れることを見てください。次に Consent を戻し、Occlusion を 70% 以上へ上げ、Emulate toggle を切り替えると、仕様で示されている「emulate するか、全 joint pose を null にするか」の違いが見えます。最後に Rounding を上げると、raw skeleton と公開 pose の差が広がり、体格・動作の細部を落とす効果が分かります。</p>
+          <p class="en-copy">Open the sample and first turn consent off to see the readouts collapse toward null. Then restore consent, raise occlusion above 70%, and switch the emulation toggle to compare the spec-shaped choice between emulating obscured joints and making all joint poses null. Finally raise rounding to see the gap between the raw skeleton and public pose, showing how body and motion detail can be reduced.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-03_html_body_tracking_privacy_pose_limiter.html" target="_blank" rel="noreferrer">Open Body Tracking Privacy Pose Limiter</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Body Tracking Module、WebXR Device API、Immersive Web 仕様一覧、WebXR Samples を確認。設計: 2026-08-02 の action arbitration から、入力が採用された後に全身データをどこまで公開するかへ論点を移す。実装: consent、occlusion、emulate / all-null、rounding granularity、motion velocity、retention window、privacy risk、83 joint readout、event trace を canvas + controls で実装。検証: JSON parse、HTML script 構文、全 outputs script compile、gallery 再生成、Pages 公開 URL を確認する。</p>
+          <p class="en-copy">Research: reviewed the Body Tracking Module, WebXR Device API, Immersive Web specification index, and WebXR Samples. Design: move from the 2026-08-02 action-arbitration topic to how much full-body data should be published after input is accepted. Implementation: built consent, occlusion, emulate/all-null behavior, rounding granularity, motion velocity, retention window, privacy risk, 83-joint readout, and event trace with canvas and controls. Validation: parse JSON, check HTML script syntax, compile all output scripts, regenerate the gallery, and verify published Pages URLs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>ここ数日は XR の入口、permission、session support、input profile、controller / hand arbitration を扱ってきました。今日の body tracking は、その延長で「入力の豊かさがそのまま privacy risk になる」領域です。表現としては avatar や training UI に直結しますが、日次サンプルでは先に公開制限、匿名化、欠損時の state を触れるようにし、派手な body effect よりもデータ境界の理解を優先しました。</p>
+          <p class="en-copy">The recent sequence has covered XR entry points, permissions, session support, input profiles, and controller/hand arbitration. Body tracking extends that into a space where input richness directly becomes privacy risk. It connects naturally to avatars and training UI, but today's sample prioritizes publish limits, anonymization, and missing-data states before flashy body effects.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Body Tracking Privacy Pose Limiter` です。実 XR session は開始せず、Body Tracking 仕様の consent、83 joints、遮蔽時の emulate / all-null、匿名化の考え方をローカル canvas で再現しました。次に足すなら、Hand Input の 25 joint と Body Tracking の手 joint の突き合わせ、avatar retargeting 用 joint subset、実機ログの replay、network 送信前の redaction preview を追加します。</p>
+          <p class="en-copy">The selected prototype is `Body Tracking Privacy Pose Limiter`. It does not start a real XR session; it recreates the Body Tracking ideas of consent, 83 joints, emulate/all-null occlusion behavior, and anonymization in a local canvas. Useful next additions are mapping Hand Input's 25 joints against body hand joints, avatar-retargeting joint subsets, real device log replay, and redaction previews before network submission.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-03_html_body_tracking_privacy_pose_limiter.html" target="_blank" rel="noreferrer">Today's sample: Body Tracking Privacy Pose Limiter</a></li>
+          
+            <li><a href="https://immersive-web.github.io/body-tracking/" target="_blank" rel="noreferrer">Immersive Web: WebXR Body Tracking Module - Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr/" target="_blank" rel="noreferrer">W3C / Immersive Web: WebXR Device API</a></li>
+          
+            <li><a href="https://immersive-web.github.io/" target="_blank" rel="noreferrer">Immersive Web at W3C: Specifications and samples</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-08-03_html_body_tracking_privacy_pose_limiter.html" loading="lazy" title="Body Tracking Privacy Pose Limiter"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
