@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raw Camera Access を要求する前の露出 crop gate を試す | 2026-08-04</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.08.04</p>
+      <h1>Raw Camera Access を要求する前の露出 crop gate を試す</h1>
+      <p class="hero-subtitle">Testing an exposure crop gate before requesting Raw Camera Access</p>
+      <p>WebXR Raw Camera Access Module、Depth Sensing、DOM Overlays、Immersive Web の公式サンプルを確認し、`camera-access` を required / optional / fallback のどれで扱うか、raw pixels をどの範囲だけ露出するかを可視化する自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the WebXR Raw Camera Access Module, Depth Sensing, DOM Overlays, and Immersive Web sample pages, today's original HTML sample visualizes whether `camera-access` should be required, optional, or avoided, and how much of the raw pixel surface should be exposed.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-08-04_html_raw_camera_exposure_crop_gate.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-08-03.html">← 2026.08.03</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Raw Camera Exposure Crop Gate</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-04_html_raw_camera_exposure_crop_gate.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Raw Camera Access Module は 2025-12-11 の Draft Community Group Report で、`camera-access` feature descriptor、`XRView.camera`、`XRWebGLBinding.getCameraImage()` を定義している。</span>
+              <span class="en-copy">The WebXR Raw Camera Access Module Draft Community Group Report dated 2025-12-11 defines the `camera-access` feature descriptor, `XRView.camera`, and `XRWebGLBinding.getCameraImage()`.</span>
+            </li>
+          
+            <li>
+              <span>`camera-access` は `immersive-ar` の背後に表示される camera image pixels をアプリが直接扱える強力な機能で、仕様上も現在の WebXR 能力の中で最も privacy implication が高いと説明されている。</span>
+              <span class="en-copy">`camera-access` lets applications directly handle camera image pixels behind an `immersive-ar` session, and the spec describes it as having the highest privacy implications among current WebXR capabilities.</span>
+            </li>
+          
+            <li>
+              <span>Raw Camera Access は `xr-spatial-tracking` だけでなく `camera` permissions policy も必要で、inline XR device はこの機能を support 可能な device として扱ってはいけない。</span>
+              <span class="en-copy">Raw Camera Access requires both `xr-spatial-tracking` and `camera` permissions policy, and the inline XR device must not be treated as capable of supporting the feature.</span>
+            </li>
+          
+            <li>
+              <span>XRCamera は frame の active / animationFrame 条件、view との alignment、native camera image の有無によって `null` になり得るため、アプリ側は raw texture 前提ではなく degrade path を持つ必要がある。</span>
+              <span class="en-copy">XRCamera can be `null` depending on frame activity, animation-frame timing, native image availability, and view alignment, so applications need a degrade path instead of assuming raw textures.</span>
+            </li>
+          
+            <li>
+              <span>公式サンプルと proposal sample は参考リンクとして使い、今日の公開カードは raw camera request を最小化する自作 crop gate に限定した。</span>
+              <span class="en-copy">Official samples and proposal samples remain reference links only; today's public card is the original crop gate for minimizing raw camera requests.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は Raw Camera Access が、AR の pass-through 映像を「見えている背景」から「アプリが読める raw pixels」に変える点です。Hit Test や Depth Sensing は現実空間の位置や距離を借りる機能ですが、Raw Camera Access は環境そのものの画像を扱うため、同意、permissions policy、privacy indicator、view との alignment が中心課題になります。仕様は `camera-access` を不要に要求しないことを強く促しており、アプリ側でも最初から required feature にせず、semantic mask、depth fallback、no-camera mode へ落とせる設計が重要だと分かります。</p>
+          <p class="en-copy">Today's notable point is that Raw Camera Access turns AR passthrough from a visible background into raw pixels the app can read. Hit Test and Depth Sensing borrow real-world position or distance, but Raw Camera Access handles images of the environment itself, so consent, permissions policy, privacy indicators, and view alignment become central. The spec strongly discourages unnecessary `camera-access` requests, which suggests applications should avoid defaulting to required features and should degrade to semantic masks, depth fallback, or no-camera modes.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/raw-camera-access/" target="_blank" rel="noreferrer">Immersive Web: WebXR Raw Camera Access Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/proposals/" target="_blank" rel="noreferrer">Immersive Web: WebXR Proposal Samples</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>今日のサンプルでは、AR camera feed 風の背景の上に、アプリが読む crop window を重ねます。Required / Optional / No camera を切り替え、Consent、Frame alignment、Crop width、Environment sensitivity、Motion between frames を動かすと、raw crop、semantic mask、depth fallback、null camera、blocked の各 state に分岐します。右上の privacy indicator と下部の DOM overlay warning は、体験中に「何が露出しているか」をユーザーへ戻す UI として扱いました。</p>
+          <p class="en-copy">The sample overlays an app-readable crop window on an AR-camera-like background. Switching Required, Optional, and No camera and adjusting consent, frame alignment, crop width, environment sensitivity, and motion routes the scene into raw crop, semantic mask, depth fallback, null camera, or blocked states. The privacy indicator and DOM overlay warning are treated as UI that reflects what is being exposed during the experience.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では `requestSession(&quot;immersive-ar&quot;, { optionalFeatures: [&quot;camera-access&quot;] })` を基本にし、raw pixels が本当に必要なフレームだけ `XRView.camera` と `getCameraImage(camera)` を読む方針がよさそうです。`camera` permissions policy、`xr-spatial-tracking`、secure context、active XR frame、view alignment、native camera image availability を独立した gate にし、失敗時は depth sensing の coarse mask、hand / body joint の抽象 state、または DOM overlay の手動入力へ落とします。raw texture を analytics や network へ流す場合は、crop、downsample、redaction、retention window を session policy として明示します。</p>
+          <p class="en-copy">A production implementation should usually start with `requestSession(&quot;immersive-ar&quot;, { optionalFeatures: [&quot;camera-access&quot;] })` and read `XRView.camera` plus `getCameraImage(camera)` only on frames that truly need raw pixels. Treat `camera` permissions policy, `xr-spatial-tracking`, secure context, active XR frame, view alignment, and native image availability as independent gates. On failure, degrade to a coarse depth-sensing mask, abstract hand/body state, or manual DOM-overlay input. If raw textures flow into analytics or networking, crop, downsample, redaction, and retention windows should be explicit session policy.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>このサンプルからは、露出 pixel 比率、risk score、consent、alignment、crop size、fallback state、privacy indicator の有無、event trace が取れます。実機の raw camera texture、depth map、plane / mesh detection、手入力、body tracking、AI 物体検出、展示会場の説明 overlay、倉庫や店舗の AR 作業指示と組み合わせると、どの機能が raw pixels を本当に必要としているかを比較できます。特に AI と組み合わせる場合は、raw image を直接送る前に semantic label だけで成立する体験を先に試す価値があります。</p>
+          <p class="en-copy">The sample produces exposed-pixel ratio, risk score, consent, alignment, crop size, fallback state, privacy-indicator state, and an event trace. Combining those with real raw camera textures, depth maps, plane or mesh detection, hand input, body tracking, AI object detection, exhibition overlays, or AR work instructions for stores and warehouses would help compare which features truly need raw pixels. When AI is involved, it is worth testing whether semantic labels alone can support the experience before sending raw images.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>Raw Camera Access の issue、`camera-access` と Depth Sensing / Mesh Detection の同時利用、permission prompt の段階化、privacy indicator の UI 実装、frame alignment が崩れる端末差、WebGPU 経由で raw camera texture を処理する場合の copy / sampling cost を見ます。公式 proposal samples 側では depth / plane / mesh detection の構成を継続確認し、raw image なしで成立する AR UX の設計パターンも増やします。</p>
+          <p class="en-copy">Watch Raw Camera Access issues, combined use of `camera-access` with Depth Sensing or Mesh Detection, staged permission prompts, privacy-indicator UI, device differences when frame alignment fails, and copy/sampling costs when processing camera textures through WebGPU. Continue checking proposal samples for depth, plane, and mesh detection patterns, while adding AR UX patterns that work without raw images.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルを開き、まず Optional のまま Crop width を小さくして exposed pixels が下がることを見てください。次に Semantic mask を on にすると、同じ crop でも raw pixels ではなく label 化された領域だけが残ります。Frame alignment を 45 未満へ落とすと `XRCamera returned null` 相当になり、Consent を 35 未満または privacy indicator を off にすると request 自体を止める state になります。</p>
+          <p class="en-copy">Open the sample, keep Optional selected, and reduce crop width to see exposed pixels fall. Then turn Semantic mask on to replace raw pixels with labeled regions within the same crop. Lower frame alignment below 45 to reach an `XRCamera returned null` equivalent, or lower consent below 35 or disable the privacy indicator to stop the request entirely.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-04_html_raw_camera_exposure_crop_gate.html" target="_blank" rel="noreferrer">Open Raw Camera Exposure Crop Gate</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Raw Camera Access、Depth Sensing、DOM Overlays、WebXR Samples、Proposal Samples を確認。設計: 2026-08-03 の Body Tracking privacy gate から、環境画像を読む camera-access の露出最小化へ進める。実装: required / optional / no-camera mode、consent、alignment、crop、sensitivity、motion、privacy indicator、semantic mask、depth fallback、DOM overlay warning、risk score、event trace を canvas + controls で実装。検証: JSON parse、HTML script 構文、全 outputs script compile、gallery 再生成、Pages 公開 URL を確認する。</p>
+          <p class="en-copy">Research: reviewed Raw Camera Access, Depth Sensing, DOM Overlays, WebXR Samples, and Proposal Samples. Design: move from the 2026-08-03 Body Tracking privacy gate to minimizing exposure when requesting `camera-access`. Implementation: built required/optional/no-camera modes, consent, alignment, crop, sensitivity, motion, privacy indicator, semantic mask, depth fallback, DOM overlay warning, risk score, and event trace with canvas and controls. Validation: parse JSON, check HTML script syntax, compile all output scripts, regenerate the gallery, and verify published Pages URLs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>ここ数日の permission、input profile、controller / hand arbitration、body tracking の流れは、入力やセンサーの豊かさをどう制限して公開するかというテーマにまとまってきました。今日の Raw Camera Access はその中でも最も直接的で、現実空間の画像を扱うため、表現の前に gate design が必要です。派手な camera shader ではなく、crop、mask、fallback、indicator を先に触れるようにしたことで、今後の AI / WebGPU / mesh 系サンプルへつなげやすくなります。</p>
+          <p class="en-copy">The recent sequence around permissions, input profiles, controller/hand arbitration, and body tracking has converged on how to constrain rich sensor input before publishing it. Raw Camera Access is the most direct case because it handles images of the real environment, so gate design needs to precede visual effects. By making crop, mask, fallback, and indicator controls tangible before building a camera shader, this sample creates a better bridge toward AI, WebGPU, and mesh-oriented prototypes.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Raw Camera Exposure Crop Gate` です。実 XR session は開始せず、Raw Camera Access 仕様の `camera-access`、view alignment、privacy indicator、camera texture null、代替 mask の考え方をローカル canvas で再現しました。次に足すなら、Depth Sensing の `getDepthInMeters()` 風 sampler、Mesh Detection の coarse geometry、AI object label の redaction queue、WebGPU compute pass 風の on-device mask 生成を追加します。</p>
+          <p class="en-copy">The selected prototype is `Raw Camera Exposure Crop Gate`. It does not start a real XR session; it recreates the Raw Camera Access ideas of `camera-access`, view alignment, privacy indicator, null camera textures, and fallback masks in a local canvas. Useful next additions are a Depth Sensing-style `getDepthInMeters()` sampler, coarse Mesh Detection geometry, an AI object-label redaction queue, and a WebGPU-compute-style on-device mask generator.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-04_html_raw_camera_exposure_crop_gate.html" target="_blank" rel="noreferrer">Today's sample: Raw Camera Exposure Crop Gate</a></li>
+          
+            <li><a href="https://immersive-web.github.io/raw-camera-access/" target="_blank" rel="noreferrer">Immersive Web: WebXR Raw Camera Access Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/depth-sensing/" target="_blank" rel="noreferrer">Immersive Web: WebXR Depth Sensing Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/dom-overlays/" target="_blank" rel="noreferrer">Immersive Web: WebXR DOM Overlays Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/proposals/" target="_blank" rel="noreferrer">Immersive Web: WebXR Proposal Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-08-04_html_raw_camera_exposure_crop_gate.html" loading="lazy" title="Raw Camera Exposure Crop Gate"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

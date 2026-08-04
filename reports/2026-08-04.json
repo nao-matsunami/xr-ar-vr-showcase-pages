@@ -1,0 +1,119 @@
+{
+  "date": "2026-08-04",
+  "headline": "Raw Camera Access を要求する前の露出 crop gate を試す",
+  "headlineEn": "Testing an exposure crop gate before requesting Raw Camera Access",
+  "summary": "WebXR Raw Camera Access Module、Depth Sensing、DOM Overlays、Immersive Web の公式サンプルを確認し、`camera-access` を required / optional / fallback のどれで扱うか、raw pixels をどの範囲だけ露出するかを可視化する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Raw Camera Access Module, Depth Sensing, DOM Overlays, and Immersive Web sample pages, today's original HTML sample visualizes whether `camera-access` should be required, optional, or avoided, and how much of the raw pixel surface should be exposed.",
+  "keyTopics": [
+    "WebXR Raw Camera Access Module は 2025-12-11 の Draft Community Group Report で、`camera-access` feature descriptor、`XRView.camera`、`XRWebGLBinding.getCameraImage()` を定義している。",
+    "`camera-access` は `immersive-ar` の背後に表示される camera image pixels をアプリが直接扱える強力な機能で、仕様上も現在の WebXR 能力の中で最も privacy implication が高いと説明されている。",
+    "Raw Camera Access は `xr-spatial-tracking` だけでなく `camera` permissions policy も必要で、inline XR device はこの機能を support 可能な device として扱ってはいけない。",
+    "XRCamera は frame の active / animationFrame 条件、view との alignment、native camera image の有無によって `null` になり得るため、アプリ側は raw texture 前提ではなく degrade path を持つ必要がある。",
+    "公式サンプルと proposal sample は参考リンクとして使い、今日の公開カードは raw camera request を最小化する自作 crop gate に限定した。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Raw Camera Access Module Draft Community Group Report dated 2025-12-11 defines the `camera-access` feature descriptor, `XRView.camera`, and `XRWebGLBinding.getCameraImage()`.",
+    "`camera-access` lets applications directly handle camera image pixels behind an `immersive-ar` session, and the spec describes it as having the highest privacy implications among current WebXR capabilities.",
+    "Raw Camera Access requires both `xr-spatial-tracking` and `camera` permissions policy, and the inline XR device must not be treated as capable of supporting the feature.",
+    "XRCamera can be `null` depending on frame activity, animation-frame timing, native image availability, and view alignment, so applications need a degrade path instead of assuming raw textures.",
+    "Official samples and proposal samples remain reference links only; today's public card is the original crop gate for minimizing raw camera requests."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Raw Camera Exposure Crop Gate",
+      "url": "../outputs/2026-08-04_html_raw_camera_exposure_crop_gate.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Raw Camera Access Module",
+      "url": "https://immersive-web.github.io/raw-camera-access/"
+    },
+    {
+      "label": "Immersive Web: WebXR Depth Sensing Module",
+      "url": "https://immersive-web.github.io/depth-sensing/"
+    },
+    {
+      "label": "Immersive Web: WebXR DOM Overlays Module",
+      "url": "https://immersive-web.github.io/dom-overlays/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Web: WebXR Proposal Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/proposals/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は Raw Camera Access が、AR の pass-through 映像を「見えている背景」から「アプリが読める raw pixels」に変える点です。Hit Test や Depth Sensing は現実空間の位置や距離を借りる機能ですが、Raw Camera Access は環境そのものの画像を扱うため、同意、permissions policy、privacy indicator、view との alignment が中心課題になります。仕様は `camera-access` を不要に要求しないことを強く促しており、アプリ側でも最初から required feature にせず、semantic mask、depth fallback、no-camera mode へ落とせる設計が重要だと分かります。",
+      "bodyEn": "Today's notable point is that Raw Camera Access turns AR passthrough from a visible background into raw pixels the app can read. Hit Test and Depth Sensing borrow real-world position or distance, but Raw Camera Access handles images of the environment itself, so consent, permissions policy, privacy indicators, and view alignment become central. The spec strongly discourages unnecessary `camera-access` requests, which suggests applications should avoid defaulting to required features and should degrade to semantic masks, depth fallback, or no-camera modes.",
+      "links": [
+        {
+          "label": "Immersive Web: WebXR Raw Camera Access Module",
+          "url": "https://immersive-web.github.io/raw-camera-access/"
+        },
+        {
+          "label": "Immersive Web: WebXR Proposal Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/proposals/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "今日のサンプルでは、AR camera feed 風の背景の上に、アプリが読む crop window を重ねます。Required / Optional / No camera を切り替え、Consent、Frame alignment、Crop width、Environment sensitivity、Motion between frames を動かすと、raw crop、semantic mask、depth fallback、null camera、blocked の各 state に分岐します。右上の privacy indicator と下部の DOM overlay warning は、体験中に「何が露出しているか」をユーザーへ戻す UI として扱いました。",
+      "bodyEn": "The sample overlays an app-readable crop window on an AR-camera-like background. Switching Required, Optional, and No camera and adjusting consent, frame alignment, crop width, environment sensitivity, and motion routes the scene into raw crop, semantic mask, depth fallback, null camera, or blocked states. The privacy indicator and DOM overlay warning are treated as UI that reflects what is being exposed during the experience."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では `requestSession(\"immersive-ar\", { optionalFeatures: [\"camera-access\"] })` を基本にし、raw pixels が本当に必要なフレームだけ `XRView.camera` と `getCameraImage(camera)` を読む方針がよさそうです。`camera` permissions policy、`xr-spatial-tracking`、secure context、active XR frame、view alignment、native camera image availability を独立した gate にし、失敗時は depth sensing の coarse mask、hand / body joint の抽象 state、または DOM overlay の手動入力へ落とします。raw texture を analytics や network へ流す場合は、crop、downsample、redaction、retention window を session policy として明示します。",
+      "bodyEn": "A production implementation should usually start with `requestSession(\"immersive-ar\", { optionalFeatures: [\"camera-access\"] })` and read `XRView.camera` plus `getCameraImage(camera)` only on frames that truly need raw pixels. Treat `camera` permissions policy, `xr-spatial-tracking`, secure context, active XR frame, view alignment, and native image availability as independent gates. On failure, degrade to a coarse depth-sensing mask, abstract hand/body state, or manual DOM-overlay input. If raw textures flow into analytics or networking, crop, downsample, redaction, and retention windows should be explicit session policy."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "このサンプルからは、露出 pixel 比率、risk score、consent、alignment、crop size、fallback state、privacy indicator の有無、event trace が取れます。実機の raw camera texture、depth map、plane / mesh detection、手入力、body tracking、AI 物体検出、展示会場の説明 overlay、倉庫や店舗の AR 作業指示と組み合わせると、どの機能が raw pixels を本当に必要としているかを比較できます。特に AI と組み合わせる場合は、raw image を直接送る前に semantic label だけで成立する体験を先に試す価値があります。",
+      "bodyEn": "The sample produces exposed-pixel ratio, risk score, consent, alignment, crop size, fallback state, privacy-indicator state, and an event trace. Combining those with real raw camera textures, depth maps, plane or mesh detection, hand input, body tracking, AI object detection, exhibition overlays, or AR work instructions for stores and warehouses would help compare which features truly need raw pixels. When AI is involved, it is worth testing whether semantic labels alone can support the experience before sending raw images."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Raw Camera Access の issue、`camera-access` と Depth Sensing / Mesh Detection の同時利用、permission prompt の段階化、privacy indicator の UI 実装、frame alignment が崩れる端末差、WebGPU 経由で raw camera texture を処理する場合の copy / sampling cost を見ます。公式 proposal samples 側では depth / plane / mesh detection の構成を継続確認し、raw image なしで成立する AR UX の設計パターンも増やします。",
+      "bodyEn": "Watch Raw Camera Access issues, combined use of `camera-access` with Depth Sensing or Mesh Detection, staged permission prompts, privacy-indicator UI, device differences when frame alignment fails, and copy/sampling costs when processing camera textures through WebGPU. Continue checking proposal samples for depth, plane, and mesh detection patterns, while adding AR UX patterns that work without raw images."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、まず Optional のまま Crop width を小さくして exposed pixels が下がることを見てください。次に Semantic mask を on にすると、同じ crop でも raw pixels ではなく label 化された領域だけが残ります。Frame alignment を 45 未満へ落とすと `XRCamera returned null` 相当になり、Consent を 35 未満または privacy indicator を off にすると request 自体を止める state になります。",
+      "bodyEn": "Open the sample, keep Optional selected, and reduce crop width to see exposed pixels fall. Then turn Semantic mask on to replace raw pixels with labeled regions within the same crop. Lower frame alignment below 45 to reach an `XRCamera returned null` equivalent, or lower consent below 35 or disable the privacy indicator to stop the request entirely.",
+      "links": [
+        {
+          "label": "Open Raw Camera Exposure Crop Gate",
+          "url": "../outputs/2026-08-04_html_raw_camera_exposure_crop_gate.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Raw Camera Access、Depth Sensing、DOM Overlays、WebXR Samples、Proposal Samples を確認。設計: 2026-08-03 の Body Tracking privacy gate から、環境画像を読む camera-access の露出最小化へ進める。実装: required / optional / no-camera mode、consent、alignment、crop、sensitivity、motion、privacy indicator、semantic mask、depth fallback、DOM overlay warning、risk score、event trace を canvas + controls で実装。検証: JSON parse、HTML script 構文、全 outputs script compile、gallery 再生成、Pages 公開 URL を確認する。",
+      "bodyEn": "Research: reviewed Raw Camera Access, Depth Sensing, DOM Overlays, WebXR Samples, and Proposal Samples. Design: move from the 2026-08-03 Body Tracking privacy gate to minimizing exposure when requesting `camera-access`. Implementation: built required/optional/no-camera modes, consent, alignment, crop, sensitivity, motion, privacy indicator, semantic mask, depth fallback, DOM overlay warning, risk score, and event trace with canvas and controls. Validation: parse JSON, check HTML script syntax, compile all output scripts, regenerate the gallery, and verify published Pages URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日の permission、input profile、controller / hand arbitration、body tracking の流れは、入力やセンサーの豊かさをどう制限して公開するかというテーマにまとまってきました。今日の Raw Camera Access はその中でも最も直接的で、現実空間の画像を扱うため、表現の前に gate design が必要です。派手な camera shader ではなく、crop、mask、fallback、indicator を先に触れるようにしたことで、今後の AI / WebGPU / mesh 系サンプルへつなげやすくなります。",
+      "bodyEn": "The recent sequence around permissions, input profiles, controller/hand arbitration, and body tracking has converged on how to constrain rich sensor input before publishing it. Raw Camera Access is the most direct case because it handles images of the real environment, so gate design needs to precede visual effects. By making crop, mask, fallback, and indicator controls tangible before building a camera shader, this sample creates a better bridge toward AI, WebGPU, and mesh-oriented prototypes."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Raw Camera Exposure Crop Gate` です。実 XR session は開始せず、Raw Camera Access 仕様の `camera-access`、view alignment、privacy indicator、camera texture null、代替 mask の考え方をローカル canvas で再現しました。次に足すなら、Depth Sensing の `getDepthInMeters()` 風 sampler、Mesh Detection の coarse geometry、AI object label の redaction queue、WebGPU compute pass 風の on-device mask 生成を追加します。",
+      "bodyEn": "The selected prototype is `Raw Camera Exposure Crop Gate`. It does not start a real XR session; it recreates the Raw Camera Access ideas of `camera-access`, view alignment, privacy indicator, null camera textures, and fallback masks in a local canvas. Useful next additions are a Depth Sensing-style `getDepthInMeters()` sampler, coarse Mesh Detection geometry, an AI object-label redaction queue, and a WebGPU-compute-style on-device mask generator."
+    }
+  ]
+}

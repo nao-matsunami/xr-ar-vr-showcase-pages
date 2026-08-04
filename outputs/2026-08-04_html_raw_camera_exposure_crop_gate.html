@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Raw Camera Exposure Crop Gate</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #06100f;
+      color: #f8f4e9;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(86, 203, 183, 0.15), transparent 34%),
+        linear-gradient(315deg, rgba(235, 178, 74, 0.12), transparent 36%),
+        #06100f;
+    }
+
+    main {
+      width: min(1260px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 372px;
+      gap: 18px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(86, 203, 183, 0.26);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 3vw, 2.6rem);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    p { margin: 0; line-height: 1.55; }
+
+    .lede {
+      max-width: 850px;
+      margin-top: 10px;
+      color: #a9bbb6;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border: 1px solid rgba(86, 203, 183, 0.34);
+      background: rgba(3, 17, 16, 0.82);
+      color: #7ce8d2;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 700px;
+      border: 1px solid rgba(86, 203, 183, 0.22);
+      background: #020706;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      top: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .hud-card {
+      min-height: 60px;
+      border: 1px solid rgba(248, 244, 233, 0.13);
+      background: rgba(4, 14, 14, 0.76);
+      padding: 9px 10px;
+      backdrop-filter: blur(10px);
+    }
+
+    .hud-card span {
+      display: block;
+      color: #a9bbb6;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+    }
+
+    .hud-card strong {
+      display: block;
+      margin-top: 5px;
+      color: #f8f4e9;
+      font-size: 0.88rem;
+      overflow-wrap: anywhere;
+    }
+
+    aside {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    section {
+      border: 1px solid rgba(86, 203, 183, 0.22);
+      background: rgba(6, 16, 16, 0.86);
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 0.96rem;
+      letter-spacing: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      margin: 12px 0;
+      color: #a9bbb6;
+      font-size: 0.86rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #7ce8d2;
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid rgba(86, 203, 183, 0.3);
+      background: rgba(86, 203, 183, 0.08);
+      color: #f8f4e9;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button.active {
+      background: #7ce8d2;
+      border-color: #7ce8d2;
+      color: #06211d;
+    }
+
+    .switch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 40px;
+      margin: 8px 0;
+      color: #a9bbb6;
+      font-size: 0.86rem;
+    }
+
+    .switch input { width: 20px; height: 20px; accent-color: #7ce8d2; }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      min-height: 70px;
+      border: 1px solid rgba(248, 244, 233, 0.13);
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .metric span {
+      display: block;
+      color: #a9bbb6;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1rem;
+      line-height: 1.12;
+      overflow-wrap: anywhere;
+    }
+
+    .log {
+      display: grid;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .entry {
+      border-left: 3px solid rgba(124, 232, 210, 0.68);
+      background: rgba(255, 255, 255, 0.045);
+      padding: 8px 9px;
+      color: #d7e4df;
+      font-size: 0.78rem;
+      line-height: 1.42;
+    }
+
+    @media (max-width: 980px) {
+      main { grid-template-columns: 1fr; padding: 14px; }
+      header { align-items: start; flex-direction: column; }
+      .stage { min-height: 560px; }
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 560px) {
+      main { padding: 10px; }
+      .stage { min-height: 500px; }
+      .hud {
+        left: 10px;
+        right: 10px;
+        top: 10px;
+        grid-template-columns: 1fr 1fr;
+      }
+      .hud-card { min-height: 54px; padding: 7px; }
+      .readout { grid-template-columns: 1fr; }
+      .seg { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Raw Camera Exposure Crop Gate</h1>
+        <p class="lede">A local canvas prototype for deciding whether an immersive AR frame should expose raw camera pixels, a cropped/aligned texture, a coarse semantic mask, or no camera texture at all.</p>
+      </div>
+      <div class="badge">Original WebXR Mini Sample - 2026-08-04</div>
+    </header>
+
+    <div class="stage">
+      <canvas id="view" width="980" height="700" aria-label="Simulated raw camera access exposure gate"></canvas>
+      <div class="hud">
+        <div class="hud-card"><span>XRSession request</span><strong id="sessionState">Optional camera</strong></div>
+        <div class="hud-card"><span>Privacy indicator</span><strong id="indicatorState">Visible while active</strong></div>
+        <div class="hud-card"><span>Camera texture</span><strong id="textureState">Aligned crop</strong></div>
+        <div class="hud-card"><span>Policy result</span><strong id="policyState">Gate open</strong></div>
+      </div>
+    </div>
+
+    <aside>
+      <section>
+        <h2>Feature Request</h2>
+        <div class="seg" id="modeButtons">
+          <button type="button" data-mode="required">Required</button>
+          <button type="button" data-mode="optional" class="active">Optional</button>
+          <button type="button" data-mode="fallback">No camera</button>
+        </div>
+        <label>Camera consent <input id="consent" type="range" min="0" max="100" value="78"></label>
+        <label>Frame alignment <input id="alignment" type="range" min="0" max="100" value="82"></label>
+        <label>Crop width <input id="crop" type="range" min="22" max="100" value="58"></label>
+        <label>Environment sensitivity <input id="sensitivity" type="range" min="0" max="100" value="46"></label>
+        <label>Motion between frames <input id="motion" type="range" min="0" max="100" value="34"></label>
+      </section>
+
+      <section>
+        <h2>Exposure Controls</h2>
+        <label class="switch">Show privacy indicator <input id="indicator" type="checkbox" checked></label>
+        <label class="switch">Use semantic mask instead of pixels <input id="semantic" type="checkbox"></label>
+        <label class="switch">Depth fallback available <input id="depthFallback" type="checkbox" checked></label>
+        <label class="switch">DOM overlay warning visible <input id="overlayWarning" type="checkbox" checked></label>
+      </section>
+
+      <section>
+        <h2>Readout</h2>
+        <div class="readout">
+          <div class="metric"><span>Exposed pixels</span><strong id="pixels">0%</strong></div>
+          <div class="metric"><span>Risk score</span><strong id="risk">0</strong></div>
+          <div class="metric"><span>Fallback</span><strong id="fallback">Depth mask</strong></div>
+          <div class="metric"><span>Action</span><strong id="action">Request</strong></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Event Trace</h2>
+        <div class="log" id="log"></div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("view");
+    const ctx = canvas.getContext("2d");
+    const els = {
+      sessionState: document.getElementById("sessionState"),
+      indicatorState: document.getElementById("indicatorState"),
+      textureState: document.getElementById("textureState"),
+      policyState: document.getElementById("policyState"),
+      consent: document.getElementById("consent"),
+      alignment: document.getElementById("alignment"),
+      crop: document.getElementById("crop"),
+      sensitivity: document.getElementById("sensitivity"),
+      motion: document.getElementById("motion"),
+      indicator: document.getElementById("indicator"),
+      semantic: document.getElementById("semantic"),
+      depthFallback: document.getElementById("depthFallback"),
+      overlayWarning: document.getElementById("overlayWarning"),
+      pixels: document.getElementById("pixels"),
+      risk: document.getElementById("risk"),
+      fallback: document.getElementById("fallback"),
+      action: document.getElementById("action"),
+      log: document.getElementById("log")
+    };
+
+    const state = {
+      mode: "optional",
+      pointer: { x: 0.58, y: 0.54 },
+      t: 0,
+      log: []
+    };
+
+    const controls = ["consent", "alignment", "crop", "sensitivity", "motion"];
+    const value = (id) => Number(els[id].value);
+
+    function addLog(message) {
+      const stamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      state.log.unshift(`${stamp} - ${message}`);
+      state.log = state.log.slice(0, 5);
+      els.log.innerHTML = state.log.map((item) => `<div class="entry">${item}</div>`).join("");
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function policy() {
+      const consent = value("consent");
+      const alignment = value("alignment");
+      const crop = value("crop");
+      const sensitivity = value("sensitivity");
+      const motion = value("motion");
+      const exposedPixels = state.mode === "fallback" ? 0 : crop * (els.semantic.checked ? 0.28 : 1);
+      const risk = Math.round(
+        exposedPixels * 0.45 +
+        sensitivity * 0.28 +
+        Math.max(0, 58 - consent) * 0.7 +
+        Math.max(0, 70 - alignment) * 0.42 +
+        motion * 0.15 -
+        (els.indicator.checked ? 10 : 0) -
+        (els.overlayWarning.checked ? 7 : 0)
+      );
+      let result = "open";
+      if (state.mode === "fallback") result = "no-camera";
+      else if (consent < 35 || !els.indicator.checked) result = "blocked";
+      else if (alignment < 45) result = "null-camera";
+      else if (risk > 72) result = els.depthFallback.checked ? "depth-mask" : "blocked";
+      else if (risk > 48 || els.semantic.checked) result = "semantic-mask";
+      return { consent, alignment, crop, sensitivity, motion, exposedPixels, risk: Math.max(0, risk), result };
+    }
+
+    function drawCameraFeed(w, h, p) {
+      const grd = ctx.createLinearGradient(0, 0, w, h);
+      grd.addColorStop(0, "#102520");
+      grd.addColorStop(0.48, "#24443c");
+      grd.addColorStop(1, "#7d693b");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.globalAlpha = 0.18;
+      for (let i = 0; i < 16; i += 1) {
+        const x = ((i * 137 + state.t * p.motion * 0.08) % (w + 120)) - 60;
+        const y = 120 + Math.sin(i * 1.7 + state.t * 0.01) * 110 + (i % 5) * 75;
+        ctx.fillStyle = i % 3 === 0 ? "#f4c66c" : "#7ce8d2";
+        ctx.fillRect(x, y, 82 + (i % 4) * 22, 50 + (i % 2) * 36);
+      }
+      ctx.restore();
+
+      ctx.strokeStyle = "rgba(248,244,233,0.12)";
+      ctx.lineWidth = 1;
+      for (let y = 100; y < h; y += 52) {
+        ctx.beginPath();
+        ctx.moveTo(0, y + Math.sin(state.t * 0.01 + y) * 4);
+        ctx.lineTo(w, y + Math.cos(state.t * 0.012 + y) * 4);
+        ctx.stroke();
+      }
+    }
+
+    function drawMask(w, h, rect, p) {
+      ctx.save();
+      ctx.fillStyle = "rgba(1, 8, 7, 0.72)";
+      ctx.fillRect(0, 0, w, h);
+      if (p.result !== "blocked" && p.result !== "no-camera") {
+        ctx.clearRect(rect.x, rect.y, rect.w, rect.h);
+      }
+      ctx.restore();
+    }
+
+    function drawSemantic(rect, p) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(rect.x, rect.y, rect.w, rect.h);
+      ctx.clip();
+      ctx.fillStyle = "rgba(5, 16, 15, 0.88)";
+      ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+      const objects = [
+        ["surface", rect.x + rect.w * 0.18, rect.y + rect.h * 0.68, 150, 42, "#7ce8d2"],
+        ["person?", rect.x + rect.w * 0.58, rect.y + rect.h * 0.34, 74, 148, "#ebb24a"],
+        ["screen", rect.x + rect.w * 0.72, rect.y + rect.h * 0.68, 118, 72, "#d95f5f"]
+      ];
+      for (const [label, x, y, rw, rh, color] of objects) {
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color + "22";
+        ctx.lineWidth = 2;
+        ctx.fillRect(x, y, rw, rh);
+        ctx.strokeRect(x, y, rw, rh);
+        ctx.fillStyle = color;
+        ctx.font = "13px ui-sans-serif, system-ui";
+        ctx.fillText(label, x + 8, y + 20);
+      }
+      ctx.restore();
+    }
+
+    function drawOverlay(w, h, rect, p) {
+      ctx.save();
+      ctx.strokeStyle = p.result === "open" ? "#7ce8d2" : p.result === "blocked" ? "#ff7373" : "#ebb24a";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+      ctx.setLineDash([9, 7]);
+      ctx.strokeStyle = "rgba(248,244,233,0.5)";
+      const pad = Math.max(10, 38 - p.alignment * 0.28);
+      ctx.strokeRect(rect.x - pad, rect.y - pad, rect.w + pad * 2, rect.h + pad * 2);
+      ctx.setLineDash([]);
+
+      if (els.indicator.checked && state.mode !== "fallback") {
+        ctx.fillStyle = "rgba(255, 115, 115, 0.92)";
+        ctx.beginPath();
+        ctx.arc(w - 36, 36, 11, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#fff4f0";
+        ctx.font = "12px ui-sans-serif, system-ui";
+        ctx.textAlign = "right";
+        ctx.fillText("camera-access active", w - 56, 41);
+      }
+
+      if (els.overlayWarning.checked) {
+        ctx.fillStyle = "rgba(6, 16, 16, 0.82)";
+        ctx.fillRect(22, h - 74, Math.min(440, w - 44), 48);
+        ctx.fillStyle = "#f8f4e9";
+        ctx.font = "14px ui-sans-serif, system-ui";
+        ctx.textAlign = "left";
+        ctx.fillText("DOM overlay warning: raw pixels are exposed only inside the aligned crop.", 38, h - 44);
+      }
+
+      const px = state.pointer.x * w;
+      const py = state.pointer.y * h;
+      ctx.strokeStyle = "rgba(124,232,210,0.8)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(px - 18, py);
+      ctx.lineTo(px + 18, py);
+      ctx.moveTo(px, py - 18);
+      ctx.lineTo(px, py + 18);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function render() {
+      state.t += 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      const p = policy();
+      const cropWidth = w * (p.crop / 100);
+      const cropHeight = Math.max(180, cropWidth * 0.58);
+      const cropX = Math.max(24, Math.min(w - cropWidth - 24, state.pointer.x * w - cropWidth / 2));
+      const cropY = Math.max(88, Math.min(h - cropHeight - 96, state.pointer.y * h - cropHeight / 2));
+      const cropRect = { x: cropX, y: cropY, w: cropWidth, h: cropHeight };
+
+      drawCameraFeed(w, h, p);
+      drawMask(w, h, cropRect, p);
+      if (p.result === "semantic-mask" || p.result === "depth-mask" || els.semantic.checked) {
+        drawSemantic(cropRect, p);
+      }
+      if (p.result === "blocked" || p.result === "no-camera" || p.result === "null-camera") {
+        ctx.save();
+        ctx.fillStyle = "rgba(2, 7, 6, 0.86)";
+        ctx.fillRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+        ctx.fillStyle = p.result === "blocked" ? "#ff7373" : "#ebb24a";
+        ctx.font = "700 18px ui-sans-serif, system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText(p.result === "null-camera" ? "XRCamera returned null" : "Raw camera texture withheld", cropRect.x + cropRect.w / 2, cropRect.y + cropRect.h / 2);
+        ctx.restore();
+      }
+      drawOverlay(w, h, cropRect, p);
+
+      els.sessionState.textContent = state.mode === "required" ? "requiredFeatures camera-access" : state.mode === "optional" ? "optionalFeatures camera-access" : "no camera-access";
+      els.indicatorState.textContent = els.indicator.checked && state.mode !== "fallback" ? "Visible while active" : "Missing or inactive";
+      els.textureState.textContent = p.result === "open" ? "Aligned raw crop" : p.result === "semantic-mask" ? "Semantic mask" : p.result === "depth-mask" ? "Depth fallback" : p.result === "null-camera" ? "XRCamera null" : "No texture";
+      els.policyState.textContent = p.result;
+      els.pixels.textContent = `${Math.round(p.exposedPixels)}%`;
+      els.risk.textContent = `${p.risk}/100`;
+      els.fallback.textContent = p.result === "depth-mask" ? "Depth mask" : p.result === "semantic-mask" ? "Labels only" : els.depthFallback.checked ? "Ready" : "None";
+      els.action.textContent = p.result === "open" ? "Request" : p.result === "blocked" ? "Do not request" : p.result === "null-camera" ? "Retry later" : "Degrade";
+
+      requestAnimationFrame(render);
+    }
+
+    document.getElementById("modeButtons").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-mode]");
+      if (!button) return;
+      state.mode = button.dataset.mode;
+      for (const item of document.querySelectorAll("#modeButtons button")) {
+        item.classList.toggle("active", item === button);
+      }
+      addLog(`XRSessionInit switched to ${state.mode}.`);
+    });
+
+    for (const id of controls) {
+      els[id].addEventListener("input", () => addLog(`${id} changed to ${els[id].value}.`));
+    }
+    for (const id of ["indicator", "semantic", "depthFallback", "overlayWarning"]) {
+      els[id].addEventListener("change", () => addLog(`${id} ${els[id].checked ? "enabled" : "disabled"}.`));
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      canvas.setPointerCapture(event.pointerId);
+      canvas.dispatchEvent(new PointerEvent("pointermove", event));
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (event.buttons === 0 && event.pointerType !== "touch") return;
+      const rect = canvas.getBoundingClientRect();
+      state.pointer.x = Math.min(0.96, Math.max(0.04, (event.clientX - rect.left) / rect.width));
+      state.pointer.y = Math.min(0.94, Math.max(0.12, (event.clientY - rect.top) / rect.height));
+    });
+
+    canvas.addEventListener("pointercancel", () => addLog("Pointer input cancelled; crop remains at last safe frame."));
+    window.addEventListener("resize", resizeCanvas);
+
+    resizeCanvas();
+    addLog("Local raw-camera policy simulation started.");
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
