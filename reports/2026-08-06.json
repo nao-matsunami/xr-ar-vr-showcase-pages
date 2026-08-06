@@ -1,0 +1,115 @@
+{
+  "date": "2026-08-06",
+  "headline": "Raw Camera Access の前に consent ladder を置く",
+  "headlineEn": "Putting a consent ladder before Raw Camera Access",
+  "summary": "WebXR Raw Camera Access、Depth Sensing、Mesh Detection、Layers API、Immersive Web Samples を確認し、camera-access を即要求せず、manual / plane / depth / mesh / camera の順に必要性を評価する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing WebXR Raw Camera Access, Depth Sensing, Mesh Detection, the Layers API, and Immersive Web Samples, today's original HTML sample evaluates manual, plane, depth, mesh, and camera routes before asking for camera-access.",
+  "keyTopics": [
+    "WebXR Raw Camera Access Module は `camera-access` feature descriptor、`XRView.camera`、`XRCamera.width` / `height`、`XRWebGLBinding.getCameraImage(camera)` を定義している。",
+    "Raw Camera Access は immersive-ar の背後にあるカメラ画像 pixels に触れるため、仕様の Privacy & Security Considerations でも最も privacy implication が大きい機能として扱われている。",
+    "Raw Camera Access は `xr-spatial-tracking` と `camera` の Permissions Policy、ユーザー同意、privacy indicator を前提にするため、体験設計上は optional / required の分離が重要になる。",
+    "WebXR Depth Sensing や Mesh Detection は、画像そのものではなく距離や粗い面情報を使えるため、配置、occlusion、測定、近接 UI の多くを raw pixels なしで成立させられる。",
+    "Immersive Web Samples は API の使い方を確認する一次的な参照として有用だが、公開アーカイブでは外部デモを並べず、今日も自作の最小サンプルを中心にした。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Raw Camera Access Module defines the `camera-access` feature descriptor, `XRView.camera`, `XRCamera.width` / `height`, and `XRWebGLBinding.getCameraImage(camera)`.",
+    "Raw Camera Access touches camera-image pixels behind immersive-ar, so the specification's Privacy & Security Considerations treats it as the feature with the highest privacy implications.",
+    "Raw Camera Access depends on `xr-spatial-tracking` and `camera` Permissions Policy, user consent, and privacy indicators, so separating optional and required feature requests matters for experience design.",
+    "WebXR Depth Sensing and Mesh Detection can use distance or coarse surfaces rather than the image itself, enabling many placement, occlusion, measurement, and proximity UI flows without raw pixels.",
+    "Immersive Web Samples remain useful primary references for API usage, while the public archive keeps external demos as links and centers today's original minimal sample."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Camera Access Consent Ladder",
+      "url": "../outputs/2026-08-06_html_camera_access_consent_ladder.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Raw Camera Access Module",
+      "url": "https://immersive-web.github.io/raw-camera-access/"
+    },
+    {
+      "label": "Immersive Web: WebXR Depth Sensing Module",
+      "url": "https://immersive-web.github.io/depth-sensing/"
+    },
+    {
+      "label": "Immersive Web: WebXR Mesh Detection Module",
+      "url": "https://immersive-web.github.io/real-world-meshing/"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/index.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は Raw Camera Access の仕様が、`camera-access` を通じて XR frame と同期した camera image texture を返す一方で、強い同意 UX と privacy indicator を要求している点です。AR では背景画像を直接読むと object recognition や custom effect が作りやすくなりますが、配置や occlusion だけなら Depth Sensing、床や壁の吸着なら Plane / Mesh Detection で十分な場面があります。そこでサンプルでは、体験の必要条件を manual / plane / depth / mesh / camera の ladder として並べ、camera-access を最後の段に置きました。",
+      "bodyEn": "Today's notable point is that Raw Camera Access can return camera-image textures synchronized with XR frames through `camera-access`, while also requiring strong consent UX and privacy indicators. Direct background image access makes object recognition and custom effects easier, but placement and occlusion can often use Depth Sensing, while floor or wall snapping can use Plane or Mesh Detection. The sample therefore arranges experience requirements as a manual / plane / depth / mesh / camera ladder and places camera-access as the final step.",
+      "links": [
+        {
+          "label": "Immersive Web: WebXR Raw Camera Access Module",
+          "url": "https://immersive-web.github.io/raw-camera-access/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルでは、縦方向の consent ladder に Manual、Plane、Depth、Mesh、Camera の 5 段を置き、utility、privacy、friction をリアルタイムに再計算します。Place / Measure / Inspect の preset と、task detail、scene motion、occlusion need、recognition need、consent threshold、derived data strength の slider を触ると、`optional: depth-sensing` で足りるのか、`required after consent: camera-access` まで進むのかが変わります。canvas 上の probe を動かすと、ユーザー操作が permission route の説明ログに反映されます。",
+      "bodyEn": "The sample places Manual, Plane, Depth, Mesh, and Camera steps on a vertical consent ladder and recalculates utility, privacy, and friction in real time. Place / Measure / Inspect presets plus sliders for task detail, scene motion, occlusion need, recognition need, consent threshold, and derived data strength change whether `optional: depth-sensing` is enough or the route advances to `required after consent: camera-access`. Moving the canvas probe updates the explanation log for the chosen permission route."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装するときは、`navigator.xr.requestSession(\"immersive-ar\", { optionalFeatures: [...] })` で derived data を先に試し、camera-access は object recognition や camera texture effect が本当に必要な操作にだけ遅延させるのが扱いやすいです。Depth は `getDepthInMeters()` 風の点問い合わせ、Mesh は surface の coarse geometry、Layers は permission prompt や privacy indicator と干渉しにくい DOM overlay / composition layer の見せ方を検討します。サンプル内の ladder score は簡易式ですが、実アプリでは失敗率、補正回数、ユーザーの明示操作、ログ保持期間を入力にできます。",
+      "bodyEn": "In implementation, first try derived data through `navigator.xr.requestSession(\"immersive-ar\", { optionalFeatures: [...] })`, and delay camera-access until object recognition or camera-texture effects are truly needed. Depth can act like point queries through `getDepthInMeters()`, Mesh can provide coarse surface geometry, and Layers can shape DOM overlays or composition layers that avoid fighting permission prompts and privacy indicators. The sample's ladder score is a simple model, but a real app can feed it with failure rate, correction count, explicit user actions, and log retention period."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルからは、scenario、slider 値、選ばれた route、privacy / utility / friction、probe 座標、feature descriptor 候補、短い decision log が取れます。これを家具配置、建築採寸、展示ガイド、現場点検、倉庫ナビ、AI object detection、redaction policy、権限説明 UI と組み合わせると、どのタスクで camera-access を正当化できるかを事前に比較できます。後で実機 WebXR に接続するなら、ladder の各段を `isSessionSupported` と optional feature の成功/失敗ログに差し替えます。",
+      "bodyEn": "Today's sample produces scenario, slider values, selected route, privacy / utility / friction, probe coordinates, candidate feature descriptors, and a short decision log. Combined with furniture placement, architectural measuring, exhibition guides, field inspection, warehouse navigation, AI object detection, redaction policies, or permission explanation UI, it can compare which tasks justify camera-access before asking for it. When connected to real WebXR hardware later, each ladder step can be replaced with `isSessionSupported` and optional-feature success/failure logs."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Raw Camera Access の issue、camera permission と XR permission の組み合わせ、Depth Sensing の CPU / GPU access、Mesh / Plane Detection の availability、WebXR Layers と DOM Overlay の permission UX、ブラウザごとの `camera-access` feature descriptor 実装状況を継続して見ます。次は、今日の ladder から Plane Detection を抜き出し、床/壁/机の semantic route と anchor placement を最小露出で比較したいです。",
+      "bodyEn": "Watch Raw Camera Access issues, the combination of camera and XR permissions, Depth Sensing CPU/GPU access, Mesh and Plane Detection availability, WebXR Layers and DOM Overlay permission UX, and browser implementation status for the `camera-access` feature descriptor. Next, extract Plane Detection from today's ladder and compare floor, wall, and desk semantic routes for low-exposure anchor placement."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、Inspect preset を押してから Recognition need を上げてください。Camera route が `ask consent` に寄り、privacy と friction が跳ねます。次に Derived data strength を上げると、同じタスクでも Depth / Mesh に戻れる場合があり、raw camera を要求する前にどれだけ代替情報で粘れるかを確認できます。",
+      "bodyEn": "Open the sample, press the Inspect preset, and raise Recognition need. The Camera route moves toward `ask consent`, while privacy and friction jump. Then raise Derived data strength; the same task may return to Depth or Mesh, showing how far derived data can go before raw camera access is requested.",
+      "links": [
+        {
+          "label": "Open Camera Access Consent Ladder",
+          "url": "../outputs/2026-08-06_html_camera_access_consent_ladder.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Raw Camera Access、Depth Sensing、Mesh Detection、Layers API、WebXR Samples を確認。設計: 2026-08-04 の raw camera crop gate と 2026-08-05 の depth / mesh sampler を、permission request の順序設計へ発展させる。実装: consent ladder、scenario preset、slider、probe drag、privacy / utility / friction readout、feature descriptor 表示、decision log を単一 HTML にまとめる。検証: JSON parse、HTML script 構文、gallery 再生成、Pages 公開 URL を確認する。",
+      "bodyEn": "Research: reviewed Raw Camera Access, Depth Sensing, Mesh Detection, the Layers API, and WebXR Samples. Design: extend the 2026-08-04 raw-camera crop gate and 2026-08-05 depth/mesh sampler into permission-request sequencing. Implementation: packaged a consent ladder, scenario presets, sliders, probe dragging, privacy / utility / friction readouts, feature-descriptor display, and decision log into one HTML file. Validation: parse JSON, check HTML script syntax, regenerate the gallery, and verify published Pages URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "7 月後半からの流れは、手入力、anchor、depth、layers、raw camera、body tracking、mesh と、現実空間データをどの精度で扱うかの設計に集約されています。今日の ladder は、そのデータ選択を UX と permission の順序に落としたものです。公開サンプルの価値は、派手なカメラ処理を見せることではなく、どこで raw pixels を避けられるかを小さく検証できる点にあります。",
+      "bodyEn": "The sequence since late July has converged on how precisely to handle real-world data across hand input, anchors, depth, layers, raw camera, body tracking, and mesh. Today's ladder turns that data choice into UX and permission sequencing. The value of the public sample is not showing flashy camera processing; it is giving a small way to test where raw pixels can be avoided."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Camera Access Consent Ladder` です。実 XR session は開始せず、requestSession の feature descriptor 設計を模した UI として、manual、plane、depth、mesh、camera の各 route を比較します。次に足すなら、`navigator.xr.isSessionSupported(\"immersive-ar\")` の実 probe、Permissions Policy の表示、Plane Detection の semantic preset、同意前/同意後の DOM overlay 文言比較、実機ログの保存を追加します。",
+      "bodyEn": "The selected prototype is `Camera Access Consent Ladder`. It does not start a real XR session; it compares manual, plane, depth, mesh, and camera routes through a UI that models feature-descriptor design for requestSession. Useful next additions are a real `navigator.xr.isSessionSupported(\"immersive-ar\")` probe, Permissions Policy display, Plane Detection semantic presets, DOM overlay copy comparisons before and after consent, and real-device log saving."
+    }
+  ]
+}

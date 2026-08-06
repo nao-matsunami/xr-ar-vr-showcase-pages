@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Camera Access Consent Ladder</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #071113;
+      --panel: rgba(10, 23, 24, 0.88);
+      --line: rgba(132, 240, 216, 0.26);
+      --text: #ecfff9;
+      --muted: #99bdb4;
+      --mint: #78ffd0;
+      --blue: #78c7ff;
+      --gold: #ffd06f;
+      --red: #ff6f86;
+      --violet: #b7a0ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 80% 14%, rgba(120, 199, 255, 0.16), transparent 26rem),
+        radial-gradient(circle at 12% 72%, rgba(120, 255, 208, 0.14), transparent 24rem),
+        linear-gradient(135deg, #071113, #15171d 54%, #0b1610);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 26px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.7vw, 2.45rem);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      max-width: 760px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.95rem;
+    }
+
+    .status,
+    .stage,
+    .controls,
+    .readouts {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.3);
+    }
+
+    .status {
+      min-width: 230px;
+      padding: 12px 14px;
+    }
+
+    .status b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .status span {
+      display: block;
+      margin-top: 5px;
+      color: var(--mint);
+      font-size: 1.04rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 342px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 662px;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 662px;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .metric {
+      border: 1px solid rgba(132, 240, 216, 0.24);
+      background: rgba(4, 12, 12, 0.76);
+      border-radius: 7px;
+      padding: 10px;
+    }
+
+    .metric b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 3px;
+      font-size: 1.04rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+    }
+
+    .controls,
+    .readouts {
+      padding: 14px;
+    }
+
+    .group {
+      display: grid;
+      gap: 10px;
+      padding: 12px 0;
+      border-top: 1px solid rgba(132, 240, 216, 0.15);
+    }
+
+    .group:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--mint);
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    button {
+      min-height: 36px;
+      border: 1px solid rgba(132, 240, 216, 0.34);
+      border-radius: 7px;
+      background: rgba(7, 20, 22, 0.86);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.81rem;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(120, 255, 208, 0.78);
+      color: var(--mint);
+      box-shadow: inset 0 0 18px rgba(120, 255, 208, 0.15);
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-top: 1px solid rgba(132, 240, 216, 0.13);
+      padding: 9px 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .row:first-child {
+      border-top: 0;
+    }
+
+    .row span:last-child {
+      color: var(--text);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .log {
+      min-height: 84px;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .status {
+        min-width: 0;
+      }
+
+      .stage {
+        min-height: 590px;
+      }
+
+      canvas {
+        height: 590px;
+      }
+
+      .hud {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Camera Access Consent Ladder</h1>
+        <p class="subtitle">Raw Camera Access をいきなり要求せず、manual / plane / depth / mesh / camera のどこで体験が成立するかを段階評価する自作 WebXR 検証サンプルです。</p>
+      </div>
+      <div class="status">
+        <b>Current request</b>
+        <span id="requestLabel">optional: depth-sensing</span>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <canvas id="stage" width="960" height="662" aria-label="Consent ladder simulation"></canvas>
+        <div class="hud">
+          <div class="metric"><b>Privacy</b><span id="privacy">42%</span></div>
+          <div class="metric"><b>Utility</b><span id="utility">76%</span></div>
+          <div class="metric"><b>Friction</b><span id="friction">31%</span></div>
+          <div class="metric"><b>Route</b><span id="route">Depth first</span></div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="controls">
+          <div class="group">
+            <label>Scenario</label>
+            <div class="seg">
+              <button data-scenario="place" aria-pressed="true">Place</button>
+              <button data-scenario="measure" aria-pressed="false">Measure</button>
+              <button data-scenario="inspect" aria-pressed="false">Inspect</button>
+            </div>
+          </div>
+
+          <div class="group">
+            <label>Task detail <input id="detail" type="range" min="0" max="100" value="56"></label>
+            <label>Scene motion <input id="motion" type="range" min="0" max="100" value="28"></label>
+            <label>Occlusion need <input id="occlusion" type="range" min="0" max="100" value="64"></label>
+            <label>Recognition need <input id="recognition" type="range" min="0" max="100" value="22"></label>
+          </div>
+
+          <div class="group">
+            <label>Consent threshold <input id="threshold" type="range" min="20" max="90" value="68"></label>
+            <label>Derived data strength <input id="derived" type="range" min="0" max="100" value="72"></label>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="row"><span>Manual fallback</span><span id="manualOut">ok</span></div>
+          <div class="row"><span>Plane route</span><span id="planeOut">usable</span></div>
+          <div class="row"><span>Depth route</span><span id="depthOut">preferred</span></div>
+          <div class="row"><span>Mesh route</span><span id="meshOut">optional</span></div>
+          <div class="row"><span>Camera route</span><span id="cameraOut">defer</span></div>
+          <div class="row"><span>Pointer probe</span><span id="probeOut">0.50, 0.46</span></div>
+          <div class="log" id="log">Move the probe or tune the sliders to change the permission route.</div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      detail: document.getElementById("detail"),
+      motion: document.getElementById("motion"),
+      occlusion: document.getElementById("occlusion"),
+      recognition: document.getElementById("recognition"),
+      threshold: document.getElementById("threshold"),
+      derived: document.getElementById("derived")
+    };
+    const out = {
+      requestLabel: document.getElementById("requestLabel"),
+      privacy: document.getElementById("privacy"),
+      utility: document.getElementById("utility"),
+      friction: document.getElementById("friction"),
+      route: document.getElementById("route"),
+      manual: document.getElementById("manualOut"),
+      plane: document.getElementById("planeOut"),
+      depth: document.getElementById("depthOut"),
+      mesh: document.getElementById("meshOut"),
+      camera: document.getElementById("cameraOut"),
+      probe: document.getElementById("probeOut"),
+      log: document.getElementById("log")
+    };
+
+    const steps = [
+      { id: "manual", label: "Manual", feature: "none", color: "#78ffd0", exposure: 8 },
+      { id: "plane", label: "Plane", feature: "plane-detection", color: "#78c7ff", exposure: 22 },
+      { id: "depth", label: "Depth", feature: "depth-sensing", color: "#ffd06f", exposure: 38 },
+      { id: "mesh", label: "Mesh", feature: "mesh-detection", color: "#b7a0ff", exposure: 58 },
+      { id: "camera", label: "Camera", feature: "camera-access", color: "#ff6f86", exposure: 86 }
+    ];
+
+    const scenarios = {
+      place: { detail: 48, motion: 26, occlusion: 62, recognition: 18, derived: 74 },
+      measure: { detail: 70, motion: 18, occlusion: 44, recognition: 16, derived: 66 },
+      inspect: { detail: 76, motion: 46, occlusion: 74, recognition: 72, derived: 58 }
+    };
+
+    const state = {
+      scenario: "place",
+      probe: { x: 0.5, y: 0.46 },
+      drag: false,
+      tick: 0,
+      log: ["Depth route is preferred until recognition demand rises."]
+    };
+
+    function value(id) {
+      return Number(controls[id].value);
+    }
+
+    function clamp(n, min, max) {
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function score() {
+      const detail = value("detail");
+      const motion = value("motion");
+      const occlusion = value("occlusion");
+      const recognition = value("recognition");
+      const threshold = value("threshold");
+      const derived = value("derived");
+      const manual = clamp(64 - detail * 0.36 - occlusion * 0.18 - recognition * 0.28, 0, 100);
+      const plane = clamp(44 + derived * 0.24 - detail * 0.14 - motion * 0.08 - recognition * 0.16, 0, 100);
+      const depth = clamp(38 + occlusion * 0.48 + derived * 0.28 - recognition * 0.18, 0, 100);
+      const mesh = clamp(30 + detail * 0.26 + occlusion * 0.23 + derived * 0.2 - motion * 0.12, 0, 100);
+      const camera = clamp(18 + recognition * 0.7 + detail * 0.16 + motion * 0.1, 0, 100);
+      const utility = { manual, plane, depth, mesh, camera };
+      let selected = steps[0];
+      for (const step of steps) {
+        if (utility[step.id] >= threshold) {
+          selected = step;
+          break;
+        }
+      }
+      if (camera > Math.max(depth, mesh) + 18 && camera >= threshold) selected = steps[4];
+      const privacy = clamp(selected.exposure + recognition * 0.18 + detail * 0.08 - derived * 0.12, 0, 100);
+      const friction = clamp(selected.exposure * 0.54 + (selected.id === "camera" ? 28 : 0) + motion * 0.12, 0, 100);
+      return { utility, selected, privacy, friction, threshold };
+    }
+
+    function setLog(message) {
+      state.log.unshift(message);
+      state.log = state.log.slice(0, 3);
+      out.log.textContent = state.log.join(" / ");
+    }
+
+    function updateReadouts(result) {
+      const selected = result.selected;
+      const bestUtility = result.utility[selected.id];
+      out.requestLabel.textContent = selected.id === "manual" ? "no XR feature request" : `optional: ${selected.feature}`;
+      if (selected.id === "camera") out.requestLabel.textContent = "required after consent: camera-access";
+      out.privacy.textContent = `${Math.round(result.privacy)}%`;
+      out.utility.textContent = `${Math.round(bestUtility)}%`;
+      out.friction.textContent = `${Math.round(result.friction)}%`;
+      out.route.textContent = `${selected.label} first`;
+      out.manual.textContent = result.utility.manual >= result.threshold ? "ok" : "fallback";
+      out.plane.textContent = selected.id === "plane" ? "preferred" : result.utility.plane >= result.threshold ? "usable" : "weak";
+      out.depth.textContent = selected.id === "depth" ? "preferred" : result.utility.depth >= result.threshold ? "usable" : "weak";
+      out.mesh.textContent = selected.id === "mesh" ? "preferred" : result.utility.mesh >= result.threshold ? "usable" : "optional";
+      out.camera.textContent = selected.id === "camera" ? "ask consent" : "defer";
+      out.probe.textContent = `${state.probe.x.toFixed(2)}, ${state.probe.y.toFixed(2)}`;
+    }
+
+    function drawLadder(result) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w * 0.5;
+      ctx.clearRect(0, 0, w, h);
+      const grd = ctx.createLinearGradient(0, 0, w, h);
+      grd.addColorStop(0, "#081617");
+      grd.addColorStop(0.55, "#15191e");
+      grd.addColorStop(1, "#0a1810");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.globalAlpha = 0.25;
+      ctx.strokeStyle = "#78ffd0";
+      for (let x = -80; x < w + 100; x += 42) {
+        ctx.beginPath();
+        ctx.moveTo(x + Math.sin(state.tick * 0.018) * 16, 0);
+        ctx.lineTo(x + 160, h);
+        ctx.stroke();
+      }
+      for (let y = 36; y < h; y += 38) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y + Math.cos(state.tick * 0.014) * 14);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      const baseY = 116;
+      const gap = 96;
+      steps.forEach((step, index) => {
+        const y = baseY + index * gap;
+        const util = result.utility[step.id];
+        const active = result.selected.id === step.id;
+        const width = 170 + util * 3.1;
+        ctx.fillStyle = active ? "rgba(120, 255, 208, 0.18)" : "rgba(5, 14, 15, 0.64)";
+        ctx.strokeStyle = active ? step.color : "rgba(132, 240, 216, 0.24)";
+        ctx.lineWidth = active ? 3 : 1;
+        roundRect(cx - width / 2, y - 32, width, 64, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = step.color;
+        ctx.font = "700 18px system-ui, sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText(step.label, cx - width / 2 + 18, y - 4);
+        ctx.fillStyle = "#99bdb4";
+        ctx.font = "12px system-ui, sans-serif";
+        ctx.fillText(step.feature, cx - width / 2 + 18, y + 16);
+
+        ctx.fillStyle = "#ecfff9";
+        ctx.font = "700 20px system-ui, sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(`${Math.round(util)}%`, cx + width / 2 - 18, y + 7);
+
+        if (index < steps.length - 1) {
+          ctx.strokeStyle = "rgba(132, 240, 216, 0.28)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx, y + 34);
+          ctx.lineTo(cx, y + gap - 34);
+          ctx.stroke();
+        }
+      });
+
+      const p = { x: state.probe.x * w, y: state.probe.y * h };
+      ctx.strokeStyle = result.selected.color;
+      ctx.fillStyle = "rgba(236, 255, 249, 0.92)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(p.x - 26, p.y);
+      ctx.lineTo(p.x + 26, p.y);
+      ctx.moveTo(p.x, p.y - 26);
+      ctx.lineTo(p.x, p.y + 26);
+      ctx.stroke();
+      ctx.font = "12px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("probe", p.x, p.y - 34);
+
+      const bandX = 44;
+      const bandH = 210;
+      ctx.fillStyle = "rgba(255, 111, 134, 0.12)";
+      ctx.fillRect(bandX, 80, 86, bandH + value("recognition") * 2.4);
+      ctx.strokeStyle = "rgba(255, 111, 134, 0.42)";
+      ctx.strokeRect(bandX, 80, 86, bandH + value("recognition") * 2.4);
+      ctx.fillStyle = "#ffb4c0";
+      ctx.font = "12px system-ui, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("camera pressure", bandX, 66);
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function frame() {
+      state.tick += 1;
+      const result = score();
+      updateReadouts(result);
+      drawLadder(result);
+      requestAnimationFrame(frame);
+    }
+
+    function setProbe(event) {
+      const rect = canvas.getBoundingClientRect();
+      state.probe.x = clamp((event.clientX - rect.left) / rect.width, 0.02, 0.98);
+      state.probe.y = clamp((event.clientY - rect.top) / rect.height, 0.06, 0.86);
+      const result = score();
+      setLog(`Probe moved; ${result.selected.label.toLowerCase()} route is now ${Math.round(result.utility[result.selected.id])}% useful.`);
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.drag = true;
+      canvas.setPointerCapture(event.pointerId);
+      setProbe(event);
+    });
+    canvas.addEventListener("pointermove", (event) => {
+      if (state.drag) setProbe(event);
+    });
+    canvas.addEventListener("pointerup", () => {
+      state.drag = false;
+    });
+    canvas.addEventListener("pointercancel", () => {
+      state.drag = false;
+    });
+
+    document.querySelectorAll("[data-scenario]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.scenario = button.dataset.scenario;
+        Object.entries(scenarios[state.scenario]).forEach(([key, next]) => {
+          controls[key].value = next;
+        });
+        document.querySelectorAll("[data-scenario]").forEach((item) => {
+          item.setAttribute("aria-pressed", String(item === button));
+        });
+        setLog(`${button.textContent} preset loaded.`);
+      });
+    });
+
+    Object.values(controls).forEach((control) => {
+      control.addEventListener("input", () => {
+        const result = score();
+        setLog(`${result.selected.label} first after slider update.`);
+      });
+    });
+
+    frame();
+  </script>
+</body>
+</html>
