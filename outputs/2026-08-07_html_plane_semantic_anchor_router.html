@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plane Semantic Anchor Router</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #071014;
+      --panel: rgba(8, 19, 23, 0.9);
+      --line: rgba(119, 238, 216, 0.25);
+      --text: #effffa;
+      --muted: #9abbb5;
+      --mint: #7dffd6;
+      --blue: #75c8ff;
+      --gold: #ffd36e;
+      --red: #ff7189;
+      --violet: #bfa8ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 82% 12%, rgba(117, 200, 255, 0.16), transparent 28rem),
+        radial-gradient(circle at 16% 78%, rgba(125, 255, 214, 0.14), transparent 24rem),
+        linear-gradient(135deg, #071014, #151a20 58%, #0b1712);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 26px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.7vw, 2.45rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      max-width: 780px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.95rem;
+    }
+
+    .status,
+    .stage,
+    .controls,
+    .readouts {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+    }
+
+    .status {
+      min-width: 242px;
+      padding: 12px 14px;
+    }
+
+    .status b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .status span {
+      display: block;
+      margin-top: 5px;
+      color: var(--mint);
+      font-size: 1.04rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 342px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 662px;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 662px;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .metric {
+      border: 1px solid rgba(119, 238, 216, 0.23);
+      background: rgba(4, 12, 13, 0.76);
+      border-radius: 7px;
+      padding: 10px;
+    }
+
+    .metric b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 3px;
+      font-size: 1.02rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+    }
+
+    .controls,
+    .readouts {
+      padding: 14px;
+    }
+
+    .group {
+      display: grid;
+      gap: 10px;
+      padding: 12px 0;
+      border-top: 1px solid rgba(119, 238, 216, 0.15);
+    }
+
+    .group:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--mint);
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    button {
+      min-height: 36px;
+      border: 1px solid rgba(119, 238, 216, 0.34);
+      border-radius: 7px;
+      background: rgba(7, 20, 22, 0.86);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.81rem;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(125, 255, 214, 0.78);
+      color: var(--mint);
+      box-shadow: inset 0 0 18px rgba(125, 255, 214, 0.15);
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-top: 1px solid rgba(119, 238, 216, 0.13);
+      padding: 9px 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .row:first-child { border-top: 0; }
+    .row span:last-child {
+      color: var(--text);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .log {
+      margin-top: 8px;
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    .log div {
+      border-left: 2px solid rgba(125, 255, 214, 0.45);
+      padding-left: 8px;
+    }
+
+    @media (max-width: 920px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .status {
+        min-width: 0;
+      }
+
+      .stage {
+        min-height: 560px;
+      }
+
+      canvas {
+        height: 560px;
+      }
+
+      .hud {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 560px) {
+      main {
+        width: min(100vw - 18px, 1180px);
+        padding-top: 14px;
+      }
+
+      .stage {
+        min-height: 520px;
+      }
+
+      canvas {
+        height: 520px;
+      }
+
+      .hud {
+        left: 9px;
+        right: 9px;
+        bottom: 9px;
+        gap: 6px;
+      }
+
+      .metric {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Plane Semantic Anchor Router</h1>
+        <p class="subtitle">WebXR Plane Detection の orientation / semanticLabel / polygon 粗さを模した低露出 anchor placement ルーター。床・壁・机を raw camera なしで選び、必要なときだけ depth / mesh / camera に進めます。</p>
+      </div>
+      <div class="status">
+        <b>recommended route</b>
+        <span id="routeLabel">plane anchor</span>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <canvas id="stage" width="900" height="662" aria-label="plane semantic anchor router canvas"></canvas>
+        <div class="hud">
+          <div class="metric"><b>fit</b><span id="fitMetric">0%</span></div>
+          <div class="metric"><b>privacy</b><span id="privacyMetric">0%</span></div>
+          <div class="metric"><b>stability</b><span id="stabilityMetric">0%</span></div>
+          <div class="metric"><b>anchor</b><span id="anchorMetric">0</span></div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="controls">
+          <div class="group">
+            <div class="seg" role="group" aria-label="scenario presets">
+              <button type="button" data-preset="poster" aria-pressed="true">Poster</button>
+              <button type="button" data-preset="furniture" aria-pressed="false">Furniture</button>
+              <button type="button" data-preset="inspection" aria-pressed="false">Inspect</button>
+            </div>
+          </div>
+          <div class="group">
+            <label>semantic strictness <input id="semantic" type="range" min="0" max="100" value="72"></label>
+            <label>polygon confidence <input id="polygon" type="range" min="0" max="100" value="68"></label>
+            <label>surface motion <input id="motion" type="range" min="0" max="100" value="28"></label>
+            <label>occlusion need <input id="occlusion" type="range" min="0" max="100" value="38"></label>
+            <label>camera pressure <input id="camera" type="range" min="0" max="100" value="18"></label>
+          </div>
+          <div class="group">
+            <div class="seg" role="group" aria-label="plane filter">
+              <button type="button" data-filter="all" aria-pressed="true">All</button>
+              <button type="button" data-filter="horizontal" aria-pressed="false">Floor</button>
+              <button type="button" data-filter="vertical" aria-pressed="false">Wall</button>
+            </div>
+            <button id="addAnchor" type="button">Drop semantic anchor</button>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="row"><span>target plane</span><span id="targetPlane">wall: poster</span></div>
+          <div class="row"><span>feature request</span><span id="featureRequest">plane-detection + anchors</span></div>
+          <div class="row"><span>fallback</span><span id="fallback">depth point probe</span></div>
+          <div class="row"><span>semantic labels</span><span id="labelReadout">wall, floor, table</span></div>
+          <div class="row"><span>drift budget</span><span id="driftReadout">low</span></div>
+          <div class="log" id="log"></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+
+    const controls = {
+      semantic: document.getElementById("semantic"),
+      polygon: document.getElementById("polygon"),
+      motion: document.getElementById("motion"),
+      occlusion: document.getElementById("occlusion"),
+      camera: document.getElementById("camera")
+    };
+
+    const labels = {
+      route: document.getElementById("routeLabel"),
+      fit: document.getElementById("fitMetric"),
+      privacy: document.getElementById("privacyMetric"),
+      stability: document.getElementById("stabilityMetric"),
+      anchor: document.getElementById("anchorMetric"),
+      targetPlane: document.getElementById("targetPlane"),
+      featureRequest: document.getElementById("featureRequest"),
+      fallback: document.getElementById("fallback"),
+      labelReadout: document.getElementById("labelReadout"),
+      drift: document.getElementById("driftReadout"),
+      log: document.getElementById("log")
+    };
+
+    const state = {
+      preset: "poster",
+      filter: "all",
+      pointer: { x: 0.58, y: 0.43 },
+      dragging: false,
+      anchors: [
+        { x: 0.58, y: 0.43, plane: "wall", label: "poster", age: 0.14 }
+      ]
+    };
+
+    const planes = [
+      { id: "floor", orientation: "horizontal", label: "floor", x: 0.07, y: 0.60, w: 0.86, h: 0.28, color: "#7dffd6", base: 0.86 },
+      { id: "wall", orientation: "vertical", label: "wall", x: 0.10, y: 0.10, w: 0.52, h: 0.42, color: "#75c8ff", base: 0.78 },
+      { id: "table", orientation: "horizontal", label: "table", x: 0.58, y: 0.38, w: 0.30, h: 0.17, color: "#ffd36e", base: 0.68 },
+      { id: "ceiling", orientation: "horizontal", label: "ceiling", x: 0.68, y: 0.12, w: 0.22, h: 0.13, color: "#bfa8ff", base: 0.52 }
+    ];
+
+    const presets = {
+      poster: { semantic: 72, polygon: 68, motion: 28, occlusion: 38, camera: 18, pointer: { x: 0.45, y: 0.27 } },
+      furniture: { semantic: 56, polygon: 74, motion: 36, occlusion: 62, camera: 14, pointer: { x: 0.66, y: 0.68 } },
+      inspection: { semantic: 84, polygon: 48, motion: 58, occlusion: 76, camera: 48, pointer: { x: 0.70, y: 0.46 } }
+    };
+
+    function clamp(value, min = 0, max = 1) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function values() {
+      return Object.fromEntries(Object.entries(controls).map(([key, el]) => [key, Number(el.value) / 100]));
+    }
+
+    function planeAt(pointer, filter = state.filter) {
+      const candidates = planes.filter((plane) => {
+        const inside = pointer.x >= plane.x && pointer.x <= plane.x + plane.w && pointer.y >= plane.y && pointer.y <= plane.y + plane.h;
+        const allowed = filter === "all" || plane.orientation === filter;
+        return inside && allowed;
+      });
+      return candidates.sort((a, b) => b.base - a.base)[0] || null;
+    }
+
+    function score() {
+      const v = values();
+      const target = planeAt(state.pointer);
+      const targetBase = target ? target.base : 0.2;
+      const semanticMatch = target ? targetBase * (0.55 + v.semantic * 0.45) : 0.18;
+      const polygonFit = clamp(v.polygon * (target ? 0.82 : 0.35) - v.motion * 0.22);
+      const stability = clamp((semanticMatch * 0.45 + polygonFit * 0.45 + targetBase * 0.25) - v.motion * 0.32);
+      const privacy = clamp(0.92 - v.camera * 0.54 - Math.max(0, v.occlusion - 0.62) * 0.22);
+      const fit = clamp(semanticMatch * 0.48 + polygonFit * 0.38 + (1 - v.occlusion) * 0.12);
+
+      let route = "manual place";
+      let feature = "inline + viewer space";
+      let fallback = "manual confirmation";
+      if (fit > 0.72 && stability > 0.58) {
+        route = "plane anchor";
+        feature = "plane-detection + anchors";
+        fallback = "depth point probe";
+      } else if (v.occlusion > 0.63 && privacy > 0.55) {
+        route = "depth assisted";
+        feature = "depth-sensing + anchors";
+        fallback = "mesh coarse plane";
+      } else if (v.camera > 0.58 || (v.semantic > 0.82 && !target)) {
+        route = "ask camera consent";
+        feature = "camera-access after explanation";
+        fallback = "redacted capture";
+      } else if (v.polygon < 0.42 || v.motion > 0.66) {
+        route = "mesh rescan";
+        feature = "mesh-detection + anchors";
+        fallback = "defer placement";
+      }
+
+      return { target, semanticMatch, polygonFit, stability, privacy, fit, route, feature, fallback, v };
+    }
+
+    function drawPlane(plane, result, now) {
+      const x = plane.x * canvas.width;
+      const y = plane.y * canvas.height;
+      const w = plane.w * canvas.width;
+      const h = plane.h * canvas.height;
+      const active = result.target?.id === plane.id;
+      const alpha = active ? 0.36 : 0.16;
+      ctx.save();
+      ctx.fillStyle = hexToRgba(plane.color, alpha);
+      ctx.strokeStyle = hexToRgba(plane.color, active ? 0.88 : 0.36);
+      ctx.lineWidth = active ? 2 : 1;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 10);
+      ctx.fill();
+      ctx.stroke();
+      ctx.globalAlpha = active ? 0.55 : 0.24;
+      for (let i = 0; i < 8; i += 1) {
+        const p = i / 7;
+        ctx.beginPath();
+        ctx.moveTo(x + w * p, y);
+        ctx.lineTo(x + w * clamp(p + Math.sin(now * 0.001 + i) * 0.04), y + h);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = plane.color;
+      ctx.font = "700 13px ui-sans-serif, system-ui";
+      ctx.fillText(`${plane.orientation} / ${plane.label}`, x + 14, y + 24);
+      ctx.restore();
+    }
+
+    function hexToRgba(hex, alpha) {
+      const clean = hex.replace("#", "");
+      const r = parseInt(clean.slice(0, 2), 16);
+      const g = parseInt(clean.slice(2, 4), 16);
+      const b = parseInt(clean.slice(4, 6), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function drawAnchor(anchor, index, now) {
+      const x = anchor.x * canvas.width;
+      const y = anchor.y * canvas.height;
+      const pulse = 9 + Math.sin(now * 0.006 + index) * 3;
+      ctx.save();
+      ctx.strokeStyle = "rgba(125,255,214,0.8)";
+      ctx.fillStyle = "rgba(125,255,214,0.12)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, 16 + pulse, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,211,110,0.55)";
+      ctx.beginPath();
+      ctx.moveTo(x - 18, y);
+      ctx.lineTo(x + 18, y);
+      ctx.moveTo(x, y - 18);
+      ctx.lineTo(x, y + 18);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(239,255,250,0.82)";
+      ctx.font = "12px ui-sans-serif, system-ui";
+      ctx.fillText(`${anchor.plane}:${anchor.label}`, x + 22, y - 8);
+      ctx.restore();
+    }
+
+    function drawReticle(result, now) {
+      const x = state.pointer.x * canvas.width;
+      const y = state.pointer.y * canvas.height;
+      const color = result.route === "ask camera consent" ? "#ff7189" : result.route === "depth assisted" ? "#ffd36e" : "#7dffd6";
+      ctx.save();
+      ctx.strokeStyle = hexToRgba(color, 0.95);
+      ctx.fillStyle = hexToRgba(color, 0.12);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, 24 + Math.sin(now * 0.008) * 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - 34, y);
+      ctx.lineTo(x - 10, y);
+      ctx.moveTo(x + 10, y);
+      ctx.lineTo(x + 34, y);
+      ctx.moveTo(x, y - 34);
+      ctx.lineTo(x, y - 10);
+      ctx.moveTo(x, y + 10);
+      ctx.lineTo(x, y + 34);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.font = "700 12px ui-sans-serif, system-ui";
+      ctx.fillText(result.route, x + 16, y + 36);
+      ctx.restore();
+    }
+
+    function drawBackground(now) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, "#071014");
+      gradient.addColorStop(0.55, "#101b22");
+      gradient.addColorStop(1, "#091611");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "rgba(119,238,216,0.08)";
+      ctx.lineWidth = 1;
+      const step = 36;
+      for (let x = (now * 0.012) % step; x < canvas.width; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x - 86, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawRoutePanel(result) {
+      const x = 28;
+      const y = 28;
+      const w = 300;
+      const rows = [
+        ["request", result.feature],
+        ["semantic", `${Math.round(result.semanticMatch * 100)}%`],
+        ["polygon", `${Math.round(result.polygonFit * 100)}%`],
+        ["fallback", result.fallback]
+      ];
+      ctx.save();
+      ctx.fillStyle = "rgba(4,12,13,0.72)";
+      ctx.strokeStyle = "rgba(119,238,216,0.24)";
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, 132, 9);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#7dffd6";
+      ctx.font = "700 14px ui-sans-serif, system-ui";
+      ctx.fillText("route packet", x + 16, y + 26);
+      ctx.font = "12px ui-sans-serif, system-ui";
+      rows.forEach((row, index) => {
+        const yy = y + 52 + index * 20;
+        ctx.fillStyle = "rgba(154,187,181,0.9)";
+        ctx.fillText(row[0], x + 16, yy);
+        ctx.fillStyle = "rgba(239,255,250,0.9)";
+        ctx.fillText(row[1], x + 96, yy);
+      });
+      ctx.restore();
+    }
+
+    function render(now = 0) {
+      const result = score();
+      drawBackground(now);
+      planes.forEach((plane) => drawPlane(plane, result, now));
+      state.anchors.forEach((anchor, index) => drawAnchor(anchor, index, now));
+      drawReticle(result, now);
+      drawRoutePanel(result);
+      updateReadouts(result);
+      requestAnimationFrame(render);
+    }
+
+    function updateReadouts(result) {
+      labels.route.textContent = result.route;
+      labels.fit.textContent = `${Math.round(result.fit * 100)}%`;
+      labels.privacy.textContent = `${Math.round(result.privacy * 100)}%`;
+      labels.stability.textContent = `${Math.round(result.stability * 100)}%`;
+      labels.anchor.textContent = String(state.anchors.length);
+      labels.targetPlane.textContent = result.target ? `${result.target.orientation}: ${result.target.label}` : "no accepted plane";
+      labels.featureRequest.textContent = result.feature;
+      labels.fallback.textContent = result.fallback;
+      labels.labelReadout.textContent = planes
+        .filter((plane) => state.filter === "all" || plane.orientation === state.filter)
+        .map((plane) => plane.label)
+        .join(", ");
+      labels.drift.textContent = result.stability > 0.72 ? "low" : result.stability > 0.46 ? "watch" : "rescan";
+      const targetLine = result.target
+        ? `semanticLabel "${result.target.label}" を採用。raw pixels は不要。`
+        : "pointer 下に accepted plane がないため、manual / mesh fallback を検討。";
+      labels.log.innerHTML = [
+        targetLine,
+        `${result.feature} を先に試し、camera-access は ${Math.round(result.v.camera * 100)}% pressure まで保留。`,
+        `occlusion need ${Math.round(result.v.occlusion * 100)}%: ${result.fallback} を次段に設定。`
+      ].map((line) => `<div>${line}</div>`).join("");
+    }
+
+    function setPreset(name) {
+      state.preset = name;
+      const preset = presets[name];
+      Object.entries(controls).forEach(([key, el]) => {
+        el.value = preset[key];
+      });
+      state.pointer = { ...preset.pointer };
+      document.querySelectorAll("[data-preset]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.preset === name));
+      });
+    }
+
+    function setFilter(name) {
+      state.filter = name;
+      document.querySelectorAll("[data-filter]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.filter === name));
+      });
+    }
+
+    function pointerFromEvent(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: clamp((event.clientX - rect.left) / rect.width),
+        y: clamp((event.clientY - rect.top) / rect.height)
+      };
+    }
+
+    document.querySelectorAll("[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => setPreset(button.dataset.preset));
+    });
+
+    document.querySelectorAll("[data-filter]").forEach((button) => {
+      button.addEventListener("click", () => setFilter(button.dataset.filter));
+    });
+
+    document.getElementById("addAnchor").addEventListener("click", () => {
+      const result = score();
+      if (!result.target) return;
+      state.anchors.unshift({
+        x: state.pointer.x,
+        y: state.pointer.y,
+        plane: result.target.orientation,
+        label: result.target.label,
+        age: 0
+      });
+      state.anchors = state.anchors.slice(0, 6);
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.dragging = true;
+      canvas.setPointerCapture(event.pointerId);
+      state.pointer = pointerFromEvent(event);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!state.dragging) return;
+      state.pointer = pointerFromEvent(event);
+    });
+
+    canvas.addEventListener("pointerup", () => {
+      state.dragging = false;
+    });
+
+    canvas.addEventListener("pointercancel", () => {
+      state.dragging = false;
+    });
+
+    render();
+  </script>
+</body>
+</html>

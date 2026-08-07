@@ -1,0 +1,115 @@
+{
+  "date": "2026-08-07",
+  "headline": "Plane Detection で低露出な anchor route を選ぶ",
+  "headlineEn": "Choosing a low-exposure anchor route with Plane Detection",
+  "summary": "WebXR Plane Detection、Anchors、Mesh Detection、Immersive Web proposal samples を確認し、orientation / semanticLabel / polygon 粗さから、raw camera に進む前の plane anchor route を比較する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing WebXR Plane Detection, Anchors, Mesh Detection, and Immersive Web proposal samples, today's original HTML sample compares plane-anchor routes from orientation, semanticLabel, and polygon roughness before escalating to raw camera access.",
+  "keyTopics": [
+    "WebXR Plane Detection Module は `plane-detection` feature descriptor、`XRFrame.detectedPlanes`、`XRPlane.orientation`、`XRPlane.polygon`、`XRPlane.semanticLabel` を定義している。",
+    "Plane Detection は flat surface の集合を native XR device から受け取るため、床、壁、机への配置や吸着を raw camera pixels なしで実装する候補になる。",
+    "仕様は privacy 対策として plane polygon の detail reduction、座標の rounding / quantization、小さすぎる plane の除外を挙げている。",
+    "WebXR Anchors Module は `anchors` feature descriptor と `XRFrame.createAnchor()` / `XRHitTestResult.createAnchor()` を定義し、検出面に合わせた virtual object の姿勢追跡を支える。",
+    "Immersive Web proposal samples には AR Plane Detection と AR Mesh Detection があり、plane hit-test と anchors の組み合わせを確認できるが、公開アーカイブの中心は今日も自作サンプルにした。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Plane Detection Module defines the `plane-detection` feature descriptor, `XRFrame.detectedPlanes`, `XRPlane.orientation`, `XRPlane.polygon`, and `XRPlane.semanticLabel`.",
+    "Plane Detection receives flat surfaces from the native XR device, making floor, wall, and table placement possible without raw camera pixels.",
+    "The specification lists privacy mitigations such as reducing plane-polygon detail, rounding or quantizing coordinates, and suppressing planes that are too small or detailed.",
+    "The WebXR Anchors Module defines the `anchors` feature descriptor plus `XRFrame.createAnchor()` and `XRHitTestResult.createAnchor()` for tracking virtual-object poses against detected surfaces.",
+    "Immersive Web proposal samples include AR Plane Detection and AR Mesh Detection, useful for checking plane hit-tests and anchors while today's archive entry remains an original sample."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Plane Semantic Anchor Router",
+      "url": "../outputs/2026-08-07_html_plane_semantic_anchor_router.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Plane Detection Module",
+      "url": "https://immersive-web.github.io/plane-detection/"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "Immersive Web: WebXR Mesh Detection Module",
+      "url": "https://immersive-web.github.io/real-world-meshing/"
+    },
+    {
+      "label": "Immersive Web Samples: Proposals",
+      "url": "https://immersive-web.github.io/webxr-samples/proposals/"
+    },
+    {
+      "label": "Immersive Web Samples: AR Plane Detection",
+      "url": "https://immersive-web.github.io/webxr-samples/proposals/plane-detection.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は Plane Detection が `orientation`、`polygon`、`semanticLabel` という比較的低露出な環境情報で AR 配置の多くを成立させられる点です。Raw Camera Access は pixels を読むため強い同意設計が必要ですが、ポスターを壁に置く、家具を床に置く、机上に UI を吸着させるような体験なら、plane の分類と粗い形状だけで十分な場面があります。サンプルでは wall / floor / table / ceiling の plane を模し、semantic strictness と polygon confidence から `plane-detection + anchors`、`depth-sensing`、`mesh-detection`、`camera-access` のどれに進むかを切り替えます。",
+      "bodyEn": "Today's notable point is that Plane Detection can support many AR placement flows with relatively low-exposure environment data: `orientation`, `polygon`, and `semanticLabel`. Raw Camera Access reads pixels and therefore needs a stronger consent design, but placing posters on walls, furniture on floors, or UI on tabletops can often work with plane classification and coarse geometry alone. The sample simulates wall / floor / table / ceiling planes and routes between `plane-detection + anchors`, `depth-sensing`, `mesh-detection`, and `camera-access` from semantic strictness and polygon confidence.",
+      "links": [
+        {
+          "label": "Immersive Web: WebXR Plane Detection Module",
+          "url": "https://immersive-web.github.io/plane-detection/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルは canvas 上の probe を動かして、床、壁、机、天井のどの plane に入っているかを確認する小さなルーターです。Poster / Furniture / Inspect の preset と、semantic strictness、polygon confidence、surface motion、occlusion need、camera pressure の slider で、配置に十分な plane anchor なのか、depth 補助が必要なのか、mesh rescan へ進むのか、camera consent を聞くべきなのかが変わります。Filter を Floor / Wall にすると、orientation gate が配置判断に効く様子を確認できます。",
+      "bodyEn": "The sample is a small router where moving the canvas probe checks whether it is over a floor, wall, table, or ceiling plane. Poster / Furniture / Inspect presets and sliders for semantic strictness, polygon confidence, surface motion, occlusion need, and camera pressure change whether a plane anchor is enough, depth assistance is needed, a mesh rescan is preferred, or camera consent should be requested. Switching the filter to Floor or Wall shows how orientation gating affects placement decisions."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は `navigator.xr.requestSession(\"immersive-ar\", { optionalFeatures: [\"plane-detection\", \"anchors\"] })` のように plane と anchor を optional で試し、体験が plane 依存なら required に上げる判断を分けます。frame ごとの `detectedPlanes` から `orientation` と `semanticLabel` を読み、polygon は面積、頂点数、変化頻度だけを使うと露出を抑えやすいです。anchor は planeSpace から求めた pose または hit-test result から作り、plane の `lastChangedTime` が頻繁に変わる場合は drift budget を上げて再配置 UI に戻します。",
+      "bodyEn": "In implementation, try plane and anchor support as optional features, for example `navigator.xr.requestSession(\"immersive-ar\", { optionalFeatures: [\"plane-detection\", \"anchors\"] })`, then only promote them to required when the experience truly depends on them. Read `orientation` and `semanticLabel` from frame-level `detectedPlanes`, and keep polygon usage to area, vertex count, and change frequency to limit exposure. Create anchors from a pose derived from `planeSpace` or from a hit-test result, and if a plane's `lastChangedTime` changes often, raise the drift budget and return to a repositioning UI."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルからは、probe 座標、選ばれた plane、orientation filter、semantic strictness、polygon confidence、route、feature request、fallback、anchor 数、decision log が取れます。家具配置、店舗棚割り、壁面展示、倉庫ナビ、建築採寸、教育用ラベル、AI object detection の事前 gate、同意 UI の A/B テストと組み合わせると、どの体験が raw camera なしで成立するかを説明しやすくなります。実機版では plane の頂点数や lastChangedTime を保存せず、集計値だけにすれば privacy review に回しやすいデータになります。",
+      "bodyEn": "Today's sample yields probe coordinates, selected plane, orientation filter, semantic strictness, polygon confidence, route, feature request, fallback, anchor count, and a decision log. Combined with furniture placement, retail shelf planning, wall exhibitions, warehouse navigation, architectural measuring, educational labels, an AI object-detection pre-gate, or permission-copy A/B testing, it clarifies which experiences work without raw camera access. In a hardware version, storing only aggregate values rather than plane vertices or `lastChangedTime` would make the data easier to review for privacy."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Plane Detection の semantic label registry、実装ブラウザごとの `plane-detection` availability、Quest / Android XR 系の plane / mesh / anchor 組み合わせ、Immersive Web proposal samples の更新、Anchors の persistent handle、Depth Sensing と plane polygon の privacy guidance を継続して見ます。次は、今日の route に room capture / initiateRoomCapture と persistent anchor の保存判断を足すと、展示や店舗で使える設置フローに近づきます。",
+      "bodyEn": "Watch the Plane Detection semantic label registry, browser availability for `plane-detection`, Quest / Android XR combinations of plane / mesh / anchor support, updates to Immersive Web proposal samples, persistent handles in Anchors, and privacy guidance for Depth Sensing and plane polygons. Next, adding room capture / `initiateRoomCapture` plus persistent-anchor save decisions would move this toward an installation flow for exhibitions or retail spaces."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、Poster preset のまま Wall filter にして probe を壁 plane に動かしてください。Route が plane anchor に寄ります。次に polygon confidence を下げ、surface motion と occlusion need を上げると depth assisted や mesh rescan に変わり、camera pressure を上げたときだけ camera consent が候補に出ます。camera を最後の段に置く判断を視覚的に確認できます。",
+      "bodyEn": "Open the sample, keep the Poster preset, switch to the Wall filter, and move the probe onto the wall plane. The route leans toward plane anchor. Then lower polygon confidence and raise surface motion plus occlusion need; the route changes to depth assisted or mesh rescan, and camera consent appears only when camera pressure rises. This makes the camera-last decision visible.",
+      "links": [
+        {
+          "label": "Open Plane Semantic Anchor Router",
+          "url": "../outputs/2026-08-07_html_plane_semantic_anchor_router.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Plane Detection、Anchors、Mesh Detection、Immersive Web proposal samples を確認。設計: 2026-08-06 の consent ladder から plane route を切り出し、orientation と semanticLabel を中心にした低露出 anchor 判断へ展開。実装: plane 表示、probe drag、orientation filter、preset、slider、anchor drop、route packet、decision log を単一 HTML にまとめる。検証: JSON parse、HTML script 構文、gallery 再生成、Pages 公開 URL を確認する。",
+      "bodyEn": "Research: reviewed Plane Detection, Anchors, Mesh Detection, and Immersive Web proposal samples. Design: extracted the plane route from the 2026-08-06 consent ladder and expanded it into a low-exposure anchor decision centered on orientation and semanticLabel. Implementation: packaged plane visualization, probe dragging, orientation filtering, presets, sliders, anchor dropping, route packet, and decision log into one HTML file. Validation: parse JSON, check HTML script syntax, regenerate the gallery, and verify published Pages URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "8 月前半の流れは、body tracking、raw camera、depth / mesh、consent ladder と、現実空間データをどこまで抽象化すれば体験が成立するかに集中しています。Plane Detection はその中でも使いやすい中間層で、pixels ほど強すぎず、manual placement ほど弱すぎない。今日の試作は、ユーザー同意を求める前に orientation、semantic label、粗い polygon でどこまで粘れるかを確認する位置づけです。",
+      "bodyEn": "The early-August sequence centers on how much real-world data can be abstracted while preserving the experience: body tracking, raw camera, depth / mesh, and consent ladders. Plane Detection is a practical middle layer: less sensitive than pixels and more useful than manual placement. Today's prototype checks how far orientation, semantic labels, and coarse polygons can go before asking for stronger consent."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Plane Semantic Anchor Router` です。実 XR session は開始せず、plane-detection と anchors の feature descriptor 設計を模した UI として、wall / floor / table / ceiling の semantic route を比較します。次に足すなら、実 `navigator.xr.isSessionSupported(\"immersive-ar\")` probe、`initiateRoomCapture()` の疑似ログ、persistent anchor の保存/破棄判断、plane polygon の quantization preview、展示会場向けの setup checklist を追加します。",
+      "bodyEn": "The selected prototype is `Plane Semantic Anchor Router`. It does not start a real XR session; it compares semantic routes for wall / floor / table / ceiling through a UI that models feature-descriptor design for plane detection and anchors. Useful next additions are a real `navigator.xr.isSessionSupported(\"immersive-ar\")` probe, simulated `initiateRoomCapture()` logs, persistent-anchor save/delete decisions, a plane-polygon quantization preview, and an installation checklist for exhibition spaces."
+    }
+  ]
+}
