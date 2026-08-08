@@ -1,0 +1,115 @@
+{
+  "date": "2026-08-08",
+  "headline": "Room Capture 後の anchor 保存を低露出に判定する",
+  "headlineEn": "Low-exposure anchor save decisions after room capture",
+  "summary": "WebXR Plane Detection、Anchors、Raw Camera Access、Immersive Web proposal samples を確認し、room capture で得た plane を粗く量子化して persistent anchor 保存の可否を判断する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing WebXR Plane Detection, Anchors, Raw Camera Access, and Immersive Web proposal samples, today's original HTML sample quantizes room-captured planes and decides whether a persistent anchor should be saved.",
+  "keyTopics": [
+    "WebXR Plane Detection Module は `XRFrame.detectedPlanes`、`XRPlane.orientation`、`XRPlane.polygon`、`XRPlane.semanticLabel` に加え、対応環境では `XRSession.initiateRoomCapture()` を定義している。",
+    "Plane Detection の privacy guidance は、polygon の detail reduction、座標の rounding / quantization、小さすぎる plane の除外を明示している。",
+    "WebXR Anchors Module は tracked anchors と persistent anchors の概念を持ち、永続保存は origin ごとの上限や UA による削除可能性を考慮する必要がある。",
+    "Raw Camera Access は `camera-access` feature descriptor と `xr-spatial-tracking` / `camera` permissions policy を必要とするため、plane / anchor で済む配置では最後の手段に寄せたい。",
+    "Immersive Web の proposal samples では Plane Detection with Anchors を確認できるが、今日の公開カードは外部デモではなく自作の room capture save gate にした。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Plane Detection Module defines `XRFrame.detectedPlanes`, `XRPlane.orientation`, `XRPlane.polygon`, `XRPlane.semanticLabel`, and, where supported, `XRSession.initiateRoomCapture()`.",
+    "Plane Detection privacy guidance explicitly mentions polygon detail reduction, coordinate rounding or quantization, and removing planes that are too small or too detailed.",
+    "The WebXR Anchors Module includes tracked anchors and persistent anchors, so persistent saves must account for per-origin limits and user-agent deletion.",
+    "Raw Camera Access requires the `camera-access` feature descriptor plus `xr-spatial-tracking` and `camera` permissions policy, so placement flows that can work with planes and anchors should keep camera pixels as the last resort.",
+    "Immersive Web proposal samples show Plane Detection with Anchors, while today's public card remains the original room capture save gate sample."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Room Capture Anchor Save Gate",
+      "url": "../outputs/2026-08-08_html_room_capture_anchor_save_gate.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Plane Detection Module",
+      "url": "https://immersive-web.github.io/plane-detection/"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "Immersive Web: WebXR Raw Camera Access Module",
+      "url": "https://immersive-web.github.io/raw-camera-access/"
+    },
+    {
+      "label": "Immersive Web Samples: AR Plane Detection",
+      "url": "https://immersive-web.github.io/webxr-samples/proposals/plane-detection.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、Plane Detection の `initiateRoomCapture()` と Anchors の persistent anchor をつなぐ前に、どの情報を保存してよいかを UI として明示する点です。公式 proposal sample は plane detection と anchors の組み合わせを確認するのに便利ですが、実際の展示や店舗では、部屋スキャン後に得た plane polygon をそのまま保存するのではなく、semantic label、orientation、粗い頂点数、再ローカライズ時の drift だけで保存判断をしたい場面があります。サンプルでは wall / floor / table / shelf の plane を模し、量子化と privacy load を見ながら session anchor、persistent anchor、recapture、manual fallback を切り替えます。",
+      "bodyEn": "Today's notable point is making the save decision visible before connecting Plane Detection `initiateRoomCapture()` to persistent Anchors. The official proposal sample is useful for checking plane detection plus anchors, but in exhibitions or retail setups it is often better not to save room-captured plane polygons directly. Instead, the app can decide from semantic labels, orientation, coarse vertex counts, and relocalization drift. The sample simulates wall / floor / table / shelf planes and switches between session anchor, persistent anchor, recapture, and manual fallback while showing quantization and privacy load.",
+      "links": [
+        {
+          "label": "Immersive Web Samples: AR Plane Detection",
+          "url": "https://immersive-web.github.io/webxr-samples/proposals/plane-detection.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルは、候補 anchor を canvas 上で動かし、Scan room ボタンで room capture の更新を疑似発生させる小さな判断盤です。Exhibit / Retail / Desk の preset、semantic confidence、polygon quantization、persistence need、environment sensitivity、relocalization noise を変えると、保存すべき anchor の種類と fallback が変わります。All / Wall / Floor の filter は orientation gate として働き、壁面展示や床置き家具で同じ room capture 結果をどう読み替えるかを試せます。",
+      "bodyEn": "The sample is a compact decision board where the candidate anchor moves on the canvas and the Scan room button simulates a room-capture update. Exhibit / Retail / Desk presets plus semantic confidence, polygon quantization, persistence need, environment sensitivity, and relocalization noise change the anchor policy and fallback. The All / Wall / Floor filter works as an orientation gate, making it possible to test how the same room-capture result is interpreted for wall exhibitions or floor-placed furniture."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では `navigator.xr.requestSession(\"immersive-ar\", { optionalFeatures: [\"plane-detection\", \"anchors\"] })` から始め、room capture が必要な設置フローだけ `initiateRoomCapture()` の呼び出し UI を出すのが扱いやすいです。`detectedPlanes` からは raw polygon を保存せず、面積帯、orientation、semanticLabel、頂点数の量子化値、lastChangedTime 由来の変化頻度だけをログに残す構成にすると、後から privacy review しやすくなります。persistent anchor は保存価値、再配置コスト、環境の機微度を gate にかけ、低信頼なら session anchor のままにします。",
+      "bodyEn": "For implementation, start with `navigator.xr.requestSession(\"immersive-ar\", { optionalFeatures: [\"plane-detection\", \"anchors\"] })` and only show an `initiateRoomCapture()` control for setup flows that need room capture. From `detectedPlanes`, avoid storing raw polygons; keep area bands, orientation, semanticLabel, quantized vertex counts, and a change-frequency value derived from `lastChangedTime` to simplify later privacy review. Persistent anchors should be gated by save value, repositioning cost, and environment sensitivity, while low-confidence placements remain session anchors."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルからは、候補 anchor の座標、選択 plane、orientation filter、semantic confidence、量子化頂点数、privacy load、save score、drift、room capture 回数、fallback を取れます。展示会場の設営ログ、店舗棚の定点 UI、建築レビューの注釈、AI ラベル付け前の低露出 gate、管理画面の設置チェックリストと組み合わせると、どの配置だけを永続保存し、どれを当日セッション限定にするかを説明しやすくなります。実機ログでは plane polygon の生データを避け、集計値と判断結果だけを保存するのがよさそうです。",
+      "bodyEn": "Today's sample yields candidate-anchor coordinates, selected plane, orientation filter, semantic confidence, quantized vertex count, privacy load, save score, drift, room-capture count, and fallback. Combined with exhibition setup logs, fixed retail shelf UI, architectural review annotations, a low-exposure gate before AI labeling, or an admin setup checklist, it clarifies which placements deserve persistence and which should remain session-only. On hardware, it would be better to avoid raw plane polygons and store only aggregate values plus the resulting decision."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Plane Detection の semantic label registry、persistent anchors の実装状況、`initiateRoomCapture()` を実装するブラウザやデバイス、Room capture 後の plane 更新頻度、Raw Camera Access の permissions policy と privacy indicator、Immersive Web proposal samples の更新を継続して見ます。次は、保存した anchor が翌セッションで復元できなかった場合の復旧 UI、複数 anchor の優先削除、手入力による再キャリブレーションを足すと、運用に近い試作になります。",
+      "bodyEn": "Watch the Plane Detection semantic label registry, implementation status for persistent anchors, browsers or devices implementing `initiateRoomCapture()`, plane update frequency after room capture, Raw Camera Access permissions policy and privacy indicators, and updates to Immersive Web proposal samples. Next, adding recovery UI when a saved anchor cannot be restored in a later session, priority deletion across multiple anchors, and hand-input recalibration would make the prototype closer to operations."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、Exhibit preset のまま Wall filter を選んで候補 anchor を poster wall に置いてください。Save score が上がり persistent anchor 寄りになります。次に polygon quantization と environment sensitivity を上げると、privacy load が上がりつつも quantized persistent anchor に寄ります。Semantic confidence を下げ、Scan room を数回押すと recapture before save や manual fallback に変わり、低信頼な部屋スキャンを保存しない判断を確認できます。",
+      "bodyEn": "Open the sample, keep the Exhibit preset, choose the Wall filter, and place the candidate anchor on the poster wall. Save score rises and the policy leans toward a persistent anchor. Then increase polygon quantization and environment sensitivity; privacy load rises while the route shifts toward a quantized persistent anchor. Lower semantic confidence and press Scan room a few times to see recapture before save or manual fallback, confirming that low-confidence room captures should not be saved.",
+      "links": [
+        {
+          "label": "Open Room Capture Anchor Save Gate",
+          "url": "../outputs/2026-08-08_html_room_capture_anchor_save_gate.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Plane Detection、Anchors、Raw Camera Access、Immersive Web samples を確認。設計: 2026-08-07 の plane semantic route から、room capture と persistent anchor 保存判断へ拡張。実装: plane 表示、candidate anchor drag、room scan pulse、preset、orientation filter、量子化 slider、privacy / save / drift readout、decision packet を単一 HTML にまとめる。検証: JSON parse、HTML script 構文、全 outputs の script compile、gallery 再生成、Pages 公開 URL を確認する。",
+      "bodyEn": "Research: reviewed Plane Detection, Anchors, Raw Camera Access, and Immersive Web samples. Design: extended the 2026-08-07 plane semantic route into room capture and persistent-anchor save decisions. Implementation: packaged plane visualization, candidate-anchor dragging, room-scan pulse, presets, orientation filter, quantization slider, privacy / save / drift readouts, and a decision packet into one HTML file. Validation: parse JSON, check HTML script syntax, compile all output scripts, regenerate the gallery, and verify published Pages URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "8 月の流れは、raw camera に進む前に depth、mesh、plane、anchor でどこまで体験を作れるかを段階化しています。今日の room capture save gate は、その中でも「一度だけ部屋を見たあとに何を残すか」を扱う層です。AR の価値は位置が戻ることにありますが、戻すために部屋の詳細を残しすぎると運用が重くなる。粗い plane 情報と保存ポリシーを同じ画面で扱うのが、実装と同意設計の接点になります。",
+      "bodyEn": "The August sequence is staging how far depth, mesh, plane, and anchor data can go before raw camera access is needed. Today's room capture save gate focuses on what remains after the room is scanned once. AR value comes from returning to the same position, but retaining too much room detail makes operations heavier. Putting coarse plane data and save policy on the same screen connects implementation with consent design."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Room Capture Anchor Save Gate` です。実 XR session は開始せず、room capture、plane polygon 量子化、semantic label、persistent anchor 保存判断を模した canvas UI として作りました。次に足すなら、`navigator.xr.isSessionSupported(\"immersive-ar\")` の実 probe、persistent anchor の復元失敗シナリオ、anchor quota の可視化、複数 anchor の削除優先度、手入力での再キャリブレーションを追加します。",
+      "bodyEn": "The selected prototype is `Room Capture Anchor Save Gate`. It does not start a real XR session; it is a canvas UI that models room capture, plane-polygon quantization, semantic labels, and persistent-anchor save decisions. Useful next additions are a real `navigator.xr.isSessionSupported(\"immersive-ar\")` probe, persistent-anchor restore-failure scenarios, anchor-quota visualization, deletion priority across multiple anchors, and hand-input recalibration."
+    }
+  ]
+}

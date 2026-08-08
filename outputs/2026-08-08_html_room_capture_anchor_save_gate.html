@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Room Capture Anchor Save Gate</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #071014;
+      --panel: rgba(7, 18, 22, 0.9);
+      --line: rgba(126, 235, 217, 0.24);
+      --text: #f0fffb;
+      --muted: #9bbab5;
+      --cyan: #78f7ff;
+      --mint: #82ffd0;
+      --amber: #ffd36a;
+      --red: #ff6d86;
+      --violet: #bca7ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 72% 12%, rgba(120, 247, 255, 0.14), transparent 26rem),
+        radial-gradient(circle at 16% 82%, rgba(255, 211, 106, 0.12), transparent 22rem),
+        linear-gradient(135deg, #071014, #15191d 58%, #0c1519);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 26px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.7vw, 2.45rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      max-width: 790px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.95rem;
+    }
+
+    .status,
+    .stage,
+    .controls,
+    .readouts {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+    }
+
+    .status {
+      min-width: 250px;
+      padding: 12px 14px;
+    }
+
+    .status b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .status span {
+      display: block;
+      margin-top: 5px;
+      color: var(--mint);
+      font-size: 1.03rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 344px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 668px;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 668px;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .metric {
+      border: 1px solid rgba(126, 235, 217, 0.23);
+      background: rgba(4, 13, 15, 0.78);
+      border-radius: 7px;
+      padding: 10px;
+    }
+
+    .metric b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 3px;
+      font-size: 1.02rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+    }
+
+    .controls,
+    .readouts {
+      padding: 14px;
+    }
+
+    .group {
+      display: grid;
+      gap: 10px;
+      padding: 12px 0;
+      border-top: 1px solid rgba(126, 235, 217, 0.14);
+    }
+
+    .group:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--mint);
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    button {
+      min-height: 36px;
+      border: 1px solid rgba(126, 235, 217, 0.34);
+      border-radius: 7px;
+      background: rgba(7, 20, 23, 0.86);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.81rem;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(130, 255, 208, 0.8);
+      color: var(--mint);
+      box-shadow: inset 0 0 18px rgba(130, 255, 208, 0.15);
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-top: 1px solid rgba(126, 235, 217, 0.13);
+      padding: 9px 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .row:first-child { border-top: 0; }
+    .row span:last-child {
+      color: var(--text);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hint {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .status {
+        min-width: 0;
+      }
+
+      .stage {
+        min-height: 560px;
+      }
+
+      canvas {
+        height: 560px;
+      }
+
+      .hud {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 520px) {
+      main {
+        width: min(100vw - 18px, 1180px);
+        padding-top: 14px;
+      }
+
+      .seg {
+        grid-template-columns: 1fr;
+      }
+
+      .hud {
+        position: static;
+        padding: 10px;
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Room Capture Anchor Save Gate</h1>
+        <p class="subtitle">Plane Detection の room capture、polygon 量子化、semantic label、persistent anchor 保存判断を HMD なしで試す最小シミュレーター。</p>
+      </div>
+      <div class="status">
+        <b>Recommended route</b>
+        <span id="routeLabel">room capture</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="stage" aria-label="room capture simulator">
+        <canvas id="stage" width="900" height="668"></canvas>
+        <div class="hud">
+          <div class="metric"><b>Save score</b><span id="saveScore">0.00</span></div>
+          <div class="metric"><b>Privacy load</b><span id="privacyLoad">0.00</span></div>
+          <div class="metric"><b>Anchor drift</b><span id="anchorDrift">0 cm</span></div>
+          <div class="metric"><b>Capture state</b><span id="captureState">idle</span></div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="controls">
+          <div class="group">
+            <div class="seg" id="presetButtons">
+              <button type="button" data-preset="exhibit" aria-pressed="true">Exhibit</button>
+              <button type="button" data-preset="retail" aria-pressed="false">Retail</button>
+              <button type="button" data-preset="desk" aria-pressed="false">Desk</button>
+            </div>
+            <button type="button" id="captureButton">Scan room</button>
+          </div>
+
+          <div class="group">
+            <label>Semantic confidence <input id="semanticConfidence" type="range" min="0" max="100" value="72"></label>
+            <label>Polygon quantization <input id="quantization" type="range" min="0" max="100" value="58"></label>
+            <label>Persistence need <input id="persistenceNeed" type="range" min="0" max="100" value="74"></label>
+            <label>Environment sensitivity <input id="sensitivity" type="range" min="0" max="100" value="44"></label>
+            <label>Relocalization noise <input id="noise" type="range" min="0" max="100" value="32"></label>
+          </div>
+
+          <div class="group">
+            <div class="seg" id="filterButtons">
+              <button type="button" data-filter="all" aria-pressed="true">All</button>
+              <button type="button" data-filter="wall" aria-pressed="false">Wall</button>
+              <button type="button" data-filter="floor" aria-pressed="false">Floor</button>
+            </div>
+            <p class="hint">キャンバス上をクリックまたはドラッグすると candidate anchor を移動します。Scan room で plane の変化を発生させます。</p>
+          </div>
+        </section>
+
+        <section class="readouts" aria-label="decision readouts">
+          <div class="row"><span>Feature request</span><span id="featureReadout">plane-detection + anchors</span></div>
+          <div class="row"><span>Selected plane</span><span id="planeReadout">wall / poster</span></div>
+          <div class="row"><span>Anchor policy</span><span id="policyReadout">session anchor</span></div>
+          <div class="row"><span>Quantized vertices</span><span id="vertexReadout">0</span></div>
+          <div class="row"><span>Room capture</span><span id="roomReadout">manual scan</span></div>
+          <div class="row"><span>Fallback</span><span id="fallbackReadout">none</span></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const $ = (id) => document.getElementById(id);
+
+    const controls = {
+      semanticConfidence: $("semanticConfidence"),
+      quantization: $("quantization"),
+      persistenceNeed: $("persistenceNeed"),
+      sensitivity: $("sensitivity"),
+      noise: $("noise")
+    };
+
+    const readouts = {
+      routeLabel: $("routeLabel"),
+      saveScore: $("saveScore"),
+      privacyLoad: $("privacyLoad"),
+      anchorDrift: $("anchorDrift"),
+      captureState: $("captureState"),
+      featureReadout: $("featureReadout"),
+      planeReadout: $("planeReadout"),
+      policyReadout: $("policyReadout"),
+      vertexReadout: $("vertexReadout"),
+      roomReadout: $("roomReadout"),
+      fallbackReadout: $("fallbackReadout")
+    };
+
+    const planes = [
+      { id: "wall-a", label: "poster wall", orientation: "wall", color: "#78f7ff", x: 84, y: 78, w: 276, h: 298, vertices: 8, stability: 0.78 },
+      { id: "table-a", label: "display table", orientation: "floor", color: "#82ffd0", x: 418, y: 140, w: 260, h: 176, vertices: 10, stability: 0.66 },
+      { id: "floor-a", label: "walkable floor", orientation: "floor", color: "#ffd36a", x: 128, y: 430, w: 548, h: 138, vertices: 12, stability: 0.72 },
+      { id: "glass-a", label: "reflective shelf", orientation: "wall", color: "#bca7ff", x: 704, y: 108, w: 118, h: 386, vertices: 14, stability: 0.48 }
+    ];
+
+    const presets = {
+      exhibit: { semanticConfidence: 72, quantization: 58, persistenceNeed: 74, sensitivity: 44, noise: 32 },
+      retail: { semanticConfidence: 63, quantization: 72, persistenceNeed: 68, sensitivity: 61, noise: 40 },
+      desk: { semanticConfidence: 82, quantization: 42, persistenceNeed: 35, sensitivity: 28, noise: 24 }
+    };
+
+    const state = {
+      preset: "exhibit",
+      filter: "all",
+      probe: { x: 226, y: 206 },
+      dragging: false,
+      scanPulse: 0,
+      captureCount: 0,
+      t: 0
+    };
+
+    function value(name) {
+      return Number(controls[name].value) / 100;
+    }
+
+    function selectedPlane() {
+      const allowed = planes.filter((plane) => state.filter === "all" || plane.orientation === state.filter);
+      const hit = allowed.find((plane) => (
+        state.probe.x >= plane.x && state.probe.x <= plane.x + plane.w &&
+        state.probe.y >= plane.y && state.probe.y <= plane.y + plane.h
+      ));
+      if (hit) return hit;
+      return allowed.reduce((best, plane) => {
+        const cx = plane.x + plane.w / 2;
+        const cy = plane.y + plane.h / 2;
+        const dist = Math.hypot(state.probe.x - cx, state.probe.y - cy);
+        return dist < best.dist ? { plane, dist } : best;
+      }, { plane: allowed[0], dist: Infinity }).plane;
+    }
+
+    function metrics() {
+      const plane = selectedPlane();
+      const semantic = value("semanticConfidence");
+      const quant = value("quantization");
+      const persistence = value("persistenceNeed");
+      const sensitivity = value("sensitivity");
+      const noise = value("noise");
+      const stability = Math.max(0, Math.min(1, plane.stability - noise * 0.28 + semantic * 0.16));
+      const detail = Math.max(3, Math.round(plane.vertices * (1 - quant * 0.62)));
+      const privacy = Math.max(0, Math.min(1, sensitivity * 0.48 + (detail / 16) * 0.32 + persistence * 0.16 - quant * 0.22));
+      const save = Math.max(0, Math.min(1, persistence * 0.42 + stability * 0.34 + semantic * 0.2 - privacy * 0.24));
+      const drift = Math.max(0.01, (1 - stability) * 0.18 + noise * 0.08 + state.captureCount * 0.006);
+      let route = "session anchor";
+      let fallback = "none";
+      let feature = "plane-detection + anchors";
+      if (semantic < 0.38 || stability < 0.42) {
+        route = "recapture before save";
+        fallback = "manual placement";
+      } else if (privacy > 0.64 && persistence > 0.58) {
+        route = "quantized persistent anchor";
+        feature = "plane-detection + anchors";
+      } else if (save > 0.66) {
+        route = "persistent anchor";
+      } else if (persistence < 0.44) {
+        route = "session anchor";
+      } else {
+        route = "room capture";
+        fallback = "hit-test anchor";
+      }
+      if (privacy > 0.82) fallback = "avoid camera-access";
+      return { plane, semantic, quant, persistence, sensitivity, noise, stability, detail, privacy, save, drift, route, fallback, feature };
+    }
+
+    function drawGrid() {
+      ctx.fillStyle = "#071014";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "rgba(126,235,217,0.07)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 36) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 36) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawPlanes(m) {
+      for (const plane of planes) {
+        const active = plane.id === m.plane.id;
+        const dim = state.filter !== "all" && plane.orientation !== state.filter;
+        ctx.save();
+        ctx.globalAlpha = dim ? 0.18 : active ? 1 : 0.62;
+        ctx.fillStyle = active ? "rgba(126,235,217,0.13)" : "rgba(126,235,217,0.05)";
+        ctx.strokeStyle = active ? plane.color : "rgba(126,235,217,0.26)";
+        ctx.lineWidth = active ? 2.5 : 1.2;
+        roundRect(plane.x, plane.y, plane.w, plane.h, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = active ? plane.color : "rgba(240,255,251,0.72)";
+        ctx.font = "13px ui-sans-serif, system-ui";
+        ctx.fillText(plane.label, plane.x + 14, plane.y + 24);
+        ctx.fillStyle = "rgba(155,186,181,0.86)";
+        ctx.fillText(`${plane.orientation} / ${plane.vertices} vertices`, plane.x + 14, plane.y + 44);
+        drawQuantizedPolygon(plane, active ? m.detail : Math.max(3, Math.round(plane.vertices * 0.55)), plane.color);
+        ctx.restore();
+      }
+    }
+
+    function drawQuantizedPolygon(plane, count, color) {
+      const cx = plane.x + plane.w / 2;
+      const cy = plane.y + plane.h / 2;
+      const rx = plane.w * 0.42;
+      const ry = plane.h * 0.34;
+      ctx.beginPath();
+      for (let i = 0; i < count; i += 1) {
+        const angle = -Math.PI / 2 + i / count * Math.PI * 2;
+        const wobble = 0.92 + ((i % 2) * 0.1);
+        const px = cx + Math.cos(angle) * rx * wobble;
+        const py = cy + Math.sin(angle) * ry * wobble;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = color;
+      ctx.globalAlpha *= 0.72;
+      ctx.setLineDash([6, 8]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawProbe(m) {
+      const pulse = 1 + Math.sin(state.t * 0.08) * 0.08 + state.scanPulse * 0.28;
+      ctx.save();
+      ctx.translate(state.probe.x, state.probe.y);
+      ctx.strokeStyle = m.route.includes("recapture") ? "#ff6d86" : m.route.includes("persistent") ? "#82ffd0" : "#ffd36a";
+      ctx.fillStyle = "rgba(7,18,22,0.8)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 19 * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-30, 0);
+      ctx.lineTo(30, 0);
+      ctx.moveTo(0, -30);
+      ctx.lineTo(0, 30);
+      ctx.stroke();
+      ctx.fillStyle = "#f0fffb";
+      ctx.font = "12px ui-sans-serif, system-ui";
+      ctx.fillText("candidate", 25, -18);
+      ctx.restore();
+    }
+
+    function drawDecisionPacket(m) {
+      const x = 60;
+      const y = 602;
+      const w = 780;
+      ctx.save();
+      ctx.fillStyle = "rgba(4,13,15,0.66)";
+      ctx.strokeStyle = "rgba(126,235,217,0.24)";
+      roundRect(x, y - 36, w, 46, 8);
+      ctx.fill();
+      ctx.stroke();
+      const steps = [
+        ["initiateRoomCapture()", m.captureCount > 0 || state.scanPulse > 0],
+        ["quantize polygon", m.quant > 0.35],
+        ["semantic gate", m.semantic > 0.5],
+        ["save policy", m.save > 0.58],
+        [m.route, true]
+      ];
+      let cursor = x + 14;
+      for (const [label, on] of steps) {
+        ctx.fillStyle = on ? "rgba(130,255,208,0.18)" : "rgba(255,109,134,0.12)";
+        ctx.strokeStyle = on ? "rgba(130,255,208,0.54)" : "rgba(255,109,134,0.42)";
+        const bw = Math.max(104, label.length * 7.4 + 24);
+        roundRect(cursor, y - 25, bw, 24, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = on ? "#82ffd0" : "#ff9aaa";
+        ctx.font = "11px ui-sans-serif, system-ui";
+        ctx.fillText(label, cursor + 10, y - 9);
+        cursor += bw + 10;
+      }
+      ctx.restore();
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function updateReadouts(m) {
+      readouts.routeLabel.textContent = m.route;
+      readouts.saveScore.textContent = m.save.toFixed(2);
+      readouts.privacyLoad.textContent = m.privacy.toFixed(2);
+      readouts.anchorDrift.textContent = `${Math.round(m.drift * 100)} cm`;
+      readouts.captureState.textContent = state.scanPulse > 0.04 ? "scanning" : state.captureCount ? "captured" : "idle";
+      readouts.featureReadout.textContent = m.feature;
+      readouts.planeReadout.textContent = `${m.plane.orientation} / ${m.plane.label}`;
+      readouts.policyReadout.textContent = m.route;
+      readouts.vertexReadout.textContent = `${m.detail} coarse points`;
+      readouts.roomReadout.textContent = state.captureCount ? `${state.captureCount} scan packet` : "manual scan";
+      readouts.fallbackReadout.textContent = m.fallback;
+    }
+
+    function render() {
+      state.t += 1;
+      state.scanPulse *= 0.94;
+      const m = metrics();
+      drawGrid();
+      drawPlanes(m);
+      drawProbe(m);
+      drawDecisionPacket(m);
+      updateReadouts(m);
+      requestAnimationFrame(render);
+    }
+
+    function pointerPosition(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (event.clientX - rect.left) * canvas.width / rect.width,
+        y: (event.clientY - rect.top) * canvas.height / rect.height
+      };
+    }
+
+    function setProbe(event) {
+      const pos = pointerPosition(event);
+      state.probe.x = Math.max(24, Math.min(canvas.width - 24, pos.x));
+      state.probe.y = Math.max(24, Math.min(canvas.height - 70, pos.y));
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.dragging = true;
+      canvas.setPointerCapture(event.pointerId);
+      setProbe(event);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (state.dragging) setProbe(event);
+    });
+
+    function stopDrag(event) {
+      state.dragging = false;
+      if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    }
+
+    canvas.addEventListener("pointerup", stopDrag);
+    canvas.addEventListener("pointercancel", stopDrag);
+
+    document.getElementById("captureButton").addEventListener("click", () => {
+      state.captureCount += 1;
+      state.scanPulse = 1;
+      for (const plane of planes) {
+        plane.stability = Math.max(0.36, Math.min(0.9, plane.stability + (Math.random() - 0.42) * 0.08));
+      }
+    });
+
+    document.getElementById("presetButtons").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-preset]");
+      if (!button) return;
+      state.preset = button.dataset.preset;
+      for (const [key, next] of Object.entries(presets[state.preset])) {
+        controls[key].value = next;
+      }
+      document.querySelectorAll("[data-preset]").forEach((node) => {
+        node.setAttribute("aria-pressed", String(node === button));
+      });
+    });
+
+    document.getElementById("filterButtons").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-filter]");
+      if (!button) return;
+      state.filter = button.dataset.filter;
+      document.querySelectorAll("[data-filter]").forEach((node) => {
+        node.setAttribute("aria-pressed", String(node === button));
+      });
+    });
+
+    render();
+  </script>
+</body>
+</html>
