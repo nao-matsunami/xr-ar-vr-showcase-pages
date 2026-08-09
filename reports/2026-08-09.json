@@ -1,0 +1,115 @@
+{
+  "date": "2026-08-09",
+  "headline": "Persistent anchor の復元失敗を回復 UI として扱う",
+  "headlineEn": "Treat persistent-anchor restore failure as recoverable UI",
+  "summary": "WebXR Anchors、Plane Detection、Hand Input、Immersive Web Samples を確認し、保存済み anchor の復元失敗、quota、削除優先度、手入力による再キャリブレーションを試す自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing WebXR Anchors, Plane Detection, Hand Input, and Immersive Web Samples, today's original HTML sample models saved-anchor restore failures, quotas, deletion priority, and hand-driven recalibration.",
+  "keyTopics": [
+    "WebXR Anchors Module は `requestPersistentHandle()`、`persistentAnchors`、`restorePersistentAnchor(uuid)`、`deletePersistentAnchor(uuid)` を定義し、persistent anchor は origin ごとの map として扱われる。",
+    "仕様上、persistent anchor の保存 map のサイズは UA が決め、UA は上限やその他の理由で entry を削除できるため、復元失敗は通常経路として扱う必要がある。",
+    "Plane Detection Module は `XRFrame.detectedPlanes`、`XRPlane.polygon`、`orientation`、`semanticLabel`、`initiateRoomCapture()` を定義し、復元失敗後の再配置候補として使いやすい。",
+    "Plane Detection の privacy guidance は plane polygon の detail reduction や小さすぎる plane の除外に触れており、復旧ログにも raw geometry を残しすぎない設計が重要になる。",
+    "WebXR Hand Input Module は articulated hand poses を WebXR に追加するため、anchor 復旧時の微調整 UI を controller 前提にしない選択肢として使える。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Anchors Module defines `requestPersistentHandle()`, `persistentAnchors`, `restorePersistentAnchor(uuid)`, and `deletePersistentAnchor(uuid)`, with persistent anchors modeled as an origin-scoped map.",
+    "The specification leaves persistent-anchor map size to the user agent and allows entries to be removed for capacity or other reasons, so restore failure should be treated as a normal route.",
+    "The WebXR Plane Detection Module defines `XRFrame.detectedPlanes`, `XRPlane.polygon`, `orientation`, `semanticLabel`, and `initiateRoomCapture()`, which are useful for recovery placement candidates.",
+    "Plane Detection privacy guidance discusses polygon detail reduction and ignoring overly small planes, so recovery logs should avoid retaining raw geometry.",
+    "The WebXR Hand Input Module adds articulated hand poses to WebXR, making hand-based fine adjustment a viable alternative to controller-only recovery."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Anchor Restore Recovery Lab",
+      "url": "../outputs/2026-08-09_html_anchor_restore_recovery_lab.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "Immersive Web: WebXR Plane Detection Module",
+      "url": "https://immersive-web.github.io/plane-detection/"
+    },
+    {
+      "label": "Immersive Web: WebXR Hand Input Module",
+      "url": "https://immersive-web.github.io/webxr-hand-input/"
+    },
+    {
+      "label": "Immersive Web Samples: AR Plane Detection",
+      "url": "https://immersive-web.github.io/webxr-samples/proposals/plane-detection.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、persistent anchor を「保存できたら終わり」ではなく、翌セッションで戻らない、上限で消える、環境が変わる、手で少し合わせ直す、という運用の失敗回復まで含めて UI にする点です。Anchors 仕様では persistent anchor の map は UA 管理で、保存数の上限や削除があり得ます。Plane Detection の room capture と semanticLabel は再配置候補を作るのに便利ですが、復旧時にも raw polygon を保存しすぎない判断が必要です。今日のサンプルは公式デモを外部カードにせず、これらの状態を canvas 上の自作判断盤としてまとめました。",
+      "bodyEn": "Today's notable point is treating persistent anchors not as finished once saved, but as an operational recovery problem: they may fail to restore in a later session, be removed because of capacity, become stale when the room changes, or need hand-based fine adjustment. In the Anchors spec, the persistent-anchor map is user-agent managed and may have limits or deletions. Plane Detection room capture and semantic labels are useful for recovery candidates, while recovery still needs to avoid retaining raw polygon data. The public card is the original canvas decision board rather than an external demo.",
+      "links": [
+        {
+          "label": "Immersive Web: WebXR Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルは保存済み anchor を光るノードとして表示し、Restore、Recalibrate、Delete low、Add anchor を切り替える復旧ラボです。Tracking confidence、Room change、Anchor quota、Hand correction を動かすと、復元率、quota 使用量、補正距離、削除候補、fallback が変化します。canvas をドラッグすると手入力の補正点が動き、近くの anchor だけが少し寄るため、復元失敗後にユーザーへ全面再スキャンを強制せず、局所的に直す体験を試せます。",
+      "bodyEn": "The sample shows saved anchors as luminous nodes and exposes Restore, Recalibrate, Delete low, and Add anchor actions. Changing tracking confidence, room change, anchor quota, and hand correction updates restore rate, quota usage, correction distance, deletion target, and fallback. Dragging the canvas moves the hand-correction point, nudging only nearby anchors, which tests local recovery instead of forcing a full rescan after every restore failure."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では `requestPersistentHandle()` で得た UUID を保存し、次回 `session.persistentAnchors` と照合して `restorePersistentAnchor(uuid)` を順に試す構成にします。失敗時は `deletePersistentAnchor(uuid)`、新規 hit test / plane anchor、または hand input による nudge を分岐にします。保存ログは UUID、粗い pose band、semantic label、復元スコア、retry 回数、削除理由に留め、plane polygon や camera frame は残さないのが扱いやすいです。quota は UI 上で可視化し、低優先度 anchor を先に消す判断をユーザーに説明できるようにします。",
+      "bodyEn": "A practical implementation can save UUIDs returned by `requestPersistentHandle()`, compare them with `session.persistentAnchors` on the next session, and try `restorePersistentAnchor(uuid)` in order. Failures branch to `deletePersistentAnchor(uuid)`, new hit-test or plane anchors, or a hand-input nudge. Logs should keep UUIDs, coarse pose bands, semantic labels, restore score, retry count, and deletion reason, while avoiding plane polygons or camera frames. Quota should be visible so users understand why lower-priority anchors are deleted first."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルからは、復元率、anchor ごとの priority、drift、age、restore score、quota 使用量、削除候補、手入力補正量、fallback 種別を取れます。展示運用の設営チェックリスト、店舗棚の販促 UI、建築注釈、CMS の配置版管理、AI による失敗原因分類、音や haptics の復旧通知と組み合わせると、単なる AR 配置ではなく「戻らなかった時にどう直すか」を運用データとして育てられます。複数日の depth / mesh / plane / camera consent ladder と結ぶと、最小露出の復旧ルート選択にも使えます。",
+      "bodyEn": "Today's sample yields restore rate, per-anchor priority, drift, age, restore score, quota usage, deletion target, hand-correction amount, and fallback type. Combined with exhibition setup checklists, retail shelf promotion UI, architectural annotations, CMS placement versions, AI failure-cause classification, or audio/haptic recovery cues, it turns AR placement into operational data about how to recover when placement does not return. Connecting it with recent depth / mesh / plane / camera-consent samples can support lowest-exposure recovery routing."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "persistent anchors の実装状況、UA ごとの anchor quota と削除挙動、Plane Detection semantic label registry、`initiateRoomCapture()` 対応、Hand Input の実機差、Immersive Web proposal samples の更新を継続して見ます。次は、復元失敗ログを時系列で蓄積し、失敗理由を tracking loss、room change、quota eviction、privacy gate、user deletion に分類するデバッグ画面に発展させたいです。",
+      "bodyEn": "Continue watching persistent-anchor implementation status, per-user-agent anchor quotas and deletion behavior, the Plane Detection semantic label registry, `initiateRoomCapture()` support, device differences in Hand Input, and Immersive Web proposal sample updates. A useful next step is a chronological restore-failure log that classifies failures as tracking loss, room change, quota eviction, privacy gate, or user deletion."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、Exhibit preset のまま Restore を押して復元率を見てください。Room change を上げると赤い失敗 anchor が増え、Hand correction を上げて canvas の補正点を失敗 anchor 近くにドラッグしてから Recalibrate を押すと drift が下がります。Anchor quota を 3 まで下げて Delete low を押すと、priority と restore score の低い anchor が消え、永続保存の整理 UI を確認できます。",
+      "bodyEn": "Open the sample, keep the Exhibit preset, and press Restore to inspect the restore rate. Increase room change to produce more failed red anchors, then raise hand correction, drag the correction point near failed anchors, and press Recalibrate to reduce drift. Lower anchor quota to 3 and press Delete low to remove lower-priority anchors, checking the persistent-storage cleanup UI.",
+      "links": [
+        {
+          "label": "Open Anchor Restore Recovery Lab",
+          "url": "../outputs/2026-08-09_html_anchor_restore_recovery_lab.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Anchors、Plane Detection、Hand Input、Immersive Web Samples を確認。設計: 2026-08-08 の room capture anchor save gate から、翌セッションの restore failure と quota 管理へ拡張。実装: saved anchors、restore score、quota slider、hand correction drag、delete priority、fallback readout を単一 HTML にまとめる。検証: JSON parse、HTML script 構文、全 outputs の script compile、gallery 再生成、Pages 公開 URL を確認する。",
+      "bodyEn": "Research: reviewed Anchors, Plane Detection, Hand Input, and Immersive Web Samples. Design: extended the 2026-08-08 room-capture anchor save gate into next-session restore failure and quota management. Implementation: packaged saved anchors, restore scores, quota slider, hand-correction drag, deletion priority, and fallback readouts into one HTML file. Validation: parse JSON, check HTML script syntax, compile all output scripts, regenerate the gallery, and verify published Pages URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "8 月前半の流れは、camera access に進む前に depth、mesh、plane、anchor、room capture でどこまで体験と運用を作れるかを積み上げています。今日のテーマは「保存」の次に必ず来る「復元と整理」です。AR は配置が戻るから価値がありますが、戻らない時の説明、消す順番、手で直す余地がないと実運用では止まりやすい。復旧 UI を先に作ることで、技術仕様と現場オペレーションの距離を縮められます。",
+      "bodyEn": "The early-August sequence asks how much experience and operation can be built with depth, mesh, plane, anchor, and room capture before reaching for camera access. Today's theme is what comes after saving: restore and cleanup. AR value depends on returning to a placement, but real operations stall without explanations for failures, deletion order, and room for manual correction. Prototyping recovery UI brings the technical spec closer to field operations."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Anchor Restore Recovery Lab` です。実 XR session は開始せず、persistent anchor の UUID 復元、quota 超過、削除優先度、手入力補正を模した canvas UI として作りました。次に足すなら、実際の `navigator.xr.isSessionSupported(\"immersive-ar\")` probe、疑似 restore log の CSV 出力、復元失敗理由の分類、複数ユーザー設営の競合表示、音や haptics による復旧誘導を追加します。",
+      "bodyEn": "The selected prototype is `Anchor Restore Recovery Lab`. It does not start a real XR session; it is a canvas UI that models persistent-anchor UUID restoration, quota overflow, deletion priority, and hand-based correction. Useful additions would be a real `navigator.xr.isSessionSupported(\"immersive-ar\")` probe, CSV export of simulated restore logs, failure-reason classification, multi-operator setup conflict display, and audio or haptic recovery guidance."
+    }
+  ]
+}

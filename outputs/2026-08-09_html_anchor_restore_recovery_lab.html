@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anchor Restore Recovery Lab</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #071014;
+      --panel: rgba(6, 16, 20, 0.9);
+      --line: rgba(126, 235, 217, 0.24);
+      --text: #effffb;
+      --muted: #9abbb5;
+      --cyan: #7cf4ff;
+      --mint: #82ffd0;
+      --amber: #ffd36a;
+      --red: #ff6d86;
+      --violet: #c3a7ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 78% 14%, rgba(124, 244, 255, 0.14), transparent 25rem),
+        radial-gradient(circle at 12% 86%, rgba(255, 211, 106, 0.12), transparent 23rem),
+        linear-gradient(135deg, #071014, #15191d 58%, #0b171b);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 26px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.7vw, 2.45rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      max-width: 790px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.95rem;
+    }
+
+    .status,
+    .stage,
+    .controls,
+    .readouts {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+    }
+
+    .status {
+      min-width: 250px;
+      padding: 12px 14px;
+    }
+
+    .status b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .status span {
+      display: block;
+      margin-top: 5px;
+      color: var(--mint);
+      font-size: 1.03rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 344px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 668px;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 668px;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .metric {
+      border: 1px solid rgba(126, 235, 217, 0.23);
+      background: rgba(4, 13, 15, 0.78);
+      border-radius: 7px;
+      padding: 10px;
+    }
+
+    .metric b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 3px;
+      font-size: 1.02rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+    }
+
+    .controls,
+    .readouts {
+      padding: 14px;
+    }
+
+    .group {
+      display: grid;
+      gap: 10px;
+      padding: 12px 0;
+      border-top: 1px solid rgba(126, 235, 217, 0.14);
+    }
+
+    .group:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--mint);
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    button {
+      min-height: 36px;
+      border: 1px solid rgba(126, 235, 217, 0.34);
+      border-radius: 7px;
+      background: rgba(7, 20, 23, 0.86);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.81rem;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(130, 255, 208, 0.8);
+      color: var(--mint);
+      box-shadow: inset 0 0 18px rgba(130, 255, 208, 0.15);
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-top: 1px solid rgba(126, 235, 217, 0.13);
+      padding: 9px 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .row:first-child { border-top: 0; }
+    .row span:last-child {
+      color: var(--text);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hint {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .status {
+        min-width: 0;
+      }
+
+      .stage {
+        min-height: 560px;
+      }
+
+      canvas {
+        height: 560px;
+      }
+
+      .hud {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 560px) {
+      main {
+        width: min(100vw - 18px, 1180px);
+        padding-top: 14px;
+      }
+
+      .hud {
+        position: static;
+        padding: 10px;
+        background: rgba(4, 13, 15, 0.8);
+      }
+
+      .actions,
+      .seg {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Anchor Restore Recovery Lab</h1>
+        <p class="subtitle">保存済み persistent anchor が翌セッションで戻らない、quota が足りない、手入力で少しだけ位置合わせしたい、という運用寄りの失敗回復を 1 枚の canvas で試す最小サンプル。</p>
+      </div>
+      <div class="status">
+        <b>Recovery route</b>
+        <span id="route">Restore + recalibrate</span>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <canvas id="stage" width="960" height="668" aria-label="persistent anchor restore recovery simulator"></canvas>
+        <div class="hud">
+          <div class="metric"><b>Restore rate</b><span id="restoreRate">73%</span></div>
+          <div class="metric"><b>Quota used</b><span id="quotaUsed">4 / 6</span></div>
+          <div class="metric"><b>Recalibration</b><span id="recalib">12 cm</span></div>
+          <div class="metric"><b>Delete target</b><span id="deleteTarget">promo</span></div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <section class="controls">
+          <div class="group">
+            <div class="seg" role="group" aria-label="scenario preset">
+              <button type="button" data-preset="exhibit" aria-pressed="true">Exhibit</button>
+              <button type="button" data-preset="retail" aria-pressed="false">Retail</button>
+              <button type="button" data-preset="desk" aria-pressed="false">Desk</button>
+            </div>
+            <div class="actions">
+              <button type="button" id="restore">Restore</button>
+              <button type="button" id="recalibrate">Recalibrate</button>
+              <button type="button" id="delete">Delete low</button>
+              <button type="button" id="add">Add anchor</button>
+            </div>
+          </div>
+
+          <div class="group">
+            <label>Tracking confidence <input id="tracking" type="range" min="0" max="100" value="68"></label>
+            <label>Room change <input id="roomChange" type="range" min="0" max="100" value="32"></label>
+            <label>Anchor quota <input id="quota" type="range" min="3" max="8" value="6"></label>
+            <label>Hand correction <input id="hand" type="range" min="0" max="100" value="42"></label>
+          </div>
+        </section>
+
+        <section class="readouts">
+          <div class="row"><span>Persistent handles</span><span id="handles">4 saved</span></div>
+          <div class="row"><span>Restore failures</span><span id="failures">1 anchor</span></div>
+          <div class="row"><span>Priority policy</span><span id="policy">keep exhibit</span></div>
+          <div class="row"><span>Manual fallback</span><span id="fallback">hand nudge</span></div>
+          <div class="row"><span>Privacy packet</span><span id="packet">uuid + band</span></div>
+          <p class="hint">canvas をクリック/ドラッグすると手入力による補正点を動かせます。Restore は復元結果を再計算し、Delete low は quota 超過時に優先度の低い anchor を消します。</p>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const els = {
+      route: document.getElementById("route"),
+      restoreRate: document.getElementById("restoreRate"),
+      quotaUsed: document.getElementById("quotaUsed"),
+      recalib: document.getElementById("recalib"),
+      deleteTarget: document.getElementById("deleteTarget"),
+      handles: document.getElementById("handles"),
+      failures: document.getElementById("failures"),
+      policy: document.getElementById("policy"),
+      fallback: document.getElementById("fallback"),
+      packet: document.getElementById("packet")
+    };
+
+    const controls = {
+      tracking: document.getElementById("tracking"),
+      roomChange: document.getElementById("roomChange"),
+      quota: document.getElementById("quota"),
+      hand: document.getElementById("hand")
+    };
+
+    const presets = {
+      exhibit: {
+        tracking: 68,
+        roomChange: 32,
+        quota: 6,
+        hand: 42,
+        anchors: [
+          { id: "poster", x: 244, y: 178, priority: 94, age: 8, drift: 0.08, restored: true },
+          { id: "wayfind", x: 556, y: 152, priority: 80, age: 12, drift: 0.16, restored: true },
+          { id: "promo", x: 716, y: 418, priority: 44, age: 28, drift: 0.31, restored: false },
+          { id: "floor", x: 354, y: 452, priority: 72, age: 6, drift: 0.13, restored: true }
+        ]
+      },
+      retail: {
+        tracking: 74,
+        roomChange: 46,
+        quota: 5,
+        hand: 58,
+        anchors: [
+          { id: "shelf-a", x: 236, y: 246, priority: 86, age: 3, drift: 0.14, restored: true },
+          { id: "shelf-b", x: 508, y: 286, priority: 76, age: 9, drift: 0.2, restored: true },
+          { id: "sale", x: 708, y: 356, priority: 39, age: 20, drift: 0.42, restored: false },
+          { id: "aisle", x: 426, y: 478, priority: 65, age: 14, drift: 0.28, restored: false }
+        ]
+      },
+      desk: {
+        tracking: 82,
+        roomChange: 18,
+        quota: 4,
+        hand: 34,
+        anchors: [
+          { id: "monitor", x: 292, y: 204, priority: 82, age: 2, drift: 0.07, restored: true },
+          { id: "notes", x: 614, y: 218, priority: 62, age: 4, drift: 0.11, restored: true },
+          { id: "lamp", x: 504, y: 452, priority: 51, age: 17, drift: 0.24, restored: true }
+        ]
+      }
+    };
+
+    const state = {
+      preset: "exhibit",
+      anchors: structuredClone(presets.exhibit.anchors),
+      handPoint: { x: 470, y: 330 },
+      dragging: false,
+      pulse: 0,
+      tick: 0
+    };
+
+    function value(id) {
+      return Number(controls[id].value);
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const scale = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * scale);
+      canvas.height = Math.round(rect.height * scale);
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    }
+
+    function logicalSize() {
+      return { w: canvas.width / (window.devicePixelRatio || 1), h: canvas.height / (window.devicePixelRatio || 1) };
+    }
+
+    function evaluateAnchor(anchor) {
+      const tracking = value("tracking") / 100;
+      const roomChange = value("roomChange") / 100;
+      const hand = value("hand") / 100;
+      const score = clamp(tracking * 1.08 - roomChange * 0.55 - anchor.drift * 0.65 + anchor.priority / 260 + hand * 0.12, 0, 1);
+      return {
+        score,
+        restored: score > 0.54,
+        needsHand: score > 0.38 && score <= 0.68,
+        deleteRisk: anchor.priority < 58 || score < 0.34
+      };
+    }
+
+    function updateReadouts() {
+      const quota = value("quota");
+      const evals = state.anchors.map((anchor) => ({ anchor, result: evaluateAnchor(anchor) }));
+      const restored = evals.filter((item) => item.result.restored).length;
+      const failures = state.anchors.length - restored;
+      const restoreRate = Math.round((restored / Math.max(1, state.anchors.length)) * 100);
+      const deleteCandidate = evals
+        .slice()
+        .sort((a, b) => (a.anchor.priority + a.result.score * 100) - (b.anchor.priority + b.result.score * 100))[0]?.anchor;
+      const overQuota = state.anchors.length > quota;
+      const correctionCm = Math.round((1 - restoreRate / 100 + value("hand") / 220) * 18);
+      const route = failures === 0 && !overQuota
+        ? "Restore clean"
+        : overQuota
+          ? "Delete + restore"
+          : correctionCm > 16
+            ? "Manual fallback"
+            : "Restore + recalibrate";
+
+      els.route.textContent = route;
+      els.restoreRate.textContent = `${restoreRate}%`;
+      els.quotaUsed.textContent = `${state.anchors.length} / ${quota}`;
+      els.recalib.textContent = `${correctionCm} cm`;
+      els.deleteTarget.textContent = deleteCandidate?.id || "none";
+      els.handles.textContent = `${state.anchors.length} saved`;
+      els.failures.textContent = `${failures} anchor${failures === 1 ? "" : "s"}`;
+      els.policy.textContent = overQuota ? "delete low score" : "keep high value";
+      els.fallback.textContent = correctionCm > 16 ? "manual place" : "hand nudge";
+      els.packet.textContent = failures ? "uuid + retry band" : "uuid + pose band";
+    }
+
+    function drawGrid(w, h) {
+      ctx.fillStyle = "#061014";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "rgba(124, 244, 255, 0.08)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 36) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 36) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "rgba(130, 255, 208, 0.25)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(84, 80, w - 168, h - 176);
+      ctx.fillStyle = "rgba(124, 244, 255, 0.05)";
+      ctx.fillRect(84, 80, w - 168, h - 176);
+
+      ctx.fillStyle = "rgba(240, 255, 251, 0.72)";
+      ctx.font = "12px ui-sans-serif, system-ui";
+      ctx.fillText("restored room map / persistent anchor handles", 104, 106);
+      ctx.fillText("hand recalibration vector", 104, h - 104);
+    }
+
+    function drawAnchor(anchor, result) {
+      const color = result.restored ? "130, 255, 208" : result.needsHand ? "255, 211, 106" : "255, 109, 134";
+      const pulse = Math.sin(state.tick / 18 + anchor.x * 0.01) * 4;
+      const radius = 22 + result.score * 16 + pulse;
+
+      ctx.strokeStyle = `rgba(${color}, 0.42)`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(anchor.x, anchor.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = `rgba(${color}, 0.15)`;
+      ctx.beginPath();
+      ctx.arc(anchor.x, anchor.y, 17, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = `rgb(${color})`;
+      ctx.beginPath();
+      ctx.arc(anchor.x, anchor.y, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = result.restored ? "rgba(130, 255, 208, 0.35)" : "rgba(255, 109, 134, 0.4)";
+      ctx.beginPath();
+      ctx.moveTo(anchor.x, anchor.y);
+      ctx.lineTo(anchor.x + anchor.drift * 110, anchor.y - anchor.drift * 90);
+      ctx.stroke();
+
+      ctx.fillStyle = "#effffb";
+      ctx.font = "700 12px ui-sans-serif, system-ui";
+      ctx.fillText(anchor.id, anchor.x + 18, anchor.y - 9);
+      ctx.font = "11px ui-sans-serif, system-ui";
+      ctx.fillStyle = "rgba(240, 255, 251, 0.7)";
+      ctx.fillText(`${Math.round(result.score * 100)}% / p${anchor.priority}`, anchor.x + 18, anchor.y + 8);
+    }
+
+    function drawHand(w, h) {
+      const handStrength = value("hand") / 100;
+      const reach = 76 + handStrength * 98;
+      const x = clamp(state.handPoint.x, 92, w - 92);
+      const y = clamp(state.handPoint.y, 92, h - 132);
+      state.handPoint.x = x;
+      state.handPoint.y = y;
+
+      ctx.strokeStyle = "rgba(195, 167, 255, 0.72)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - reach * 0.5, h - 86);
+      ctx.quadraticCurveTo(x - 22, y + 48, x, y);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(195, 167, 255, 0.14)";
+      ctx.beginPath();
+      ctx.arc(x, y, 36 + handStrength * 36, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(195, 167, 255, 0.48)";
+      ctx.stroke();
+
+      ctx.fillStyle = "#c3a7ff";
+      ctx.beginPath();
+      ctx.arc(x, y, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(240, 255, 251, 0.76)";
+      ctx.font = "12px ui-sans-serif, system-ui";
+      ctx.fillText("hand correction", x + 12, y - 12);
+    }
+
+    function drawDecisionPanel(w) {
+      const quota = value("quota");
+      const tracking = value("tracking");
+      const roomChange = value("roomChange");
+      const x = w - 308;
+      const y = 102;
+      ctx.fillStyle = "rgba(4, 13, 15, 0.8)";
+      ctx.strokeStyle = "rgba(126, 235, 217, 0.22)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(x, y, 216, 132, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#effffb";
+      ctx.font = "700 13px ui-sans-serif, system-ui";
+      ctx.fillText("restore packet", x + 14, y + 24);
+      ctx.font = "12px ui-sans-serif, system-ui";
+      ctx.fillStyle = "rgba(240, 255, 251, 0.72)";
+      ctx.fillText(`tracking: ${tracking}%`, x + 14, y + 50);
+      ctx.fillText(`room change: ${roomChange}%`, x + 14, y + 72);
+      ctx.fillText(`quota: ${state.anchors.length}/${quota}`, x + 14, y + 94);
+      ctx.fillText(`stored: UUID + coarse pose`, x + 14, y + 116);
+    }
+
+    function draw() {
+      const { w, h } = logicalSize();
+      state.tick += 1;
+      drawGrid(w, h);
+      state.anchors.forEach((anchor) => drawAnchor(anchor, evaluateAnchor(anchor)));
+      drawHand(w, h);
+      drawDecisionPanel(w);
+      updateReadouts();
+      requestAnimationFrame(draw);
+    }
+
+    function applyPreset(name) {
+      state.preset = name;
+      const preset = presets[name];
+      Object.entries(controls).forEach(([key, input]) => {
+        input.value = preset[key];
+      });
+      state.anchors = structuredClone(preset.anchors);
+      document.querySelectorAll("[data-preset]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.preset === name));
+      });
+    }
+
+    function restoreAnchors() {
+      state.anchors = state.anchors.map((anchor, index) => {
+        const result = evaluateAnchor(anchor);
+        return {
+          ...anchor,
+          restored: result.restored,
+          drift: clamp(anchor.drift + (value("roomChange") - value("tracking")) / 900 + Math.sin(index + state.tick) * 0.02, 0.04, 0.62)
+        };
+      });
+    }
+
+    function recalibrate() {
+      const amount = value("hand") / 240;
+      state.anchors = state.anchors.map((anchor) => {
+        const dx = state.handPoint.x - anchor.x;
+        const dy = state.handPoint.y - anchor.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance > 170) return anchor;
+        return {
+          ...anchor,
+          x: anchor.x + dx * amount,
+          y: anchor.y + dy * amount,
+          drift: clamp(anchor.drift * (0.82 - value("hand") / 500), 0.03, 0.62)
+        };
+      });
+    }
+
+    function deleteLowPriority() {
+      if (!state.anchors.length) return;
+      const scored = state.anchors
+        .map((anchor, index) => ({ index, value: anchor.priority + evaluateAnchor(anchor).score * 80 - anchor.age }))
+        .sort((a, b) => a.value - b.value)[0];
+      state.anchors.splice(scored.index, 1);
+    }
+
+    function addAnchor() {
+      const { w, h } = logicalSize();
+      state.anchors.push({
+        id: `new-${state.anchors.length + 1}`,
+        x: clamp(state.handPoint.x + 28, 110, w - 120),
+        y: clamp(state.handPoint.y - 18, 110, h - 160),
+        priority: 54 + Math.round(value("hand") / 3),
+        age: 0,
+        drift: 0.18,
+        restored: true
+      });
+    }
+
+    function pointerPos(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+      };
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.dragging = true;
+      canvas.setPointerCapture(event.pointerId);
+      state.handPoint = pointerPos(event);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!state.dragging) return;
+      state.handPoint = pointerPos(event);
+    });
+
+    function stopDrag(event) {
+      state.dragging = false;
+      if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    }
+
+    canvas.addEventListener("pointerup", stopDrag);
+    canvas.addEventListener("pointercancel", stopDrag);
+
+    document.querySelectorAll("[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => applyPreset(button.dataset.preset));
+    });
+    document.getElementById("restore").addEventListener("click", restoreAnchors);
+    document.getElementById("recalibrate").addEventListener("click", recalibrate);
+    document.getElementById("delete").addEventListener("click", deleteLowPriority);
+    document.getElementById("add").addEventListener("click", addAnchor);
+    Object.values(controls).forEach((input) => input.addEventListener("input", updateReadouts));
+    window.addEventListener("resize", resizeCanvas);
+
+    resizeCanvas();
+    draw();
+  </script>
+</body>
+</html>
