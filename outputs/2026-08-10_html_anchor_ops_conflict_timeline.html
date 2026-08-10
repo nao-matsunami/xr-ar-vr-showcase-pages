@@ -1,0 +1,816 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anchor Ops Conflict Timeline</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #061012;
+      --panel: rgba(7, 17, 21, 0.9);
+      --line: rgba(126, 235, 217, 0.24);
+      --text: #ecfffb;
+      --muted: #9ab8b4;
+      --cyan: #79e9ff;
+      --mint: #82ffd0;
+      --amber: #ffd36a;
+      --red: #ff6d86;
+      --violet: #b9a3ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 72% 10%, rgba(121, 233, 255, 0.15), transparent 23rem),
+        radial-gradient(circle at 10% 86%, rgba(255, 211, 106, 0.12), transparent 22rem),
+        linear-gradient(135deg, #061012, #141b20 58%, #081316);
+    }
+
+    main {
+      width: min(1190px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 26px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.7vw, 2.45rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      max-width: 800px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.95rem;
+    }
+
+    .status,
+    .stage,
+    .controls,
+    .readouts,
+    .log {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+    }
+
+    .status {
+      min-width: 260px;
+      padding: 12px 14px;
+    }
+
+    .status b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .status span {
+      display: block;
+      margin-top: 5px;
+      color: var(--mint);
+      font-size: 1.03rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 350px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 690px;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 690px;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .metric {
+      border: 1px solid rgba(126, 235, 217, 0.23);
+      background: rgba(4, 13, 15, 0.78);
+      border-radius: 7px;
+      padding: 10px;
+    }
+
+    .metric b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 3px;
+      font-size: 1.02rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+    }
+
+    .controls,
+    .readouts,
+    .log {
+      padding: 14px;
+    }
+
+    .group {
+      display: grid;
+      gap: 10px;
+      padding: 12px 0;
+      border-top: 1px solid rgba(126, 235, 217, 0.14);
+    }
+
+    .group:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--mint);
+    }
+
+    .seg,
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    button {
+      min-height: 36px;
+      border: 1px solid rgba(126, 235, 217, 0.34);
+      border-radius: 7px;
+      background: rgba(7, 20, 23, 0.86);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.81rem;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(130, 255, 208, 0.8);
+      color: var(--mint);
+      box-shadow: inset 0 0 18px rgba(130, 255, 208, 0.15);
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-top: 1px solid rgba(126, 235, 217, 0.13);
+      padding: 9px 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .row:first-child { border-top: 0; }
+
+    .row strong {
+      color: var(--text);
+      font-weight: 650;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .log-list {
+      display: grid;
+      gap: 7px;
+      max-height: 188px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .log-item {
+      display: grid;
+      grid-template-columns: 54px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid rgba(126, 235, 217, 0.14);
+      border-radius: 7px;
+      background: rgba(2, 9, 11, 0.5);
+      padding: 8px;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .log-item strong {
+      color: var(--text);
+      font-weight: 650;
+    }
+
+    .pill {
+      border: 1px solid rgba(126, 235, 217, 0.24);
+      border-radius: 999px;
+      padding: 3px 7px;
+      color: var(--mint);
+      white-space: nowrap;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .status {
+        min-width: 0;
+      }
+
+      canvas {
+        height: 620px;
+      }
+
+      .stage {
+        min-height: 620px;
+      }
+
+      .hud {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 560px) {
+      main {
+        width: min(100vw - 18px, 1190px);
+        padding-top: 14px;
+      }
+
+      canvas {
+        height: 560px;
+      }
+
+      .stage {
+        min-height: 560px;
+      }
+
+      .hud {
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        gap: 6px;
+      }
+
+      .metric {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Anchor Ops Conflict Timeline</h1>
+        <p class="subtitle">Persistent anchor の復元失敗を、時系列ログ、原因分類、複数オペレーターの競合、CSV 出力まで含む運用画面として試す最小サンプル。</p>
+      </div>
+      <div class="status">
+        <b>Current route</b>
+        <span id="route">Classify and merge</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="stage" aria-label="Anchor operation timeline canvas">
+        <canvas id="stage" width="980" height="690"></canvas>
+        <div class="hud">
+          <div class="metric"><b>Restore ok</b><span id="okRate">--%</span></div>
+          <div class="metric"><b>Conflict risk</b><span id="risk">--%</span></div>
+          <div class="metric"><b>CSV rows</b><span id="rows">--</span></div>
+          <div class="metric"><b>Overlay holds</b><span id="holds">--</span></div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="controls">
+          <div class="group">
+            <div class="seg" role="group" aria-label="Preset">
+              <button type="button" data-preset="exhibit" aria-pressed="true">Exhibit</button>
+              <button type="button" data-preset="retail" aria-pressed="false">Retail</button>
+              <button type="button" data-preset="field" aria-pressed="false">Field ops</button>
+              <button type="button" data-preset="quiet" aria-pressed="false">Quiet</button>
+            </div>
+          </div>
+
+          <div class="group">
+            <label>Room change <input id="roomChange" type="range" min="0" max="100" value="42"></label>
+            <label>Operator latency <input id="latency" type="range" min="0" max="100" value="38"></label>
+            <label>Overlay lock <input id="overlayLock" type="range" min="0" max="100" value="54"></label>
+            <label>Quota pressure <input id="quota" type="range" min="0" max="100" value="48"></label>
+          </div>
+
+          <div class="group">
+            <div class="actions">
+              <button type="button" id="restore">Run restore</button>
+              <button type="button" id="merge">Merge ops</button>
+              <button type="button" id="classify">Classify</button>
+              <button type="button" id="exportCsv">CSV export</button>
+            </div>
+            <p class="note">canvas をドラッグすると監督者カーソルが動き、近い anchor の競合と復旧理由が変わります。</p>
+          </div>
+        </section>
+
+        <section class="readouts">
+          <div class="row"><span>Failure reason</span><strong id="reason">--</strong></div>
+          <div class="row"><span>Selected anchor</span><strong id="selected">--</strong></div>
+          <div class="row"><span>Operator diff</span><strong id="diff">-- cm</strong></div>
+          <div class="row"><span>Next action</span><strong id="nextAction">--</strong></div>
+          <div class="row"><span>Clipboard</span><strong id="clipboard">idle</strong></div>
+        </section>
+
+        <section class="log">
+          <div class="log-list" id="logList" aria-label="Operation log"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const ui = {
+      route: document.getElementById("route"),
+      okRate: document.getElementById("okRate"),
+      risk: document.getElementById("risk"),
+      rows: document.getElementById("rows"),
+      holds: document.getElementById("holds"),
+      reason: document.getElementById("reason"),
+      selected: document.getElementById("selected"),
+      diff: document.getElementById("diff"),
+      nextAction: document.getElementById("nextAction"),
+      clipboard: document.getElementById("clipboard"),
+      logList: document.getElementById("logList"),
+      roomChange: document.getElementById("roomChange"),
+      latency: document.getElementById("latency"),
+      overlayLock: document.getElementById("overlayLock"),
+      quota: document.getElementById("quota")
+    };
+
+    const presets = {
+      exhibit: { roomChange: 42, latency: 38, overlayLock: 54, quota: 48 },
+      retail: { roomChange: 58, latency: 64, overlayLock: 66, quota: 70 },
+      field: { roomChange: 74, latency: 72, overlayLock: 34, quota: 78 },
+      quiet: { roomChange: 18, latency: 20, overlayLock: 28, quota: 24 }
+    };
+
+    const reasons = ["tracking_loss", "room_change", "quota_eviction", "privacy_gate", "operator_conflict"];
+    const operators = [
+      { id: "A", name: "Lead", color: "#82ffd0" },
+      { id: "B", name: "Floor", color: "#ffd36a" },
+      { id: "C", name: "Remote", color: "#b9a3ff" }
+    ];
+
+    let mode = "exhibit";
+    let drag = false;
+    let supervisor = { x: 0.52, y: 0.45 };
+    let tick = 0;
+    let actionPulse = 0;
+    let lastExport = "";
+
+    const anchors = Array.from({ length: 9 }, (_, i) => {
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      return {
+        id: `anc-${String(i + 1).padStart(2, "0")}`,
+        x: 0.2 + col * 0.26 + (row % 2) * 0.04,
+        y: 0.22 + row * 0.19,
+        priority: 0.28 + ((i * 17) % 65) / 100,
+        age: 1 + ((i * 7) % 9),
+        drift: 0.08 + ((i * 13) % 35) / 100,
+        semantic: ["wall", "floor", "table", "shelf", "ceiling"][i % 5],
+        owner: operators[i % operators.length].id,
+        status: "pending",
+        reason: "tracking_loss",
+        score: 0
+      };
+    });
+
+    function stateValues() {
+      return {
+        room: Number(ui.roomChange.value) / 100,
+        latency: Number(ui.latency.value) / 100,
+        overlay: Number(ui.overlayLock.value) / 100,
+        quota: Number(ui.quota.value) / 100
+      };
+    }
+
+    function clamp(value, min = 0, max = 1) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function classifyAnchor(anchor, values) {
+      const dx = anchor.x - supervisor.x;
+      const dy = anchor.y - supervisor.y;
+      const distance = Math.hypot(dx, dy);
+      const opJitter = Math.abs(Math.sin((tick * 0.025) + anchor.age + anchor.priority * 5)) * values.latency;
+      const restoreScore = clamp(anchor.priority * 0.42 + (1 - anchor.drift) * 0.26 + (1 - values.room) * 0.22 + (1 - values.quota) * 0.1 - distance * 0.12);
+      const conflict = clamp(distance * 0.55 + values.latency * 0.32 + values.overlay * 0.18 + opJitter * 0.18);
+      const privacyHold = values.overlay > 0.55 && anchor.semantic === "shelf";
+      const quotaEvict = values.quota > anchor.priority + 0.28;
+      const roomFail = values.room + anchor.drift > 0.98;
+      const trackingFail = restoreScore < 0.43;
+      const operatorConflict = conflict > 0.62;
+
+      let reason = "restored";
+      if (privacyHold) reason = "privacy_gate";
+      else if (quotaEvict) reason = "quota_eviction";
+      else if (operatorConflict) reason = "operator_conflict";
+      else if (roomFail) reason = "room_change";
+      else if (trackingFail) reason = "tracking_loss";
+
+      anchor.score = restoreScore;
+      anchor.conflict = conflict;
+      anchor.reason = reason;
+      anchor.status = reason === "restored" ? "ok" : "fail";
+      return anchor;
+    }
+
+    function updateModel() {
+      const values = stateValues();
+      anchors.forEach((anchor) => classifyAnchor(anchor, values));
+      const selected = nearestAnchor();
+      const ok = anchors.filter((anchor) => anchor.status === "ok").length;
+      const holds = anchors.filter((anchor) => anchor.reason === "privacy_gate").length;
+      const avgRisk = anchors.reduce((sum, anchor) => sum + anchor.conflict, 0) / anchors.length;
+      const diffCm = Math.round(selected.conflict * 64 + values.latency * 18);
+      ui.okRate.textContent = `${Math.round((ok / anchors.length) * 100)}%`;
+      ui.risk.textContent = `${Math.round(avgRisk * 100)}%`;
+      ui.rows.textContent = String(anchors.length);
+      ui.holds.textContent = String(holds);
+      ui.reason.textContent = selected.reason;
+      ui.selected.textContent = selected.id;
+      ui.diff.textContent = `${diffCm} cm`;
+      ui.nextAction.textContent = nextAction(selected);
+      ui.route.textContent = routeLabel(selected);
+      renderLog(selected);
+    }
+
+    function nearestAnchor() {
+      return anchors.reduce((best, anchor) => {
+        const da = Math.hypot(anchor.x - supervisor.x, anchor.y - supervisor.y);
+        const db = Math.hypot(best.x - supervisor.x, best.y - supervisor.y);
+        return da < db ? anchor : best;
+      }, anchors[0]);
+    }
+
+    function nextAction(anchor) {
+      if (anchor.reason === "restored") return "Keep UUID";
+      if (anchor.reason === "quota_eviction") return "Delete low";
+      if (anchor.reason === "privacy_gate") return "Hold overlay";
+      if (anchor.reason === "operator_conflict") return "Merge ops";
+      if (anchor.reason === "room_change") return "Plane rehit";
+      return "Retry pose";
+    }
+
+    function routeLabel(anchor) {
+      if (anchor.reason === "restored") return "Restore accepted";
+      if (anchor.reason === "operator_conflict") return "Classify and merge";
+      if (anchor.reason === "privacy_gate") return "Suppress world select";
+      if (anchor.reason === "quota_eviction") return "Quota cleanup";
+      return "Recover from log";
+    }
+
+    function logRows() {
+      return anchors
+        .slice()
+        .sort((a, b) => b.conflict - a.conflict)
+        .map((anchor, index) => ({
+          time: `T+${String(index * 7 + Math.floor(tick / 40)).padStart(3, "0")}s`,
+          anchor: anchor.id,
+          operator: anchor.owner,
+          semantic: anchor.semantic,
+          reason: anchor.reason,
+          score: anchor.score.toFixed(2),
+          conflict: anchor.conflict.toFixed(2),
+          action: nextAction(anchor)
+        }));
+    }
+
+    function renderLog(selected) {
+      ui.logList.innerHTML = "";
+      logRows().slice(0, 7).forEach((row) => {
+        const item = document.createElement("div");
+        item.className = "log-item";
+        item.innerHTML = `<span>${row.time}</span><strong>${row.anchor}</strong><span class="pill">${row.reason}</span>`;
+        if (row.anchor === selected.id) {
+          item.style.borderColor = "rgba(130, 255, 208, 0.7)";
+        }
+        ui.logList.appendChild(item);
+      });
+    }
+
+    function drawGrid() {
+      ctx.fillStyle = "#061012";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.globalAlpha = 0.45;
+      ctx.strokeStyle = "rgba(126, 235, 217, 0.12)";
+      ctx.lineWidth = 1;
+      for (let x = 40; x < canvas.width; x += 42) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 34; y < canvas.height; y += 34) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawTimeline() {
+      const rows = logRows();
+      const left = 54;
+      const top = 58;
+      const width = canvas.width - 108;
+      const band = 33;
+      ctx.font = "12px Inter, sans-serif";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(154, 184, 180, 0.9)";
+      ctx.fillText("restore / conflict timeline", left, top - 24);
+      rows.forEach((row, index) => {
+        const y = top + index * band;
+        const anchor = anchors.find((entry) => entry.id === row.anchor);
+        const length = width * (0.22 + anchor.conflict * 0.7);
+        const hue = anchor.reason === "restored" ? "#82ffd0" : anchor.reason === "privacy_gate" ? "#ffd36a" : anchor.reason === "operator_conflict" ? "#b9a3ff" : "#ff6d86";
+        ctx.strokeStyle = "rgba(126, 235, 217, 0.18)";
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(left + width, y);
+        ctx.stroke();
+        const grad = ctx.createLinearGradient(left, 0, left + length, 0);
+        grad.addColorStop(0, "rgba(121, 233, 255, 0.16)");
+        grad.addColorStop(1, hue);
+        ctx.fillStyle = grad;
+        ctx.fillRect(left, y - 8, length, 16);
+        ctx.fillStyle = "#ecfffb";
+        ctx.fillText(row.anchor, left + 8, y);
+        ctx.fillStyle = "rgba(236, 255, 251, 0.72)";
+        ctx.fillText(row.reason, left + length + 12, y);
+        ctx.fillStyle = "rgba(154, 184, 180, 0.78)";
+        ctx.fillText(row.time, left + width - 52, y);
+      });
+    }
+
+    function drawFloorPlan() {
+      const x0 = 68;
+      const y0 = 386;
+      const w = canvas.width - 136;
+      const h = 210;
+      ctx.strokeStyle = "rgba(126, 235, 217, 0.32)";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x0, y0, w, h);
+      ctx.fillStyle = "rgba(121, 233, 255, 0.04)";
+      ctx.fillRect(x0, y0, w, h);
+
+      anchors.forEach((anchor) => {
+        const x = x0 + anchor.x * w;
+        const y = y0 + anchor.y * h;
+        const color = anchor.status === "ok" ? "#82ffd0" : anchor.reason === "operator_conflict" ? "#b9a3ff" : anchor.reason === "privacy_gate" ? "#ffd36a" : "#ff6d86";
+        const radius = 8 + anchor.priority * 8 + Math.sin(tick * 0.05 + anchor.age) * 1.5;
+        ctx.strokeStyle = color;
+        ctx.globalAlpha = 0.28;
+        ctx.beginPath();
+        ctx.arc(x, y, radius + anchor.conflict * 22, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#061012";
+        ctx.font = "10px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(anchor.owner, x, y + 0.5);
+        ctx.textAlign = "start";
+        ctx.fillStyle = "rgba(236, 255, 251, 0.72)";
+        ctx.fillText(anchor.semantic, x + 12, y - 10);
+      });
+
+      const sx = x0 + supervisor.x * w;
+      const sy = y0 + supervisor.y * h;
+      const selected = nearestAnchor();
+      const tx = x0 + selected.x * w;
+      const ty = y0 + selected.y * h;
+      ctx.strokeStyle = "rgba(121, 233, 255, 0.78)";
+      ctx.setLineDash([6, 8]);
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#79e9ff";
+      ctx.beginPath();
+      ctx.arc(sx, sy, 9 + Math.sin(tick * 0.08) * 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(121, 233, 255, 0.8)";
+      ctx.beginPath();
+      ctx.arc(sx, sy, 24, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(236, 255, 251, 0.86)";
+      ctx.font = "12px Inter, sans-serif";
+      ctx.fillText("supervisor cursor", sx + 15, sy + 16);
+    }
+
+    function drawCards() {
+      const values = stateValues();
+      const cards = [
+        ["room change", values.room, "#ff6d86"],
+        ["operator latency", values.latency, "#b9a3ff"],
+        ["overlay lock", values.overlay, "#ffd36a"],
+        ["quota pressure", values.quota, "#82ffd0"]
+      ];
+      const left = canvas.width - 270;
+      const top = 382;
+      ctx.font = "12px Inter, sans-serif";
+      cards.forEach((card, i) => {
+        const y = top + i * 46;
+        ctx.fillStyle = "rgba(4, 13, 15, 0.72)";
+        ctx.strokeStyle = "rgba(126, 235, 217, 0.2)";
+        ctx.lineWidth = 1;
+        ctx.fillRect(left, y, 210, 32);
+        ctx.strokeRect(left, y, 210, 32);
+        ctx.fillStyle = "rgba(154, 184, 180, 0.9)";
+        ctx.fillText(card[0], left + 10, y + 17);
+        ctx.fillStyle = card[2];
+        ctx.fillRect(left + 120, y + 10, Math.max(3, 78 * card[1]), 12);
+      });
+    }
+
+    function draw() {
+      tick += 1;
+      actionPulse *= 0.92;
+      updateModel();
+      drawGrid();
+      drawTimeline();
+      drawFloorPlan();
+      drawCards();
+      if (actionPulse > 0.02) {
+        ctx.save();
+        ctx.strokeStyle = `rgba(130, 255, 208, ${actionPulse})`;
+        ctx.lineWidth = 4;
+        ctx.strokeRect(22, 22, canvas.width - 44, canvas.height - 44);
+        ctx.restore();
+      }
+      requestAnimationFrame(draw);
+    }
+
+    function setPreset(name) {
+      mode = name;
+      const preset = presets[name];
+      Object.entries(preset).forEach(([key, value]) => {
+        ui[key].value = value;
+      });
+      document.querySelectorAll("[data-preset]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.preset === name));
+      });
+      actionPulse = 1;
+    }
+
+    function csvPayload() {
+      const header = "time,anchor,operator,semantic,reason,score,conflict,action";
+      return [header, ...logRows().map((row) => [
+        row.time,
+        row.anchor,
+        row.operator,
+        row.semantic,
+        row.reason,
+        row.score,
+        row.conflict,
+        row.action
+      ].join(","))].join("\n");
+    }
+
+    function exportCsv() {
+      lastExport = csvPayload();
+      ui.clipboard.textContent = `${lastExport.split("\n").length - 1} rows ready`;
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(lastExport).then(() => {
+          ui.clipboard.textContent = "copied";
+        }).catch(() => {
+          ui.clipboard.textContent = "ready";
+        });
+      }
+      const blob = new Blob([lastExport], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `anchor_ops_${mode}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      actionPulse = 1;
+    }
+
+    function nudgeSelected(amount) {
+      const selected = nearestAnchor();
+      selected.drift = clamp(selected.drift + amount, 0, 1);
+      selected.priority = clamp(selected.priority - amount * 0.28, 0.1, 0.95);
+      actionPulse = 1;
+    }
+
+    document.querySelectorAll("[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => setPreset(button.dataset.preset));
+    });
+
+    document.getElementById("restore").addEventListener("click", () => nudgeSelected(-0.08));
+    document.getElementById("merge").addEventListener("click", () => {
+      ui.latency.value = Math.max(0, Number(ui.latency.value) - 14);
+      nudgeSelected(-0.04);
+    });
+    document.getElementById("classify").addEventListener("click", () => {
+      ui.roomChange.value = Math.min(100, Number(ui.roomChange.value) + 8);
+      actionPulse = 1;
+    });
+    document.getElementById("exportCsv").addEventListener("click", exportCsv);
+
+    canvas.addEventListener("pointerdown", (event) => {
+      drag = true;
+      canvas.setPointerCapture(event.pointerId);
+      moveSupervisor(event);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (drag) moveSupervisor(event);
+    });
+
+    canvas.addEventListener("pointerup", () => {
+      drag = false;
+    });
+
+    canvas.addEventListener("pointercancel", () => {
+      drag = false;
+    });
+
+    function moveSupervisor(event) {
+      const rect = canvas.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width;
+      const y = (event.clientY - rect.top) / rect.height;
+      supervisor.x = clamp((x - 0.07) / 0.86);
+      supervisor.y = clamp((y - 0.56) / 0.3);
+      actionPulse = 0.7;
+    }
+
+    draw();
+  </script>
+</body>
+</html>
