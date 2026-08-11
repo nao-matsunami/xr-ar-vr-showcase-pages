@@ -1,0 +1,119 @@
+{
+  "date": "2026-08-11",
+  "headline": "Hit Test 候補を保存前にふるい分ける",
+  "headlineEn": "Filter hit-test candidates before saving anchors",
+  "summary": "WebXR Device API、Hit Test、Anchors、Layers、MDN、Immersive Web Samples を確認し、毎フレームの hit-test 候補を surface lock、pose stability、privacy trim、anchor threshold で評価する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Device API, Hit Test, Anchors, Layers, MDN, and Immersive Web Samples, today's original HTML sample evaluates frame-by-frame hit-test candidates through surface lock, pose stability, privacy trim, and anchor threshold.",
+  "keyTopics": [
+    "W3C WebXR Device API は `navigator.xr.isSessionSupported()`、ユーザー操作からの `requestSession()`、XR frame loop という基本フローを定義しており、サンプルにも `immersive-ar` support probe を入れた。",
+    "Immersive Web Hit Test explainer は real-world hit test を `immersive-ar` session の毎フレーム処理として扱い、配置前の cursor 表示や object placement を主用途としている。",
+    "MDN の WebXR Device API ページは Anchors、Depth Sensing、Hit Testing、Layers、Hand Input などの参照入口を整理しており、機能横断の設計メモを作る基点として使いやすい。",
+    "MDN の `XRHitTestResult` は `XRFrame.getHitTestResults()` と `getPose()`、さらに hit test result から anchor を作る流れを示しているが、保存可否の判断はアプリ側に残る。",
+    "Immersive Web Samples の proposal demos は depth、plane、mesh などを実機確認する入口になるが、公開カードの中心は外部デモではなく今日作成した最小サンプルにした。"
+  ],
+  "keyTopicsEn": [
+    "The W3C WebXR Device API defines the basic flow around `navigator.xr.isSessionSupported()`, user-activated `requestSession()`, and the XR frame loop, so the sample includes an `immersive-ar` support probe.",
+    "The Immersive Web Hit Test explainer treats real-world hit testing as per-frame work in an `immersive-ar` session, mainly for cursor display and object placement.",
+    "MDN's WebXR Device API page is a practical entry point for Anchors, Depth Sensing, Hit Testing, Layers, and Hand Input references, making it useful for cross-feature design notes.",
+    "MDN's `XRHitTestResult` page shows `XRFrame.getHitTestResults()`, `getPose()`, and creating anchors from hit-test results, while leaving save-readiness decisions to application logic.",
+    "Immersive Web proposal demos are useful for checking depth, plane, and mesh behavior on devices, but today's public card centers the original minimal sample rather than an external demo."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Hit Test Confidence Funnel",
+      "url": "../outputs/2026-08-11_html_hit_test_confidence_funnel.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: Hit Testing explainer",
+      "url": "https://immersive-web.github.io/hit-test/hit-testing-explainer.html"
+    },
+    {
+      "label": "MDN: WebXR Device API",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API"
+    },
+    {
+      "label": "MDN: XRHitTestResult",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRHitTestResult"
+    },
+    {
+      "label": "Immersive Web: WebXR proposal samples",
+      "url": "https://immersive-web.github.io/webxr-samples/proposals/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、WebXR Hit Test の結果をそのまま anchor 化せず、保存前に surface lock、pose stability、privacy trim、threshold の小さなファネルを通す考え方です。Hit Test explainer は real-world surface へ cursor を追従させる用途を説明し、MDN は `XRHitTestResult.getPose()` と `createAnchor()` の流れを示しています。ただし、どの候補を保存してよいか、どの候補は再スキャンに戻すかは体験設計側の判断です。そこを可視化すると、AR 配置 UI は単なる照準ではなく、運用に耐える保存ゲートになります。",
+      "bodyEn": "Today's notable idea is filtering WebXR hit-test results through a small funnel before converting them into anchors: surface lock, pose stability, privacy trim, and threshold. The Hit Test explainer covers cursors that follow real-world surfaces, and MDN shows the path from `XRHitTestResult.getPose()` to `createAnchor()`. The application still has to decide which candidates are safe to save and which should return to rescan. Visualizing that decision turns AR placement UI from a cursor into an operational save gate.",
+      "links": [
+        {
+          "label": "Immersive Web: Hit Testing explainer",
+          "url": "https://immersive-web.github.io/hit-test/hit-testing-explainer.html"
+        },
+        {
+          "label": "MDN: XRHitTestResult",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRHitTestResult"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルは viewer ray と 4 段の評価レーンを canvas に描き、ポインタ位置を照準として扱います。Surface noise、Motion drift、Privacy clamp、Anchor threshold を動かすと、候補が `anchor`、`rescan`、`trim`、`reject` に変わります。クリックまたは Freeze candidate で現在の候補を凍結し、Sample burst で複数候補をまとめて発生させます。Copy JSON は raw pose ではなく粗い判断ログだけをコピーするため、保存粒度の見直しにも使えます。",
+      "bodyEn": "The sample draws a viewer ray and four evaluation lanes on canvas, treating pointer position as the targeting cursor. Changing Surface noise, Motion drift, Privacy clamp, and Anchor threshold moves a candidate between `anchor`, `rescan`, `trim`, and `reject`. Clicking or pressing Freeze candidate stores the current candidate, while Sample burst generates several candidates at once. Copy JSON copies only a coarse decision log instead of raw pose data, making saved-data scope visible."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装に落とす場合は、XR frame loop 内で `frame.getHitTestResults(hitTestSource)` を読み、最初の結果の `getPose(referenceSpace)` を使うだけでなく、数フレーム分の pose jitter、surface normal の変化、tracking confidence、ユーザーの照準滞在時間を合わせて anchor-ready score を作るのが扱いやすいです。保存時は `createAnchor()` に進む前に、プライバシー上保存してよい label と粗い pose band へ丸め、失敗時は raw camera や詳細 mesh に飛ばずに再スキャン指示へ戻す方が安全です。",
+      "bodyEn": "In a real implementation, read `frame.getHitTestResults(hitTestSource)` inside the XR frame loop and use `getPose(referenceSpace)` from the first result, but also compute an anchor-readiness score from several frames of pose jitter, surface-normal changes, tracking confidence, and cursor dwell time. Before calling `createAnchor()`, quantize saved labels and coarse pose bands for privacy. On failure, return to a rescan prompt before escalating to raw camera or detailed mesh data."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルからは、anchor-ready score、surface lock、privacy trim、jitter meter、decision、accepted / rescan count、preset、粗い JSON payload を取れます。商品配置、展示ラベル、倉庫棚、建築レビュー、教育教材と組み合わせると、ユーザーが『置けた』と感じる瞬間と、システムが『保存してよい』と判断する瞬間の差を記録できます。音声ガイド、haptics、AI の品質判定、CMS の配置履歴、現場チケットとつなげると、AR 配置をあとから説明できるログにできます。",
+      "bodyEn": "Today's sample yields anchor-readiness score, surface lock, privacy trim, jitter meters, decision labels, accepted / rescan counts, preset, and a coarse JSON payload. Combined with product placement, exhibit labels, warehouse shelves, architecture review, or learning material, it can record the gap between the moment a user feels something is placed and the moment the system considers it safe to save. Voice guidance, haptics, AI quality checks, CMS placement history, and field tickets can make AR placement explainable after the session."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Hit Test、Anchors、Plane Detection、Depth Sensing、Raw Camera Access の実装差と、ブラウザ互換表の更新を見ます。特に、hit test result から anchor へ進む前に得られる信頼度情報、plane / mesh detection と併用した時の保存粒度、`immersive-ar` support probe の結果を UI にどう出すかを追います。Immersive Web Samples の proposal ページは、実機で API 形状を確認するための参照として継続ウォッチします。",
+      "bodyEn": "Watch implementation differences across WebXR Hit Test, Anchors, Plane Detection, Depth Sensing, Raw Camera Access, and browser compatibility updates. The key questions are what confidence information is available before turning a hit-test result into an anchor, how saved-data granularity changes when plane or mesh detection is involved, and how `immersive-ar` support-probe results should be shown in UI. Keep watching Immersive Web proposal samples as device-check references."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、Desk scan のまま canvas 上の照準を中央付近へ動かしてクリックしてください。Surface noise と Motion drift を上げると `rescan` や `reject` が増え、Privacy clamp を上げると `trim` になり、保存 payload が coarse pose に寄ります。Museum label preset は privacy を高めにしつつ threshold も上げた状態なので、展示ラベルのように保存判断を厳しくしたいケースを試せます。",
+      "bodyEn": "Open the sample, keep Desk scan selected, move the cursor near the canvas center, and click. Increasing Surface noise and Motion drift produces more `rescan` and `reject` decisions. Increasing Privacy clamp produces `trim` and shifts the saved payload toward coarse pose. The Museum label preset raises both privacy and threshold, matching stricter save decisions for exhibit-label placement.",
+      "links": [
+        {
+          "label": "Open Hit Test Confidence Funnel",
+          "url": "../outputs/2026-08-11_html_hit_test_confidence_funnel.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、Immersive Web Hit Test explainer、MDN WebXR Device API、MDN XRHitTestResult、Immersive Web proposal samples を確認。設計: 2026-08-10 の anchor 復元ログから一段戻り、anchor 保存前の hit-test 候補評価へ焦点を移した。実装: 単一 HTML に canvas、support probe、4 slider、4 preset、候補凍結、burst、粗い JSON copy、ログをまとめた。検証: JSON parse、HTML script 構文、upsert / publish による days / pages / index 再生成と GitHub Pages 公開を行う。",
+      "bodyEn": "Research: reviewed the W3C WebXR Device API, Immersive Web Hit Test explainer, MDN WebXR Device API, MDN XRHitTestResult, and Immersive Web proposal samples. Design: moved one step earlier than the 2026-08-10 anchor restore log, focusing on hit-test candidate evaluation before anchor saving. Implementation: packaged canvas, support probe, four sliders, four presets, freeze, burst, coarse JSON copy, and logs into a single HTML file. Validation: parse JSON, check HTML script syntax, then run upsert / publish to regenerate days / pages / index and publish GitHub Pages."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "7 月からの蓄積は、HUD、hit test、depth、hand、layers、anchors、permission、raw camera、room capture、復元運用へ広がってきました。今日のサンプルは、anchor を保存した後の復旧ではなく、保存する前の『置くべきか、もう一度測るべきか、保存情報を削るべきか』に戻しています。XR の品質は描画の派手さだけでなく、保存できる状態をどう判断し、どう説明するかで決まる場面が多くなります。",
+      "bodyEn": "The archive has grown from HUDs, hit testing, depth, hands, layers, anchors, permissions, raw camera, room capture, and restore operations. Today's sample moves from recovery after anchor saving back to the earlier question: should this candidate be placed, rescanned, or trimmed before saving. XR quality often depends less on visual impact and more on how the app decides and explains whether a spatial state is safe to persist."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Hit Test Confidence Funnel` です。実機の WebXR session なしでも、hit-test 候補をアンカー化する前に評価する設計を操作できます。次に足すなら、実際の `requestHitTestSource()` と `getHitTestResults()`、数フレームの pose 履歴、localStorage replay、plane semantic label、depth availability、anchor quota、音や haptics による保存可否フィードバックを接続します。",
+      "bodyEn": "The selected prototype is `Hit Test Confidence Funnel`. Without a real WebXR session, it lets you manipulate the design of evaluating hit-test candidates before anchor creation. Useful next additions are real `requestHitTestSource()` and `getHitTestResults()`, multi-frame pose history, localStorage replay, plane semantic labels, depth availability, anchor quota, and audio or haptic feedback for save readiness."
+    }
+  ]
+}

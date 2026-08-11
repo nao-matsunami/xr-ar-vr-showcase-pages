@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hit Test Confidence Funnel</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07100e;
+      --panel: rgba(9, 17, 16, 0.92);
+      --line: rgba(154, 224, 190, 0.25);
+      --text: #f0fff7;
+      --muted: #a6b9af;
+      --green: #91f5b8;
+      --blue: #7ec7ff;
+      --gold: #ffd36d;
+      --red: #ff7184;
+      --ink: #101719;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, rgba(145, 245, 184, 0.12), transparent 32%),
+        linear-gradient(225deg, rgba(126, 199, 255, 0.15), transparent 34%),
+        linear-gradient(180deg, #07100e, #121719 62%, #070d0d);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 26px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.6vw, 2.4rem);
+      line-height: 1.07;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 800px;
+      font-size: 0.94rem;
+    }
+
+    .badge,
+    .stage,
+    .panel,
+    .log {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.33);
+    }
+
+    .badge {
+      min-width: 250px;
+      padding: 12px 14px;
+    }
+
+    .badge b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .badge span {
+      display: block;
+      margin-top: 5px;
+      color: var(--green);
+      font-size: 1.03rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 350px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      min-height: 690px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 690px;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .overlay {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .metric {
+      border: 1px solid rgba(154, 224, 190, 0.23);
+      background: rgba(4, 11, 10, 0.77);
+      border-radius: 7px;
+      padding: 10px;
+    }
+
+    .metric b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 3px;
+      font-size: 1.02rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel,
+    .log {
+      padding: 14px;
+    }
+
+    .group {
+      display: grid;
+      gap: 10px;
+      padding: 12px 0;
+      border-top: 1px solid rgba(154, 224, 190, 0.14);
+    }
+
+    .group:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--green);
+    }
+
+    .seg,
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    button {
+      min-height: 36px;
+      border: 1px solid rgba(154, 224, 190, 0.35);
+      border-radius: 7px;
+      background: rgba(8, 20, 18, 0.86);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.81rem;
+      cursor: pointer;
+    }
+
+    button[aria-pressed="true"] {
+      border-color: rgba(145, 245, 184, 0.85);
+      color: var(--green);
+      box-shadow: inset 0 0 18px rgba(145, 245, 184, 0.14);
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-top: 1px solid rgba(154, 224, 190, 0.13);
+      padding: 9px 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .row:first-child { border-top: 0; }
+
+    .row strong {
+      color: var(--text);
+      font-weight: 650;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .log-list {
+      display: grid;
+      gap: 7px;
+      max-height: 188px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .log-item {
+      display: grid;
+      grid-template-columns: 54px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid rgba(154, 224, 190, 0.14);
+      border-radius: 7px;
+      background: rgba(3, 9, 8, 0.52);
+      padding: 8px;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .log-item strong {
+      color: var(--text);
+      font-weight: 650;
+    }
+
+    .pill {
+      border: 1px solid rgba(154, 224, 190, 0.24);
+      border-radius: 999px;
+      padding: 3px 7px;
+      color: var(--green);
+      white-space: nowrap;
+    }
+
+    .note {
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.78rem;
+    }
+
+    @media (max-width: 920px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .badge {
+        min-width: 0;
+      }
+    }
+
+    @media (max-width: 640px) {
+      main {
+        width: min(100vw - 18px, 1180px);
+        padding-top: 14px;
+      }
+
+      canvas,
+      .stage {
+        min-height: 590px;
+        height: 590px;
+      }
+
+      .overlay {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Hit Test Confidence Funnel</h1>
+        <p class="subtitle">WebXR Hit Test の毎フレーム候補を、アンカー化する前に「安定」「再スキャン」「保存しない」へ振り分ける自作ミニ検証。ポインタを動かして照準をずらし、環境ノイズとプライバシー制約を変えてください。</p>
+      </div>
+      <div class="badge">
+        <b>today's sample</b>
+        <span>2026-08-11 / AR placement gate</span>
+      </div>
+    </header>
+
+    <section class="layout" aria-label="Hit test confidence funnel controls">
+      <div class="stage">
+        <canvas id="stage" width="980" height="690"></canvas>
+        <div class="overlay">
+          <div class="metric"><b>anchor ready</b><span id="readyMetric">0%</span></div>
+          <div class="metric"><b>surface lock</b><span id="surfaceMetric">0%</span></div>
+          <div class="metric"><b>privacy trim</b><span id="privacyMetric">0%</span></div>
+          <div class="metric"><b>decision</b><span id="decisionMetric">scan</span></div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="panel">
+          <div class="group">
+            <label>Surface noise <input id="noise" type="range" min="0" max="100" value="34"></label>
+            <label>Motion drift <input id="drift" type="range" min="0" max="100" value="28"></label>
+            <label>Privacy clamp <input id="privacy" type="range" min="0" max="100" value="42"></label>
+            <label>Anchor threshold <input id="threshold" type="range" min="40" max="92" value="72"></label>
+          </div>
+          <div class="group">
+            <div class="seg">
+              <button id="presetDesk" aria-pressed="true">Desk scan</button>
+              <button id="presetWall" aria-pressed="false">Wall scan</button>
+              <button id="presetRetail" aria-pressed="false">Retail aisle</button>
+              <button id="presetMuseum" aria-pressed="false">Museum label</button>
+            </div>
+          </div>
+          <div class="group">
+            <div class="actions">
+              <button id="freeze">Freeze candidate</button>
+              <button id="sample">Sample burst</button>
+              <button id="clear">Clear marks</button>
+              <button id="copy">Copy JSON</button>
+            </div>
+            <p class="note">実 API の代替ではなく、`XRFrame.getHitTestResults()` で毎フレーム得る候補を保存前にどう絞るかを検討するためのローカル模型です。</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="row"><span>Accepted candidates</span><strong id="accepted">0</strong></div>
+          <div class="row"><span>Rescan requests</span><strong id="rescans">0</strong></div>
+          <div class="row"><span>Pose jitter band</span><strong id="jitter">0.00m</strong></div>
+          <div class="row"><span>Saved payload</span><strong id="payload">coarse</strong></div>
+          <div class="row"><span>XR support probe</span><strong id="probe">checking</strong></div>
+        </div>
+
+        <div class="log">
+          <div class="log-list" id="logList"></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const els = {
+      noise: document.getElementById("noise"),
+      drift: document.getElementById("drift"),
+      privacy: document.getElementById("privacy"),
+      threshold: document.getElementById("threshold"),
+      readyMetric: document.getElementById("readyMetric"),
+      surfaceMetric: document.getElementById("surfaceMetric"),
+      privacyMetric: document.getElementById("privacyMetric"),
+      decisionMetric: document.getElementById("decisionMetric"),
+      accepted: document.getElementById("accepted"),
+      rescans: document.getElementById("rescans"),
+      jitter: document.getElementById("jitter"),
+      payload: document.getElementById("payload"),
+      probe: document.getElementById("probe"),
+      logList: document.getElementById("logList")
+    };
+
+    const state = {
+      pointer: { x: 0.54, y: 0.52 },
+      frozen: [],
+      accepted: 0,
+      rescans: 0,
+      tick: 0,
+      logs: [],
+      preset: "desk"
+    };
+
+    const presets = {
+      presetDesk: { name: "desk", noise: 34, drift: 28, privacy: 42, threshold: 72 },
+      presetWall: { name: "wall", noise: 45, drift: 36, privacy: 50, threshold: 76 },
+      presetRetail: { name: "retail", noise: 62, drift: 48, privacy: 64, threshold: 80 },
+      presetMuseum: { name: "museum", noise: 26, drift: 18, privacy: 58, threshold: 78 }
+    };
+
+    function n(id) {
+      return Number(els[id].value);
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function pct(value) {
+      return `${Math.round(value)}%`;
+    }
+
+    function addLog(kind, label, score) {
+      state.logs.unshift({
+        time: new Date().toLocaleTimeString("ja-JP", { hour12: false }),
+        kind,
+        label,
+        score: Math.round(score)
+      });
+      state.logs = state.logs.slice(0, 7);
+      renderLogs();
+    }
+
+    function renderLogs() {
+      els.logList.innerHTML = state.logs.map((entry) => `
+        <div class="log-item">
+          <span>${entry.time}</span>
+          <strong>${entry.label}</strong>
+          <span class="pill">${entry.score}</span>
+        </div>
+      `).join("");
+    }
+
+    function compute() {
+      const noise = n("noise");
+      const drift = n("drift");
+      const privacy = n("privacy");
+      const threshold = n("threshold");
+      const t = state.tick * 0.032;
+      const centerBias = 1 - Math.hypot(state.pointer.x - 0.52, state.pointer.y - 0.52) * 1.2;
+      const scanWave = Math.sin(t * 1.8) * 7 + Math.cos(t * 0.7) * 5;
+      const surface = clamp(92 - noise * 0.58 - drift * 0.22 + centerBias * 24 + scanWave, 0, 100);
+      const pose = clamp(96 - drift * 0.72 - noise * 0.18 + Math.sin(t * 2.5) * 6, 0, 100);
+      const privacyTrim = clamp(privacy + noise * 0.22 + Math.max(0, state.pointer.y - 0.7) * 34, 0, 100);
+      const ready = clamp(surface * 0.48 + pose * 0.35 + (100 - privacyTrim) * 0.17, 0, 100);
+      const jitter = clamp((noise * 0.0028 + drift * 0.0036 + (100 - pose) * 0.0012), 0.01, 0.55);
+      let decision = "rescan";
+      if (ready >= threshold && privacyTrim < 74) decision = "anchor";
+      if (privacyTrim >= 74) decision = "trim";
+      if (surface < 40 || pose < 42) decision = "reject";
+      return { noise, drift, privacy, threshold, surface, pose, privacyTrim, ready, jitter, decision };
+    }
+
+    function drawGrid(metrics) {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, "#07100e");
+      grad.addColorStop(0.55, "#11191a");
+      grad.addColorStop(1, "#081010");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = "rgba(154,224,190,0.12)";
+      ctx.lineWidth = 1;
+      for (let x = 40; x < w; x += 48) {
+        ctx.beginPath();
+        ctx.moveTo(x, 74);
+        ctx.lineTo(x, h - 104);
+        ctx.stroke();
+      }
+      for (let y = 90; y < h - 80; y += 42) {
+        ctx.beginPath();
+        ctx.moveTo(30, y);
+        ctx.lineTo(w - 30, y);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "rgba(240,255,247,0.88)";
+      ctx.font = "700 18px Inter, sans-serif";
+      ctx.fillText("viewer ray to real-world hit candidate", 32, 42);
+      ctx.fillStyle = "rgba(166,185,175,0.92)";
+      ctx.font = "13px Inter, sans-serif";
+      ctx.fillText("candidate should become an anchor only when surface lock, pose stability, and privacy clamp fit together", 32, 66);
+
+      const lanes = [
+        { y: 130, label: "1. hit result", value: metrics.surface, color: "#7ec7ff" },
+        { y: 230, label: "2. pose stability", value: metrics.pose, color: "#91f5b8" },
+        { y: 330, label: "3. privacy trim", value: 100 - metrics.privacyTrim, color: "#ffd36d" },
+        { y: 430, label: "4. anchor gate", value: metrics.ready, color: metrics.decision === "anchor" ? "#91f5b8" : "#ff7184" }
+      ];
+
+      lanes.forEach((lane) => {
+        ctx.fillStyle = "rgba(166,185,175,0.95)";
+        ctx.font = "700 13px Inter, sans-serif";
+        ctx.fillText(lane.label, 44, lane.y - 20);
+        ctx.fillStyle = "rgba(255,255,255,0.07)";
+        ctx.fillRect(180, lane.y - 34, w - 260, 26);
+        ctx.fillStyle = lane.color;
+        ctx.fillRect(180, lane.y - 34, (w - 260) * lane.value / 100, 26);
+        ctx.fillStyle = "#07100e";
+        ctx.font = "700 13px Inter, sans-serif";
+        ctx.fillText(`${Math.round(lane.value)}%`, 190, lane.y - 15);
+      });
+
+      const px = 180 + state.pointer.x * (w - 260);
+      const py = 112 + state.pointer.y * 348;
+      ctx.strokeStyle = "rgba(126,199,255,0.85)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.5, h - 72);
+      ctx.lineTo(px, py);
+      ctx.stroke();
+
+      const radius = 22 + metrics.jitter * 80;
+      ctx.fillStyle = metrics.decision === "anchor" ? "rgba(145,245,184,0.28)" : "rgba(255,113,132,0.20)";
+      ctx.strokeStyle = metrics.decision === "anchor" ? "#91f5b8" : "#ff7184";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(px, py, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#f0fff7";
+      ctx.font = "800 18px Inter, sans-serif";
+      ctx.fillText(metrics.decision.toUpperCase(), px + 24, py - 12);
+      ctx.fillStyle = "rgba(166,185,175,0.92)";
+      ctx.font = "12px Inter, sans-serif";
+      ctx.fillText(`jitter ${metrics.jitter.toFixed(2)}m / threshold ${metrics.threshold}%`, px + 24, py + 8);
+
+      state.frozen.forEach((mark, index) => {
+        ctx.fillStyle = mark.decision === "anchor" ? "rgba(145,245,184,0.72)" : "rgba(255,211,109,0.64)";
+        ctx.beginPath();
+        ctx.arc(mark.x * w, mark.y * h, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(240,255,247,0.86)";
+        ctx.font = "11px Inter, sans-serif";
+        ctx.fillText(String(index + 1), mark.x * w + 11, mark.y * h + 4);
+      });
+    }
+
+    function update() {
+      state.tick += 1;
+      const metrics = compute();
+      drawGrid(metrics);
+      els.readyMetric.textContent = pct(metrics.ready);
+      els.surfaceMetric.textContent = pct(metrics.surface);
+      els.privacyMetric.textContent = pct(metrics.privacyTrim);
+      els.decisionMetric.textContent = metrics.decision;
+      els.accepted.textContent = String(state.accepted);
+      els.rescans.textContent = String(state.rescans);
+      els.jitter.textContent = `${metrics.jitter.toFixed(2)}m`;
+      els.payload.textContent = metrics.privacyTrim > 68 ? "coarse pose" : "pose + label";
+      requestAnimationFrame(update);
+    }
+
+    function freezeCandidate() {
+      const metrics = compute();
+      const x = 0.18 + state.pointer.x * 0.68;
+      const y = 0.18 + state.pointer.y * 0.58;
+      state.frozen.push({ x, y, decision: metrics.decision, ready: metrics.ready });
+      state.frozen = state.frozen.slice(-12);
+      if (metrics.decision === "anchor") {
+        state.accepted += 1;
+        addLog("anchor", "anchor candidate saved", metrics.ready);
+      } else {
+        state.rescans += 1;
+        addLog("rescan", `${metrics.decision} before save`, metrics.ready);
+      }
+    }
+
+    canvas.addEventListener("pointermove", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      state.pointer.x = clamp((event.clientX - rect.left) / rect.width, 0, 1);
+      state.pointer.y = clamp((event.clientY - rect.top) / rect.height, 0, 1);
+    });
+
+    canvas.addEventListener("pointerdown", freezeCandidate);
+
+    document.getElementById("freeze").addEventListener("click", freezeCandidate);
+    document.getElementById("sample").addEventListener("click", () => {
+      for (let i = 0; i < 5; i += 1) {
+        state.pointer.x = clamp(0.28 + Math.random() * 0.46, 0, 1);
+        state.pointer.y = clamp(0.25 + Math.random() * 0.48, 0, 1);
+        freezeCandidate();
+      }
+    });
+    document.getElementById("clear").addEventListener("click", () => {
+      state.frozen = [];
+      state.accepted = 0;
+      state.rescans = 0;
+      state.logs = [];
+      renderLogs();
+    });
+    document.getElementById("copy").addEventListener("click", async () => {
+      const metrics = compute();
+      const payload = {
+        sample: "hit-test-confidence-funnel",
+        preset: state.preset,
+        decision: metrics.decision,
+        ready: Math.round(metrics.ready),
+        surface: Math.round(metrics.surface),
+        privacyTrim: Math.round(metrics.privacyTrim),
+        jitterMeters: Number(metrics.jitter.toFixed(3)),
+        accepted: state.accepted,
+        rescans: state.rescans
+      };
+      await navigator.clipboard?.writeText(JSON.stringify(payload, null, 2));
+      addLog("copy", "coarse decision JSON copied", metrics.ready);
+    });
+
+    Object.entries(presets).forEach(([id, preset]) => {
+      document.getElementById(id).addEventListener("click", () => {
+        els.noise.value = preset.noise;
+        els.drift.value = preset.drift;
+        els.privacy.value = preset.privacy;
+        els.threshold.value = preset.threshold;
+        state.preset = preset.name;
+        Object.keys(presets).forEach((buttonId) => {
+          document.getElementById(buttonId).setAttribute("aria-pressed", String(buttonId === id));
+        });
+        addLog("preset", `${preset.name} preset loaded`, compute().ready);
+      });
+    });
+
+    async function probeXR() {
+      if (!("xr" in navigator)) {
+        els.probe.textContent = "navigator.xr absent";
+        return;
+      }
+      try {
+        const supported = await navigator.xr.isSessionSupported("immersive-ar");
+        els.probe.textContent = supported ? "immersive-ar yes" : "immersive-ar no";
+      } catch {
+        els.probe.textContent = "probe blocked";
+      }
+    }
+
+    addLog("start", "viewer hit-test funnel ready", 72);
+    renderLogs();
+    probeXR();
+    update();
+  </script>
+</body>
+</html>
