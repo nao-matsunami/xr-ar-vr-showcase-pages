@@ -1,0 +1,123 @@
+{
+  "date": "2026-08-12",
+  "headline": "Hit Test 履歴から保存と触覚フィードバックを決める",
+  "headlineEn": "Use hit-test history to decide anchor saving and haptic feedback",
+  "summary": "WebXR Hit Test、Anchors、Gamepads / Haptics、Immersive Web Samples を確認し、単発の hit-test 結果ではなく直近フレーム履歴、trackable type、anchor quota、privacy trim、haptic strength から保存可否を判断する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing WebXR Hit Test, Anchors, Gamepads / Haptics, and Immersive Web Samples, today's original HTML sample decides save readiness from recent frame history, trackable type, anchor quota, privacy trim, and haptic strength rather than a single hit-test result.",
+  "keyTopics": [
+    "W3C WebXR Hit Test Module は `requestHitTestSource()`、`getHitTestResults()`、`XRHitTestTrackableType` の `point` / `plane` / `mesh` を定義し、hit test source の作り過ぎを privacy measure として拒否できるとしている。",
+    "Immersive Web の Hit Test with Anchors sample は viewer space から hit test source を作り、毎フレーム reticle を更新し、select 時に `XRHitTestResult.createAnchor()` へ進む最小の実装例として参照しやすい。",
+    "WebXR Anchors Module は `XRHitTestResult.createAnchor()`、`XRFrame.createAnchor()`、persistent handle、restore / delete API を定義し、persistent anchors の map は user agent 側の上限や削除に左右される。",
+    "WebXR Gamepads Module は XR input source の `gamepad` が frame ごとに live update されることを示し、保存フィードバックを作る時は前フレームとの差分をアプリ側で保持する必要がある。",
+    "Gamepad / haptics は利用できない環境も多いため、今日のサンプルでは実 actuator があれば `pulse()` を試し、なければ視覚ログとして同じ feedback decision を残す。"
+  ],
+  "keyTopicsEn": [
+    "The W3C WebXR Hit Test Module defines `requestHitTestSource()`, `getHitTestResults()`, and `XRHitTestTrackableType` values `point`, `plane`, and `mesh`, and allows user agents to reject excessive hit-test source requests as a privacy measure.",
+    "The Immersive Web Hit Test with Anchors sample is a compact reference for creating a hit-test source from viewer space, updating a reticle every frame, and calling `XRHitTestResult.createAnchor()` on select.",
+    "The WebXR Anchors Module defines `XRHitTestResult.createAnchor()`, `XRFrame.createAnchor()`, persistent handles, restore / delete APIs, and notes that persistent-anchor maps depend on user-agent limits and deletion behavior.",
+    "The WebXR Gamepads Module shows that an XR input source `gamepad` is live-updated each frame, so apps need their own cached state when deriving save feedback from input changes.",
+    "Gamepad haptics are not broadly available, so today's sample attempts `pulse()` when an actuator exists and otherwise keeps the same feedback decision visible in the log."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Pose History Anchor Haptics Coach",
+      "url": "../outputs/2026-08-12_html_pose_history_anchor_haptics_coach.html"
+    },
+    {
+      "label": "W3C: WebXR Hit Test Module",
+      "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "W3C: WebXR Gamepads Module Level 1",
+      "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+    },
+    {
+      "label": "W3C: Gamepad",
+      "url": "https://www.w3.org/TR/gamepad/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Web sample: Hit Test with Anchors",
+      "url": "https://immersive-web.github.io/webxr-samples/hit-test-anchors.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、Immersive Web の Hit Test with Anchors sample が示す `viewer` space -> `requestHitTestSource()` -> `frame.getHitTestResults()` -> reticle -> `createAnchor()` の流れです。この流れは実装の入口として明快ですが、実サービスでは一回の結果だけで保存すると、pose jitter、trackable type の違い、anchor quota、privacy trim、ユーザーへの保存 feedback が抜け落ちます。そこで今日の自作サンプルでは、複数フレームの履歴を先に可視化し、保存判断と haptic / audio 相当の feedback を同じ decision として扱いました。",
+      "bodyEn": "Today's notable reference is the Immersive Web Hit Test with Anchors sample, which clearly shows the path from `viewer` space to `requestHitTestSource()`, `frame.getHitTestResults()`, reticle rendering, and `createAnchor()`. That is a good implementation entry point, but production experiences need more than one result: pose jitter, trackable type, anchor quota, privacy trimming, and user feedback all matter. Today's original sample visualizes multi-frame history first, then treats save readiness and haptic / audio-style feedback as the same decision.",
+      "links": [
+        {
+          "label": "Immersive Web sample: Hit Test with Anchors",
+          "url": "https://immersive-web.github.io/webxr-samples/hit-test-anchors.html"
+        },
+        {
+          "label": "W3C: WebXR Hit Test Module",
+          "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルは canvas 上の照準をドラッグすると、擬似 `getHitTestResults()` の履歴点が揺れながら蓄積されます。History frames、Pose jitter、Surface drift を変えると安定度リングが広がり、Trackable type を `plane` / `mesh` / `point` に切り替えると保存 score が変わります。Anchor quota used を上げると `quota hold`、Privacy trim を上げると `trim + save` へ寄り、Save ボタンでは保存成功か失敗かに応じて pulse ログを出します。実 actuator が見つかれば Gamepad haptics の `pulse()` も試します。",
+      "bodyEn": "Dragging the canvas cursor accumulates a jittering history of pseudo `getHitTestResults()` points. History frames, Pose jitter, and Surface drift change the stability ring, while switching Trackable type between `plane`, `mesh`, and `point` changes the save score. Raising Anchor quota used leads to `quota hold`; raising Privacy trim biases toward `trim + save`. Pressing Save emits pulse feedback based on success or failure, and the sample tries Gamepad haptics `pulse()` when an actuator is available."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は `requestSession('immersive-ar', { requiredFeatures: ['hit-test'], optionalFeatures: ['anchors'] })` のように feature を明示し、`viewer` space で hit test source を作ってから、XR frame loop 内で `getHitTestResults()` の先頭結果だけでなく、数フレーム分の pose spread、normal の変化、trackable type、滞在時間を保存 score にします。`createAnchor()` の前に quota / persistent handle の扱いを UI に出し、保存成功時は `XRInputSource.gamepad` 由来の actuator があれば pulse、なければ音・色・ログで同じ feedback を返す設計が扱いやすいです。",
+      "bodyEn": "For implementation, request features explicitly, for example `requestSession('immersive-ar', { requiredFeatures: ['hit-test'], optionalFeatures: ['anchors'] })`, create a hit-test source from `viewer` space, and in the XR frame loop compute a save score from several frames of pose spread, normal changes, trackable type, and dwell time instead of only the first `getHitTestResults()` result. Before `createAnchor()`, show quota / persistent-handle state in the UI. On successful saving, pulse an actuator from `XRInputSource.gamepad` when available, and otherwise provide the same feedback through sound, color, and logs."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルからは、pose history、spread、normal confidence、trackable type、quota pressure、privacy trim、decision、coarse pose payload、haptic strength、保存ログを取れます。展示ラベル、施工チェック、倉庫棚、商品試着、教育教材と組み合わせると、なぜ保存できたか、なぜ再スキャンになったかを後から説明できます。音声ガイド、空間オーディオ、controller haptics、AI 品質判定、CMS の配置履歴、現場チケット、前日の hit-test confidence funnel とつなぐと、AR 配置の QA データとして使えます。",
+      "bodyEn": "Today's sample yields pose history, spread, normal confidence, trackable type, quota pressure, privacy trim, decisions, coarse pose payloads, haptic strength, and save logs. Combined with exhibit labels, construction checks, warehouse shelves, product try-on, or learning material, it can explain why saving succeeded or why a rescan was required. Voice guidance, spatial audio, controller haptics, AI quality checks, CMS placement history, field tickets, and yesterday's hit-test confidence funnel can turn AR placement into QA data."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Hit Test の trackable type 実装差、Anchors の persistent handle / restore / delete のブラウザ差、Gamepad haptics の対応範囲、Input Profiles と実 controller mapping、そして Plane / Mesh Detection と hit test の組み合わせを継続して見ます。特に user agent が hit-test source の過剰作成を拒否する条件、persistent anchor map の上限、実機で haptic pulse がどの入力ソースに出るかを確認したいです。",
+      "bodyEn": "Keep watching implementation differences for Hit Test trackable types, Anchors persistent handles / restore / delete, Gamepad haptics support, Input Profiles and real controller mappings, and Plane / Mesh Detection combined with hit testing. The key questions are when user agents reject excessive hit-test sources, what limits apply to persistent-anchor maps, and which real input sources can receive haptic pulses."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、canvas の照準を中央付近へドラッグして Frame burst を押してください。Pose jitter を低め、Trackable type を `plane`、Anchor quota used を 4 以下にすると `save anchor` になりやすく、Privacy trim を上げると `trim + save` になります。Quota を 8 に近づけると `quota hold` になり、保存前に古い anchor を消す必要がある状態を再現できます。",
+      "bodyEn": "Open the sample, drag the canvas cursor near the center, and press Frame burst. Low Pose jitter, Trackable type `plane`, and Anchor quota used under 4 make `save anchor` more likely. Raising Privacy trim pushes the decision toward `trim + save`. Moving quota close to 8 triggers `quota hold`, recreating the state where old anchors must be deleted before saving.",
+      "links": [
+        {
+          "label": "Open Pose History Anchor Haptics Coach",
+          "url": "../outputs/2026-08-12_html_pose_history_anchor_haptics_coach.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Hit Test Module、Anchors Module、WebXR Gamepads Module、Gamepad API、Immersive Web Samples と Hit Test with Anchors を確認。設計: 2026-08-11 の保存前 confidence funnel を、複数フレーム履歴、quota、feedback decision へ拡張。実装: 単一 HTML に canvas、support probe、history burst、trackable 切替、quota / privacy / haptic slider、save / copy JSON、実 haptic pulse の試行をまとめた。検証: JSON parse、HTML script 構文、upsert / publish による days / pages / index 再生成と GitHub Pages 公開を行う。",
+      "bodyEn": "Research: reviewed the WebXR Hit Test Module, Anchors Module, WebXR Gamepads Module, Gamepad API, Immersive Web Samples, and Hit Test with Anchors. Design: extended the 2026-08-11 pre-save confidence funnel into multi-frame history, quota, and feedback decisions. Implementation: packaged canvas, support probe, history burst, trackable switching, quota / privacy / haptic sliders, save / copy JSON, and optional real haptic pulse into one HTML file. Validation: parse JSON, check HTML script syntax, then run upsert / publish to regenerate days / pages / index and publish GitHub Pages."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの蓄積は、hit test、depth、hand、layers、anchors、permission、raw camera、room capture、復元運用、保存前 confidence へ進んできました。今日のサンプルは、保存判断をさらに『時間方向』へ広げ、1 frame の交点ではなく履歴から安心して保存できるかを見ます。XR の現場運用では、保存できたかどうかだけでなく、ユーザーがその瞬間に確信できる feedback をどう返すかが重要になります。",
+      "bodyEn": "The archive has moved through hit testing, depth, hands, layers, anchors, permissions, raw camera, room capture, restore operations, and pre-save confidence. Today's sample expands save readiness into the time dimension, looking at whether history makes an anchor safe to save rather than trusting a single-frame intersection. In operational XR, it is not enough to save; users also need clear feedback that the save decision is trustworthy."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Pose History Anchor Haptics Coach` です。実機 WebXR session がなくても、hit-test 履歴、anchor quota、privacy trim、haptic strength を動かして、保存判断の状態遷移を確認できます。次に足すなら、実 `requestHitTestSource()` の session path、`frame.trackedAnchors` の追跡、persistent handle の保存 / 復元、Input Profiles 由来の controller 別 haptic profile、Web Audio の短い save / reject cue を接続します。",
+      "bodyEn": "The selected prototype is `Pose History Anchor Haptics Coach`. Without a real WebXR session, it lets you manipulate hit-test history, anchor quota, privacy trim, and haptic strength to inspect save-state transitions. Useful next additions are a real `requestHitTestSource()` session path, `frame.trackedAnchors` tracking, persistent handle save / restore, controller-specific haptic profiles from Input Profiles, and short Web Audio save / reject cues."
+    }
+  ]
+}

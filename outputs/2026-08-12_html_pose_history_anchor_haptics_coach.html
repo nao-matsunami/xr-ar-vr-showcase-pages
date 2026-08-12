@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pose History Anchor Haptics Coach</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080d10;
+      --panel: rgba(10, 17, 21, 0.92);
+      --line: rgba(140, 220, 255, 0.23);
+      --text: #eefaff;
+      --muted: #9fb4bd;
+      --cyan: #82e9ff;
+      --green: #91f5b8;
+      --gold: #ffd36d;
+      --red: #ff7184;
+      --violet: #b9a7ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 14%, rgba(130, 233, 255, 0.16), transparent 28%),
+        radial-gradient(circle at 82% 18%, rgba(255, 211, 109, 0.13), transparent 26%),
+        linear-gradient(180deg, #081014, #111419 58%, #070b0f);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 26px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.6vw, 2.4rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 820px;
+      font-size: 0.94rem;
+    }
+
+    .badge,
+    .stage,
+    .panel,
+    .log {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.33);
+    }
+
+    .badge {
+      min-width: 260px;
+      padding: 12px 14px;
+    }
+
+    .badge b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    .badge span {
+      display: block;
+      margin-top: 5px;
+      color: var(--cyan);
+      font-size: 1.02rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 350px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      min-height: 700px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 700px;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .metric {
+      min-width: 0;
+      padding: 10px 11px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      background: rgba(4, 9, 12, 0.74);
+    }
+
+    .metric b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 4px;
+      font-size: 1rem;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel,
+    .log {
+      padding: 14px;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 0.94rem;
+      letter-spacing: 0;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    button,
+    select {
+      min-height: 38px;
+      border: 1px solid rgba(130, 233, 255, 0.32);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(9, 20, 26, 0.9);
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 720;
+    }
+
+    button:hover,
+    select:hover {
+      border-color: rgba(130, 233, 255, 0.72);
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      margin: 10px 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      padding: 8px 9px;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 8px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 0.78rem;
+    }
+
+    .chip strong {
+      display: block;
+      margin-top: 3px;
+      color: var(--text);
+      font-size: 0.94rem;
+    }
+
+    .log {
+      min-height: 178px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.76rem;
+      line-height: 1.45;
+      white-space: pre-line;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .badge {
+        min-width: 0;
+      }
+
+      canvas {
+        height: 620px;
+      }
+
+      .stage {
+        min-height: 620px;
+      }
+
+      .hud {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Pose History Anchor Haptics Coach</h1>
+        <p class="subtitle">Hit Test の候補を単発で保存せず、直近フレームの姿勢履歴、trackable type、anchor quota、haptic/audio feedback をまとめて保存可否に変換する最小サンプルです。</p>
+      </div>
+      <div class="badge">
+        <b>Decision</b>
+        <span id="decision">warming history</span>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <canvas id="stage" width="930" height="700" aria-label="Pose history anchor haptics simulator"></canvas>
+        <div class="hud">
+          <div class="metric"><b>Stability</b><span id="stability">0%</span></div>
+          <div class="metric"><b>Quota</b><span id="quota">0 / 8</span></div>
+          <div class="metric"><b>Feedback</b><span id="feedback">idle</span></div>
+          <div class="metric"><b>Payload</b><span id="payload">none</span></div>
+        </div>
+      </div>
+
+      <div class="side">
+        <div class="panel">
+          <h2>Controls</h2>
+          <div class="buttons">
+            <button id="probe">Probe XR</button>
+            <button id="burst">Frame burst</button>
+            <button id="save">Save</button>
+            <button id="copy">Copy JSON</button>
+          </div>
+          <label>Trackable type
+            <select id="trackable">
+              <option value="plane">plane</option>
+              <option value="mesh">mesh</option>
+              <option value="point">point</option>
+            </select>
+          </label>
+          <label>History frames <input id="historyFrames" type="range" min="8" max="42" value="24"></label>
+          <label>Pose jitter <input id="jitter" type="range" min="0" max="100" value="28"></label>
+          <label>Surface drift <input id="drift" type="range" min="0" max="100" value="34"></label>
+          <label>Privacy trim <input id="privacy" type="range" min="0" max="100" value="45"></label>
+          <label>Anchor quota used <input id="quotaUsed" type="range" min="0" max="8" value="4"></label>
+          <label>Haptic strength <input id="haptic" type="range" min="0" max="100" value="56"></label>
+          <div class="readout">
+            <div class="chip">XR support<strong id="xrSupport">unknown</strong></div>
+            <div class="chip">Haptics<strong id="hapticSupport">simulated</strong></div>
+            <div class="chip">Anchor score<strong id="score">0</strong></div>
+            <div class="chip">Saved anchors<strong id="savedCount">0</strong></div>
+          </div>
+        </div>
+        <div id="log" class="log"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const els = {
+      decision: document.getElementById("decision"),
+      stability: document.getElementById("stability"),
+      quota: document.getElementById("quota"),
+      feedback: document.getElementById("feedback"),
+      payload: document.getElementById("payload"),
+      probe: document.getElementById("probe"),
+      burst: document.getElementById("burst"),
+      save: document.getElementById("save"),
+      copy: document.getElementById("copy"),
+      trackable: document.getElementById("trackable"),
+      historyFrames: document.getElementById("historyFrames"),
+      jitter: document.getElementById("jitter"),
+      drift: document.getElementById("drift"),
+      privacy: document.getElementById("privacy"),
+      quotaUsed: document.getElementById("quotaUsed"),
+      haptic: document.getElementById("haptic"),
+      xrSupport: document.getElementById("xrSupport"),
+      hapticSupport: document.getElementById("hapticSupport"),
+      score: document.getElementById("score"),
+      savedCount: document.getElementById("savedCount"),
+      log: document.getElementById("log")
+    };
+
+    const state = {
+      pointer: { x: 0.54, y: 0.51 },
+      history: [],
+      saved: [],
+      log: ["boot: collecting pseudo XRFrame hit-test history"],
+      support: "unknown",
+      feedback: "idle",
+      copied: null
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function val(id) {
+      return Number(els[id].value);
+    }
+
+    function log(line) {
+      const stamp = new Date().toLocaleTimeString("ja-JP", { hour12: false });
+      state.log.unshift(`${stamp} ${line}`);
+      state.log = state.log.slice(0, 9);
+      els.log.textContent = state.log.join("\n");
+    }
+
+    function addFrame(forceBurst = false) {
+      const jitter = val("jitter") / 100;
+      const drift = val("drift") / 100;
+      const t = performance.now() / 1000;
+      const burst = forceBurst ? 1.8 : 1;
+      const wobbleX = Math.sin(t * 2.1) * drift * 0.035 + (Math.random() - 0.5) * jitter * 0.075 * burst;
+      const wobbleY = Math.cos(t * 1.7) * drift * 0.028 + (Math.random() - 0.5) * jitter * 0.066 * burst;
+      const normal = 1 - Math.abs(Math.sin(t * 0.9)) * drift * 0.45 - jitter * 0.18;
+      state.history.push({
+        x: clamp(state.pointer.x + wobbleX, 0.12, 0.88),
+        y: clamp(state.pointer.y + wobbleY, 0.17, 0.78),
+        normal: clamp(normal, 0.2, 1),
+        age: 0,
+        trackable: els.trackable.value
+      });
+      const maxFrames = val("historyFrames");
+      if (state.history.length > maxFrames) {
+        state.history.splice(0, state.history.length - maxFrames);
+      }
+    }
+
+    function metrics() {
+      if (state.history.length < 3) {
+        return { stability: 0, score: 0, decision: "warming history", color: "#ffd36d", payload: "none" };
+      }
+      const cx = state.history.reduce((sum, p) => sum + p.x, 0) / state.history.length;
+      const cy = state.history.reduce((sum, p) => sum + p.y, 0) / state.history.length;
+      const spread = state.history.reduce((sum, p) => sum + Math.hypot(p.x - cx, p.y - cy), 0) / state.history.length;
+      const normal = state.history.reduce((sum, p) => sum + p.normal, 0) / state.history.length;
+      const stability = clamp((1 - spread * 9) * 0.72 + normal * 0.28, 0, 1);
+      const quotaPressure = val("quotaUsed") / 8;
+      const privacy = val("privacy") / 100;
+      const typeBonus = els.trackable.value === "plane" ? 0.11 : els.trackable.value === "mesh" ? 0.03 : -0.08;
+      const score = clamp(stability * 0.72 + (1 - quotaPressure) * 0.16 + typeBonus - privacy * 0.18, 0, 1);
+      let decision = "rescan";
+      let color = "#ffd36d";
+      if (quotaPressure > 0.88) {
+        decision = "quota hold";
+        color = "#ff7184";
+      } else if (privacy > 0.72 && score > 0.48) {
+        decision = "trim + save";
+        color = "#b9a7ff";
+      } else if (score > 0.68) {
+        decision = "save anchor";
+        color = "#91f5b8";
+      } else if (score < 0.32) {
+        decision = "reject";
+        color = "#ff7184";
+      }
+      const payload = `${els.trackable.value}:${Math.round(cx * 10)}/${Math.round(cy * 10)}`;
+      return { stability, score, decision, color, payload, cx, cy, spread, normal };
+    }
+
+    async function pulse(strength) {
+      const ms = 90 + Math.round(strength * 130);
+      state.feedback = `pulse ${Math.round(strength * 100)}% / ${ms}ms`;
+      const pads = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
+      const actuator = pads.flatMap((pad) => pad.hapticActuators || []).find(Boolean);
+      if (actuator && actuator.pulse) {
+        els.hapticSupport.textContent = "gamepad pulse";
+        try {
+          await actuator.pulse(strength, ms);
+        } catch (error) {
+          els.hapticSupport.textContent = "pulse blocked";
+        }
+      }
+      setTimeout(() => {
+        state.feedback = "idle";
+      }, ms + 180);
+    }
+
+    function saveCandidate() {
+      const m = metrics();
+      if (!m.decision.includes("save")) {
+        log(`save blocked: ${m.decision}`);
+        pulse(0.22);
+        return;
+      }
+      const anchor = {
+        id: `anchor-${String(state.saved.length + 1).padStart(2, "0")}`,
+        decision: m.decision,
+        trackable: els.trackable.value,
+        coarsePose: { xBand: Math.round(m.cx * 10), yBand: Math.round(m.cy * 10) },
+        stability: Number(m.stability.toFixed(3)),
+        score: Number(m.score.toFixed(3)),
+        privacyTrim: val("privacy")
+      };
+      state.saved.push(anchor);
+      state.saved = state.saved.slice(-8);
+      els.quotaUsed.value = clamp(val("quotaUsed") + 1, 0, 8);
+      log(`saved ${anchor.id}: ${anchor.decision} ${anchor.trackable} score=${anchor.score}`);
+      pulse(val("haptic") / 100);
+    }
+
+    function drawGrid() {
+      ctx.fillStyle = "#071015";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.strokeStyle = "rgba(130, 233, 255, 0.08)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= canvas.width; x += 42) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= canvas.height; y += 42) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function draw() {
+      addFrame(false);
+      state.history.forEach((p) => { p.age += 1; });
+      const m = metrics();
+      drawGrid();
+
+      const origin = { x: canvas.width * 0.5, y: canvas.height * 0.88 };
+      const target = { x: state.pointer.x * canvas.width, y: state.pointer.y * canvas.height };
+      const cx = (m.cx || state.pointer.x) * canvas.width;
+      const cy = (m.cy || state.pointer.y) * canvas.height;
+
+      ctx.strokeStyle = "rgba(130, 233, 255, 0.35)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(origin.x, origin.y);
+      ctx.lineTo(target.x, target.y);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(130, 233, 255, 0.08)";
+      ctx.fillRect(58, 72, canvas.width - 116, canvas.height * 0.58);
+      ctx.strokeStyle = "rgba(130, 233, 255, 0.25)";
+      ctx.strokeRect(58, 72, canvas.width - 116, canvas.height * 0.58);
+
+      state.history.forEach((p, index) => {
+        const alpha = 0.12 + index / state.history.length * 0.72;
+        ctx.fillStyle = `rgba(130, 233, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x * canvas.width, p.y * canvas.height, 3 + p.normal * 5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.strokeStyle = m.color;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 34 + (1 - m.stability) * 44, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx - 56, cy);
+      ctx.lineTo(cx + 56, cy);
+      ctx.moveTo(cx, cy - 56);
+      ctx.lineTo(cx, cy + 56);
+      ctx.stroke();
+
+      state.saved.forEach((anchor, index) => {
+        const x = 96 + index * 62;
+        const y = canvas.height - 160;
+        ctx.fillStyle = anchor.decision === "trim + save" ? "rgba(185, 167, 255, 0.26)" : "rgba(145, 245, 184, 0.24)";
+        ctx.strokeStyle = "rgba(255,255,255,0.24)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(x, y, 44, 44, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#eefaff";
+        ctx.font = "12px ui-monospace, monospace";
+        ctx.fillText(anchor.id.slice(-2), x + 14, y + 27);
+      });
+
+      const quota = val("quotaUsed");
+      for (let i = 0; i < 8; i += 1) {
+        ctx.fillStyle = i < quota ? "rgba(255, 113, 132, 0.56)" : "rgba(255, 255, 255, 0.08)";
+        ctx.fillRect(canvas.width - 216 + i * 19, 36, 12, 48);
+      }
+
+      ctx.fillStyle = "#eefaff";
+      ctx.font = "700 24px Inter, sans-serif";
+      ctx.fillText(m.decision.toUpperCase(), 58, 44);
+      ctx.font = "13px ui-monospace, monospace";
+      ctx.fillStyle = "#9fb4bd";
+      ctx.fillText(`history=${state.history.length}  trackable=${els.trackable.value}  normal=${Math.round((m.normal || 0) * 100)}%`, 58, 66);
+      ctx.fillText("quota pressure", canvas.width - 216, 28);
+
+      els.decision.textContent = m.decision;
+      els.stability.textContent = `${Math.round(m.stability * 100)}%`;
+      els.quota.textContent = `${quota} / 8`;
+      els.feedback.textContent = state.feedback;
+      els.payload.textContent = m.payload;
+      els.score.textContent = Math.round(m.score * 100);
+      els.savedCount.textContent = state.saved.length;
+      requestAnimationFrame(draw);
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      canvas.setPointerCapture(event.pointerId);
+      movePointer(event);
+    });
+    canvas.addEventListener("pointermove", (event) => {
+      if (event.buttons || event.pointerType === "touch") movePointer(event);
+    });
+    canvas.addEventListener("pointercancel", () => {});
+
+    function movePointer(event) {
+      const rect = canvas.getBoundingClientRect();
+      state.pointer.x = clamp((event.clientX - rect.left) / rect.width, 0.08, 0.92);
+      state.pointer.y = clamp((event.clientY - rect.top) / rect.height, 0.13, 0.8);
+    }
+
+    els.probe.addEventListener("click", async () => {
+      if (!("xr" in navigator)) {
+        state.support = "navigator.xr missing";
+        els.xrSupport.textContent = state.support;
+        log("probe: navigator.xr unavailable, simulator remains active");
+        return;
+      }
+      try {
+        const ar = await navigator.xr.isSessionSupported("immersive-ar");
+        const vr = await navigator.xr.isSessionSupported("immersive-vr");
+        state.support = `AR ${ar ? "ok" : "no"} / VR ${vr ? "ok" : "no"}`;
+        els.xrSupport.textContent = state.support;
+        log(`probe: ${state.support}`);
+      } catch (error) {
+        state.support = error.name || "probe error";
+        els.xrSupport.textContent = state.support;
+        log(`probe failed: ${state.support}`);
+      }
+    });
+
+    els.burst.addEventListener("click", () => {
+      for (let i = 0; i < 14; i += 1) addFrame(true);
+      log("burst: added pseudo getHitTestResults() history");
+    });
+
+    els.save.addEventListener("click", saveCandidate);
+
+    els.copy.addEventListener("click", async () => {
+      const m = metrics();
+      const payload = {
+        date: "2026-08-12",
+        sample: "pose-history-anchor-haptics-coach",
+        decision: m.decision,
+        trackable: els.trackable.value,
+        score: Number(m.score.toFixed(3)),
+        stability: Number(m.stability.toFixed(3)),
+        coarsePose: { xBand: Math.round((m.cx || 0) * 10), yBand: Math.round((m.cy || 0) * 10) },
+        quotaUsed: val("quotaUsed"),
+        hapticStrength: val("haptic")
+      };
+      state.copied = payload;
+      try {
+        await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+        log("copy: coarse save payload copied");
+      } catch (error) {
+        log("copy: clipboard blocked, payload kept in memory");
+      }
+    });
+
+    log("ready: drag canvas, tune history, press Save");
+    draw();
+  </script>
+</body>
+</html>
