@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XR Gamepad Frame Poller</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #071017;
+      --panel: rgba(8, 18, 24, 0.92);
+      --line: rgba(144, 218, 255, 0.24);
+      --text: #eff9ff;
+      --muted: #9bb5c5;
+      --cyan: #7cd9ff;
+      --green: #93f0b9;
+      --gold: #ffd36f;
+      --red: #ff7a8e;
+      --ink: #061017;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 14% 8%, rgba(124, 217, 255, 0.18), transparent 24%),
+        radial-gradient(circle at 84% 18%, rgba(147, 240, 185, 0.13), transparent 24%),
+        linear-gradient(180deg, #071017, #10242d 58%, #071017);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 28px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.8vw, 2.45rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 830px;
+      font-size: 0.94rem;
+    }
+
+    .badge,
+    .panel,
+    .stage,
+    .log {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+    }
+
+    .badge {
+      min-width: 254px;
+      padding: 12px 14px;
+    }
+
+    .badge b {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 650;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .badge span {
+      display: block;
+      margin-top: 5px;
+      color: var(--green);
+      font-weight: 760;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+      gap: 14px;
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      min-height: 620px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 620px;
+      background: #071017;
+      touch-action: none;
+    }
+
+    .overlay {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .readout {
+      padding: 10px;
+      border: 1px solid rgba(239, 249, 255, 0.12);
+      border-radius: 8px;
+      background: rgba(4, 11, 15, 0.78);
+      min-width: 0;
+    }
+
+    .readout small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .readout strong {
+      display: block;
+      margin-top: 4px;
+      font-size: clamp(0.9rem, 1.8vw, 1.15rem);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel {
+      padding: 14px;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      letter-spacing: 0;
+    }
+
+    .control {
+      display: grid;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    input[type="range"],
+    select {
+      width: 100%;
+      accent-color: var(--cyan);
+    }
+
+    select {
+      border: 1px solid rgba(239, 249, 255, 0.14);
+      border-radius: 8px;
+      background: rgba(239, 249, 255, 0.08);
+      color: var(--text);
+      min-height: 40px;
+      padding: 0 10px;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 1px solid rgba(239, 249, 255, 0.18);
+      background: rgba(239, 249, 255, 0.08);
+      color: var(--text);
+      border-radius: 8px;
+      min-height: 42px;
+      padding: 9px 10px;
+      font-weight: 720;
+      cursor: pointer;
+    }
+
+    button.primary {
+      color: var(--ink);
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+    }
+
+    button.warn {
+      border-color: rgba(255, 122, 142, 0.35);
+      background: rgba(255, 122, 142, 0.11);
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .chips button {
+      min-height: 34px;
+      padding: 6px 8px;
+      font-size: 0.78rem;
+    }
+
+    .log {
+      min-height: 138px;
+      max-height: 210px;
+      overflow: auto;
+      padding: 10px;
+      font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: #cfe6ef;
+    }
+
+    .meter {
+      height: 9px;
+      overflow: hidden;
+      border: 1px solid rgba(239, 249, 255, 0.12);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.07);
+      margin-top: 7px;
+    }
+
+    .meter i {
+      display: block;
+      height: 100%;
+      width: var(--value, 50%);
+      background: linear-gradient(90deg, var(--cyan), var(--green), var(--gold));
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .badge {
+        min-width: 0;
+      }
+
+      .overlay {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stage {
+        min-height: 560px;
+      }
+
+      canvas {
+        height: 560px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>XR Gamepad Frame Poller</h1>
+        <p class="subtitle">XRInputSource.gamepad を毎フレーム読む前提で、左右コントローラの trigger / squeeze / axes / profile を正規化し、行動・触覚 cue・UI 表示へ分ける最小サンプルです。</p>
+      </div>
+      <div class="badge">
+        <b>Frame Loop</b>
+        <span id="status">synthetic input ready</span>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <canvas id="stage" width="920" height="620"></canvas>
+        <div class="overlay">
+          <div class="readout"><small>Dominant hand</small><strong id="dominant">right aim</strong></div>
+          <div class="readout"><small>Mapped action</small><strong id="action">hover</strong></div>
+          <div class="readout"><small>Haptic route</small><strong id="haptic">idle</strong></div>
+          <div class="readout"><small>XR support</small><strong id="support">checking</strong></div>
+        </div>
+      </div>
+
+      <aside class="controls">
+        <div class="panel">
+          <h2>Input Source</h2>
+          <div class="control">
+            <label for="profile">Profile <span id="profileOut">generic-trigger-squeeze-thumbstick</span></label>
+            <select id="profile">
+              <option value="generic-trigger-squeeze-thumbstick">generic-trigger-squeeze-thumbstick</option>
+              <option value="oculus-touch">oculus-touch</option>
+              <option value="htc-vive">htc-vive</option>
+              <option value="generic-hand-select">generic-hand-select</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="handBias">Hand bias <span id="handBiasOut">62%</span></label>
+            <input id="handBias" type="range" min="0" max="100" value="62">
+          </div>
+          <div class="control">
+            <label for="deadzone">Axis deadzone <span id="deadzoneOut">0.14</span></label>
+            <input id="deadzone" type="range" min="0" max="40" value="14">
+          </div>
+          <div class="chips">
+            <button data-preset="menu">Menu</button>
+            <button data-preset="place">Place</button>
+            <button data-preset="alert">Alert</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Controller Values</h2>
+          <div class="control">
+            <label for="trigger">Trigger <span id="triggerOut">0.52</span></label>
+            <input id="trigger" type="range" min="0" max="100" value="52">
+          </div>
+          <div class="control">
+            <label for="squeeze">Squeeze <span id="squeezeOut">0.24</span></label>
+            <input id="squeeze" type="range" min="0" max="100" value="24">
+          </div>
+          <div class="control">
+            <label for="axisX">Thumbstick X <span id="axisXOut">0.34</span></label>
+            <input id="axisX" type="range" min="-100" max="100" value="34">
+          </div>
+          <div class="control">
+            <label for="axisY">Thumbstick Y <span id="axisYOut">-0.18</span></label>
+            <input id="axisY" type="range" min="-100" max="100" value="-18">
+          </div>
+          <div class="control">
+            <label for="noise">Poll jitter <span id="noiseOut">7%</span></label>
+            <input id="noise" type="range" min="0" max="30" value="7">
+          </div>
+          <div class="buttons">
+            <button class="primary" id="sample">Sample frame</button>
+            <button id="copy">Copy payload</button>
+            <button id="xr">Try XR poll</button>
+            <button class="warn" id="reset">Reset</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Frame Decision</h2>
+          <div>intent score<div class="meter" style="--value: 52%"><i id="intentMeter"></i></div></div>
+          <div style="margin-top:10px">stability<div class="meter" style="--value: 78%"><i id="stableMeter"></i></div></div>
+        </div>
+
+        <div class="log" id="log"></div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const ids = ["profile", "handBias", "deadzone", "trigger", "squeeze", "axisX", "axisY", "noise"];
+    const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
+    const out = {
+      status: document.getElementById("status"),
+      dominant: document.getElementById("dominant"),
+      action: document.getElementById("action"),
+      haptic: document.getElementById("haptic"),
+      support: document.getElementById("support"),
+      profileOut: document.getElementById("profileOut"),
+      handBiasOut: document.getElementById("handBiasOut"),
+      deadzoneOut: document.getElementById("deadzoneOut"),
+      triggerOut: document.getElementById("triggerOut"),
+      squeezeOut: document.getElementById("squeezeOut"),
+      axisXOut: document.getElementById("axisXOut"),
+      axisYOut: document.getElementById("axisYOut"),
+      noiseOut: document.getElementById("noiseOut"),
+      intentMeter: document.getElementById("intentMeter"),
+      stableMeter: document.getElementById("stableMeter"),
+      log: document.getElementById("log")
+    };
+
+    const state = {
+      frame: 0,
+      pointer: { x: 0.66, y: 0.43 },
+      lastPayload: null,
+      xrSession: null,
+      realSources: []
+    };
+
+    const profiles = {
+      "generic-trigger-squeeze-thumbstick": { select: "trigger", menu: "thumbstick", haptic: "pulse" },
+      "oculus-touch": { select: "trigger", menu: "thumbstick-click", haptic: "pulse + click" },
+      "htc-vive": { select: "trigger", menu: "touchpad", haptic: "pulse" },
+      "generic-hand-select": { select: "pinch/select", menu: "gaze dwell", haptic: "visual fallback" }
+    };
+
+    function clamp(value, min = 0, max = 1) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function value(id) {
+      return Number(els[id].value);
+    }
+
+    function normalizedInput() {
+      const jitter = value("noise") / 100;
+      const wave = Math.sin(performance.now() / 420) * jitter;
+      const trigger = clamp(value("trigger") / 100 + wave * 0.28);
+      const squeeze = clamp(value("squeeze") / 100 - wave * 0.2);
+      let axisX = clamp(value("axisX") / 100 + wave, -1, 1);
+      let axisY = clamp(value("axisY") / 100 - wave * 0.7, -1, 1);
+      const deadzone = value("deadzone") / 100;
+      if (Math.abs(axisX) < deadzone) axisX = 0;
+      if (Math.abs(axisY) < deadzone) axisY = 0;
+      const rightWeight = value("handBias") / 100;
+      const leftWeight = 1 - rightWeight;
+      const dominant = rightWeight >= leftWeight ? "right" : "left";
+      const intent = clamp(trigger * 0.55 + squeeze * 0.35 + Math.hypot(axisX, axisY) * 0.18);
+      const stability = clamp(1 - jitter * 1.8 - Math.abs(axisX) * 0.16 - Math.abs(axisY) * 0.16);
+      const action = squeeze > 0.72 ? "grab" : trigger > 0.64 ? "select" : intent > 0.42 ? "hover" : "idle";
+      const haptic = action === "select" ? "confirm pulse" : action === "grab" ? "hold tick" : stability < 0.58 ? "stability warn" : "idle";
+      return { trigger, squeeze, axisX, axisY, deadzone, rightWeight, leftWeight, dominant, intent, stability, action, haptic };
+    }
+
+    function payload() {
+      const input = normalizedInput();
+      const profile = els.profile.value;
+      return {
+        frame: state.frame,
+        profile,
+        mapping: profiles[profile],
+        handedness: input.dominant,
+        buttons: {
+          trigger: Number(input.trigger.toFixed(3)),
+          squeeze: Number(input.squeeze.toFixed(3))
+        },
+        axes: {
+          x: Number(input.axisX.toFixed(3)),
+          y: Number(input.axisY.toFixed(3)),
+          deadzone: Number(input.deadzone.toFixed(2))
+        },
+        decision: {
+          action: input.action,
+          haptic: input.haptic,
+          intent: Number(input.intent.toFixed(3)),
+          stability: Number(input.stability.toFixed(3))
+        }
+      };
+    }
+
+    function syncLabels() {
+      out.profileOut.textContent = els.profile.value;
+      out.handBiasOut.textContent = `${value("handBias")}%`;
+      out.deadzoneOut.textContent = (value("deadzone") / 100).toFixed(2);
+      out.triggerOut.textContent = (value("trigger") / 100).toFixed(2);
+      out.squeezeOut.textContent = (value("squeeze") / 100).toFixed(2);
+      out.axisXOut.textContent = (value("axisX") / 100).toFixed(2);
+      out.axisYOut.textContent = (value("axisY") / 100).toFixed(2);
+      out.noiseOut.textContent = `${value("noise")}%`;
+    }
+
+    function logLine(text) {
+      const now = new Date().toLocaleTimeString("ja-JP", { hour12: false });
+      out.log.textContent = `[${now}] ${text}\n${out.log.textContent}`.slice(0, 1900);
+    }
+
+    function drawController(cx, cy, side, input, active) {
+      const scale = active ? 1.08 : 0.94;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(scale, scale);
+      ctx.strokeStyle = active ? "#93f0b9" : "rgba(124,217,255,0.58)";
+      ctx.lineWidth = 3;
+      ctx.fillStyle = active ? "rgba(147,240,185,0.13)" : "rgba(124,217,255,0.1)";
+      ctx.beginPath();
+      ctx.roundRect(-58, -78, 116, 156, 34);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#eff9ff";
+      ctx.font = "700 17px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(side, 0, -48);
+      ctx.fillStyle = "#7cd9ff";
+      ctx.fillRect(-36, -18, 72 * input.trigger, 12);
+      ctx.fillStyle = "#ffd36f";
+      ctx.fillRect(-36, 10, 72 * input.squeeze, 12);
+      ctx.strokeStyle = "rgba(239,249,255,0.3)";
+      ctx.strokeRect(-36, -18, 72, 12);
+      ctx.strokeRect(-36, 10, 72, 12);
+      ctx.beginPath();
+      ctx.arc(input.axisX * 28, 47 + input.axisY * 22, 18, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,255,255,0.12)";
+      ctx.fill();
+      ctx.strokeStyle = "#eff9ff";
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function draw() {
+      state.frame += 1;
+      syncLabels();
+      const data = payload();
+      state.lastPayload = data;
+      const input = normalizedInput();
+      out.dominant.textContent = `${data.handedness} aim`;
+      out.action.textContent = data.decision.action;
+      out.haptic.textContent = data.decision.haptic;
+      out.intentMeter.style.width = `${Math.round(data.decision.intent * 100)}%`;
+      out.stableMeter.style.width = `${Math.round(data.decision.stability * 100)}%`;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const grd = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grd.addColorStop(0, "#071017");
+      grd.addColorStop(1, "#0f2430");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = "rgba(144,218,255,0.1)";
+      ctx.lineWidth = 1;
+      for (let x = 60; x < canvas.width; x += 60) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 60; y < canvas.height; y += 60) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
+      drawController(190, 290, "left", input, data.handedness === "left");
+      drawController(canvas.width - 190, 290, "right", input, data.handedness === "right");
+
+      const aimX = canvas.width * (0.5 + input.axisX * 0.23);
+      const aimY = canvas.height * (0.45 + input.axisY * 0.2);
+      const originX = data.handedness === "right" ? canvas.width - 190 : 190;
+      ctx.strokeStyle = data.decision.action === "select" ? "#93f0b9" : "#7cd9ff";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(originX, 290);
+      ctx.lineTo(aimX, aimY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(aimX, aimY, 22 + data.decision.intent * 18, 0, Math.PI * 2);
+      ctx.fillStyle = data.decision.action === "grab" ? "rgba(255,211,111,0.24)" : "rgba(124,217,255,0.2)";
+      ctx.fill();
+      ctx.strokeStyle = "#eff9ff";
+      ctx.stroke();
+
+      ctx.fillStyle = "#eff9ff";
+      ctx.font = "760 22px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(data.decision.action.toUpperCase(), canvas.width / 2, 84);
+      ctx.font = "14px Inter, sans-serif";
+      ctx.fillStyle = "#9bb5c5";
+      ctx.fillText(`${data.profile} / ${data.mapping.select} -> ${data.mapping.haptic}`, canvas.width / 2, 112);
+
+      ctx.fillStyle = "rgba(4,11,15,0.62)";
+      ctx.strokeStyle = "rgba(239,249,255,0.14)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(canvas.width / 2 - 190, 430, 380, 82, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#cfe6ef";
+      ctx.font = "13px ui-monospace, monospace";
+      ctx.textAlign = "left";
+      ctx.fillText(`buttons: trigger=${data.buttons.trigger} squeeze=${data.buttons.squeeze}`, canvas.width / 2 - 170, 462);
+      ctx.fillText(`axes: x=${data.axes.x} y=${data.axes.y} deadzone=${data.axes.deadzone}`, canvas.width / 2 - 170, 486);
+
+      requestAnimationFrame(draw);
+    }
+
+    async function probeSupport() {
+      const xr = "xr" in navigator;
+      const gpu = "gpu" in navigator;
+      out.support.textContent = xr ? `WebXR${gpu ? " + WebGPU" : ""}` : "no navigator.xr";
+    }
+
+    async function tryXR() {
+      if (!navigator.xr) {
+        logLine("navigator.xr is not available; synthetic polling continues");
+        return;
+      }
+      try {
+        const ok = await navigator.xr.isSessionSupported("immersive-vr");
+        if (!ok) {
+          logLine("immersive-vr session is not supported here");
+          return;
+        }
+        const session = await navigator.xr.requestSession("immersive-vr");
+        state.xrSession = session;
+        session.addEventListener("inputsourceschange", () => {
+          state.realSources = [...session.inputSources];
+          logLine(`XR inputSources changed: ${state.realSources.length}`);
+        });
+        out.status.textContent = "real XR session requested";
+        logLine("XR session opened; poll session.inputSources in XR frame loop");
+      } catch (error) {
+        logLine(`XR request blocked: ${error.message}`);
+      }
+    }
+
+    document.querySelectorAll("[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const preset = button.dataset.preset;
+        const next = {
+          menu: { trigger: 20, squeeze: 12, axisX: -62, axisY: 4, handBias: 44, noise: 5 },
+          place: { trigger: 78, squeeze: 20, axisX: 18, axisY: -12, handBias: 72, noise: 6 },
+          alert: { trigger: 52, squeeze: 82, axisX: 48, axisY: 38, handBias: 62, noise: 18 }
+        }[preset];
+        Object.entries(next).forEach(([key, val]) => { els[key].value = val; });
+        logLine(`preset applied: ${preset}`);
+      });
+    });
+
+    document.getElementById("sample").addEventListener("click", () => {
+      const data = payload();
+      logLine(`${data.handedness} ${data.decision.action} / ${data.decision.haptic} / intent ${data.decision.intent}`);
+    });
+
+    document.getElementById("copy").addEventListener("click", async () => {
+      const text = JSON.stringify(state.lastPayload || payload(), null, 2);
+      try {
+        await navigator.clipboard.writeText(text);
+        logLine("payload copied");
+      } catch {
+        logLine(text.replace(/\n/g, " "));
+      }
+    });
+
+    document.getElementById("xr").addEventListener("click", tryXR);
+
+    document.getElementById("reset").addEventListener("click", () => {
+      els.profile.value = "generic-trigger-squeeze-thumbstick";
+      els.handBias.value = 62;
+      els.deadzone.value = 14;
+      els.trigger.value = 52;
+      els.squeeze.value = 24;
+      els.axisX.value = 34;
+      els.axisY.value = -18;
+      els.noise.value = 7;
+      logLine("controls reset");
+    });
+
+    ids.forEach((id) => els[id].addEventListener("input", syncLabels));
+    probeSupport();
+    logLine("synthetic XRInputSource.gamepad polling started");
+    draw();
+  </script>
+</body>
+</html>

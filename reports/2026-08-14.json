@@ -1,0 +1,123 @@
+{
+  "date": "2026-08-14",
+  "headline": "XR controller の gamepad 状態を毎フレーム正規化する",
+  "headlineEn": "Normalize XR controller gamepad state every frame",
+  "summary": "XRInputSource.gamepad、WebXR Gamepads Module、Gamepad API、WebXR Input Profiles、Immersive Web Samples を確認し、左右コントローラの trigger / squeeze / axis / profile を frame loop で読み替える自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing XRInputSource.gamepad, the WebXR Gamepads Module, the Gamepad API, WebXR Input Profiles, and Immersive Web Samples, today's original HTML sample normalizes left/right controller trigger, squeeze, axis, and profile state in a frame loop.",
+  "keyTopics": [
+    "MDN の WebXR input guide は、XR input source が targeting と action を分け、追加の buttons / axes は `XRInputSource.gamepad` から読む前提を説明している。",
+    "W3C WebXR Gamepads Module Level 1 は XR controller 向けの `xr-standard` gamepad mapping を定義し、trigger、squeeze、thumbstick / touchpad を profile と結び付ける基礎になります。",
+    "Gamepad API は button、axis、haptic actuator の一般モデルを定義しており、昨日の haptic mixer と今日の polling layer を同じ payload で接続しやすい。",
+    "Immersive Web の WebXR Samples には Controller State と Input Profiles の公式デモ入口があり、実機 controller の状態表示と profile 解決の挙動確認に使える。",
+    "WebXR Input Profiles の motion-controllers package は、`inputsourceschange` で controller を作り、XR frame callback ごとに `updateFromGamepad()` する流れを示している。"
+  ],
+  "keyTopicsEn": [
+    "MDN's WebXR input guide explains that XR input sources separate targeting from actions, while additional buttons and axes are read through `XRInputSource.gamepad`.",
+    "The W3C WebXR Gamepads Module Level 1 defines the `xr-standard` gamepad mapping for XR controllers, forming the basis for linking trigger, squeeze, thumbstick / touchpad, and profiles.",
+    "The Gamepad API defines the general button, axis, and haptic actuator model, making yesterday's haptic mixer and today's polling layer easy to connect through one payload.",
+    "Immersive Web's WebXR Samples include official Controller State and Input Profiles demo entry points for inspecting real controller state and profile resolution behavior.",
+    "The WebXR Input Profiles motion-controllers package shows a flow where controllers are created on `inputsourceschange` and `updateFromGamepad()` is called during each XR frame callback."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: XR Gamepad Frame Poller",
+      "url": "../outputs/2026-08-14_html_xr_gamepad_frame_poller.html"
+    },
+    {
+      "label": "MDN: Inputs and input sources",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Inputs"
+    },
+    {
+      "label": "W3C: WebXR Gamepads Module Level 1",
+      "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+    },
+    {
+      "label": "W3C: Gamepad",
+      "url": "https://www.w3.org/TR/gamepad/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Web: WebXR Input Profiles",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/"
+    },
+    {
+      "label": "Immersive Web: Motion Controllers package",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/packages/motion-controllers/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、Immersive Web Samples の Controller State と WebXR Input Profiles の motion-controllers package です。select / squeeze のイベントだけでは、thumbstick、touchpad、trigger value、左右 handedness、profile ごとの差は拾いきれません。XR の操作を安定させるには、XR frame loop で `session.inputSources` を見て、`inputSource.gamepad` を正規化し、アプリ側の action、visual state、haptic route へ分配する層が必要です。",
+      "bodyEn": "Today's notable references are the Immersive Web Controller State sample and the WebXR Input Profiles motion-controllers package. Select / squeeze events alone do not capture thumbstick, touchpad, trigger value, handedness, or profile-specific differences. Stable XR interaction needs a layer that reads `session.inputSources` in the XR frame loop, normalizes `inputSource.gamepad`, and routes the result into app actions, visual state, and haptic feedback.",
+      "links": [
+        {
+          "label": "Immersive Web: WebXR Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/"
+        },
+        {
+          "label": "Immersive Web: Motion Controllers package",
+          "url": "https://immersive-web.github.io/webxr-input-profiles/packages/motion-controllers/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルでは、左右 controller の重み、profile、trigger、squeeze、thumbstick x / y、deadzone、poll jitter を操作し、毎フレーム `hover`、`select`、`grab`、`idle` に落とします。canvas 上では dominant hand から照準線が伸び、正規化後の button / axis 値と haptic route が同じ payload から更新されます。実機がなくても、profile 変更による入力名の違いと action decision の境界を確認できます。",
+      "bodyEn": "The sample lets you manipulate left/right controller weight, profile, trigger, squeeze, thumbstick x / y, deadzone, and poll jitter, then collapses each frame into `hover`, `select`, `grab`, or `idle`. On the canvas, an aim ray extends from the dominant hand, and normalized button / axis values plus haptic route update from the same payload. Without hardware, it still exposes profile naming differences and action decision thresholds."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は `inputsourceschange` で入力ソースの追加 / 削除を追跡し、XR frame callback で各 `inputSource.gamepad` を poll します。profile 解決は WebXR Input Profiles の registry / assets / motion-controllers を使うと、button index の直読みではなく conceptual component 単位に寄せられます。deadzone、value threshold、jitter 抑制、handedness、haptic support は input adapter で吸収し、アプリの placement / menu / warning ロジックには semantic action だけを渡すのが扱いやすいです。",
+      "bodyEn": "In production, track input-source additions and removals with `inputsourceschange`, then poll each `inputSource.gamepad` inside the XR frame callback. WebXR Input Profiles registry / assets / motion-controllers help resolve profiles into conceptual components rather than raw button indices. Deadzones, value thresholds, jitter suppression, handedness, and haptic support should be absorbed by an input adapter, leaving placement / menu / warning logic to consume only semantic actions."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルからは、frame number、profile、handedness、trigger / squeeze value、axis vector、deadzone 後の値、intent score、stability、action、haptic route を取れます。昨日の haptic priority mixer と組み合わせると、controller 入力から保存・拒否・警告 cue までを一本のログにできます。さらに Web Audio、DOM Overlay、anchor save payload、手入力、AI gesture classification、展示向け analytics とつなぐと、入力の揺れと feedback の結果を同時に検証できます。",
+      "bodyEn": "Today's sample yields frame number, profile, handedness, trigger / squeeze value, axis vector, post-deadzone values, intent score, stability, action, and haptic route. Combined with yesterday's haptic priority mixer, it can produce one log from controller input through save / rejection / warning cues. Adding Web Audio, DOM Overlay, anchor-save payloads, hand input, AI gesture classification, or exhibit analytics allows input noise and feedback results to be tested together."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Gamepads Module の実装差、Input Profiles registry の更新、Quest / Vision Pro / PC VR controller の profile 表現差、hand-only input と controller input の切り替え、DOM Overlay 上の pointer と XR controller の同時入力、そして haptic actuator の `pulse()` / `playEffect()` 対応を継続して見ます。次は controller poller と昨日の haptic mixer を接続し、左右別 queue と action conflict の可視化へ進めたいです。",
+      "bodyEn": "Keep watching WebXR Gamepads Module implementation differences, Input Profiles registry updates, profile differences across Quest / Vision Pro / PC VR controllers, hand-only versus controller input switching, simultaneous DOM Overlay pointer and XR controller input, and haptic actuator `pulse()` / `playEffect()` support. A good next step is connecting this controller poller to yesterday's haptic mixer and visualizing separate left/right queues plus action conflicts."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、Place プリセットを押してから Trigger を 0.64 付近で上下させてください。`hover` と `select` の境界、dominant hand の切り替え、deadzone 後の axis 値、haptic route が同時に変わります。次に Alert プリセットで jitter を上げると、stability が下がり、同じ入力値でも warning 寄りの feedback に変わる様子を確認できます。",
+      "bodyEn": "Open the sample, press the Place preset, then move Trigger around 0.64. You can see the boundary between `hover` and `select`, dominant-hand switching, post-deadzone axes, and haptic route update together. Then use the Alert preset and raise jitter to see stability drop and feedback shift toward warning for similar raw input values.",
+      "links": [
+        {
+          "label": "Open XR Gamepad Frame Poller",
+          "url": "../outputs/2026-08-14_html_xr_gamepad_frame_poller.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: MDN WebXR inputs、W3C WebXR Gamepads Module、W3C Gamepad API、Immersive Web Samples、WebXR Input Profiles を確認。設計: 2026-08-13 の haptic decision payload の手前に controller polling adapter を置く。実装: 単一 HTML に canvas、左右 controller 表示、profile selector、button / axis sliders、deadzone、jitter、XR support probe、optional immersive-vr request、payload copy をまとめた。検証: JSON parse、HTML script 構文、upsert / publish による days / pages / index 再生成と GitHub Pages 公開を行う。",
+      "bodyEn": "Research: reviewed MDN WebXR inputs, the W3C WebXR Gamepads Module, W3C Gamepad API, Immersive Web Samples, and WebXR Input Profiles. Design: place a controller polling adapter before the 2026-08-13 haptic decision payload. Implementation: packaged canvas, left/right controller visualization, profile selector, button / axis sliders, deadzone, jitter, XR support probe, optional immersive-vr request, and payload copy into one HTML file. Validation: parse JSON, check HTML script syntax, then run upsert / publish to regenerate days / pages / index and publish GitHub Pages."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "この数日は、anchor 保存の信頼度、pose history、haptic feedback へ進んできました。今日のサンプルは、その feedback のさらに手前にある入力読み取りを小さく切り出しています。XR UI は action を画面上のボタンだけでなく、controller の連続値、手の左右、profile、触覚の可用性まで含めて設計する必要があります。入力 adapter を先に整えると、後続の anchor / overlay / haptic 実験を再利用しやすくなります。",
+      "bodyEn": "Recent samples progressed through anchor-save confidence, pose history, and haptic feedback. Today's sample isolates the input-reading layer that comes before that feedback. XR UI needs to treat actions not only as on-screen buttons, but also as controller continuous values, handedness, profiles, and haptic availability. A clean input adapter makes later anchor / overlay / haptic experiments easier to reuse."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `XR Gamepad Frame Poller` です。実 WebXR session がなくても、疑似 controller の frame polling、profile mapping、deadzone、jitter、action decision、haptic route を観察できます。次に足すなら、昨日の `XR Haptic Priority Mixer` へ payload を直接渡し、左右 controller 別の haptic queue、Input Profiles から読み込んだ実 component 名、Web Audio cue、実機 XR frame loop の詳細ログを追加します。",
+      "bodyEn": "The selected prototype is `XR Gamepad Frame Poller`. Without a real WebXR session, it still lets you inspect synthetic controller frame polling, profile mapping, deadzone, jitter, action decisions, and haptic routing. Useful next additions are direct payload handoff into yesterday's `XR Haptic Priority Mixer`, separate haptic queues per controller, real component names loaded from Input Profiles, Web Audio cues, and detailed logs from a real XR frame loop."
+    }
+  ]
+}
