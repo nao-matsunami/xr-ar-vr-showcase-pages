@@ -1,0 +1,123 @@
+{
+  "date": "2026-08-15",
+  "headline": "XR 入力から触覚 cue までを左右別 queue で制御する",
+  "headlineEn": "Control XR input-to-haptic cues with separate left/right queues",
+  "summary": "Gamepad API の haptic actuator、MDN の `pulse()`、WebXR Gamepads Module、Immersive Web Samples、WebXR Input Profiles を確認し、XR controller の連続入力を semantic action に変換して左右別 haptic queue に流す自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing Gamepad API haptic actuators, MDN `pulse()`, the WebXR Gamepads Module, Immersive Web Samples, and WebXR Input Profiles, today's original HTML sample converts XR controller continuous input into semantic actions and routes them through separate left/right haptic queues.",
+  "keyTopics": [
+    "W3C Gamepad API は haptic actuator、supported effect、`playEffect()`、`reset()` を一般モデルとして定義し、XR controller の触覚 cue を queue 化する土台になります。",
+    "MDN の `GamepadHapticActuator.pulse()` は限定対応ながら、強度と duration を渡す旧来 fallback として読みやすく、重複 call が進行中の pulse を上書きする注意点も示しています。",
+    "WebXR Gamepads Module は XRInputSource の gamepad mapping を XR controller 向けに扱うための前提で、昨日の frame poller から今日の haptic queue へ接続しやすい。",
+    "Immersive Web の Controller State / Input Profiles サンプルは、実機 input source の buttons / axes / profiles を frame loop で見る検証入口として有用です。",
+    "WebXR Input Profiles の motion-controllers package は raw button index ではなく conceptual component として trigger / squeeze / thumbstick を扱う設計を後押しします。"
+  ],
+  "keyTopicsEn": [
+    "The W3C Gamepad API defines haptic actuators, supported effects, `playEffect()`, and `reset()` as a general model, forming a base for queued XR controller haptic cues.",
+    "MDN's `GamepadHapticActuator.pulse()` is limited in support but useful as a clear legacy fallback that accepts intensity and duration, with the important caveat that repeated calls override an in-progress pulse.",
+    "The WebXR Gamepads Module gives the XR-controller-specific mapping assumptions needed to connect yesterday's frame poller to today's haptic queue.",
+    "Immersive Web's Controller State and Input Profiles samples are useful entry points for inspecting real input-source buttons, axes, and profiles inside the frame loop.",
+    "The WebXR Input Profiles motion-controllers package encourages handling trigger, squeeze, and thumbstick as conceptual components rather than raw button indices."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: XR Haptic Queue Sequencer",
+      "url": "../outputs/2026-08-15_html_xr_haptic_queue_sequencer.html"
+    },
+    {
+      "label": "W3C: Gamepad API",
+      "url": "https://www.w3.org/TR/gamepad/"
+    },
+    {
+      "label": "MDN: GamepadHapticActuator pulse()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/GamepadHapticActuator/pulse"
+    },
+    {
+      "label": "W3C: WebXR Gamepads Module Level 1",
+      "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Web: WebXR Input Profiles",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/"
+    },
+    {
+      "label": "Immersive Web: Motion Controllers package",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/packages/motion-controllers/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、Gamepad API の haptic actuator モデルと Immersive Web Samples の Controller State / Input Profiles です。XR controller では select / squeeze の単発 event だけでなく、trigger value、squeeze value、axis、handedness、profile、触覚 actuator の可用性が同時に問題になります。面白い点は、入力を直接 UI 状態へ渡すのではなく、semantic action、priority、cooldown、左右別 queue に分けると、保存成功、拒否、警告、移動 nudge のような cue を衝突させずに整理できるところです。",
+      "bodyEn": "Today's notable references are the Gamepad API haptic actuator model and Immersive Web's Controller State / Input Profiles samples. XR controllers require more than one-shot select / squeeze events: trigger value, squeeze value, axes, handedness, profile, and haptic actuator availability all matter together. The interesting part is that routing input through semantic actions, priority, cooldown, and separate left/right queues makes save success, rejection, warning, and movement nudge cues manageable without uncontrolled conflicts.",
+      "links": [
+        {
+          "label": "W3C: Gamepad API",
+          "url": "https://www.w3.org/TR/gamepad/"
+        },
+        {
+          "label": "Immersive Web: WebXR Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルでは trigger、squeeze、thumbstick y、warning priority を動かし、`select`、`grab`、`warn`、`nudge`、`idle` に分類します。dominant hand に照準線を出し、左右 controller の queue と active pulse を canvas 上で可視化します。`warn` は左右へ mirror dispatch し、`select` や `grab` は dominant hand のみに流すため、同じ入力 adapter から触覚の局所性と全体警告の違いを試せます。",
+      "bodyEn": "The sample maps trigger, squeeze, thumbstick y, and warning priority into `select`, `grab`, `warn`, `nudge`, or `idle`. It draws an aim ray from the dominant hand and visualizes each controller's queue plus active pulse on canvas. `warn` mirrors to both hands, while `select` and `grab` stay on the dominant hand, so one input adapter can demonstrate the difference between local tactile feedback and global alerts."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では XR frame callback 内で `inputSource.gamepad` を読み、Input Profiles で conceptual component に寄せ、semantic action payload を作ります。haptics 側は `gamepad.vibrationActuator.playEffect()` があれば優先し、なければ `gamepad.hapticActuators[0].pulse()`、それもなければ Web Audio / visual cue へ落とすとテストしやすいです。Gamepad API の仕様上、効果の preempt、hidden document、NotSupportedError、supported effects の差を前提に、duration、priority、cooldown、actuator budget を adapter で吸収します。",
+      "bodyEn": "In production, read `inputSource.gamepad` inside the XR frame callback, use Input Profiles to map raw data to conceptual components, and emit semantic action payloads. The haptics layer can prefer `gamepad.vibrationActuator.playEffect()`, fall back to `gamepad.hapticActuators[0].pulse()`, then to Web Audio / visual cues for testing. Given the Gamepad API model, preemption, hidden documents, NotSupportedError, and supported-effect differences should be absorbed by adapter-level duration, priority, cooldown, and actuator-budget rules."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルからは frame、profile、mapping、trigger、squeeze、axes、dominantHand、action、priority、queue length、cooldown、dispatch latency、actuator budget を取れます。昨日の gamepad poller、一昨日の haptic priority mixer、anchor save payload、DOM Overlay、Web Audio、展示向け analytics、AI gesture classifier と組み合わせると、入力の揺れ、警告の出しすぎ、左右 cue の偏り、実機での触覚未対応 fallback を同じログで検証できます。",
+      "bodyEn": "Today's sample yields frame, profile, mapping, trigger, squeeze, axes, dominantHand, action, priority, queue length, cooldown, dispatch latency, and actuator budget. Combined with yesterday's gamepad poller, the previous haptic priority mixer, anchor-save payloads, DOM Overlay, Web Audio, exhibit analytics, or AI gesture classifiers, the same log can test input noise, overactive warnings, left/right cue imbalance, and hardware fallback when haptics are unavailable."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Gamepad API の haptic effect 実装差、`pulse()` と `playEffect()` の扱い、WebXR Gamepads Module の `xr-standard` mapping、Input Profiles registry の更新、controller と hand-only fallback の切り替え、Web Audio cue のアクセシビリティ、DOM Overlay との同時入力を継続して見ます。次は queue payload を anchor 操作やエラー回復フローに接続し、触覚 cue が作業判断を邪魔しない条件を探ります。",
+      "bodyEn": "Keep watching Gamepad API haptic-effect implementation differences, `pulse()` versus `playEffect()`, WebXR Gamepads Module `xr-standard` mapping, Input Profiles registry updates, controller / hand-only fallback switching, accessibility of Web Audio cues, and simultaneous DOM Overlay input. Next, connect the queue payload to anchor operations and error recovery flows to find when tactile cues help rather than distract."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、Warn プリセットを押してから warning priority と cooldown を動かしてください。priority が高い時は左右 queue に mirror cue が入り、cooldown を短くすると dispatch が密になります。次に Grab プリセットへ切り替えると dominant hand のみが震える設計になり、局所 feedback と全体 alert の違いを確認できます。Audio cue を有効にすると、実機 haptics がない環境でも cue の長さと強度を耳で追えます。",
+      "bodyEn": "Open the sample, press the Warn preset, then adjust warning priority and cooldown. At high priority, mirrored cues enter both queues; shortening cooldown makes dispatch denser. Switch to the Grab preset to see a dominant-hand-only pattern, clarifying local feedback versus global alerts. Enabling Audio cue lets you hear duration and intensity even without real haptic hardware.",
+      "links": [
+        {
+          "label": "Open XR Haptic Queue Sequencer",
+          "url": "../outputs/2026-08-15_html_xr_haptic_queue_sequencer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Gamepad API、MDN `pulse()`、WebXR Gamepads Module、Immersive Web Samples、Input Profiles を確認。設計: 2026-08-14 の frame poller から semantic action payload を受け、2026-08-13 の haptic mixer へ渡す中間 queue を作る。実装: 単一 HTML に canvas controller 表示、左右 queue、priority sort、cooldown、actuator budget、latency、Web Audio fallback、payload copy をまとめた。検証: JSON parse、HTML script 構文、upsert / publish による days / pages / index 再生成と GitHub Pages 公開を行う。",
+      "bodyEn": "Research: reviewed the Gamepad API, MDN `pulse()`, the WebXR Gamepads Module, Immersive Web Samples, and Input Profiles. Design: create an intermediate queue that receives semantic action payloads from the 2026-08-14 frame poller and feeds the 2026-08-13 haptic mixer. Implementation: package canvas controller visualization, left/right queues, priority sorting, cooldown, actuator budget, latency, Web Audio fallback, and payload copy into one HTML file. Validation: parse JSON, check HTML script syntax, then run upsert / publish to regenerate days / pages / index and publish GitHub Pages."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "最近の流れは anchor 保存の信頼度、pose history、haptic priority、controller polling と、空間 UI の裏側にある入力・反馈の安定化へ寄っています。今日のサンプルは、その線を一段つなぎ、input adapter と haptic adapter の間に queue policy を置きました。XR では「押したから即震える」だけではなく、どちらの手へ、どの強さで、何を上書きしてよいかを設計する必要があります。",
+      "bodyEn": "The recent sequence has moved through anchor-save confidence, pose history, haptic priority, and controller polling, focusing on the input and feedback stability behind spatial UI. Today's sample connects that line by placing queue policy between the input adapter and the haptic adapter. XR feedback design is not just 'pressed, therefore vibrate'; it must decide which hand, what strength, and what may be preempted."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `XR Haptic Queue Sequencer` です。実機 WebXR session がなくても、疑似 XR controller 入力から semantic action を作り、左右別 queue、priority、cooldown、latency、budget、Web Audio fallback を観察できます。次に足すなら、実 `XRSession.requestAnimationFrame()` から `inputSource.gamepad` を読み、`vibrationActuator.playEffect()` と `hapticActuators[0].pulse()` の実結果をログ化し、anchor 保存 / 復旧 sample に直接接続します。",
+      "bodyEn": "The selected prototype is `XR Haptic Queue Sequencer`. Without a real WebXR session, it still converts simulated XR controller input into semantic actions and exposes separate left/right queues, priority, cooldown, latency, budget, and Web Audio fallback. Useful next additions are reading real `inputSource.gamepad` values from `XRSession.requestAnimationFrame()`, logging actual `vibrationActuator.playEffect()` and `hapticActuators[0].pulse()` results, and connecting directly to anchor-save / recovery samples."
+    }
+  ]
+}

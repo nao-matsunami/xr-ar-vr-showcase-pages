@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XR Haptic Queue Sequencer</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #081018;
+      --panel: rgba(8, 18, 25, 0.92);
+      --line: rgba(132, 220, 255, 0.23);
+      --text: #f0faff;
+      --muted: #9db7c6;
+      --cyan: #7cd9ff;
+      --green: #8cf0b6;
+      --gold: #ffd36b;
+      --red: #ff748a;
+      --ink: #071018;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 12%, rgba(124, 217, 255, 0.17), transparent 25%),
+        radial-gradient(circle at 82% 14%, rgba(255, 211, 107, 0.12), transparent 24%),
+        linear-gradient(180deg, #071018, #102735 58%, #071018);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 28px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.8vw, 2.45rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 830px;
+      font-size: 0.94rem;
+    }
+
+    .badge,
+    .panel,
+    .stage,
+    .log {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+    }
+
+    .badge {
+      min-width: 250px;
+      padding: 12px 14px;
+    }
+
+    .badge b {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 650;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .badge span {
+      display: block;
+      margin-top: 5px;
+      color: var(--green);
+      font-weight: 760;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+      gap: 14px;
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      min-height: 620px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 620px;
+      background: #071018;
+      touch-action: none;
+    }
+
+    .overlay {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .readout {
+      padding: 10px;
+      border: 1px solid rgba(240, 250, 255, 0.12);
+      border-radius: 8px;
+      background: rgba(5, 12, 18, 0.78);
+      min-width: 0;
+    }
+
+    .readout small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .readout strong {
+      display: block;
+      margin-top: 4px;
+      font-size: clamp(0.9rem, 1.8vw, 1.15rem);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel {
+      padding: 14px;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      letter-spacing: 0;
+    }
+
+    .control {
+      display: grid;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    input[type="range"],
+    select {
+      width: 100%;
+      accent-color: var(--cyan);
+    }
+
+    select {
+      border: 1px solid rgba(240, 250, 255, 0.14);
+      border-radius: 8px;
+      background: rgba(240, 250, 255, 0.08);
+      color: var(--text);
+      min-height: 40px;
+      padding: 0 10px;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 1px solid rgba(240, 250, 255, 0.18);
+      background: rgba(240, 250, 255, 0.08);
+      color: var(--text);
+      border-radius: 8px;
+      min-height: 42px;
+      padding: 9px 10px;
+      font-weight: 720;
+      cursor: pointer;
+    }
+
+    button.primary {
+      color: var(--ink);
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+    }
+
+    button.warn {
+      border-color: rgba(255, 116, 138, 0.35);
+      background: rgba(255, 116, 138, 0.11);
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .chips button {
+      min-height: 34px;
+      padding: 6px 8px;
+      font-size: 0.78rem;
+    }
+
+    .log {
+      min-height: 142px;
+      max-height: 218px;
+      overflow: auto;
+      padding: 10px;
+      color: var(--muted);
+      font: 0.76rem/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .log div { margin-bottom: 4px; }
+
+    @media (max-width: 900px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .badge {
+        min-width: 0;
+      }
+
+      .overlay {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      canvas {
+        height: 560px;
+      }
+
+      .stage {
+        min-height: 560px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      main {
+        width: min(100vw - 18px, 1180px);
+        padding-top: 14px;
+      }
+
+      .overlay {
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        gap: 6px;
+      }
+
+      .readout {
+        padding: 8px;
+      }
+
+      .buttons,
+      .chips {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>XR Haptic Queue Sequencer</h1>
+        <p class="subtitle">
+          XRInputSource.gamepad の連続入力を semantic action に変換し、左右別の haptic cue queue、cooldown、preempt、Web Audio 代替 cue までを 1 画面で試す最小サンプルです。
+        </p>
+      </div>
+      <div class="badge">
+        <b>Today's focus</b>
+        <span>input -> haptic queue</span>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <canvas id="stage" width="920" height="620" aria-label="XR haptic queue visualizer"></canvas>
+        <div class="overlay">
+          <div class="readout"><small>dominant action</small><strong id="actionReadout">idle</strong></div>
+          <div class="readout"><small>dispatch</small><strong id="dispatchReadout">waiting</strong></div>
+          <div class="readout"><small>queue length</small><strong id="queueReadout">0 / 0</strong></div>
+          <div class="readout"><small>adapter payload</small><strong id="payloadReadout">frame 0</strong></div>
+        </div>
+      </div>
+
+      <aside class="controls">
+        <section class="panel">
+          <h2>Controller input</h2>
+          <div class="control">
+            <label for="profile">profile <span id="profileValue">generic-trigger-squeeze-thumbstick</span></label>
+            <select id="profile">
+              <option value="generic-trigger-squeeze-thumbstick">generic-trigger-squeeze-thumbstick</option>
+              <option value="oculus-touch-v3">oculus-touch-v3</option>
+              <option value="valve-index">valve-index</option>
+              <option value="hand-only-fallback">hand-only-fallback</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="trigger">trigger <span id="triggerValue">0.62</span></label>
+            <input id="trigger" type="range" min="0" max="1" step="0.01" value="0.62">
+          </div>
+          <div class="control">
+            <label for="squeeze">squeeze <span id="squeezeValue">0.20</span></label>
+            <input id="squeeze" type="range" min="0" max="1" step="0.01" value="0.20">
+          </div>
+          <div class="control">
+            <label for="axis">thumbstick y <span id="axisValue">0.35</span></label>
+            <input id="axis" type="range" min="-1" max="1" step="0.01" value="0.35">
+          </div>
+          <div class="chips">
+            <button type="button" data-preset="place">Place</button>
+            <button type="button" data-preset="grab">Grab</button>
+            <button type="button" data-preset="warn">Warn</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Queue policy</h2>
+          <div class="control">
+            <label for="priority">warning priority <span id="priorityValue">0.74</span></label>
+            <input id="priority" type="range" min="0" max="1" step="0.01" value="0.74">
+          </div>
+          <div class="control">
+            <label for="cooldown">cooldown ms <span id="cooldownValue">240</span></label>
+            <input id="cooldown" type="range" min="80" max="700" step="20" value="240">
+          </div>
+          <div class="control">
+            <label for="budget">actuator budget <span id="budgetValue">2</span></label>
+            <input id="budget" type="range" min="1" max="4" step="1" value="2">
+          </div>
+          <div class="control">
+            <label for="latency">dispatch latency ms <span id="latencyValue">46</span></label>
+            <input id="latency" type="range" min="0" max="180" step="2" value="46">
+          </div>
+          <div class="buttons">
+            <button class="primary" type="button" id="inject">Inject cue</button>
+            <button class="warn" type="button" id="clear">Clear queue</button>
+            <button type="button" id="audio">Audio cue</button>
+            <button type="button" id="copy">Copy payload</button>
+          </div>
+        </section>
+
+        <section class="log" id="log" aria-live="polite"></section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const ui = {};
+    for (const id of ["profile", "trigger", "squeeze", "axis", "priority", "cooldown", "budget", "latency"]) {
+      ui[id] = document.getElementById(id);
+      ui[`${id}Value`] = document.getElementById(`${id}Value`);
+    }
+
+    const readouts = {
+      action: document.getElementById("actionReadout"),
+      dispatch: document.getElementById("dispatchReadout"),
+      queue: document.getElementById("queueReadout"),
+      payload: document.getElementById("payloadReadout"),
+      log: document.getElementById("log")
+    };
+
+    const state = {
+      frame: 0,
+      audio: false,
+      audioContext: null,
+      lastDispatch: { left: -999, right: -999 },
+      queue: { left: [], right: [] },
+      active: [],
+      pointer: { x: 0.54, y: 0.44 },
+      payload: {}
+    };
+
+    const colors = {
+      select: "#8cf0b6",
+      grab: "#7cd9ff",
+      warn: "#ff748a",
+      nudge: "#ffd36b",
+      idle: "#9db7c6"
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function nowMs() {
+      return performance.now();
+    }
+
+    function log(message) {
+      const line = document.createElement("div");
+      line.textContent = `${new Date().toLocaleTimeString()} ${message}`;
+      readouts.log.prepend(line);
+      while (readouts.log.children.length > 18) {
+        readouts.log.lastChild.remove();
+      }
+    }
+
+    function updateLabels() {
+      ui.profileValue.textContent = ui.profile.value;
+      ui.triggerValue.textContent = Number(ui.trigger.value).toFixed(2);
+      ui.squeezeValue.textContent = Number(ui.squeeze.value).toFixed(2);
+      ui.axisValue.textContent = Number(ui.axis.value).toFixed(2);
+      ui.priorityValue.textContent = Number(ui.priority.value).toFixed(2);
+      ui.cooldownValue.textContent = ui.cooldown.value;
+      ui.budgetValue.textContent = ui.budget.value;
+      ui.latencyValue.textContent = ui.latency.value;
+    }
+
+    function classifyInput() {
+      const trigger = Number(ui.trigger.value);
+      const squeeze = Number(ui.squeeze.value);
+      const axis = Number(ui.axis.value);
+      const warningPriority = Number(ui.priority.value);
+      let action = "idle";
+      let intensity = 0;
+      let duration = 0;
+      let priority = 0.1;
+
+      if (warningPriority > 0.82 && Math.abs(axis) > 0.55) {
+        action = "warn";
+        intensity = 0.92;
+        duration = 180;
+        priority = warningPriority;
+      } else if (squeeze > 0.58) {
+        action = "grab";
+        intensity = clamp(0.38 + squeeze * 0.55, 0, 1);
+        duration = 120;
+        priority = 0.68;
+      } else if (trigger > 0.54) {
+        action = "select";
+        intensity = clamp(0.28 + trigger * 0.55, 0, 1);
+        duration = 82;
+        priority = 0.58;
+      } else if (Math.abs(axis) > 0.42) {
+        action = "nudge";
+        intensity = 0.34;
+        duration = 48;
+        priority = 0.34;
+      }
+
+      const dominantHand = axis < -0.18 ? "left" : "right";
+      const otherHand = dominantHand === "left" ? "right" : "left";
+      return { action, intensity, duration, priority, dominantHand, otherHand, trigger, squeeze, axis };
+    }
+
+    function cueFromInput(input) {
+      if (input.action === "idle") return null;
+      const strength = input.action === "warn" ? 1 : input.intensity;
+      return {
+        id: `${input.action}-${state.frame}`,
+        action: input.action,
+        hand: input.dominantHand,
+        mirrorHand: input.action === "warn" ? input.otherHand : null,
+        intensity: strength,
+        duration: input.duration,
+        priority: input.priority,
+        createdAt: nowMs(),
+        dispatchAt: nowMs() + Number(ui.latency.value)
+      };
+    }
+
+    function enqueue(cue) {
+      if (!cue) return;
+      const targets = cue.mirrorHand ? [cue.hand, cue.mirrorHand] : [cue.hand];
+      for (const hand of targets) {
+        const item = { ...cue, hand };
+        const bucket = state.queue[hand];
+        const existing = bucket.findIndex((queued) => queued.action === item.action);
+        if (existing >= 0) {
+          bucket[existing] = item;
+        } else {
+          bucket.push(item);
+        }
+        bucket.sort((a, b) => b.priority - a.priority || a.createdAt - b.createdAt);
+      }
+    }
+
+    function playAudioCue(cue) {
+      if (!state.audio) return;
+      if (!state.audioContext) {
+        state.audioContext = new AudioContext();
+      }
+      const osc = state.audioContext.createOscillator();
+      const gain = state.audioContext.createGain();
+      const base = cue.action === "warn" ? 180 : cue.action === "grab" ? 110 : cue.action === "select" ? 280 : 420;
+      osc.frequency.value = base;
+      gain.gain.value = 0.0001;
+      osc.connect(gain).connect(state.audioContext.destination);
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.035 * cue.intensity, state.audioContext.currentTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, state.audioContext.currentTime + cue.duration / 1000);
+      osc.stop(state.audioContext.currentTime + cue.duration / 1000 + 0.02);
+    }
+
+    function dispatchQueues() {
+      const t = nowMs();
+      const budget = Number(ui.budget.value);
+      const cooldown = Number(ui.cooldown.value);
+      const dispatched = [];
+
+      for (const hand of ["left", "right"]) {
+        const bucket = state.queue[hand];
+        if (!bucket.length || dispatched.length >= budget) continue;
+        if (t - state.lastDispatch[hand] < cooldown) continue;
+        const cue = bucket[0];
+        if (cue.dispatchAt > t) continue;
+        bucket.shift();
+        state.lastDispatch[hand] = t;
+        state.active.push({ ...cue, startedAt: t, endsAt: t + cue.duration });
+        dispatched.push(cue);
+        playAudioCue(cue);
+      }
+
+      state.active = state.active.filter((cue) => cue.endsAt > t);
+      if (dispatched.length) {
+        const summary = dispatched.map((cue) => `${cue.hand}:${cue.action}@${cue.intensity.toFixed(2)}`).join(" ");
+        readouts.dispatch.textContent = summary;
+      }
+    }
+
+    function drawController(hand, x, y, input) {
+      const isDominant = hand === input.dominantHand;
+      const queued = state.queue[hand].length;
+      const active = state.active.find((cue) => cue.hand === hand);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.strokeStyle = active ? colors[active.action] : isDominant ? colors[input.action] : "rgba(240,250,255,0.28)";
+      ctx.lineWidth = active ? 4 : 2;
+      ctx.fillStyle = "rgba(240,250,255,0.06)";
+      roundRect(-72, -116, 144, 232, 28);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = active ? colors[active.action] : "rgba(240,250,255,0.72)";
+      ctx.font = "700 18px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(hand.toUpperCase(), 0, -82);
+      bar(-42, -42, 84, 12, input.trigger, "trigger", colors.select);
+      bar(-42, -12, 84, 12, input.squeeze, "squeeze", colors.grab);
+      const stickY = clamp(input.axis, -1, 1) * 34;
+      ctx.strokeStyle = "rgba(240,250,255,0.24)";
+      ctx.beginPath();
+      ctx.arc(0, 46, 38, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = colors.nudge;
+      ctx.beginPath();
+      ctx.arc(0, 46 + stickY, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(240,250,255,0.75)";
+      ctx.font = "600 13px Inter, sans-serif";
+      ctx.fillText(`queue ${queued}`, 0, 98);
+      if (active) {
+        const p = clamp((active.endsAt - nowMs()) / active.duration, 0, 1);
+        ctx.globalAlpha = 0.6 + p * 0.4;
+        ctx.strokeStyle = colors[active.action];
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.arc(0, 0, 88 + p * 20, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function bar(x, y, w, h, value, label, color) {
+      ctx.fillStyle = "rgba(240,250,255,0.12)";
+      roundRect(x, y, w, h, 6);
+      ctx.fill();
+      ctx.fillStyle = color;
+      roundRect(x, y, w * clamp(value, 0, 1), h, 6);
+      ctx.fill();
+      ctx.fillStyle = "rgba(240,250,255,0.72)";
+      ctx.font = "600 11px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(label, x + w / 2, y - 7);
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function drawTimeline() {
+      const left = 130;
+      const top = 420;
+      const width = canvas.width - 260;
+      ctx.fillStyle = "rgba(240,250,255,0.06)";
+      roundRect(left, top, width, 94, 8);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(240,250,255,0.14)";
+      ctx.stroke();
+
+      for (const hand of ["left", "right"]) {
+        const y = hand === "left" ? top + 30 : top + 65;
+        ctx.fillStyle = "rgba(240,250,255,0.7)";
+        ctx.font = "650 12px Inter, sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(hand, left - 12, y + 4);
+        ctx.strokeStyle = "rgba(240,250,255,0.18)";
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(left + width, y);
+        ctx.stroke();
+        state.queue[hand].slice(0, 6).forEach((cue, index) => {
+          const x = left + 34 + index * 62;
+          ctx.fillStyle = colors[cue.action];
+          roundRect(x - 18, y - 11, 36, 22, 6);
+          ctx.fill();
+          ctx.fillStyle = "#071018";
+          ctx.font = "800 11px Inter, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(cue.action.slice(0, 1).toUpperCase(), x, y + 4);
+        });
+      }
+    }
+
+    function render() {
+      state.frame += 1;
+      updateLabels();
+      const input = classifyInput();
+      if (state.frame % 28 === 0) enqueue(cueFromInput(input));
+      dispatchQueues();
+
+      state.payload = {
+        frame: state.frame,
+        profile: ui.profile.value,
+        gamepad: {
+          mapping: "xr-standard",
+          trigger: input.trigger,
+          squeeze: input.squeeze,
+          axes: [0, input.axis]
+        },
+        action: input.action,
+        dominantHand: input.dominantHand,
+        queue: {
+          left: state.queue.left.length,
+          right: state.queue.right.length
+        },
+        haptics: {
+          strategy: "playEffect-or-pulse-fallback",
+          cooldownMs: Number(ui.cooldown.value),
+          actuatorBudget: Number(ui.budget.value)
+        }
+      };
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, "#081018");
+      gradient.addColorStop(1, "#123240");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = "rgba(124,217,255,0.13)";
+      for (let x = 34; x < canvas.width; x += 52) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + 80, canvas.height);
+        ctx.stroke();
+      }
+
+      drawController("left", canvas.width * 0.28, 210, input);
+      drawController("right", canvas.width * 0.72, 210, input);
+
+      const aimX = input.dominantHand === "left" ? canvas.width * 0.28 : canvas.width * 0.72;
+      const targetX = canvas.width * state.pointer.x;
+      const targetY = canvas.height * state.pointer.y;
+      ctx.strokeStyle = colors[input.action];
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 10]);
+      ctx.beginPath();
+      ctx.moveTo(aimX, 260);
+      ctx.lineTo(targetX, targetY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = colors[input.action];
+      ctx.beginPath();
+      ctx.arc(targetX, targetY, 14 + input.intensity * 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawTimeline();
+
+      readouts.action.textContent = `${input.dominantHand}:${input.action}`;
+      readouts.queue.textContent = `${state.queue.left.length} / ${state.queue.right.length}`;
+      readouts.payload.textContent = `frame ${state.frame}`;
+      requestAnimationFrame(render);
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      canvas.setPointerCapture(event.pointerId);
+      const rect = canvas.getBoundingClientRect();
+      state.pointer.x = clamp((event.clientX - rect.left) / rect.width, 0.05, 0.95);
+      state.pointer.y = clamp((event.clientY - rect.top) / rect.height, 0.08, 0.78);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!event.buttons) return;
+      const rect = canvas.getBoundingClientRect();
+      state.pointer.x = clamp((event.clientX - rect.left) / rect.width, 0.05, 0.95);
+      state.pointer.y = clamp((event.clientY - rect.top) / rect.height, 0.08, 0.78);
+    });
+
+    document.querySelectorAll("[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const preset = button.dataset.preset;
+        const presets = {
+          place: { trigger: 0.72, squeeze: 0.18, axis: 0.18, priority: 0.52 },
+          grab: { trigger: 0.38, squeeze: 0.78, axis: -0.22, priority: 0.64 },
+          warn: { trigger: 0.24, squeeze: 0.18, axis: 0.72, priority: 0.93 }
+        };
+        Object.entries(presets[preset]).forEach(([key, value]) => {
+          ui[key].value = value;
+        });
+        log(`preset ${preset}`);
+      });
+    });
+
+    document.getElementById("inject").addEventListener("click", () => {
+      enqueue(cueFromInput(classifyInput()));
+      log("manual cue injected");
+    });
+
+    document.getElementById("clear").addEventListener("click", () => {
+      state.queue.left = [];
+      state.queue.right = [];
+      state.active = [];
+      readouts.dispatch.textContent = "cleared";
+      log("queue cleared");
+    });
+
+    document.getElementById("audio").addEventListener("click", async () => {
+      state.audio = !state.audio;
+      if (state.audio && !state.audioContext) {
+        state.audioContext = new AudioContext();
+      }
+      if (state.audioContext?.state === "suspended") {
+        await state.audioContext.resume();
+      }
+      log(`audio cue ${state.audio ? "enabled" : "disabled"}`);
+    });
+
+    document.getElementById("copy").addEventListener("click", async () => {
+      await navigator.clipboard?.writeText(JSON.stringify(state.payload, null, 2));
+      log("payload copied");
+    });
+
+    log("sample ready: gamepad input feeds left/right haptic queues");
+    render();
+  </script>
+</body>
+</html>
