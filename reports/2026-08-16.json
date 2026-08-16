@@ -1,0 +1,123 @@
+{
+  "date": "2026-08-16",
+  "headline": "Hit-test 結果を anchor 作成前に安定度でふるい分ける",
+  "headlineEn": "Gate hit-test results by stability before creating anchors",
+  "summary": "WebXR Hit Test Module、WebXR Anchors Module、WebXR Device API、MDN の `getHitTestResults()`、Immersive Web の hit-test / anchors samples を確認し、疑似 hit-test 結果を距離・傾き・履歴安定度・触覚 cue で評価して anchor commit を許可/保留する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Hit Test Module, WebXR Anchors Module, WebXR Device API, MDN `getHitTestResults()`, and Immersive Web hit-test / anchors samples, today's original HTML sample evaluates simulated hit-test results by distance, tilt, history stability, and haptic cue before allowing or holding anchor commits.",
+  "keyTopics": [
+    "W3C WebXR Hit Test Module は `hit-test` feature descriptor、`entityTypes`、`offsetRay`、`XRHitTestSource`、`XRHitTestResult.getPose()` を整理しており、配置候補の入力モデルを作る基礎になります。",
+    "Hit Test Module の説明では、ray が現実世界の geometry と交差した点と surface orientation を返すことが主目的で、床・壁・メッシュへの配置 UX と直結します。",
+    "WebXR Anchors Module は 2026-04-27 の Editor's Draft で、`anchors` feature、`XRAnchor.anchorSpace`、`XRFrame.createAnchor()`、`XRHitTestResult.createAnchor()`、persistent anchor の考え方を示しています。",
+    "MDN の `XRFrame.getHitTestResults()` は secure context と限定対応を明示し、実装では `requestHitTestSource()` を作って frame loop 内で結果を読む流れを確認できます。",
+    "Immersive Web Samples の hit-test / anchors ページは外部デモとして参照にとどめ、自作サンプルでは実機がなくても gate policy とログ payload を検証できる形にしました。"
+  ],
+  "keyTopicsEn": [
+    "The W3C WebXR Hit Test Module defines the `hit-test` feature descriptor, `entityTypes`, `offsetRay`, `XRHitTestSource`, and `XRHitTestResult.getPose()`, forming the placement-candidate input model.",
+    "The Hit Test Module frames the core purpose as ray intersection with real-world geometry plus surface orientation, directly supporting floor, wall, and mesh placement UX.",
+    "The WebXR Anchors Module Editor's Draft dated 2026-04-27 describes the `anchors` feature, `XRAnchor.anchorSpace`, `XRFrame.createAnchor()`, `XRHitTestResult.createAnchor()`, and persistent anchors.",
+    "MDN's `XRFrame.getHitTestResults()` page calls out secure context and limited support, while showing the production flow of creating a hit-test source and reading results inside the frame loop.",
+    "Immersive Web hit-test / anchors samples are used as reference demos only; today's original sample makes gate policy and log payload testable without a real device."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Hit-Test Anchor Commit Gate",
+      "url": "../outputs/2026-08-16_html_hit_test_anchor_commit_gate.html"
+    },
+    {
+      "label": "W3C: WebXR Hit Test Module",
+      "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "MDN: XRFrame.getHitTestResults()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRFrame/getHitTestResults"
+    },
+    {
+      "label": "Immersive Web Sample: Hit Test",
+      "url": "https://immersive-web.github.io/webxr-samples/hit-test.html"
+    },
+    {
+      "label": "Immersive Web Sample: Anchors",
+      "url": "https://immersive-web.github.io/webxr-samples/anchors.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、WebXR Hit Test Module と WebXR Anchors Module の接続点です。hit-test は ray と現実 geometry の交差結果を返し、anchors はその pose を環境に固定して追跡する仕組みを担います。面白いのは、`XRHitTestResult.createAnchor()` があるからといって即作成すればよいわけではなく、実際の UX では結果の傾き、距離、entity type、数フレームの安定度、ユーザーへの触覚/音 cue を見て「今は置いてよいか」を決める policy が必要になるところです。",
+      "bodyEn": "Today's notable point is the connection between the WebXR Hit Test Module and WebXR Anchors Module. Hit testing returns intersections between a ray and real-world geometry, while anchors keep the resulting pose tracked relative to the environment. The interesting part is that `XRHitTestResult.createAnchor()` does not mean every result should be committed immediately; practical UX needs policy around surface tilt, distance, entity type, multi-frame stability, and tactile/audio cues before deciding whether placement is allowed.",
+      "links": [
+        {
+          "label": "W3C: WebXR Hit Test Module",
+          "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+        },
+        {
+          "label": "Immersive Web: WebXR Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルでは `entityTypes` を auto / plane / point / mesh で切り替え、`offsetRay`、surface tilt、target distance、tracking jitter、history window を操作します。canvas には疑似 ray、候補 entity、best result、履歴 centroid、commit ring、作成済み anchor を描きます。score が 72% 以上なら Commit で anchor を置け、低い場合は hold / reject として cue を変えるため、reticle が単なる点ではなく「置ける理由」を可視化する UI として扱えます。",
+      "bodyEn": "The sample lets you switch `entityTypes` between auto / plane / point / mesh and adjust `offsetRay`, surface tilt, target distance, tracking jitter, and history window. The canvas draws the simulated ray, candidate entities, best result, history centroid, commit ring, and committed anchors. When the score is at least 72%, Commit places an anchor; otherwise the state becomes hold / reject with different cues, turning the reticle from a simple dot into UI that shows why placement is allowed."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機では `navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['hit-test'], optionalFeatures: ['anchors', 'dom-overlay'] })` のように開始し、viewer space から `requestHitTestSource()` を作り、`XRSession.requestAnimationFrame()` 内で `frame.getHitTestResults(source)` を読む流れになります。anchor 作成は `hitTestResult.createAnchor()` または `frame.createAnchor(pose, space)` へ進みますが、frame の active 期間、feature policy / secure context、entity type の有無、persistent anchor の上限や削除を adapter 側で扱う必要があります。",
+      "bodyEn": "On real devices, the flow is to request an `immersive-ar` session with `requiredFeatures: ['hit-test']` and optional anchors / DOM overlay as needed, create a hit-test source from viewer space, then read `frame.getHitTestResults(source)` inside `XRSession.requestAnimationFrame()`. Anchor creation proceeds through `hitTestResult.createAnchor()` or `frame.createAnchor(pose, space)`, but the adapter should handle frame active lifetime, feature policy / secure context, missing entity types, and persistent-anchor limits or deletion."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルからは frame、feature list、entityTypes、offsetRay、best entity、distance、surface tilt、confidence、history stability、normal score、gate decision、haptic cue、anchor count を取れます。昨日の haptic queue、過去の anchor restore / recovery、DOM Overlay、Depth Sensing、Plane Semantic router、展示向けログ、AI による置き場所分類と組み合わせると、配置前の迷い、誤配置の原因、床/壁/メッシュの切り替え、cue の出しすぎを一つの payload で追えます。",
+      "bodyEn": "Today's sample emits frame, feature list, entityTypes, offsetRay, best entity, distance, surface tilt, confidence, history stability, normal score, gate decision, haptic cue, and anchor count. Combined with yesterday's haptic queue, earlier anchor restore / recovery samples, DOM Overlay, Depth Sensing, Plane Semantic router, exhibit logs, or AI placement classification, the same payload can track hesitation before placement, causes of bad commits, floor / wall / mesh switching, and overactive cues."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Hit Test Module の `entityTypes` と transient input hit-test、Anchors Module の `persistentAnchors` / `restorePersistentAnchor()`、WebXR Device API の frame active lifetime、Permissions Policy の `xr-spatial-tracking`、実ブラウザでの anchors 対応差、Depth Sensing / plane detection / mesh 情報との統合を継続して見ます。次は commit gate を実際の復旧フローに接続し、置いた anchor が drift した時に再 hit-test する条件を作ります。",
+      "bodyEn": "Keep watching Hit Test `entityTypes` and transient input hit tests, Anchors `persistentAnchors` / `restorePersistentAnchor()`, WebXR frame active lifetime, `xr-spatial-tracking` Permissions Policy, browser differences in anchors support, and integration with Depth Sensing / plane detection / mesh data. Next, connect the commit gate to an actual recovery flow and define when a drifted anchor should be re-hit-tested."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、Floor プリセットを押してから Commit してください。score が十分なら anchor が配置されます。次に Noisy プリセットへ切り替えると、jitter、距離、傾きの悪化で gate が hold / reject に落ち、cue も warning 系へ変わります。pointer drag で `offsetRay` を動かすと、中央から外れた ray が confidence と安定度へどう影響するかを見られます。",
+      "bodyEn": "Open the sample, press the Floor preset, then Commit. If the score is high enough, an anchor is placed. Switch to the Noisy preset to see jitter, distance, and tilt push the gate into hold / reject and change the cue toward warning. Dragging on the canvas moves `offsetRay`, showing how an off-center ray affects confidence and stability.",
+      "links": [
+        {
+          "label": "Open Hit-Test Anchor Commit Gate",
+          "url": "../outputs/2026-08-16_html_hit_test_anchor_commit_gate.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Hit Test Module、Anchors Module、WebXR Device API、MDN `getHitTestResults()`、Immersive Web の hit-test / anchors samples を確認。設計: 2026-08-15 の haptic queue から、anchor 操作へ戻るための commit gate を作る。実装: 単一 HTML に疑似 ray、entity 候補、履歴安定度、score、gate state、haptic cue、anchor 配置、payload ログをまとめた。検証: JSON parse、HTML script 構文、gallery 再生成、publish、公開 URL の HTTP 確認まで行う。",
+      "bodyEn": "Research: reviewed the WebXR Hit Test Module, Anchors Module, WebXR Device API, MDN `getHitTestResults()`, and Immersive Web hit-test / anchors samples. Design: move from the 2026-08-15 haptic queue back into anchor operations through a commit gate. Implementation: package a simulated ray, entity candidates, history stability, score, gate state, haptic cue, anchor placement, and payload log into one HTML file. Validation: parse JSON, check HTML script syntax, rebuild the gallery, publish, and verify public URLs by HTTP."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日は controller 入力と haptics に寄っていましたが、今日のサンプルで anchor 操作へ戻しました。XR の配置 UI は hit-test の瞬間値だけでは弱く、入力・環境理解・feedback をまとめた gate として考える方が実装しやすいです。特に `entityTypes`、pose stability、cue policy を同じ payload に入れると、実機差が出た時に「どの層が悪いか」を切り分けやすくなります。",
+      "bodyEn": "The last few days focused on controller input and haptics; today's sample moves back into anchor operations. XR placement UI is weak if it trusts only an instantaneous hit-test result, and it becomes easier to implement when treated as a gate that combines input, environment understanding, and feedback. Putting `entityTypes`, pose stability, and cue policy in the same payload makes device-specific failures easier to isolate."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Hit-Test Anchor Commit Gate` です。実 WebXR session がなくても、plane / point / mesh の疑似 hit-test 候補を評価し、安定していれば anchor を置く、悪ければ hold / reject にする流れを確認できます。次に足すなら、実 `XRHitTestResult.createAnchor()` の成功/失敗ログ、persistent handle、drift 検知後の re-hit-test、昨日の左右別 haptic queue への cue dispatch を接続します。",
+      "bodyEn": "The selected prototype is `Hit-Test Anchor Commit Gate`. Without a real WebXR session, it evaluates simulated plane / point / mesh hit-test candidates and lets stable results place anchors while weak results are held or rejected. Useful next additions are real `XRHitTestResult.createAnchor()` success/failure logging, persistent handles, re-hit-testing after drift detection, and cue dispatch into yesterday's separate left/right haptic queues."
+    }
+  ]
+}

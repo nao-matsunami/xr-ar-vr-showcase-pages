@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hit-Test Anchor Commit Gate</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #081017;
+      --panel: rgba(9, 18, 24, 0.92);
+      --line: rgba(148, 217, 255, 0.24);
+      --text: #eef9ff;
+      --muted: #9fb7c3;
+      --cyan: #82dcff;
+      --green: #83efad;
+      --amber: #ffd36f;
+      --red: #ff7788;
+      --blue: #88a8ff;
+      --ink: #061017;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 12%, rgba(130, 220, 255, 0.16), transparent 25%),
+        radial-gradient(circle at 84% 16%, rgba(255, 211, 111, 0.10), transparent 23%),
+        linear-gradient(180deg, #071017, #122735 58%, #071017);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 28px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.8vw, 2.45rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      max-width: 830px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+
+    .badge,
+    .panel,
+    .stage,
+    .log {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+    }
+
+    .badge {
+      min-width: 250px;
+      padding: 12px 14px;
+    }
+
+    .badge b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .badge span {
+      display: block;
+      margin-top: 5px;
+      color: var(--green);
+      font-weight: 760;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+      gap: 14px;
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      min-height: 620px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 620px;
+      background: #071017;
+      touch-action: none;
+    }
+
+    .overlay {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .readout {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(238, 249, 255, 0.12);
+      border-radius: 8px;
+      background: rgba(5, 12, 18, 0.78);
+    }
+
+    .readout small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .readout strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--text);
+      font-size: clamp(0.95rem, 1.9vw, 1.2rem);
+      line-height: 1.15;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .panel {
+      padding: 14px;
+    }
+
+    .panel h2,
+    .log h2 {
+      margin: 0 0 12px;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--cyan);
+    }
+
+    .control {
+      display: grid;
+      gap: 7px;
+      margin: 11px 0;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    label output {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+    }
+
+    select,
+    button {
+      width: 100%;
+      border: 1px solid rgba(238, 249, 255, 0.15);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      font: inherit;
+    }
+
+    select {
+      padding: 10px;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    button {
+      min-height: 40px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 720;
+    }
+
+    button.primary {
+      color: var(--ink);
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+    }
+
+    button.warn {
+      color: var(--ink);
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--amber), #ff9b73);
+    }
+
+    .log {
+      padding: 14px;
+    }
+
+    pre {
+      margin: 0;
+      max-height: 230px;
+      overflow: auto;
+      color: #cfe9f5;
+      font-size: 0.77rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .note {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 860px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .badge {
+        min-width: 0;
+      }
+
+      .overlay {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      canvas {
+        height: 560px;
+      }
+
+      .stage {
+        min-height: 560px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Hit-Test Anchor Commit Gate</h1>
+        <p class="subtitle">疑似 WebXR hit-test 結果を plane / point / mesh で比較し、距離・傾き・履歴安定度・触覚 cue の状態から anchor 作成を許可するか保留する最小サンプルです。</p>
+      </div>
+      <div class="badge">
+        <b>今日の試作</b>
+        <span id="badgeText">commit gate warming up</span>
+      </div>
+    </header>
+
+    <section class="layout" aria-label="hit-test anchor gate simulator">
+      <div class="stage">
+        <canvas id="stage" width="980" height="620"></canvas>
+        <div class="overlay">
+          <div class="readout"><small>Commit score</small><strong id="scoreOut">0%</strong></div>
+          <div class="readout"><small>Best entity</small><strong id="entityOut">plane</strong></div>
+          <div class="readout"><small>Gate state</small><strong id="gateOut">hold</strong></div>
+          <div class="readout"><small>Haptic cue</small><strong id="cueOut">idle</strong></div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="panel">
+          <h2>Input</h2>
+          <div class="control">
+            <label for="entityMode">entityTypes <output id="entityModeOut">auto</output></label>
+            <select id="entityMode">
+              <option value="auto">auto: plane + point + mesh</option>
+              <option value="plane">plane only</option>
+              <option value="point">point only</option>
+              <option value="mesh">mesh only</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="rayX">offsetRay x <output id="rayXOut">0.00</output></label>
+            <input id="rayX" type="range" min="-1" max="1" value="0" step="0.01">
+          </div>
+          <div class="control">
+            <label for="rayY">offsetRay y <output id="rayYOut">0.25</output></label>
+            <input id="rayY" type="range" min="-0.45" max="0.75" value="0.25" step="0.01">
+          </div>
+          <div class="control">
+            <label for="surfaceTilt">surface tilt <output id="surfaceTiltOut">12 deg</output></label>
+            <input id="surfaceTilt" type="range" min="0" max="48" value="12" step="1">
+          </div>
+          <div class="control">
+            <label for="distance">target distance <output id="distanceOut">2.0 m</output></label>
+            <input id="distance" type="range" min="0.6" max="5.0" value="2.0" step="0.1">
+          </div>
+          <div class="control">
+            <label for="jitter">tracking jitter <output id="jitterOut">18 mm</output></label>
+            <input id="jitter" type="range" min="0" max="80" value="18" step="1">
+          </div>
+          <div class="control">
+            <label for="history">history window <output id="historyOut">14 frames</output></label>
+            <input id="history" type="range" min="4" max="36" value="14" step="1">
+          </div>
+          <div class="button-grid">
+            <button id="presetFloor" type="button">Floor</button>
+            <button id="presetWall" type="button">Wall</button>
+            <button id="presetNoisy" type="button" class="warn">Noisy</button>
+            <button id="commitNow" type="button" class="primary">Commit</button>
+          </div>
+          <p class="note">Commit は score が 72% 以上の時だけ anchor を作成します。pointer drag で offsetRay を直接動かせます。</p>
+        </div>
+
+        <div class="log">
+          <h2>Frame payload</h2>
+          <pre id="payload"></pre>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      entityMode: document.getElementById("entityMode"),
+      rayX: document.getElementById("rayX"),
+      rayY: document.getElementById("rayY"),
+      surfaceTilt: document.getElementById("surfaceTilt"),
+      distance: document.getElementById("distance"),
+      jitter: document.getElementById("jitter"),
+      history: document.getElementById("history")
+    };
+    const outs = {
+      entityMode: document.getElementById("entityModeOut"),
+      rayX: document.getElementById("rayXOut"),
+      rayY: document.getElementById("rayYOut"),
+      surfaceTilt: document.getElementById("surfaceTiltOut"),
+      distance: document.getElementById("distanceOut"),
+      jitter: document.getElementById("jitterOut"),
+      history: document.getElementById("historyOut"),
+      score: document.getElementById("scoreOut"),
+      entity: document.getElementById("entityOut"),
+      gate: document.getElementById("gateOut"),
+      cue: document.getElementById("cueOut"),
+      badge: document.getElementById("badgeText"),
+      payload: document.getElementById("payload")
+    };
+
+    const state = {
+      frame: 0,
+      history: [],
+      anchors: [],
+      lastCue: "idle",
+      message: "scan",
+      drag: false
+    };
+
+    function number(id) {
+      return Number(controls[id].value);
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function updateLabels() {
+      outs.entityMode.textContent = controls.entityMode.value;
+      outs.rayX.textContent = number("rayX").toFixed(2);
+      outs.rayY.textContent = number("rayY").toFixed(2);
+      outs.surfaceTilt.textContent = `${number("surfaceTilt").toFixed(0)} deg`;
+      outs.distance.textContent = `${number("distance").toFixed(1)} m`;
+      outs.jitter.textContent = `${number("jitter").toFixed(0)} mm`;
+      outs.history.textContent = `${number("history").toFixed(0)} frames`;
+    }
+
+    function seededNoise(seed) {
+      const x = Math.sin(seed * 12.9898) * 43758.5453;
+      return x - Math.floor(x);
+    }
+
+    function candidate(entity, index) {
+      const rayX = number("rayX");
+      const rayY = number("rayY");
+      const jitter = number("jitter") / 1000;
+      const distance = number("distance");
+      const tilt = number("surfaceTilt");
+      const t = state.frame * 0.033 + index * 1.7;
+      const wobbleX = (seededNoise(state.frame + index * 17) - 0.5) * jitter * 2.5;
+      const wobbleY = Math.sin(t) * jitter * 1.4;
+      const base = {
+        plane: { score: 0.78, tiltPenalty: 0.010, entityBonus: 0.08 },
+        mesh: { score: 0.68, tiltPenalty: 0.006, entityBonus: 0.03 },
+        point: { score: 0.58, tiltPenalty: 0.003, entityBonus: -0.02 }
+      }[entity];
+      const centerPenalty = Math.hypot(rayX, rayY - 0.18) * 0.18;
+      const distancePenalty = Math.abs(distance - 2.2) * 0.055;
+      const tiltPenalty = tilt * base.tiltPenalty;
+      const jitterPenalty = jitter * 2.8;
+      const confidence = clamp(base.score + base.entityBonus - centerPenalty - distancePenalty - tiltPenalty - jitterPenalty, 0.05, 0.98);
+      return {
+        entity,
+        x: rayX + wobbleX + (entity === "point" ? -0.04 : entity === "mesh" ? 0.05 : 0),
+        y: rayY + wobbleY + (entity === "point" ? 0.03 : entity === "mesh" ? -0.025 : 0),
+        distance,
+        tilt: entity === "plane" ? tilt : tilt * 0.7 + (entity === "mesh" ? 10 : 18),
+        confidence
+      };
+    }
+
+    function candidates() {
+      const mode = controls.entityMode.value;
+      const entities = mode === "auto" ? ["plane", "mesh", "point"] : [mode];
+      return entities.map(candidate).sort((a, b) => b.confidence - a.confidence);
+    }
+
+    function computeFrame() {
+      const list = candidates();
+      const best = list[0];
+      state.history.push({ x: best.x, y: best.y, confidence: best.confidence });
+      while (state.history.length > number("history")) state.history.shift();
+      const centroid = state.history.reduce((acc, point) => {
+        acc.x += point.x;
+        acc.y += point.y;
+        acc.c += point.confidence;
+        return acc;
+      }, { x: 0, y: 0, c: 0 });
+      centroid.x /= state.history.length;
+      centroid.y /= state.history.length;
+      centroid.c /= state.history.length;
+      const drift = state.history.reduce((sum, point) => sum + Math.hypot(point.x - centroid.x, point.y - centroid.y), 0) / state.history.length;
+      const stability = clamp(1 - drift * 7.5, 0, 1);
+      const normal = clamp(1 - best.tilt / 52, 0, 1);
+      const range = clamp(1 - Math.abs(best.distance - 2.1) / 3.0, 0, 1);
+      const score = clamp((best.confidence * 0.42) + (stability * 0.34) + (normal * 0.16) + (range * 0.08), 0, 1);
+      const gate = score >= 0.72 ? "ready" : score >= 0.52 ? "hold" : "reject";
+      const cue = gate === "ready" ? "short success pulse" : gate === "hold" ? "soft scan tick" : "warning buzz";
+      state.lastCue = cue;
+      return { list, best, centroid, drift, stability, normal, range, score, gate, cue };
+    }
+
+    function sx(x) {
+      return canvas.width * (0.5 + x * 0.34);
+    }
+
+    function sy(y) {
+      return canvas.height * (0.52 - y * 0.38);
+    }
+
+    function drawGrid() {
+      ctx.fillStyle = "#071017";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height * 0.64);
+      ctx.strokeStyle = "rgba(130, 220, 255, 0.13)";
+      ctx.lineWidth = 1;
+      for (let i = -8; i <= 8; i += 1) {
+        ctx.beginPath();
+        ctx.moveTo(i * 52, -250);
+        ctx.lineTo(i * 88, 110);
+        ctx.stroke();
+      }
+      for (let j = 0; j <= 8; j += 1) {
+        ctx.beginPath();
+        ctx.moveTo(-450 - j * 18, -230 + j * 43);
+        ctx.lineTo(450 + j * 18, -230 + j * 43);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function draw(frame) {
+      drawGrid();
+      const origin = { x: canvas.width / 2, y: 78 };
+      const target = { x: sx(number("rayX")), y: sy(number("rayY")) };
+
+      ctx.strokeStyle = "rgba(130, 220, 255, 0.62)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(origin.x, origin.y);
+      ctx.lineTo(target.x, target.y);
+      ctx.stroke();
+
+      ctx.fillStyle = "#82dcff";
+      ctx.beginPath();
+      ctx.arc(origin.x, origin.y, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      frame.list.forEach((candidate, index) => {
+        const x = sx(candidate.x);
+        const y = sy(candidate.y);
+        const radius = candidate.entity === "plane" ? 42 : candidate.entity === "mesh" ? 34 : 24;
+        const color = candidate.entity === "plane" ? "#83efad" : candidate.entity === "mesh" ? "#88a8ff" : "#ffd36f";
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate((candidate.tilt * Math.PI) / 180);
+        ctx.globalAlpha = 0.18 + candidate.confidence * 0.52;
+        ctx.fillStyle = color;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = candidate === frame.best ? 4 : 2;
+        if (candidate.entity === "point") {
+          ctx.beginPath();
+          ctx.arc(0, 0, radius * 0.46, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillRect(-radius, -radius * 0.42, radius * 2, radius * 0.84);
+          ctx.strokeRect(-radius, -radius * 0.42, radius * 2, radius * 0.84);
+        }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "#eef9ff";
+        ctx.font = "13px ui-sans-serif, system-ui";
+        ctx.fillText(`${candidate.entity} ${(candidate.confidence * 100).toFixed(0)}%`, -radius, radius * 0.8);
+        ctx.restore();
+      });
+
+      ctx.strokeStyle = frame.gate === "ready" ? "#83efad" : frame.gate === "hold" ? "#ffd36f" : "#ff7788";
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 9]);
+      ctx.beginPath();
+      ctx.arc(sx(frame.centroid.x), sy(frame.centroid.y), 56 + Math.sin(state.frame * 0.12) * 4, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      state.anchors.forEach((anchor, index) => {
+        const age = state.frame - anchor.frame;
+        ctx.fillStyle = `rgba(131, 239, 173, ${clamp(1 - age / 900, 0.2, 0.95)})`;
+        ctx.strokeStyle = "rgba(238, 249, 255, 0.82)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.rect(sx(anchor.x) - 15, sy(anchor.y) - 15, 30, 30);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#eef9ff";
+        ctx.font = "12px ui-sans-serif, system-ui";
+        ctx.fillText(`A${index + 1}`, sx(anchor.x) - 10, sy(anchor.y) + 4);
+      });
+
+      ctx.fillStyle = "rgba(238, 249, 255, 0.88)";
+      ctx.font = "14px ui-sans-serif, system-ui";
+      ctx.fillText(`XRFrame ${state.frame} / getHitTestResults(source) -> createAnchor gate`, 20, 30);
+      ctx.fillStyle = frame.gate === "ready" ? "#83efad" : frame.gate === "hold" ? "#ffd36f" : "#ff7788";
+      ctx.fillText(`state: ${frame.gate} / ${frame.cue}`, 20, 54);
+    }
+
+    function render() {
+      state.frame += 1;
+      updateLabels();
+      const frame = computeFrame();
+      draw(frame);
+      outs.score.textContent = `${(frame.score * 100).toFixed(0)}%`;
+      outs.entity.textContent = frame.best.entity;
+      outs.gate.textContent = frame.gate;
+      outs.cue.textContent = frame.cue;
+      outs.badge.textContent = frame.gate === "ready" ? "anchor commit is allowed" : frame.gate === "hold" ? "waiting for stable pose" : "rejecting noisy result";
+      outs.payload.textContent = JSON.stringify({
+        frame: state.frame,
+        feature: ["hit-test", "anchors"],
+        request: {
+          entityTypes: controls.entityMode.value,
+          offsetRay: { x: number("rayX"), y: number("rayY") }
+        },
+        bestHitTestResult: {
+          entity: frame.best.entity,
+          distanceMeters: Number(frame.best.distance.toFixed(2)),
+          surfaceTiltDeg: Number(frame.best.tilt.toFixed(1)),
+          confidence: Number(frame.best.confidence.toFixed(3))
+        },
+        gate: {
+          score: Number(frame.score.toFixed(3)),
+          stability: Number(frame.stability.toFixed(3)),
+          normal: Number(frame.normal.toFixed(3)),
+          decision: frame.gate,
+          hapticCue: frame.cue
+        },
+        anchors: state.anchors.length
+      }, null, 2);
+      requestAnimationFrame(render);
+    }
+
+    function commit() {
+      const frame = computeFrame();
+      if (frame.score < 0.72) {
+        state.message = "blocked";
+        state.lastCue = "reject buzz";
+        return;
+      }
+      state.anchors.push({
+        x: frame.centroid.x,
+        y: frame.centroid.y,
+        entity: frame.best.entity,
+        score: frame.score,
+        frame: state.frame
+      });
+      if (state.anchors.length > 6) state.anchors.shift();
+      state.message = "committed";
+      state.lastCue = "success pulse";
+    }
+
+    document.getElementById("commitNow").addEventListener("click", commit);
+    document.getElementById("presetFloor").addEventListener("click", () => {
+      controls.entityMode.value = "plane";
+      controls.rayX.value = "0";
+      controls.rayY.value = "0.22";
+      controls.surfaceTilt.value = "7";
+      controls.distance.value = "2.0";
+      controls.jitter.value = "10";
+    });
+    document.getElementById("presetWall").addEventListener("click", () => {
+      controls.entityMode.value = "mesh";
+      controls.rayX.value = "0.28";
+      controls.rayY.value = "0.04";
+      controls.surfaceTilt.value = "32";
+      controls.distance.value = "2.7";
+      controls.jitter.value = "16";
+    });
+    document.getElementById("presetNoisy").addEventListener("click", () => {
+      controls.entityMode.value = "auto";
+      controls.rayX.value = "-0.45";
+      controls.rayY.value = "0.52";
+      controls.surfaceTilt.value = "39";
+      controls.distance.value = "4.2";
+      controls.jitter.value = "64";
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.drag = true;
+      canvas.setPointerCapture(event.pointerId);
+    });
+    canvas.addEventListener("pointermove", (event) => {
+      if (!state.drag) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width;
+      const y = (event.clientY - rect.top) / rect.height;
+      controls.rayX.value = clamp((x - 0.5) / 0.34, -1, 1).toFixed(2);
+      controls.rayY.value = clamp((0.52 - y) / 0.38, -0.45, 0.75).toFixed(2);
+    });
+    for (const type of ["pointerup", "pointercancel", "pointerleave"]) {
+      canvas.addEventListener(type, () => {
+        state.drag = false;
+      });
+    }
+
+    updateLabels();
+    render();
+  </script>
+</body>
+</html>
