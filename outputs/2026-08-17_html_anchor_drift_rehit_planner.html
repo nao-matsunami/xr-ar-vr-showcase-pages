@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anchor Drift Re-Hit-Test Planner</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #081017;
+      --panel: rgba(10, 18, 24, 0.92);
+      --line: rgba(174, 222, 255, 0.22);
+      --text: #eef8ff;
+      --muted: #9db3bd;
+      --cyan: #7edcff;
+      --green: #7df0b3;
+      --amber: #ffd166;
+      --red: #ff6f8d;
+      --violet: #b49cff;
+      --ink: #071018;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 12%, rgba(126, 220, 255, 0.13), transparent 26%),
+        radial-gradient(circle at 88% 14%, rgba(255, 209, 102, 0.10), transparent 24%),
+        linear-gradient(180deg, #081017, #16262b 56%, #091017);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 28px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.7vw, 2.4rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      max-width: 860px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+
+    .badge,
+    .panel,
+    .stage,
+    .log {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+    }
+
+    .badge {
+      min-width: 250px;
+      padding: 12px 14px;
+    }
+
+    .badge b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .badge span {
+      display: block;
+      margin-top: 5px;
+      color: var(--green);
+      font-weight: 760;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+      gap: 14px;
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      min-height: 620px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 620px;
+      background: #071017;
+      touch-action: none;
+    }
+
+    .overlay {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .readout {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(238, 248, 255, 0.12);
+      border-radius: 8px;
+      background: rgba(5, 12, 18, 0.78);
+    }
+
+    .readout small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .readout strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--text);
+      font-size: clamp(0.92rem, 1.8vw, 1.18rem);
+      line-height: 1.15;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .panel,
+    .log {
+      padding: 14px;
+    }
+
+    .panel h2,
+    .log h2 {
+      margin: 0 0 12px;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--cyan);
+    }
+
+    .control {
+      display: grid;
+      gap: 7px;
+      margin: 11px 0;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    label output {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+    }
+
+    select,
+    button {
+      width: 100%;
+      border: 1px solid rgba(238, 248, 255, 0.15);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      font: inherit;
+    }
+
+    select {
+      padding: 10px;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    button {
+      min-height: 40px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 720;
+    }
+
+    button.primary {
+      color: var(--ink);
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+    }
+
+    button.warn {
+      color: var(--ink);
+      background: linear-gradient(135deg, var(--amber), #ffb36b);
+    }
+
+    .log pre {
+      overflow: auto;
+      max-height: 260px;
+      margin: 0;
+      padding: 12px;
+      border: 1px solid rgba(238, 248, 255, 0.10);
+      border-radius: 8px;
+      background: rgba(3, 9, 13, 0.74);
+      color: #dff7ff;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .hint {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .badge {
+        min-width: 0;
+      }
+
+      .stage {
+        min-height: 520px;
+      }
+
+      canvas {
+        height: 520px;
+      }
+
+      .overlay {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 520px) {
+      main {
+        width: min(100vw - 18px, 1180px);
+        padding-top: 14px;
+      }
+
+      .button-grid,
+      .overlay {
+        grid-template-columns: 1fr;
+      }
+
+      .stage {
+        min-height: 500px;
+      }
+
+      canvas {
+        height: 500px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Anchor Drift Re-Hit-Test Planner</h1>
+        <p class="subtitle">WebXR Anchors の tracked / unlocatable / persistent handle を想定し、配置済み anchor の drift が増えた時に保持、再 hit-test、削除、persistent 復元のどれを選ぶかを可視化する自作ミニサンプルです。</p>
+      </div>
+      <div class="badge">
+        <b>today's probe</b>
+        <span id="statusText">monitoring anchors</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="stage" aria-label="anchor drift simulator">
+        <canvas id="stage" width="860" height="620"></canvas>
+        <div class="overlay">
+          <div class="readout"><small>anchor state</small><strong id="anchorState">tracked</strong></div>
+          <div class="readout"><small>drift score</small><strong id="driftScore">0.00</strong></div>
+          <div class="readout"><small>decision</small><strong id="decision">keep</strong></div>
+          <div class="readout"><small>persistent</small><strong id="persistent">none</strong></div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>Controls</h2>
+          <div class="control">
+            <label for="scenario">scenario <output id="scenarioOut">Stable table</output></label>
+            <select id="scenario">
+              <option value="stable">Stable table</option>
+              <option value="drift">Slow drift</option>
+              <option value="lost">Unlocatable frames</option>
+              <option value="moved">Entity moved</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="drift">drift cm <output id="driftOut">8</output></label>
+            <input id="drift" type="range" min="0" max="70" value="8">
+          </div>
+          <div class="control">
+            <label for="lostFrames">unlocatable frames <output id="lostFramesOut">0</output></label>
+            <input id="lostFrames" type="range" min="0" max="90" value="0">
+          </div>
+          <div class="control">
+            <label for="confidence">tracking confidence <output id="confidenceOut">88%</output></label>
+            <input id="confidence" type="range" min="15" max="100" value="88">
+          </div>
+          <div class="control">
+            <label for="rehitQuality">re-hit-test quality <output id="rehitQualityOut">76%</output></label>
+            <input id="rehitQuality" type="range" min="0" max="100" value="76">
+          </div>
+          <div class="button-grid">
+            <button class="primary" id="save">request handle</button>
+            <button id="restore">restore</button>
+            <button class="warn" id="rehit">re-hit-test</button>
+            <button id="deleteAnchor">delete anchor</button>
+          </div>
+          <p class="hint">canvas をドラッグすると anchor の現在位置を手動でずらせます。数値は実 WebXR の pose ログを模したものです。</p>
+        </section>
+
+        <section class="log">
+          <h2>Payload</h2>
+          <pre id="payload">{}</pre>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      scenario: document.getElementById("scenario"),
+      drift: document.getElementById("drift"),
+      lostFrames: document.getElementById("lostFrames"),
+      confidence: document.getElementById("confidence"),
+      rehitQuality: document.getElementById("rehitQuality")
+    };
+
+    const outputs = {
+      statusText: document.getElementById("statusText"),
+      scenarioOut: document.getElementById("scenarioOut"),
+      driftOut: document.getElementById("driftOut"),
+      lostFramesOut: document.getElementById("lostFramesOut"),
+      confidenceOut: document.getElementById("confidenceOut"),
+      rehitQualityOut: document.getElementById("rehitQualityOut"),
+      anchorState: document.getElementById("anchorState"),
+      driftScore: document.getElementById("driftScore"),
+      decision: document.getElementById("decision"),
+      persistent: document.getElementById("persistent"),
+      payload: document.getElementById("payload")
+    };
+
+    const state = {
+      frame: 0,
+      anchor: { x: 430, y: 320 },
+      original: { x: 430, y: 320 },
+      candidate: { x: 430, y: 320 },
+      persistentHandle: "",
+      deleted: false,
+      restored: false,
+      drag: false,
+      lastDecision: "keep"
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function scenarioDefaults(name) {
+      const presets = {
+        stable: [8, 0, 88, 76],
+        drift: [34, 6, 68, 82],
+        lost: [22, 54, 45, 58],
+        moved: [48, 14, 73, 91]
+      };
+      const [drift, lostFrames, confidence, rehitQuality] = presets[name];
+      controls.drift.value = drift;
+      controls.lostFrames.value = lostFrames;
+      controls.confidence.value = confidence;
+      controls.rehitQuality.value = rehitQuality;
+    }
+
+    function metrics() {
+      const driftCm = Number(controls.drift.value);
+      const lostFrames = Number(controls.lostFrames.value);
+      const confidence = Number(controls.confidence.value) / 100;
+      const rehitQuality = Number(controls.rehitQuality.value) / 100;
+      const manualCm = Math.hypot(state.anchor.x - state.original.x, state.anchor.y - state.original.y) / 4.5;
+      const driftScore = clamp((driftCm + manualCm * 0.85) / 65 + lostFrames / 150 + (1 - confidence) * 0.46, 0, 1);
+      const locatable = lostFrames < 42 && confidence > 0.38 && !state.deleted;
+      const anchorState = state.deleted ? "deleted" : locatable ? "tracked" : "unlocatable";
+      let decision = "keep";
+      if (state.deleted) decision = "deleted";
+      else if (!locatable && rehitQuality < 0.7) decision = "hide + wait";
+      else if (driftScore > 0.72 && rehitQuality >= 0.66) decision = "re-hit-test";
+      else if (driftScore > 0.48) decision = "warn";
+      return { driftCm, lostFrames, confidence, rehitQuality, manualCm, driftScore, anchorState, decision };
+    }
+
+    function updateOutputs(m) {
+      const scenarioLabel = controls.scenario.options[controls.scenario.selectedIndex].textContent;
+      outputs.scenarioOut.textContent = scenarioLabel;
+      outputs.driftOut.textContent = String(m.driftCm);
+      outputs.lostFramesOut.textContent = String(m.lostFrames);
+      outputs.confidenceOut.textContent = `${Math.round(m.confidence * 100)}%`;
+      outputs.rehitQualityOut.textContent = `${Math.round(m.rehitQuality * 100)}%`;
+      outputs.anchorState.textContent = m.anchorState;
+      outputs.driftScore.textContent = m.driftScore.toFixed(2);
+      outputs.decision.textContent = m.decision;
+      outputs.persistent.textContent = state.persistentHandle ? "handle saved" : "none";
+      outputs.statusText.textContent = m.decision === "keep" ? "anchor stable" : `${m.decision} required`;
+      outputs.payload.textContent = JSON.stringify({
+        frame: state.frame,
+        featureList: ["anchors", "hit-test"],
+        trackedAnchors: state.deleted ? 0 : 1,
+        anchorState: m.anchorState,
+        driftCm: Number((m.driftCm + m.manualCm).toFixed(1)),
+        unlocatableFrames: m.lostFrames,
+        confidence: Number(m.confidence.toFixed(2)),
+        rehitQuality: Number(m.rehitQuality.toFixed(2)),
+        persistentHandle: state.persistentHandle || null,
+        restoredFromHandle: state.restored,
+        decision: m.decision,
+        nextAction: nextAction(m)
+      }, null, 2);
+    }
+
+    function nextAction(m) {
+      if (state.deleted) return "do not access anchorSpace after delete";
+      if (m.decision === "re-hit-test") return "create new hit-test source and compare pose before replacing anchor";
+      if (m.decision === "hide + wait") return "hide attached content until anchorSpace becomes locatable";
+      if (m.decision === "warn") return "dim content and queue subtle haptic warning";
+      return "keep rendering from anchorSpace";
+    }
+
+    function drawGrid() {
+      ctx.fillStyle = "#071017";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(0, 50);
+      for (let y = 0; y < 560; y += 34) {
+        const depth = y / 560;
+        ctx.strokeStyle = `rgba(126, 220, 255, ${0.08 + depth * 0.12})`;
+        ctx.beginPath();
+        ctx.moveTo(80 - depth * 60, y);
+        ctx.lineTo(780 + depth * 60, y);
+        ctx.stroke();
+      }
+      for (let i = -8; i <= 8; i += 1) {
+        ctx.strokeStyle = "rgba(255,255,255,0.06)";
+        ctx.beginPath();
+        ctx.moveTo(430 + i * 24, 0);
+        ctx.lineTo(430 + i * 68, 560);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawAnchor(m) {
+      const pulse = Math.sin(state.frame * 0.055) * 4;
+      const driftPx = m.driftCm * 3.6;
+      const driftAngle = state.frame * 0.012;
+      const autoX = Math.cos(driftAngle) * driftPx;
+      const autoY = Math.sin(driftAngle * 0.7) * driftPx * 0.44;
+      const current = {
+        x: state.anchor.x + autoX,
+        y: state.anchor.y + autoY
+      };
+      state.candidate = {
+        x: state.original.x + (current.x - state.original.x) * (m.rehitQuality + 0.08),
+        y: state.original.y + (current.y - state.original.y) * (m.rehitQuality + 0.08)
+      };
+
+      ctx.strokeStyle = "rgba(255,255,255,0.24)";
+      ctx.setLineDash([8, 8]);
+      ctx.beginPath();
+      ctx.moveTo(state.original.x, state.original.y);
+      ctx.lineTo(current.x, current.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "rgba(125, 240, 179, 0.12)";
+      ctx.strokeStyle = "rgba(125, 240, 179, 0.78)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(state.original.x, state.original.y, 34, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      label("original anchor", state.original.x + 46, state.original.y - 10, "#7df0b3");
+
+      const color = m.decision === "keep" ? "#7df0b3" : m.decision === "warn" ? "#ffd166" : m.decision === "deleted" ? "#ff6f8d" : "#7edcff";
+      ctx.fillStyle = `${color}22`;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(current.x, current.y, 30 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(current.x, current.y, 5, 0, Math.PI * 2);
+      ctx.fill();
+      label("current anchorSpace pose", current.x + 42, current.y + 8, color);
+
+      ctx.strokeStyle = "rgba(180, 156, 255, 0.88)";
+      ctx.fillStyle = "rgba(180, 156, 255, 0.14)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(state.candidate.x, state.candidate.y, 24, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      label("re-hit-test candidate", state.candidate.x + 36, state.candidate.y - 16, "#b49cff");
+
+      ctx.strokeStyle = "rgba(255, 209, 102, 0.65)";
+      ctx.beginPath();
+      ctx.moveTo(430, 88);
+      ctx.lineTo(state.candidate.x, state.candidate.y);
+      ctx.stroke();
+
+      if (m.anchorState === "unlocatable") {
+        ctx.fillStyle = "rgba(255, 111, 141, 0.16)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        label("anchor temporarily unlocatable", 28, 46, "#ff6f8d");
+      }
+    }
+
+    function label(text, x, y, color) {
+      ctx.font = "13px Inter, system-ui, sans-serif";
+      const w = ctx.measureText(text).width + 16;
+      ctx.fillStyle = "rgba(4, 10, 14, 0.72)";
+      ctx.fillRect(x - 8, y - 17, w, 25);
+      ctx.fillStyle = color;
+      ctx.fillText(text, x, y);
+    }
+
+    function drawDecisionRail(m) {
+      const items = ["keep", "warn", "re-hit-test", "hide + wait", "deleted"];
+      const x = 28;
+      let y = 84;
+      label("decision policy", x, y - 22, "#7edcff");
+      items.forEach((item) => {
+        const active = item === m.decision;
+        ctx.fillStyle = active ? "rgba(126, 220, 255, 0.20)" : "rgba(255,255,255,0.05)";
+        ctx.strokeStyle = active ? "#7edcff" : "rgba(255,255,255,0.12)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(x, y, 132, 30, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = active ? "#eef8ff" : "#9db3bd";
+        ctx.font = "13px Inter, system-ui, sans-serif";
+        ctx.fillText(item, x + 12, y + 20);
+        y += 38;
+      });
+    }
+
+    function draw() {
+      state.frame += 1;
+      const m = metrics();
+      drawGrid();
+      drawDecisionRail(m);
+      drawAnchor(m);
+      updateOutputs(m);
+      requestAnimationFrame(draw);
+    }
+
+    controls.scenario.addEventListener("change", () => scenarioDefaults(controls.scenario.value));
+    Object.values(controls).forEach((control) => {
+      control.addEventListener("input", () => updateOutputs(metrics()));
+    });
+
+    document.getElementById("save").addEventListener("click", () => {
+      state.persistentHandle = state.persistentHandle || `origin-${Math.random().toString(16).slice(2, 10)}`;
+      state.restored = false;
+    });
+
+    document.getElementById("restore").addEventListener("click", () => {
+      if (state.persistentHandle) {
+        state.deleted = false;
+        state.restored = true;
+        state.anchor.x = state.original.x;
+        state.anchor.y = state.original.y;
+        controls.confidence.value = Math.max(Number(controls.confidence.value), 72);
+        controls.lostFrames.value = 0;
+      }
+    });
+
+    document.getElementById("rehit").addEventListener("click", () => {
+      state.deleted = false;
+      state.restored = false;
+      state.anchor.x = state.candidate.x;
+      state.anchor.y = state.candidate.y;
+      controls.drift.value = Math.max(4, Math.round(Number(controls.drift.value) * 0.34));
+      controls.lostFrames.value = Math.max(0, Math.round(Number(controls.lostFrames.value) * 0.25));
+    });
+
+    document.getElementById("deleteAnchor").addEventListener("click", () => {
+      state.deleted = true;
+      state.restored = false;
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.drag = true;
+      canvas.setPointerCapture(event.pointerId);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!state.drag) return;
+      const rect = canvas.getBoundingClientRect();
+      state.anchor.x = clamp((event.clientX - rect.left) / rect.width * canvas.width, 180, 760);
+      state.anchor.y = clamp((event.clientY - rect.top) / rect.height * canvas.height, 130, 540);
+    });
+
+    function stopDrag() {
+      state.drag = false;
+    }
+
+    canvas.addEventListener("pointerup", stopDrag);
+    canvas.addEventListener("pointercancel", stopDrag);
+    canvas.addEventListener("pointerleave", stopDrag);
+
+    draw();
+  </script>
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anchor の drift と locate 不能から再 hit-test 判断へつなぐ | 2026-08-17</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.08.17</p>
+      <h1>Anchor の drift と locate 不能から再 hit-test 判断へつなぐ</h1>
+      <p class="hero-subtitle">Route anchor drift and unlocatable frames into re-hit-test decisions</p>
+      <p>WebXR Anchors Module、WebXR Hit Test Module、WebXR Device API、MDN の `XRFrame.getHitTestResults()`、Immersive Web の anchors / hit-test samples を確認し、配置済み anchor が drift した時に keep / warn / re-hit-test / hide + wait / delete を選ぶ自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the WebXR Anchors Module, WebXR Hit Test Module, WebXR Device API, MDN `XRFrame.getHitTestResults()`, and Immersive Web anchors / hit-test samples, today's original HTML sample chooses keep / warn / re-hit-test / hide + wait / delete when a placed anchor drifts or becomes unlocatable.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-08-17_html_anchor_drift_rehit_planner.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-08-16.html">← 2026.08.16</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Anchor Drift Re-Hit-Test Planner</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-17_html_anchor_drift_rehit_planner.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Anchors Module Editor's Draft 2026-04-27 は `XRAnchor.anchorSpace`、`requestPersistentHandle()`、`delete()`、`XRSession.persistentAnchors`、`restorePersistentAnchor()`、`deletePersistentAnchor()` を定義し、anchor の寿命管理を考える基礎になります。</span>
+              <span class="en-copy">The WebXR Anchors Module Editor's Draft dated 2026-04-27 defines `XRAnchor.anchorSpace`, `requestPersistentHandle()`, `delete()`, `XRSession.persistentAnchors`, `restorePersistentAnchor()`, and `deletePersistentAnchor()`, giving a basis for anchor lifetime management.</span>
+            </li>
+          
+            <li>
+              <span>同 draft は native anchor が継続的に追跡される一方、フレームによっては pose が不明になることや、最終的に追跡不能と判断されうることを説明しており、locatable でない期間の UI policy が必要です。</span>
+              <span class="en-copy">The draft explains that native anchors are continuously tracked, but their pose may be unknown on some frames and may eventually be considered no longer tracked, requiring UI policy for unlocatable periods.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Hit Test Module と Immersive Web の Hit Test with Anchors sample は、hit-test 結果から anchor を作る流れを示します。今日の焦点は作成前ではなく、作成後にずれた anchor をいつ置き換えるかです。</span>
+              <span class="en-copy">The WebXR Hit Test Module and Immersive Web Hit Test with Anchors sample show the flow from hit-test result to anchor creation. Today's focus is not pre-creation gating, but when to replace an anchor after it has drifted.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Device API の frame loop / session feature model では、`anchors` と `hit-test` を optional / required feature として扱い、secure context と `xr-spatial-tracking` の権限前提を設計に含める必要があります。</span>
+              <span class="en-copy">The WebXR Device API frame loop and session feature model require `anchors` and `hit-test` to be handled as optional / required features with secure-context and `xr-spatial-tracking` permission assumptions.</span>
+            </li>
+          
+            <li>
+              <span>MDN の `getHitTestResults()` は限定対応と HTTPS 前提を明示しているため、公開サンプルは実機 API を直接要求せず、drift 判定 payload と UI policy をブラウザ単体で検証できる形にしました。</span>
+              <span class="en-copy">MDN `getHitTestResults()` calls out limited availability and HTTPS requirements, so today's public sample avoids requiring a live device and makes drift-decision payloads and UI policy testable in a normal browser.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は WebXR Anchors Module の「作った anchor をどう維持するか」です。`XRAnchor.anchorSpace` は描画の基準になりますが、仕様上は native anchor が一時的に locate 不能になる可能性や、追跡が戻らない可能性があります。面白いのは、anchor は一度置いたら終わりではなく、pose の drift、unlocatable frame、persistent handle、再 hit-test 候補をまとめて見ながら「そのまま表示するか、警告するか、隠して待つか、置き換えるか」を毎フレーム近い粒度で判断する UI 部品になる点です。</p>
+          <p class="en-copy">Today's notable point is how the WebXR Anchors Module treats maintaining anchors after creation. `XRAnchor.anchorSpace` becomes the rendering reference, but native anchors may be temporarily unlocatable or may never recover tracking. The interesting part is that an anchor is not finished once placed; it becomes a UI component that continuously weighs pose drift, unlocatable frames, persistent handles, and re-hit-test candidates to decide whether to keep rendering, warn, hide and wait, or replace it.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/hit-test-anchors.html" target="_blank" rel="noreferrer">Immersive Web Sample: Hit Test with Anchors</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>サンプルでは Stable table / Slow drift / Unlocatable frames / Entity moved のシナリオを切り替え、drift cm、unlocatable frames、tracking confidence、re-hit-test quality を操作します。canvas には original anchor、現在の `anchorSpace` pose、再 hit-test 候補、decision rail を描き、ドラッグで現在位置をずらせます。ユーザーに見える表現としては、急にオブジェクトを消すのではなく、keep では通常表示、warn では dim + 軽い cue、re-hit-test では候補リング、hide + wait では半透明の不確定状態を出す、といった段階的な feedback が使えます。</p>
+          <p class="en-copy">The sample switches between Stable table / Slow drift / Unlocatable frames / Entity moved scenarios and exposes drift cm, unlocatable frames, tracking confidence, and re-hit-test quality. The canvas draws the original anchor, current `anchorSpace` pose, re-hit-test candidate, and decision rail, and dragging manually offsets the current pose. For user-facing expression, this suggests staged feedback instead of abrupt disappearance: normal rendering for keep, dim plus subtle cue for warn, a candidate ring for re-hit-test, and a translucent uncertain state for hide + wait.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では `XRFrame.trackedAnchors` を frame loop 内で読み、各 `XRAnchor.anchorSpace` を viewer / local / local-floor space に対して `getPose()` し、pose が取れない frame 数を anchor ごとに数えます。persistent 化する場合は `anchor.requestPersistentHandle()` を保存し、次回 session で `session.restorePersistentAnchor(uuid)` を試します。drift が閾値を超え、近傍の `getHitTestResults()` や plane / mesh 情報の品質が高い時だけ新 anchor に置き換えると、誤復旧で content が跳ねる問題を抑えられます。`delete()` 後の `anchorSpace` アクセスは InvalidStateError 前提で adapter 側に閉じ込めます。</p>
+          <p class="en-copy">In production, read `XRFrame.trackedAnchors` inside the frame loop, call `getPose()` for each `XRAnchor.anchorSpace` relative to viewer / local / local-floor spaces, and count unlocatable frames per anchor. For persistence, store `anchor.requestPersistentHandle()` and try `session.restorePersistentAnchor(uuid)` in the next session. Replacing with a new anchor only when drift exceeds a threshold and nearby `getHitTestResults()` or plane / mesh information is strong reduces content jumps caused by bad recovery. Access to `anchorSpace` after `delete()` should be isolated in an adapter because InvalidStateError is expected.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日のサンプルからは frame、feature list、tracked anchor count、anchor state、drift cm、unlocatable frames、confidence、re-hit-test quality、persistent handle、restore state、decision、next action を取れます。昨日の hit-test commit gate、過去の anchor restore/recovery、depth occlusion、plane semantic router、haptic queue と組み合わせると、配置前の安定度、配置後の drift、復旧判断、ユーザーへの cue を同じ時系列で扱えます。展示 UI では、anchor が不安定な場所だけ後からヒートマップ化する用途にも向きます。</p>
+          <p class="en-copy">Today's sample emits frame, feature list, tracked anchor count, anchor state, drift cm, unlocatable frames, confidence, re-hit-test quality, persistent handle, restore state, decision, and next action. Combined with yesterday's hit-test commit gate, earlier anchor restore / recovery, depth occlusion, plane semantic router, and haptic queue samples, it can put pre-placement stability, post-placement drift, recovery decisions, and user cues on one timeline. In exhibit UI, the same data can later become a heat map of unstable anchor locations.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>Anchors Module の `trackedAnchors`、persistent anchor の保存/削除、native entity attached anchor、emulated native anchors、Hit Test Module の transient input hit-test、Immersive Web の AR Plane Detection / AR Mesh Detection proposal samples を続けて見ます。特に、平面やメッシュ検出と anchor drift を同じ policy に入れると、単なる距離誤差ではなく「机が再認識された」「壁 entity が差し替わった」といった理由付きの復旧 UI にできそうです。</p>
+          <p class="en-copy">Continue watching Anchors `trackedAnchors`, persistent-anchor save/delete, native entity attached anchors, emulated native anchors, Hit Test transient input hit tests, and Immersive Web AR Plane Detection / AR Mesh Detection proposal samples. Putting plane or mesh detection into the same drift policy could create recovery UI with reasons such as 'table re-recognized' or 'wall entity replaced,' rather than only distance error.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルを開き、Slow drift に切り替えて drift cm を上げてください。decision が keep から warn、re-hit-test へ変わります。次に Unlocatable frames を選び、unlocatable frames を増やすと hide + wait に落ちます。`request handle` で persistent handle を作り、`delete anchor` 後に `restore` を押すと、復元時に confidence と lost frames が戻る流れを確認できます。</p>
+          <p class="en-copy">Open the sample, switch to Slow drift, and raise drift cm. The decision moves from keep to warn and then re-hit-test. Then choose Unlocatable frames and increase unlocatable frames to push the state into hide + wait. Press `request handle` to create a persistent handle, then `delete anchor` and `restore` to see confidence and lost frames recover.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-17_html_anchor_drift_rehit_planner.html" target="_blank" rel="noreferrer">Open Anchor Drift Re-Hit-Test Planner</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Anchors Module、Hit Test Module、WebXR Device API、MDN `getHitTestResults()`、Immersive Web の anchors / hit-test samples を確認。設計: 2026-08-16 の commit gate の次段として、作成済み anchor の運用 policy を作る。実装: 単一 HTML に original anchor、現在 pose、再 hit-test 候補、persistent handle、delete/restore、decision payload をまとめた。検証: JSON parse、HTML script 構文、gallery 再生成、publish、公開 URL 確認まで行う。</p>
+          <p class="en-copy">Research: reviewed the WebXR Anchors Module, Hit Test Module, WebXR Device API, MDN `getHitTestResults()`, and Immersive Web anchors / hit-test samples. Design: follow the 2026-08-16 commit gate with policy for operating already-created anchors. Implementation: package original anchor, current pose, re-hit-test candidate, persistent handle, delete/restore, and decision payload into one HTML file. Validation: parse JSON, check HTML script syntax, rebuild the gallery, publish, and verify public URLs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>この流れで、AR 配置は「置く瞬間」から「置いた後の維持」へ移りました。hit-test gate は入口、anchor drift policy は運用、persistent handle は次回 session への橋渡しです。ここまでを一つの payload で扱うと、実機差や環境差が出たときに、入力、環境理解、anchor tracking、UI feedback のどこで問題が起きたかを切り分けやすくなります。</p>
+          <p class="en-copy">This step moves AR placement from the moment of placement into post-placement maintenance. The hit-test gate is the entrance, anchor drift policy is operations, and persistent handles bridge into later sessions. Treating all of this as one payload makes it easier to separate issues in input, environment understanding, anchor tracking, and UI feedback when device or environment differences appear.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Anchor Drift Re-Hit-Test Planner` です。実 WebXR session がなくても、anchor の drift、locate 不能 frame、tracking confidence、再 hit-test 品質、persistent handle の有無から、keep / warn / re-hit-test / hide + wait / deleted を確認できます。次に足すなら、実 `XRFrame.trackedAnchors` ログの取り込み、plane / mesh entity ID の差し替わり検知、昨日の commit gate から作成した anchor との連続 replay、左右別 haptic queue への warning dispatch です。</p>
+          <p class="en-copy">The selected prototype is `Anchor Drift Re-Hit-Test Planner`. Without a real WebXR session, it lets you inspect keep / warn / re-hit-test / hide + wait / deleted decisions from anchor drift, unlocatable frames, tracking confidence, re-hit-test quality, and persistent-handle state. Useful next additions are real `XRFrame.trackedAnchors` logs, plane / mesh entity ID replacement detection, continuous replay from yesterday's commit gate, and warning dispatch into separate left/right haptic queues.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-17_html_anchor_drift_rehit_planner.html" target="_blank" rel="noreferrer">Today's sample: Anchor Drift Re-Hit-Test Planner</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hit-test-1/" target="_blank" rel="noreferrer">W3C: WebXR Hit Test Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRFrame/getHitTestResults" target="_blank" rel="noreferrer">MDN: XRFrame.getHitTestResults()</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/anchors.html" target="_blank" rel="noreferrer">Immersive Web Sample: Anchors</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/hit-test-anchors.html" target="_blank" rel="noreferrer">Immersive Web Sample: Hit Test with Anchors</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-08-17_html_anchor_drift_rehit_planner.html" loading="lazy" title="Anchor Drift Re-Hit-Test Planner"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
