@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DOM Overlay と world anchor の select 衝突を入力ゲートで分ける | 2026-08-18</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.08.18</p>
+      <h1>DOM Overlay と world anchor の select 衝突を入力ゲートで分ける</h1>
+      <p class="hero-subtitle">Separate DOM Overlay and world-anchor select collisions with an input gate</p>
+      <p>WebXR DOM Overlays Module、WebXR Device API、WebXR Anchors Module、MDN の `XRHitTestResult.createAnchor()`、Immersive Web の anchors / hit-test samples を確認し、overlay 操作が `beforexrselect` で XR select を抑止するか、world anchor 操作へ通すかを可視化する自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the WebXR DOM Overlays Module, WebXR Device API, WebXR Anchors Module, MDN `XRHitTestResult.createAnchor()`, and Immersive Web anchors / hit-test samples, today's original HTML sample visualizes whether overlay interaction suppresses XR select through `beforexrselect` or passes input through to a world anchor.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-08-18_html_dom_overlay_anchor_select_gate.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-08-17.html">← 2026.08.17</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>DOM Overlay Anchor Select Gate</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-18_html_dom_overlay_anchor_select_gate.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR DOM Overlays Module Working Draft 2024-09-24 は、immersive session 中に単一の DOM root を overlay として表示し、XR 入力が overlay と交差した時に `beforexrselect` を発火する流れを定義しています。</span>
+              <span class="en-copy">The WebXR DOM Overlays Module Working Draft dated 2024-09-24 defines displaying a single DOM root as an overlay during immersive sessions and firing `beforexrselect` when XR input intersects the overlay.</span>
+            </li>
+          
+            <li>
+              <span>`beforexrselect` は cancelable で、`preventDefault()` すると通常の `selectstart` / `selectend` / `select` が抑止されます。AR の配置 UI では、DOM ボタン操作と world anchor 操作を分離する基礎になります。</span>
+              <span class="en-copy">`beforexrselect` is cancelable, and calling `preventDefault()` suppresses normal `selectstart`, `selectend`, and `select` events. This is the basis for separating DOM button interaction from world-anchor interaction in AR placement UI.</span>
+            </li>
+          
+            <li>
+              <span>同 draft は cross-origin content への入力時に pose や gamepad data を制限する考え方を含みます。overlay 内 iframe や外部 UI を使う場合は、入力ログを過剰に取らない設計が必要です。</span>
+              <span class="en-copy">The same draft includes limiting pose and gamepad data during interaction with cross-origin content. If iframes or external UI are used inside an overlay, input logging must avoid over-collecting data.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Device API 2026-03-16 CRD の session / input source / select event model は、overlay 側の DOM event と XR 側の select event を別系統として扱う前提になります。</span>
+              <span class="en-copy">The WebXR Device API CRD dated 2026-03-16 provides the session, input source, and select event model that lets DOM overlay events and XR select events be treated as separate routes.</span>
+            </li>
+          
+            <li>
+              <span>Anchors Module と Hit Test Module の流れでは、hit-test から anchor を作った後も select 操作で再配置、警告、削除が起きます。今日の焦点は、その操作が overlay に吸われるべきか world に届くべきかの gate です。</span>
+              <span class="en-copy">In the Anchors and Hit Test flow, after a hit-test creates an anchor, later select actions may replace, warn, or delete it. Today's focus is the gate that decides whether that action is consumed by overlay UI or reaches the world.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は WebXR DOM Overlays Module の `beforexrselect` です。overlay 上に ray が当たった時、アプリは DOM event を処理しつつ XR の `select` を出すか止めるかを選べます。面白いのは、AR の「保存」「削除」「再配置」ボタンと、空間内 anchor そのものの選択が、同じトリガー入力を使っても別の経路として整理できる点です。UI の見た目ではなく、入力の所有権を明示する小さな runtime policy として使えます。</p>
+          <p class="en-copy">Today's notable point is `beforexrselect` in the WebXR DOM Overlays Module. When a ray intersects the overlay, an app can handle DOM events while deciding whether XR `select` should still fire. The interesting part is that AR buttons such as save, delete, and replace can share the same trigger input with spatial anchor selection while still being routed as separate paths. It is less about the overlay's appearance and more about a small runtime policy for input ownership.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">W3C: WebXR DOM Overlays Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>サンプルでは ray の位置、overlay type、anchor drift、`preventDefault()` の有無、cross-origin 風パネル、transient input source を切り替えます。canvas には DOM overlay root、embedded content 風の制限領域、world anchor、target ray、decision rail を描き、primary action が DOM click、auxiliary、suppressed、limited、world select のどれになるかを表示します。実 UI では overlay に触れた瞬間だけ anchor の hover ring を弱め、world に戻ったら anchor 操作を再度 armed にする表現が使えます。</p>
+          <p class="en-copy">The sample switches ray position, overlay type, anchor drift, `preventDefault()`, a cross-origin-like panel, and transient input source behavior. The canvas draws the DOM overlay root, embedded-content-like restricted region, world anchor, target ray, and decision rail, showing whether the primary action becomes a DOM click, auxiliary route, suppressed event, limited route, or world select. In a real UI, touching the overlay can dim the anchor hover ring, then re-arm anchor operations when the pointer returns to the world.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では `requestSession('immersive-ar', { optionalFeatures: ['dom-overlay', 'anchors', 'hit-test'], domOverlay: { root } })` のように overlay root を明示します。root の `beforexrselect` handler で、ボタンやフォームなど DOM が所有する領域では `event.preventDefault()` を呼び、anchor 操作が必要な world 領域では XR の `select` を通します。cross-origin iframe 相当の領域では、仕様の privacy model に合わせ、pose / gamepad logging を limited として扱う adapter を挟むのが安全です。</p>
+          <p class="en-copy">In production, explicitly pass the overlay root, for example `requestSession('immersive-ar', { optionalFeatures: ['dom-overlay', 'anchors', 'hit-test'], domOverlay: { root } })`. In the root `beforexrselect` handler, call `event.preventDefault()` for DOM-owned regions such as buttons and forms, while allowing XR `select` to reach world regions that need anchor operations. For areas equivalent to cross-origin iframes, use an adapter that treats pose and gamepad logging as limited according to the privacy model.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日のサンプルからは frame、requested features、overlay type、target ray hit、`beforexrselect` 発火、prevented/allowed、pose limited、gamepad limited、XR select route、anchor drift、anchor action を取れます。昨日の anchor drift planner と組み合わせると、drift が大きい anchor に対して `re-hit-test` を出したい時でも、overlay 上の confirm/cancel に入力が当たったら world 側の置き換えを止める、といった安全な操作列を作れます。</p>
+          <p class="en-copy">Today's sample emits frame, requested features, overlay type, target-ray hit, `beforexrselect` state, prevented/allowed route, pose limited, gamepad limited, XR select route, anchor drift, and anchor action. Combined with yesterday's anchor drift planner, it can prevent accidental world-side replacement when the user is aiming at overlay confirm/cancel controls even if a drifting anchor wants a re-hit-test action.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>DOM Overlay の `:xr-overlay`、fullscreen 統合、cross-origin content の制限、transient input source の扱い、Hit Test Module の transient hit-test source、Anchors Module の persistent handle 復元を続けて見ます。次は、overlay の confirm/cancel 操作を anchor restore / delete / re-hit-test queue に接続し、入力衝突だけでなく操作の取り消し可能性まで含めた小さな state machine にできます。</p>
+          <p class="en-copy">Continue watching DOM Overlay `:xr-overlay`, fullscreen integration, cross-origin content restrictions, transient input source behavior, Hit Test transient hit-test sources, and Anchors persistent-handle restoration. A next step is connecting overlay confirm/cancel actions to anchor restore / delete / re-hit-test queues, turning input collision handling into a small undoable operation state machine.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルを開き、`aim overlay` を押してから `fire primary action` を押してください。`beforexrselect` が prevented になり、transient input では XR select が auxiliary route になります。次に `aim world anchor` を押すと XR select が通り、anchor drift cm に応じて `select anchor`、`warn`、`re-hit-test` が変わります。`aim embedded panel` と cross-origin toggle も試すと、pose / gamepad limited の payload が見られます。</p>
+          <p class="en-copy">Open the sample, press `aim overlay`, then press `fire primary action`. `beforexrselect` becomes prevented, and with transient input the XR select route becomes auxiliary. Then press `aim world anchor`; XR select passes through, and anchor drift cm changes the action between `select anchor`, `warn`, and `re-hit-test`. Try `aim embedded panel` with the cross-origin toggle to inspect the pose / gamepad limited payload.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-18_html_dom_overlay_anchor_select_gate.html" target="_blank" rel="noreferrer">Open DOM Overlay Anchor Select Gate</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR DOM Overlays Module、WebXR Device API、WebXR Anchors Module、MDN `XRHitTestResult.createAnchor()`、Immersive Web anchors / hit-test samples を確認。設計: 2026-08-17 の anchor drift / re-hit-test 判断に、overlay が入力を所有する場合の gate を足す。実装: 単一 HTML に overlay root、embedded content 風領域、world anchor、target ray、decision rail、JSON payload をまとめた。検証: JSON parse、HTML script 構文、gallery 再生成、publish、公開 URL 確認まで行う。</p>
+          <p class="en-copy">Research: reviewed the WebXR DOM Overlays Module, WebXR Device API, WebXR Anchors Module, MDN `XRHitTestResult.createAnchor()`, and Immersive Web anchors / hit-test samples. Design: add an input gate for overlay-owned interaction on top of the 2026-08-17 anchor drift / re-hit-test decision. Implementation: package an overlay root, embedded-content-like region, world anchor, target ray, decision rail, and JSON payload into one HTML file. Validation: parse JSON, check HTML script syntax, rebuild the gallery, publish, and verify public URLs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>ここまでの流れは、AR 配置の安定化から操作の所有権へ進みました。hit-test gate は置く前、anchor drift planner は置いた後、今日の DOM Overlay select gate はユーザーが何を操作しているかを分ける層です。この層があると、空間内の不安定な anchor に警告を出しながら、overlay の確認 UI を誤って world 操作として処理しない設計にできます。</p>
+          <p class="en-copy">The series has moved from AR placement stability into ownership of interaction. The hit-test gate handles pre-placement, the anchor drift planner handles post-placement, and today's DOM Overlay select gate separates what the user is operating. With this layer, an app can warn about unstable spatial anchors while avoiding accidental world operations when the user is confirming something in overlay UI.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `DOM Overlay Anchor Select Gate` です。実 WebXR session がなくても、target ray が overlay、embedded content、world anchor のどこに当たっているかで、`beforexrselect`、XR select、pose/gamepad limitation、anchor action がどう変わるかを確認できます。次に足すなら、昨日の drift planner の payload を読み込み、re-hit-test / delete / restore を overlay confirm queue で確定する state machine です。</p>
+          <p class="en-copy">The selected prototype is `DOM Overlay Anchor Select Gate`. Without a real WebXR session, it shows how `beforexrselect`, XR select, pose/gamepad limitation, and anchor action change depending on whether the target ray hits the overlay, embedded content, or world anchor. A useful next addition is reading yesterday's drift-planner payload and confirming re-hit-test / delete / restore through an overlay confirmation queue.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-18_html_dom_overlay_anchor_select_gate.html" target="_blank" rel="noreferrer">Today's sample: DOM Overlay Anchor Select Gate</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">W3C: WebXR DOM Overlays Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRHitTestResult/createAnchor" target="_blank" rel="noreferrer">MDN: XRHitTestResult.createAnchor()</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/anchors.html" target="_blank" rel="noreferrer">Immersive Web Sample: Anchors</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/hit-test-anchors.html" target="_blank" rel="noreferrer">Immersive Web Sample: Hit Test with Anchors</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-08-18_html_dom_overlay_anchor_select_gate.html" loading="lazy" title="DOM Overlay Anchor Select Gate"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DOM Overlay Anchor Select Gate</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #081014;
+      --panel: rgba(12, 19, 22, 0.92);
+      --line: rgba(197, 232, 218, 0.22);
+      --text: #f4fff8;
+      --muted: #a9bab1;
+      --mint: #84f4bd;
+      --sky: #8fc7ff;
+      --amber: #ffd36e;
+      --red: #ff738d;
+      --ink: #07100c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, rgba(132, 244, 189, 0.14), transparent 32%),
+        linear-gradient(210deg, rgba(143, 199, 255, 0.13), transparent 36%),
+        linear-gradient(180deg, #081014, #17221e 55%, #09110f);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 28px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.7vw, 2.35rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      max-width: 850px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+
+    .badge,
+    .stage,
+    .panel,
+    .log {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.31);
+    }
+
+    .badge {
+      min-width: 250px;
+      padding: 12px 14px;
+    }
+
+    .badge b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .badge span {
+      display: block;
+      margin-top: 5px;
+      color: var(--mint);
+      font-weight: 760;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+      gap: 14px;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 620px;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 620px;
+      background: #07100e;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .readout {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(244, 255, 248, 0.13);
+      border-radius: 8px;
+      background: rgba(5, 12, 10, 0.76);
+    }
+
+    .readout small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .readout strong {
+      display: block;
+      margin-top: 4px;
+      font-size: clamp(0.92rem, 1.8vw, 1.15rem);
+      line-height: 1.16;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .panel,
+    .log {
+      padding: 14px;
+    }
+
+    .panel h2,
+    .log h2 {
+      margin: 0 0 12px;
+      color: var(--mint);
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .control {
+      display: grid;
+      gap: 7px;
+      margin: 11px 0;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    label output {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--mint);
+    }
+
+    select,
+    button {
+      width: 100%;
+      border: 1px solid rgba(244, 255, 248, 0.15);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      font: inherit;
+    }
+
+    select {
+      padding: 10px;
+    }
+
+    .check {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 9px;
+      align-items: start;
+      margin: 10px 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.4;
+    }
+
+    .check input {
+      margin-top: 2px;
+      accent-color: var(--mint);
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    button {
+      min-height: 40px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 720;
+    }
+
+    button.primary {
+      color: var(--ink);
+      background: linear-gradient(135deg, var(--mint), var(--sky));
+    }
+
+    button.warn {
+      color: var(--ink);
+      background: linear-gradient(135deg, var(--amber), #ffb56f);
+    }
+
+    .log pre {
+      overflow: auto;
+      max-height: 285px;
+      margin: 0;
+      padding: 12px;
+      border: 1px solid rgba(244, 255, 248, 0.10);
+      border-radius: 8px;
+      background: rgba(3, 9, 8, 0.75);
+      color: #e5fff1;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .hint {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .badge {
+        min-width: 0;
+      }
+
+      .stage {
+        min-height: 540px;
+      }
+
+      canvas {
+        height: 540px;
+      }
+
+      .hud {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 520px) {
+      main {
+        width: min(100vw - 18px, 1180px);
+        padding-top: 14px;
+      }
+
+      .button-grid,
+      .hud {
+        grid-template-columns: 1fr;
+      }
+
+      .stage {
+        min-height: 520px;
+      }
+
+      canvas {
+        height: 520px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>DOM Overlay Anchor Select Gate</h1>
+        <p class="subtitle">WebXR DOM Overlay の beforexrselect を想定し、overlay 操作、cross-origin 風領域、world anchor 操作が同じ入力で衝突した時に XR select を出すか抑止するかを確認する自作ミニサンプルです。</p>
+      </div>
+      <div class="badge">
+        <b>today's probe</b>
+        <span id="statusText">waiting for target ray</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="stage" aria-label="dom overlay select gate simulator">
+        <canvas id="stage" width="860" height="620"></canvas>
+        <div class="hud">
+          <div class="readout"><small>target</small><strong id="targetOut">world</strong></div>
+          <div class="readout"><small>beforexrselect</small><strong id="beforeOut">not fired</strong></div>
+          <div class="readout"><small>XR select</small><strong id="selectOut">ready</strong></div>
+          <div class="readout"><small>anchor action</small><strong id="anchorOut">hover</strong></div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>Controls</h2>
+          <div class="control">
+            <label for="overlayType">overlay type <output id="overlayTypeOut">floating</output></label>
+            <select id="overlayType">
+              <option value="floating">floating</option>
+              <option value="head-locked">head-locked</option>
+              <option value="screen">screen</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="rayX">target ray x <output id="rayXOut">47%</output></label>
+            <input id="rayX" type="range" min="8" max="92" value="47">
+          </div>
+          <div class="control">
+            <label for="rayY">target ray y <output id="rayYOut">45%</output></label>
+            <input id="rayY" type="range" min="10" max="88" value="45">
+          </div>
+          <div class="control">
+            <label for="anchorDrift">anchor drift cm <output id="anchorDriftOut">18</output></label>
+            <input id="anchorDrift" type="range" min="0" max="70" value="18">
+          </div>
+          <label class="check">
+            <input id="preventOverlay" type="checkbox" checked>
+            <span>overlay 上では beforexrselect.preventDefault() で XR select を抑止する</span>
+          </label>
+          <label class="check">
+            <input id="crossOrigin" type="checkbox">
+            <span>cross-origin 風パネル上では pose / gamepad を limited として扱う</span>
+          </label>
+          <label class="check">
+            <input id="transient" type="checkbox" checked>
+            <span>screen-mode transient input source として判定する</span>
+          </label>
+          <div class="button-grid">
+            <button class="primary" id="fire">fire primary action</button>
+            <button id="moveWorld">aim world anchor</button>
+            <button class="warn" id="movePanel">aim overlay</button>
+            <button id="moveIframe">aim embedded panel</button>
+          </div>
+          <p class="hint">canvas をクリック/ドラッグして ray を動かせます。primary action は DOM UI と world anchor のどちらが受け取るかを payload に記録します。</p>
+        </section>
+
+        <section class="log">
+          <h2>Payload</h2>
+          <pre id="payload">{}</pre>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      overlayType: document.getElementById("overlayType"),
+      rayX: document.getElementById("rayX"),
+      rayY: document.getElementById("rayY"),
+      anchorDrift: document.getElementById("anchorDrift"),
+      preventOverlay: document.getElementById("preventOverlay"),
+      crossOrigin: document.getElementById("crossOrigin"),
+      transient: document.getElementById("transient")
+    };
+
+    const out = {
+      statusText: document.getElementById("statusText"),
+      overlayTypeOut: document.getElementById("overlayTypeOut"),
+      rayXOut: document.getElementById("rayXOut"),
+      rayYOut: document.getElementById("rayYOut"),
+      anchorDriftOut: document.getElementById("anchorDriftOut"),
+      targetOut: document.getElementById("targetOut"),
+      beforeOut: document.getElementById("beforeOut"),
+      selectOut: document.getElementById("selectOut"),
+      anchorOut: document.getElementById("anchorOut"),
+      payload: document.getElementById("payload")
+    };
+
+    const state = {
+      frame: 0,
+      lastActionFrame: -120,
+      lastEvent: "none",
+      drag: false
+    };
+
+    const rects = {
+      overlay: { x: 470, y: 118, w: 260, h: 185 },
+      iframe: { x: 510, y: 210, w: 172, h: 58 },
+      anchor: { x: 330, y: 346, r: 58 }
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function pointInRect(p, r) {
+      return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
+    }
+
+    function pointInCircle(p, c) {
+      return Math.hypot(p.x - c.x, p.y - c.y) <= c.r;
+    }
+
+    function pointer() {
+      return {
+        x: canvas.width * Number(controls.rayX.value) / 100,
+        y: canvas.height * Number(controls.rayY.value) / 100
+      };
+    }
+
+    function metrics() {
+      const p = pointer();
+      const onOverlay = pointInRect(p, rects.overlay);
+      const onEmbedded = pointInRect(p, rects.iframe);
+      const onAnchor = pointInCircle(p, rects.anchor);
+      const beforexrselect = onOverlay;
+      const preventDefault = beforexrselect && controls.preventOverlay.checked;
+      const poseLimited = onEmbedded && controls.crossOrigin.checked;
+      let target = "world";
+      if (onEmbedded) target = "embedded-dom";
+      else if (onOverlay) target = "dom-overlay";
+      else if (onAnchor) target = "world-anchor";
+
+      let xrSelect = "select";
+      if (preventDefault && controls.transient.checked) xrSelect = "auxiliary";
+      else if (preventDefault) xrSelect = "suppressed";
+      if (poseLimited) xrSelect = "limited";
+
+      const drift = Number(controls.anchorDrift.value);
+      let anchorAction = "hover";
+      if (target === "world-anchor" && xrSelect === "select") {
+        anchorAction = drift > 44 ? "re-hit-test" : drift > 24 ? "warn" : "select anchor";
+      } else if (target === "dom-overlay" || target === "embedded-dom") {
+        anchorAction = "dom handles input";
+      } else if (xrSelect === "suppressed" || xrSelect === "auxiliary" || xrSelect === "limited") {
+        anchorAction = "anchor untouched";
+      }
+
+      return { p, target, onOverlay, onEmbedded, onAnchor, beforexrselect, preventDefault, poseLimited, xrSelect, drift, anchorAction };
+    }
+
+    function updateOutputs(m) {
+      out.overlayTypeOut.textContent = controls.overlayType.value;
+      out.rayXOut.textContent = `${controls.rayX.value}%`;
+      out.rayYOut.textContent = `${controls.rayY.value}%`;
+      out.anchorDriftOut.textContent = String(m.drift);
+      out.targetOut.textContent = m.target;
+      out.beforeOut.textContent = m.beforexrselect ? (m.preventDefault ? "prevented" : "allowed") : "not fired";
+      out.selectOut.textContent = m.xrSelect;
+      out.anchorOut.textContent = m.anchorAction;
+      out.statusText.textContent = m.target === "world-anchor" ? "world input armed" : `${m.target} route`;
+      out.payload.textContent = JSON.stringify({
+        frame: state.frame,
+        event: state.lastEvent,
+        requestedFeatures: ["dom-overlay", "anchors", "hit-test"],
+        domOverlay: {
+          type: controls.overlayType.value,
+          root: "#xr-overlay",
+          beforexrselectFired: m.beforexrselect,
+          preventDefault: m.preventDefault
+        },
+        inputSource: {
+          mode: controls.transient.checked ? "transient screen input" : "tracked controller",
+          targetRayHit: m.target,
+          poseLimited: m.poseLimited,
+          gamepadLimited: m.poseLimited
+        },
+        xrEvents: {
+          selectstart: m.xrSelect === "select",
+          select: m.xrSelect === "select",
+          route: m.xrSelect
+        },
+        anchor: {
+          id: "anchor-desk-01",
+          driftCm: m.drift,
+          action: m.anchorAction
+        }
+      }, null, 2);
+    }
+
+    function drawGrid() {
+      ctx.fillStyle = "#07100e";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(0, 52);
+      for (let y = 0; y < 540; y += 34) {
+        const depth = y / 540;
+        ctx.strokeStyle = `rgba(132, 244, 189, ${0.07 + depth * 0.11})`;
+        ctx.beginPath();
+        ctx.moveTo(95 - depth * 66, y);
+        ctx.lineTo(765 + depth * 66, y);
+        ctx.stroke();
+      }
+      for (let i = -8; i <= 8; i += 1) {
+        ctx.strokeStyle = "rgba(255,255,255,0.055)";
+        ctx.beginPath();
+        ctx.moveTo(430 + i * 25, 0);
+        ctx.lineTo(430 + i * 68, 540);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawOverlay(m) {
+      const r = rects.overlay;
+      ctx.fillStyle = m.onOverlay ? "rgba(143, 199, 255, 0.24)" : "rgba(143, 199, 255, 0.12)";
+      ctx.strokeStyle = m.onOverlay ? "rgba(143, 199, 255, 0.92)" : "rgba(143, 199, 255, 0.46)";
+      ctx.lineWidth = 2;
+      ctx.fillRect(r.x, r.y, r.w, r.h);
+      ctx.strokeRect(r.x, r.y, r.w, r.h);
+
+      ctx.fillStyle = "#f4fff8";
+      ctx.font = "700 16px ui-sans-serif, system-ui";
+      ctx.fillText("DOM Overlay root", r.x + 18, r.y + 32);
+      ctx.font = "13px ui-sans-serif, system-ui";
+      ctx.fillStyle = "#cfe8da";
+      ctx.fillText("settings, confirm, cancel", r.x + 18, r.y + 57);
+      ctx.fillText(`type: ${controls.overlayType.value}`, r.x + 18, r.y + 82);
+
+      const f = rects.iframe;
+      ctx.fillStyle = m.onEmbedded ? "rgba(255, 115, 141, 0.30)" : "rgba(255, 115, 141, 0.15)";
+      ctx.strokeStyle = m.onEmbedded ? "rgba(255, 115, 141, 0.92)" : "rgba(255, 115, 141, 0.52)";
+      ctx.fillRect(f.x, f.y, f.w, f.h);
+      ctx.strokeRect(f.x, f.y, f.w, f.h);
+      ctx.fillStyle = "#ffeaf0";
+      ctx.font = "700 13px ui-sans-serif, system-ui";
+      ctx.fillText("embedded content", f.x + 14, f.y + 24);
+      ctx.font = "12px ui-sans-serif, system-ui";
+      ctx.fillText("limit pose/gamepad", f.x + 14, f.y + 43);
+    }
+
+    function drawAnchor(m) {
+      const a = rects.anchor;
+      const wobble = Math.sin(state.frame * 0.04) * m.drift * 0.55;
+      const x = a.x + wobble;
+      const y = a.y + Math.cos(state.frame * 0.03) * m.drift * 0.22;
+      const color = m.anchorAction === "re-hit-test" ? "#ffd36e" : m.anchorAction === "warn" ? "#ffb56f" : "#84f4bd";
+
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.setLineDash([7, 8]);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "rgba(132, 244, 189, 0.10)";
+      ctx.strokeStyle = "rgba(132, 244, 189, 0.65)";
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = `${color}2b`;
+      ctx.strokeStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, 32 + Math.sin(state.frame * 0.08) * 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#f4fff8";
+      ctx.font = "700 14px ui-sans-serif, system-ui";
+      ctx.fillText("world anchor", x - 46, y + 55);
+    }
+
+    function drawRay(m) {
+      ctx.strokeStyle = m.xrSelect === "select" ? "rgba(132, 244, 189, 0.9)" : "rgba(255, 211, 110, 0.88)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, canvas.height - 28);
+      ctx.lineTo(m.p.x, m.p.y);
+      ctx.stroke();
+
+      ctx.fillStyle = m.poseLimited ? "#ff738d" : m.preventDefault ? "#ffd36e" : "#84f4bd";
+      ctx.beginPath();
+      ctx.arc(m.p.x, m.p.y, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.62)";
+      ctx.stroke();
+    }
+
+    function drawDecisionRail(m) {
+      const items = [
+        ["pointer", "targetRaySpace intersects"],
+        ["beforexrselect", m.beforexrselect ? "fired on overlay root" : "not on DOM overlay"],
+        ["default", m.preventDefault ? "preventDefault" : "continue"],
+        ["xr select", m.xrSelect],
+        ["anchor", m.anchorAction]
+      ];
+      const x = 56;
+      const y = 48;
+      const w = 145;
+      items.forEach((item, i) => {
+        const px = x + i * (w + 12);
+        ctx.fillStyle = i === 2 && m.preventDefault ? "rgba(255, 211, 110, 0.20)" : "rgba(244, 255, 248, 0.08)";
+        ctx.strokeStyle = "rgba(244, 255, 248, 0.16)";
+        ctx.fillRect(px, y, w, 58);
+        ctx.strokeRect(px, y, w, 58);
+        ctx.fillStyle = "#a9bab1";
+        ctx.font = "11px ui-sans-serif, system-ui";
+        ctx.fillText(item[0], px + 10, y + 21);
+        ctx.fillStyle = "#f4fff8";
+        ctx.font = "700 12px ui-sans-serif, system-ui";
+        ctx.fillText(item[1].slice(0, 20), px + 10, y + 42);
+        if (i < items.length - 1) {
+          ctx.strokeStyle = "rgba(244, 255, 248, 0.28)";
+          ctx.beginPath();
+          ctx.moveTo(px + w, y + 29);
+          ctx.lineTo(px + w + 12, y + 29);
+          ctx.stroke();
+        }
+      });
+    }
+
+    function render() {
+      state.frame += 1;
+      const m = metrics();
+      drawGrid();
+      drawDecisionRail(m);
+      drawAnchor(m);
+      drawOverlay(m);
+      drawRay(m);
+      updateOutputs(m);
+      requestAnimationFrame(render);
+    }
+
+    function aim(x, y) {
+      controls.rayX.value = Math.round(x / canvas.width * 100);
+      controls.rayY.value = Math.round(y / canvas.height * 100);
+    }
+
+    function firePrimaryAction() {
+      const m = metrics();
+      state.lastActionFrame = state.frame;
+      state.lastEvent = m.beforexrselect
+        ? `beforexrselect:${m.preventDefault ? "prevented" : "allowed"}:${m.xrSelect}`
+        : `world:${m.xrSelect}`;
+      updateOutputs(m);
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.drag = true;
+      canvas.setPointerCapture(event.pointerId);
+      const box = canvas.getBoundingClientRect();
+      aim((event.clientX - box.left) / box.width * canvas.width, (event.clientY - box.top) / box.height * canvas.height);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!state.drag) return;
+      const box = canvas.getBoundingClientRect();
+      aim((event.clientX - box.left) / box.width * canvas.width, (event.clientY - box.top) / box.height * canvas.height);
+    });
+
+    canvas.addEventListener("pointerup", (event) => {
+      state.drag = false;
+      canvas.releasePointerCapture(event.pointerId);
+      firePrimaryAction();
+    });
+
+    canvas.addEventListener("pointercancel", () => {
+      state.drag = false;
+    });
+
+    document.getElementById("fire").addEventListener("click", firePrimaryAction);
+    document.getElementById("moveWorld").addEventListener("click", () => aim(rects.anchor.x, rects.anchor.y));
+    document.getElementById("movePanel").addEventListener("click", () => aim(rects.overlay.x + 68, rects.overlay.y + 70));
+    document.getElementById("moveIframe").addEventListener("click", () => aim(rects.iframe.x + 60, rects.iframe.y + 30));
+
+    render();
+  </script>
+</body>
+</html>
