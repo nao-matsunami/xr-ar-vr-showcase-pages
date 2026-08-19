@@ -1,0 +1,129 @@
+{
+  "date": "2026-08-19",
+  "headline": "DOM Overlay の確認 UI でアンカー操作を取り消し可能にする",
+  "headlineEn": "Make anchor operations undoable through DOM Overlay confirmation UI",
+  "summary": "WebXR DOM Overlays Module、WebXR Anchors Module、WebXR Hit Test Module、MDN の `beforexrselect`、Immersive Web の hit-test anchors sample を確認し、delete / restore / re-hit-test を overlay の confirm/cancel queue で確定する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR DOM Overlays Module, WebXR Anchors Module, WebXR Hit Test Module, MDN `beforexrselect`, and the Immersive Web hit-test anchors sample, today's original HTML sample stages delete / restore / re-hit-test through an overlay confirm/cancel queue.",
+  "keyTopics": [
+    "WebXR DOM Overlays Module は、overlay の DOM root に `beforexrselect` を発火し、`preventDefault()` で `selectstart` / `selectend` / `select` を抑止できる入力境界を定義しています。",
+    "MDN の `beforexrselect` ページは、この機能が experimental / limited availability であり、広いブラウザ互換を前提にしない検証が必要だと示しています。",
+    "Immersive Web の Anchors Module では、`XRAnchor.delete()`、`requestPersistentHandle()`、`XRSession.restorePersistentAnchor()`、`deletePersistentAnchor()` が anchor lifecycle の基本操作になります。",
+    "WebXR Hit Test Module は `requestHitTestSourceForTransientInput()` と `getHitTestResultsForTransientInput()` を定義し、screen tap 由来の一時的な ray から再配置候補を得る流れを扱います。",
+    "DOM Overlay の説明資料では、DOM event と XR event は完全同期ではなく、非 event 型の controller pose / button state / transient input はアプリ側で重複排除する必要があると整理されています。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR DOM Overlays Module defines an input boundary where `beforexrselect` fires on the overlay DOM root and `preventDefault()` can suppress `selectstart`, `selectend`, and `select`.",
+    "MDN's `beforexrselect` page marks the feature as experimental and limited availability, so validation should not assume broad browser support.",
+    "The Immersive Web Anchors Module makes `XRAnchor.delete()`, `requestPersistentHandle()`, `XRSession.restorePersistentAnchor()`, and `deletePersistentAnchor()` core parts of the anchor lifecycle.",
+    "The WebXR Hit Test Module defines `requestHitTestSourceForTransientInput()` and `getHitTestResultsForTransientInput()`, covering replacement candidates from screen-tap transient rays.",
+    "The DOM Overlay explainer clarifies that DOM events and XR events are not fully synchronized, and apps must deduplicate non-event controller pose, button state, and transient input when needed."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Anchor Undo Overlay Queue",
+      "url": "../outputs/2026-08-19_html_anchor_undo_overlay_queue.html"
+    },
+    {
+      "label": "W3C: WebXR DOM Overlays Module",
+      "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+    },
+    {
+      "label": "MDN: Element beforexrselect event",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/Element/beforexrselect_event"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "W3C: WebXR Hit Test Module",
+      "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+    },
+    {
+      "label": "Immersive Web Sample: Hit Test with Anchors",
+      "url": "https://immersive-web.github.io/webxr-samples/hit-test-anchors.html"
+    },
+    {
+      "label": "Immersive Web DOM Overlay explainer",
+      "url": "https://github.com/immersive-web/dom-overlays/blob/main/explainer.md"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、DOM Overlay の confirm/cancel UI を anchor lifecycle の操作キューとして使う考え方です。`beforexrselect.preventDefault()` は単にボタンと world select の二重発火を止めるだけでなく、`delete()`、persistent handle restore、re-hit-test replace のような戻しにくい操作を、overlay 上の明示的な確認に閉じ込める境界として使えます。面白いのは、空間内 anchor の hover や drift warning は world 側で続けながら、確定操作だけを DOM 側の取り消し可能な queue に逃がせる点です。",
+      "bodyEn": "Today's notable idea is using DOM Overlay confirm/cancel UI as an operation queue for the anchor lifecycle. `beforexrselect.preventDefault()` is not only a way to stop duplicate button and world-select events; it can also fence hard-to-reverse operations such as `delete()`, persistent-handle restore, and re-hit-test replacement behind explicit overlay confirmation. The useful part is that world-side hover and drift warning can continue while commit operations move into an undoable DOM-side queue.",
+      "links": [
+        {
+          "label": "W3C: WebXR DOM Overlays Module",
+          "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+        },
+        {
+          "label": "Immersive Web: WebXR Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルでは pending anchor operation、confirm/cancel overlay、world anchor、target ray、hit-test quality、drift cm を同じ画面に置きました。confirm に ray が当たり、overlay gate が有効な時だけ commit に進みます。cancel なら rollback、world anchor に当たった時は drift が大きければ request confirm、小さければ inspect です。実演出では、confirm 中だけ anchor ring を固定色にし、world 側の select ray を点線にして、今は空間ではなく DOM が入力を所有していることを示すと分かりやすくなります。",
+      "bodyEn": "The sample places the pending anchor operation, confirm/cancel overlay, world anchor, target ray, hit-test quality, and drift in one view. It commits only when the ray hits confirm while the overlay gate is active. Cancel rolls back; hitting the world anchor requests confirmation when drift is large and only inspects when drift is small. In a real scene, the anchor ring can freeze to a confirmation color and the world select ray can become dashed while DOM owns the input.",
+      "links": [
+        {
+          "label": "Open Anchor Undo Overlay Queue",
+          "url": "../outputs/2026-08-19_html_anchor_undo_overlay_queue.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では anchor 操作を即時実行せず、`{ type, anchorId, persistentHandle, hitTestSource, createdAtFrame }` のような queue item として持ちます。overlay root の `beforexrselect` で confirm/cancel 領域を検出したら `preventDefault()` し、DOM click 側で commit / rollback を行います。re-hit-test は `requestHitTestSourceForTransientInput()` の結果を候補として持ち、quality や entity type が閾値未満なら hold にします。persistent handle がない restore は UI 上では同じに見えても実行条件が違うため、payload で null を明示するのが安全です。",
+      "bodyEn": "In production, keep anchor operations as queue items such as `{ type, anchorId, persistentHandle, hitTestSource, createdAtFrame }` instead of executing immediately. When the overlay root's `beforexrselect` detects confirm/cancel regions, call `preventDefault()` and let DOM click commit or roll back. For re-hit-test, hold the `requestHitTestSourceForTransientInput()` result as a candidate and keep the operation on hold if quality or entity type is below threshold. A restore without a persistent handle looks similar in UI but has different execution requirements, so the payload should make null explicit."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルからは frame、pending operation、queue state、confirm/cancel target、`beforexrselect` 発火、prevented route、hit-test quality、transient input source、persistent handle 有無、drift cm、commit / rollback 回数を取れます。昨日の DOM Overlay select gate と組み合わせると入力経路の重複排除ができ、2026-08-17 の anchor drift planner と組み合わせると drift が閾値を越えた anchor だけを confirm queue に送れます。業務 UI なら、危険な削除や再配置に監査ログと undo window を足す設計にもできます。",
+      "bodyEn": "Today's sample emits frame, pending operation, queue state, confirm/cancel target, `beforexrselect` firing, prevented route, hit-test quality, transient input source, persistent-handle presence, drift, and commit / rollback counts. Combined with yesterday's DOM Overlay select gate, it handles input-route deduplication; combined with the 2026-08-17 anchor drift planner, only anchors beyond a drift threshold enter the confirmation queue. For operational UI, dangerous delete or replacement actions can gain audit logs and an undo window."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "引き続き DOM Overlay の limited availability、cross-origin content の privacy model、transient input hit-test、Anchors Module の persistent anchor 仕様、`XRAnchor.delete()` 後の `anchorSpace` 参照エラー、`deletePersistentAnchor()` の扱いを追います。次は、confirm queue の payload を複数 anchor に広げ、trackedAnchors の集合変化、unlocatable frame、restore failure をまとめて表示する復旧ダッシュボードに発展できます。",
+      "bodyEn": "Continue watching DOM Overlay limited availability, cross-origin content privacy behavior, transient input hit testing, persistent anchors, `anchorSpace` errors after `XRAnchor.delete()`, and `deletePersistentAnchor()` behavior. Next, the confirm-queue payload can expand to multiple anchors and become a recovery dashboard that shows tracked-anchor set changes, unlocatable frames, and restore failures."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、operation を `re-hit-test replace` にして hit-test quality を 50% 前後まで下げ、`queue op`、`aim confirm` を押してください。overlay gate が有効なら XR select は suppressed になり、quality が低いため commit ではなく hold になります。次に quality を 70% 以上へ上げて confirm すると commit に変わります。`aim world anchor` では drift が大きい場合に request confirm となり、world 側だけで破壊的操作に進まないことを確認できます。",
+      "bodyEn": "Open the sample, set the operation to `re-hit-test replace`, lower hit-test quality to around 50%, then press `queue op` and `aim confirm`. With the overlay gate enabled, XR select is suppressed and the low quality keeps the operation on hold instead of committing. Raise quality above 70% and confirm again to commit. `aim world anchor` shows request-confirm behavior when drift is high, preventing destructive world-side action from proceeding by itself.",
+      "links": [
+        {
+          "label": "Open Anchor Undo Overlay Queue",
+          "url": "../outputs/2026-08-19_html_anchor_undo_overlay_queue.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: DOM Overlay の `beforexrselect`、MDN の互換性注意、Anchors Module の delete / persistent restore、Hit Test Module の transient input hit-test、Immersive Web の hit-test anchors sample を確認。設計: world select と overlay confirm/cancel を分け、アンカー操作を pending queue として扱う。実装: 単一 HTML に canvas stage、操作 selector、drift / quality sliders、confirm/cancel hit target、JSON payload を作成。検証: JSON parse、HTML script 構文、gallery 再生成、publish、公開 URL 確認まで行う。",
+      "bodyEn": "Research: reviewed DOM Overlay `beforexrselect`, MDN compatibility notes, Anchors delete / persistent restore, Hit Test transient input hit testing, and the Immersive Web hit-test anchors sample. Design: separate world select from overlay confirm/cancel and treat anchor operations as a pending queue. Implementation: built a single HTML file with a canvas stage, operation selector, drift / quality sliders, confirm/cancel hit targets, and JSON payload. Validation: parse JSON, check HTML script syntax, rebuild the gallery, publish, and verify public URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "7月からの流れは、depth / lighting / hand / layers の表現検証から、8月後半には anchor の配置、復旧、入力所有権へ寄ってきました。今日の queue は、空間コンテンツを置いた後に必要になる運用の層です。AR では「置ける」だけでは足りず、ずれた時、消す時、戻す時に、どの入力が本当に確定操作なのかを UI と payload の両方で説明できる必要があります。",
+      "bodyEn": "The series has moved from depth, lighting, hand, and layers expression tests into anchor placement, recovery, and input ownership in late August. Today's queue is an operational layer needed after spatial content is placed. In AR, being able to place content is not enough; when it drifts, is deleted, or is restored, the system must explain which input truly commits the action through both UI and payload."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Anchor Undo Overlay Queue` です。実 WebXR session がなくても、delete / restore / re-hit-test を pending queue に入れ、overlay confirm/cancel、world anchor、hit-test quality、persistent handle の条件で commit / rollback / hold / request confirm がどう変わるかを確認できます。次に足すなら、複数 anchor の timeline と、実機ログを貼り付けて queue 判定を再生する import 機能です。",
+      "bodyEn": "The selected prototype is `Anchor Undo Overlay Queue`. Without a real WebXR session, it queues delete / restore / re-hit-test and shows how overlay confirm/cancel, world-anchor targeting, hit-test quality, and persistent-handle conditions change the result between commit, rollback, hold, and request-confirm. A useful next addition is a multi-anchor timeline plus an import path that replays real-device logs through the queue rules."
+    }
+  ]
+}

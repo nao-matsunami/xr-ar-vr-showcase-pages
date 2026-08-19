@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anchor Undo Overlay Queue</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07100e;
+      --panel: rgba(11, 18, 20, 0.93);
+      --line: rgba(218, 240, 226, 0.2);
+      --text: #f5fff7;
+      --muted: #9db0a8;
+      --green: #90f0ad;
+      --cyan: #88d9ff;
+      --amber: #ffd36c;
+      --red: #ff758b;
+      --ink: #07100d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(145deg, #07100e, #172321 56%, #08100f);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.6vw, 2.35rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 850px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.55;
+    }
+
+    .badge,
+    .stage,
+    .panel,
+    .log {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+    }
+
+    .badge {
+      min-width: 252px;
+      padding: 12px 14px;
+    }
+
+    .badge b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .badge span {
+      display: block;
+      margin-top: 5px;
+      color: var(--green);
+      font-weight: 760;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+      gap: 14px;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 620px;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 620px;
+      background: #07100e;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .readout {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(245, 255, 247, 0.13);
+      border-radius: 8px;
+      background: rgba(4, 10, 9, 0.76);
+    }
+
+    .readout small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .readout strong {
+      display: block;
+      margin-top: 4px;
+      font-size: clamp(0.9rem, 1.7vw, 1.12rem);
+      line-height: 1.16;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .panel,
+    .log {
+      padding: 14px;
+    }
+
+    .panel h2,
+    .log h2 {
+      margin: 0 0 12px;
+      color: var(--green);
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .control {
+      display: grid;
+      gap: 7px;
+      margin: 11px 0;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    label output {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--green);
+    }
+
+    select,
+    button {
+      width: 100%;
+      border: 1px solid rgba(245, 255, 247, 0.15);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      font: inherit;
+    }
+
+    select {
+      padding: 10px;
+    }
+
+    .check {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 9px;
+      align-items: start;
+      margin: 10px 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.4;
+    }
+
+    .check input {
+      margin-top: 2px;
+      accent-color: var(--green);
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    button {
+      min-height: 40px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 720;
+    }
+
+    button.primary {
+      color: var(--ink);
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+    }
+
+    button.warn {
+      color: var(--ink);
+      background: linear-gradient(135deg, var(--amber), #ffb46d);
+    }
+
+    .log pre {
+      overflow: auto;
+      max-height: 285px;
+      margin: 0;
+      padding: 12px;
+      border: 1px solid rgba(245, 255, 247, 0.1);
+      border-radius: 8px;
+      background: rgba(3, 8, 8, 0.75);
+      color: #e7fff0;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .hint {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .badge {
+        min-width: 0;
+      }
+
+      .stage,
+      canvas {
+        min-height: 540px;
+        height: 540px;
+      }
+
+      .hud {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 520px) {
+      main {
+        width: min(100vw - 18px, 1180px);
+        padding-top: 14px;
+      }
+
+      .button-grid,
+      .hud {
+        grid-template-columns: 1fr;
+      }
+
+      .stage,
+      canvas {
+        min-height: 520px;
+        height: 520px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Anchor Undo Overlay Queue</h1>
+        <p class="subtitle">WebXR の DOM Overlay と Anchors を想定し、delete / restore / re-hit-test を overlay の confirm/cancel で確定するまで world 側に流さないための自作ミニサンプルです。</p>
+      </div>
+      <div class="badge">
+        <b>today's probe</b>
+        <span id="statusText">queue waiting</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="stage" aria-label="anchor undo overlay queue simulator">
+        <canvas id="stage" width="860" height="620"></canvas>
+        <div class="hud">
+          <div class="readout"><small>target</small><strong id="targetOut">world-anchor</strong></div>
+          <div class="readout"><small>pending op</small><strong id="pendingOut">restore</strong></div>
+          <div class="readout"><small>XR select</small><strong id="selectOut">select</strong></div>
+          <div class="readout"><small>commit</small><strong id="commitOut">queued</strong></div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>Controls</h2>
+          <div class="control">
+            <label for="operation">anchor operation <output id="operationOut">restore</output></label>
+            <select id="operation">
+              <option value="restore">restore persistent</option>
+              <option value="delete">delete anchor</option>
+              <option value="rehit">re-hit-test replace</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="rayX">target ray x <output id="rayXOut">55%</output></label>
+            <input id="rayX" type="range" min="7" max="93" value="55">
+          </div>
+          <div class="control">
+            <label for="rayY">target ray y <output id="rayYOut">38%</output></label>
+            <input id="rayY" type="range" min="10" max="88" value="38">
+          </div>
+          <div class="control">
+            <label for="drift">anchor drift cm <output id="driftOut">32</output></label>
+            <input id="drift" type="range" min="0" max="80" value="32">
+          </div>
+          <div class="control">
+            <label for="hitQuality">hit-test quality <output id="hitQualityOut">71%</output></label>
+            <input id="hitQuality" type="range" min="0" max="100" value="71">
+          </div>
+          <label class="check">
+            <input id="overlayGate" type="checkbox" checked>
+            <span>confirm/cancel 領域で beforexrselect.preventDefault() を使う</span>
+          </label>
+          <label class="check">
+            <input id="persistent" type="checkbox" checked>
+            <span>requestPersistentHandle / restorePersistentAnchor の流れを想定する</span>
+          </label>
+          <label class="check">
+            <input id="transientHit" type="checkbox" checked>
+            <span>re-hit-test は transient input hit-test source として扱う</span>
+          </label>
+          <div class="button-grid">
+            <button class="primary" id="queue">queue op</button>
+            <button class="warn" id="confirm">aim confirm</button>
+            <button id="cancel">aim cancel</button>
+            <button id="world">aim world anchor</button>
+          </div>
+          <p class="hint">canvas をクリック/ドラッグして ray を動かせます。操作は pending queue に入り、confirm/cancel を通った場合だけ commit または rollback されます。</p>
+        </section>
+
+        <section class="log">
+          <h2>Payload</h2>
+          <pre id="payload">{}</pre>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      operation: document.getElementById("operation"),
+      rayX: document.getElementById("rayX"),
+      rayY: document.getElementById("rayY"),
+      drift: document.getElementById("drift"),
+      hitQuality: document.getElementById("hitQuality"),
+      overlayGate: document.getElementById("overlayGate"),
+      persistent: document.getElementById("persistent"),
+      transientHit: document.getElementById("transientHit")
+    };
+
+    const out = {
+      statusText: document.getElementById("statusText"),
+      operationOut: document.getElementById("operationOut"),
+      rayXOut: document.getElementById("rayXOut"),
+      rayYOut: document.getElementById("rayYOut"),
+      driftOut: document.getElementById("driftOut"),
+      hitQualityOut: document.getElementById("hitQualityOut"),
+      targetOut: document.getElementById("targetOut"),
+      pendingOut: document.getElementById("pendingOut"),
+      selectOut: document.getElementById("selectOut"),
+      commitOut: document.getElementById("commitOut"),
+      payload: document.getElementById("payload")
+    };
+
+    const rects = {
+      overlay: { x: 468, y: 96, w: 280, h: 222 },
+      confirm: { x: 500, y: 238, w: 98, h: 44 },
+      cancel: { x: 620, y: 238, w: 92, h: 44 },
+      anchor: { x: 324, y: 350, r: 58 }
+    };
+
+    const state = {
+      frame: 0,
+      drag: false,
+      queuedAt: 0,
+      committed: 0,
+      rolledBack: 0,
+      lastEvent: "boot",
+      queueState: "queued"
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function pointInRect(p, r) {
+      return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
+    }
+
+    function pointInCircle(p, c) {
+      return Math.hypot(p.x - c.x, p.y - c.y) <= c.r;
+    }
+
+    function pointer() {
+      return {
+        x: canvas.width * Number(controls.rayX.value) / 100,
+        y: canvas.height * Number(controls.rayY.value) / 100
+      };
+    }
+
+    function getTarget(p) {
+      if (pointInRect(p, rects.confirm)) return "overlay-confirm";
+      if (pointInRect(p, rects.cancel)) return "overlay-cancel";
+      if (pointInRect(p, rects.overlay)) return "overlay-panel";
+      if (pointInCircle(p, rects.anchor)) return "world-anchor";
+      return "world";
+    }
+
+    function metrics() {
+      const p = pointer();
+      const target = getTarget(p);
+      const beforexrselect = target.startsWith("overlay");
+      const prevented = beforexrselect && controls.overlayGate.checked;
+      const xrSelect = prevented ? "suppressed" : "select";
+      const drift = Number(controls.drift.value);
+      const quality = Number(controls.hitQuality.value);
+      const op = controls.operation.value;
+      let decision = "queued";
+
+      if (target === "overlay-confirm" && prevented) {
+        const needsBetterHit = op === "rehit" && quality < 58;
+        const staleRestore = op === "restore" && !controls.persistent.checked;
+        decision = needsBetterHit || staleRestore ? "hold" : "commit";
+      } else if (target === "overlay-cancel" && prevented) {
+        decision = "rollback";
+      } else if (target === "world-anchor" && xrSelect === "select") {
+        decision = drift > 42 ? "request confirm" : "inspect";
+      }
+
+      return { p, target, beforexrselect, prevented, xrSelect, drift, quality, op, decision };
+    }
+
+    function updateStateFromAction(action) {
+      const m = metrics();
+      state.lastEvent = action;
+      if (action === "queue") {
+        state.queuedAt = state.frame;
+        state.queueState = "queued";
+      } else if (action === "confirm") {
+        if (m.decision === "commit") {
+          state.committed += 1;
+          state.queueState = "committed";
+        } else {
+          state.queueState = "hold";
+        }
+      } else if (action === "cancel") {
+        state.rolledBack += 1;
+        state.queueState = "rolled back";
+      }
+      updateOutputs(metrics());
+      draw();
+    }
+
+    function drawGrid() {
+      ctx.fillStyle = "#07100e";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(0, 58);
+      for (let y = 0; y < 540; y += 34) {
+        const depth = y / 540;
+        ctx.strokeStyle = `rgba(136, 217, 255, ${0.08 + depth * 0.18})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(70 - depth * 52, y);
+        ctx.lineTo(790 + depth * 52, y);
+        ctx.stroke();
+      }
+      for (let x = -100; x <= 960; x += 68) {
+        ctx.strokeStyle = "rgba(144, 240, 173, 0.09)";
+        ctx.beginPath();
+        ctx.moveTo(430, 0);
+        ctx.lineTo(x, 540);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawAnchor(m) {
+      const drift = m.drift / 80;
+      const glow = m.target === "world-anchor" ? 0.75 : 0.32;
+      ctx.save();
+      ctx.translate(rects.anchor.x, rects.anchor.y);
+      ctx.strokeStyle = `rgba(255, 211, 108, ${0.26 + glow * 0.35})`;
+      ctx.lineWidth = 9;
+      ctx.beginPath();
+      ctx.arc(0, 0, rects.anchor.r + drift * 22, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255, 211, 108, 0.11)";
+      ctx.beginPath();
+      ctx.arc(0, 0, rects.anchor.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = m.decision === "request confirm" ? varColor("--red") : varColor("--green");
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 30, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "#f5fff7";
+      ctx.font = "700 14px ui-sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("anchor", 0, 5);
+      ctx.fillStyle = "#9db0a8";
+      ctx.font = "12px ui-sans-serif";
+      ctx.fillText(`${m.drift}cm drift`, 0, 46);
+      ctx.restore();
+    }
+
+    function drawOverlay(m) {
+      ctx.save();
+      ctx.fillStyle = "rgba(12, 18, 20, 0.83)";
+      ctx.strokeStyle = m.target.startsWith("overlay") ? "rgba(144, 240, 173, 0.72)" : "rgba(245, 255, 247, 0.24)";
+      ctx.lineWidth = 2;
+      roundRect(rects.overlay.x, rects.overlay.y, rects.overlay.w, rects.overlay.h, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#f5fff7";
+      ctx.font = "800 16px ui-sans-serif";
+      ctx.fillText("DOM Overlay queue", rects.overlay.x + 22, rects.overlay.y + 34);
+      ctx.fillStyle = "#9db0a8";
+      ctx.font = "12px ui-sans-serif";
+      ctx.fillText("pending anchor operation", rects.overlay.x + 22, rects.overlay.y + 58);
+
+      drawMiniMeter(rects.overlay.x + 22, rects.overlay.y + 82, 220, "hit quality", m.quality / 100, varColor("--cyan"));
+      drawMiniMeter(rects.overlay.x + 22, rects.overlay.y + 122, 220, "undo window", queueAge(), varColor("--green"));
+
+      drawButton(rects.confirm, "confirm", m.target === "overlay-confirm", varColor("--green"));
+      drawButton(rects.cancel, "cancel", m.target === "overlay-cancel", varColor("--amber"));
+      ctx.restore();
+    }
+
+    function drawQueue(m) {
+      const x = 82;
+      const y = 104;
+      const items = [
+        ["pending", m.op],
+        ["gate", m.prevented ? "DOM owns" : "world passes"],
+        ["result", m.decision]
+      ];
+      ctx.save();
+      ctx.fillStyle = "rgba(4, 10, 9, 0.64)";
+      ctx.strokeStyle = "rgba(245, 255, 247, 0.14)";
+      roundRect(x - 18, y - 28, 270, 142, 8);
+      ctx.fill();
+      ctx.stroke();
+      items.forEach((item, index) => {
+        const yy = y + index * 40;
+        ctx.fillStyle = index === 2 ? colorForDecision(m.decision) : "rgba(136, 217, 255, 0.2)";
+        ctx.beginPath();
+        ctx.arc(x, yy, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#9db0a8";
+        ctx.font = "12px ui-sans-serif";
+        ctx.fillText(item[0], x + 26, yy - 5);
+        ctx.fillStyle = "#f5fff7";
+        ctx.font = "800 15px ui-sans-serif";
+        ctx.fillText(item[1], x + 26, yy + 14);
+      });
+      ctx.restore();
+    }
+
+    function drawRay(m) {
+      ctx.save();
+      ctx.strokeStyle = m.prevented ? "rgba(255, 211, 108, 0.88)" : "rgba(136, 217, 255, 0.86)";
+      ctx.lineWidth = 3;
+      ctx.setLineDash(m.xrSelect === "suppressed" ? [8, 8] : []);
+      ctx.beginPath();
+      ctx.moveTo(430, 590);
+      ctx.lineTo(m.p.x, m.p.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = m.prevented ? varColor("--amber") : varColor("--cyan");
+      ctx.beginPath();
+      ctx.arc(m.p.x, m.p.y, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(245, 255, 247, 0.75)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawMiniMeter(x, y, w, label, t, color) {
+      ctx.fillStyle = "#9db0a8";
+      ctx.font = "12px ui-sans-serif";
+      ctx.fillText(label, x, y);
+      ctx.fillStyle = "rgba(245, 255, 247, 0.09)";
+      roundRect(x, y + 8, w, 8, 4);
+      ctx.fill();
+      ctx.fillStyle = color;
+      roundRect(x, y + 8, clamp(w * t, 0, w), 8, 4);
+      ctx.fill();
+    }
+
+    function drawButton(r, text, active, color) {
+      ctx.fillStyle = active ? color : "rgba(245, 255, 247, 0.08)";
+      ctx.strokeStyle = active ? "rgba(245, 255, 247, 0.64)" : "rgba(245, 255, 247, 0.18)";
+      roundRect(r.x, r.y, r.w, r.h, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = active ? "#07100d" : "#f5fff7";
+      ctx.font = "800 13px ui-sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(text, r.x + r.w / 2, r.y + 27);
+      ctx.textAlign = "left";
+    }
+
+    function roundRect(x, y, w, h, r) {
+      const rr = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rr);
+      ctx.arcTo(x + w, y + h, x, y + h, rr);
+      ctx.arcTo(x, y + h, x, y, rr);
+      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.closePath();
+    }
+
+    function varColor(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function colorForDecision(decision) {
+      if (decision === "commit") return varColor("--green");
+      if (decision === "rollback" || decision === "request confirm") return varColor("--amber");
+      if (decision === "hold") return varColor("--red");
+      return "rgba(136, 217, 255, 0.55)";
+    }
+
+    function queueAge() {
+      return clamp((state.frame - state.queuedAt) / 420, 0, 1);
+    }
+
+    function updateOutputs(m) {
+      out.operationOut.textContent = controls.operation.value;
+      out.rayXOut.textContent = `${controls.rayX.value}%`;
+      out.rayYOut.textContent = `${controls.rayY.value}%`;
+      out.driftOut.textContent = String(m.drift);
+      out.hitQualityOut.textContent = `${m.quality}%`;
+      out.targetOut.textContent = m.target;
+      out.pendingOut.textContent = m.op;
+      out.selectOut.textContent = m.xrSelect;
+      out.commitOut.textContent = m.decision;
+      out.statusText.textContent = `${state.queueState}: ${m.decision}`;
+      out.payload.textContent = JSON.stringify({
+        frame: state.frame,
+        event: state.lastEvent,
+        requestedFeatures: ["anchors", "hit-test", "dom-overlay"],
+        pendingOperation: {
+          type: m.op,
+          queueState: state.queueState,
+          queuedFramesAgo: state.frame - state.queuedAt,
+          committedCount: state.committed,
+          rolledBackCount: state.rolledBack
+        },
+        domOverlay: {
+          root: "#xr-overlay",
+          target: m.target,
+          beforexrselectFired: m.beforexrselect,
+          preventDefault: m.prevented
+        },
+        hitTest: {
+          transientInputSource: controls.transientHit.checked,
+          quality: m.quality,
+          safeToReplaceAnchor: m.op === "rehit" && m.quality >= 58
+        },
+        anchor: {
+          id: "desk-anchor-restore-01",
+          persistentHandle: controls.persistent.checked ? "local-origin-uuid" : null,
+          driftCm: m.drift,
+          action: m.decision
+        },
+        xrEvents: {
+          select: m.xrSelect === "select",
+          route: m.xrSelect
+        }
+      }, null, 2);
+    }
+
+    function draw() {
+      const m = metrics();
+      drawGrid();
+      drawQueue(m);
+      drawAnchor(m);
+      drawOverlay(m);
+      drawRay(m);
+      updateOutputs(m);
+    }
+
+    function animate() {
+      state.frame += 1;
+      draw();
+      requestAnimationFrame(animate);
+    }
+
+    function setAim(xPct, yPct) {
+      controls.rayX.value = String(xPct);
+      controls.rayY.value = String(yPct);
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.drag = true;
+      canvas.setPointerCapture(event.pointerId);
+      movePointer(event);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (state.drag) movePointer(event);
+    });
+
+    canvas.addEventListener("pointerup", () => {
+      state.drag = false;
+    });
+
+    canvas.addEventListener("pointercancel", () => {
+      state.drag = false;
+    });
+
+    function movePointer(event) {
+      const box = canvas.getBoundingClientRect();
+      const x = clamp((event.clientX - box.left) / box.width * 100, 7, 93);
+      const y = clamp((event.clientY - box.top) / box.height * 100, 10, 88);
+      controls.rayX.value = String(Math.round(x));
+      controls.rayY.value = String(Math.round(y));
+      state.lastEvent = "move ray";
+      draw();
+    }
+
+    document.getElementById("queue").addEventListener("click", () => updateStateFromAction("queue"));
+    document.getElementById("confirm").addEventListener("click", () => {
+      setAim(64, 42);
+      updateStateFromAction("confirm");
+    });
+    document.getElementById("cancel").addEventListener("click", () => {
+      setAim(77, 42);
+      updateStateFromAction("cancel");
+    });
+    document.getElementById("world").addEventListener("click", () => {
+      setAim(38, 56);
+      updateStateFromAction("world select");
+    });
+
+    for (const control of Object.values(controls)) {
+      control.addEventListener("input", () => {
+        state.lastEvent = "control change";
+        draw();
+      });
+    }
+
+    animate();
+  </script>
+</body>
+</html>
