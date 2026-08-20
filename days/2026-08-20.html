@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>trackedAnchors の集合変化からアンカー復旧キューを作る | 2026-08-20</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.08.20</p>
+      <h1>trackedAnchors の集合変化からアンカー復旧キューを作る</h1>
+      <p class="hero-subtitle">Build an anchor recovery queue from trackedAnchors set changes</p>
+      <p>WebXR Anchors Module、MDN の `XRFrame.trackedAnchors`、WebXR Device API の frame / transient input 処理、Immersive Web の anchors / hit-test anchors sample を確認し、複数アンカーの tracked / unlocatable / restore failed を監視する自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the WebXR Anchors Module, MDN `XRFrame.trackedAnchors`, WebXR Device API frame and transient input processing, and Immersive Web anchor samples, today's original HTML sample monitors multiple anchors across tracked, unlocatable, and restore-failed states.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-08-20_html_tracked_anchor_recovery_monitor.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-08-19.html">← 2026.08.19</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Tracked Anchor Recovery Monitor</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-20_html_tracked_anchor_recovery_monitor.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Anchors Module の 2026-04-27 Editor's Draft は、`XRFrame.trackedAnchors` を各 frame でまだ tracked な anchor の集合として扱い、`getPose(anchor.anchorSpace, referenceSpace)` が unlocatable になる frame もあり得ると整理しています。</span>
+              <span class="en-copy">The 2026-04-27 WebXR Anchors Module Editor's Draft treats `XRFrame.trackedAnchors` as the per-frame set of anchors still tracked, while allowing frames where `getPose(anchor.anchorSpace, referenceSpace)` is unlocatable.</span>
+            </li>
+          
+            <li>
+              <span>`XRAnchor.delete()` は anchor を tracked set から取り除き、削除後の `anchorSpace` 参照は `InvalidStateError` になるため、UI 側の mesh / DOM row / persistent handle を同時に片付ける必要があります。</span>
+              <span class="en-copy">`XRAnchor.delete()` removes an anchor from the tracked set, and accessing `anchorSpace` after deletion can raise `InvalidStateError`, so UI meshes, DOM rows, and persistent handles need coordinated cleanup.</span>
+            </li>
+          
+            <li>
+              <span>`restorePersistentAnchor(uuid)` は persistent map に uuid がない場合や session が終了している場合に `InvalidStateError` で reject されるため、復元 UI は成功前提ではなく失敗キューを持つべきです。</span>
+              <span class="en-copy">`restorePersistentAnchor(uuid)` rejects with `InvalidStateError` when the UUID is absent from the persistent map or the session has ended, so restore UI should keep a failure queue instead of assuming success.</span>
+            </li>
+          
+            <li>
+              <span>MDN の `XRFrame.trackedAnchors` は Limited availability / experimental で、HTTPS secure context が必要な API として説明されており、公開サンプルは実 API がない環境でも状態遷移を観察できる形が有効です。</span>
+              <span class="en-copy">MDN marks `XRFrame.trackedAnchors` as limited availability and experimental, requiring a secure context, making simulated state-transition samples useful on non-XR devices.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の anchors sample は `frame.trackedAnchors.has(anchor)` と `frame.getPose(anchor.anchorSpace, referenceSpace)` で scene object の visible / remove を切り替える基本パターンを示しています。</span>
+              <span class="en-copy">The Immersive Web anchors sample demonstrates the basic loop of `frame.trackedAnchors.has(anchor)` and `frame.getPose(anchor.anchorSpace, referenceSpace)` to toggle scene object visibility or removal.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は、単体 anchor の復元 UI ではなく、`trackedAnchors` の集合差分から復旧キューを作る考え方です。Immersive Web の anchors sample は、tracked set から消えた anchor の scene object を外し、pose が取れない frame では visible を落とす基本形を示しています。面白いのは、この処理を描画だけで終わらせず、unlocatable が何 frame 続いたか、persistent handle があるか、delete 済みかを並べると、復元・再 hit-test・mesh 削除の判断に変換できる点です。</p>
+          <p class="en-copy">Today's notable idea is building a recovery queue from `trackedAnchors` set differences instead of only offering single-anchor restore UI. The Immersive Web anchors sample removes scene objects when anchors leave the tracked set and hides them when pose lookup fails. The useful extension is turning those rendering states into decisions: how many frames were unlocatable, whether a persistent handle exists, and whether delete has already been called.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://github.com/immersive-web/webxr-samples/blob/main/anchors.html" target="_blank" rel="noreferrer">Immersive Web sample source: anchors.html</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>サンプルでは 3 つの anchor を地図風 canvas に置き、frame を進めるたびに tracked、unlocatable、not in set、deleted を切り替えます。リングが実 pose、点線が unlocatable / lost、細い線が元 pose からの drift です。右側には recovery queue と JSON payload を出し、`restore selected` と `delete selected` で復元失敗や削除後の集合変化を観察できます。実演出では、空間内の物体を消す前に queue row を点滅させ、操作の理由を operator UI に残すと運用向きになります。</p>
+          <p class="en-copy">The sample places three anchors on a map-like canvas and changes tracked, unlocatable, not-in-set, and deleted states as frames advance. Rings show current poses, dashed rings show unlocatable or lost states, and thin lines show drift from the original pose. The side panel exposes the recovery queue and JSON payload, while `restore selected` and `delete selected` demonstrate restore failure and deletion set changes. In a production display, queue rows can blink before spatial objects disappear, leaving an operator-visible reason.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-20_html_tracked_anchor_recovery_monitor.html" target="_blank" rel="noreferrer">Open Tracked Anchor Recovery Monitor</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では、前 frame の `trackedAnchors` と現在 frame の `trackedAnchors` を比較し、消えた anchor は scene mesh を remove、集合に残っているが `getPose()` が null の anchor は `unlocatableFrames++` にします。`unlocatableFrames` が短ければ hold、長ければ persistent handle restore または re-hit-test replace に送ります。`delete()` 後は `anchorSpace` を読まないために、アプリ側の anchor record に `deletedAtFrame` を持たせるのが安全です。復元失敗は promise rejection を UI queue に残し、同じ uuid を連打しない cooldown を入れます。</p>
+          <p class="en-copy">In production, compare the previous frame's `trackedAnchors` with the current frame. Anchors that disappeared remove scene meshes; anchors still in the set but returning null from `getPose()` increment `unlocatableFrames`. Short gaps hold pose, while longer gaps enter persistent-handle restore or re-hit-test replacement. After `delete()`, keep `deletedAtFrame` in the app record so code does not read `anchorSpace`. Promise rejections from restore should remain in a UI queue with cooldown to avoid repeatedly hitting the same UUID.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日のサンプルからは frame、tracked anchor id、locatable flag、persistent handle、unlocatable frame count、drift cm、restore failure count、recovery queue、decision を取れます。2026-08-19 の confirm queue と組み合わせると、危険な `delete()` や re-hit-test replace だけを overlay confirm に送り、今日の monitor はその前段の検出器になります。業務用途なら、部屋スキャン・設置物管理・展示メンテナンスの監査ログとして、anchor の見失い理由と復旧結果を時系列で残せます。</p>
+          <p class="en-copy">Today's sample emits frame number, tracked anchor IDs, locatable flags, persistent handles, unlocatable-frame counts, drift, restore-failure count, recovery queue, and decision. Combined with the 2026-08-19 confirm queue, dangerous `delete()` and re-hit-test replacement actions can be sent to overlay confirmation, while today's monitor acts as the detector. For operational use, this becomes an audit log for room scans, placed-object management, or exhibition maintenance.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>引き続き Anchors Module の persistent anchor map、`XRAnchor.delete()` 後の状態、`restorePersistentAnchor()` / `deletePersistentAnchor()` の rejection 条件、MDN の互換性表示、Immersive Web samples の anchors 実装を追います。次は、今日の recovery queue を DOM Overlay の confirm/cancel と接続し、複数 anchor の削除・復元・再配置を undo window 付きで扱う流れに進めます。</p>
+          <p class="en-copy">Continue watching the Anchors Module persistent-anchor map, post-`XRAnchor.delete()` state, rejection conditions for `restorePersistentAnchor()` and `deletePersistentAnchor()`, MDN compatibility notes, and Immersive Web sample implementations. Next, connect today's recovery queue to DOM Overlay confirm/cancel and handle multi-anchor delete, restore, and replacement with an undo window.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルを開いて scenario を `occluded anchor` にし、`auto run` を押してください。B2 が数 frame unlocatable になると `hold-pose` から `restore-or-rehit` に変わります。次に scenario を `lost persistent map` にして A1 を選び、`restore selected` を押すと persistent handle があっても復元失敗として queue に残ります。`delete selected` では trackedAnchors が減り、削除後は復元ではなく mesh 削除の判断になることを確認できます。</p>
+          <p class="en-copy">Open the sample, choose `occluded anchor`, and press `auto run`. When B2 becomes unlocatable for several frames, the queue moves from `hold-pose` to `restore-or-rehit`. Then choose `lost persistent map`, select A1, and press `restore selected`; even with a persistent handle, it stays in the queue as a restore failure. `delete selected` reduces the trackedAnchors count and turns the decision into mesh removal rather than restore.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-20_html_tracked_anchor_recovery_monitor.html" target="_blank" rel="noreferrer">Open Tracked Anchor Recovery Monitor</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Anchors Module の trackedAnchors / restore / delete、MDN の limited availability、WebXR Device API の frame と transient input 処理、Immersive Web の anchors sample を確認。設計: 複数 anchor の集合差分、unlocatable frame、persistent handle、restore failure を同じ payload にまとめる。実装: canvas stage、scenario selector、drift / drop sliders、restore / delete buttons、recovery queue、JSON payload を持つ単一 HTML を作成。検証: JSON parse、HTML script 構文、gallery 再生成、publish、公開 URL 確認まで行う。</p>
+          <p class="en-copy">Research: reviewed Anchors trackedAnchors / restore / delete, MDN limited availability, WebXR Device API frame and transient input processing, and Immersive Web anchor samples. Design: combine multi-anchor set differences, unlocatable frames, persistent handles, and restore failures in one payload. Implementation: created a single HTML file with a canvas stage, scenario selector, drift / drop sliders, restore / delete buttons, recovery queue, and JSON payload. Validation: parse JSON, check HTML script syntax, rebuild the gallery, publish, and verify public URLs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>ここ数日は、anchor を置く、ずれを検出する、DOM Overlay で確定する、という順で進めてきました。今日の監視盤はその間を埋める検出レイヤーです。AR の運用品質は、見えている物体だけでなく、見えなくなった瞬間をどう扱うかで決まります。`trackedAnchors` は小さな集合 API ですが、描画状態・復旧判断・監査ログをつなぐ起点になります。</p>
+          <p class="en-copy">The recent sequence has covered placing anchors, detecting drift, and confirming operations through DOM Overlay. Today's monitor fills the detection layer between those steps. AR operational quality depends not only on visible objects but also on how the system handles the moment an object disappears. `trackedAnchors` is a small set API, but it can connect rendering state, recovery decisions, and audit logs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Tracked Anchor Recovery Monitor` です。実 WebXR session がなくても、frame advance、unlocatable rate、drift、restore budget、scenario を変えながら、複数 anchor の tracking 状態と復旧キューを確認できます。次に足すなら、2026-08-19 の overlay confirm/cancel と接続し、queue item ごとに commit / rollback / cooldown を持たせることです。</p>
+          <p class="en-copy">The selected prototype is `Tracked Anchor Recovery Monitor`. Without a real WebXR session, it lets you change frame advance, unlocatable rate, drift, restore budget, and scenario while watching multi-anchor tracking state and the recovery queue. The next addition is to connect it to the 2026-08-19 overlay confirm/cancel flow and give each queue item commit, rollback, and cooldown state.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-20_html_tracked_anchor_recovery_monitor.html" target="_blank" rel="noreferrer">Today's sample: Tracked Anchor Recovery Monitor</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRFrame/trackedAnchors" target="_blank" rel="noreferrer">MDN: XRFrame trackedAnchors property</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web Samples</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples/blob/main/anchors.html" target="_blank" rel="noreferrer">Immersive Web sample source: anchors.html</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-08-20_html_tracked_anchor_recovery_monitor.html" loading="lazy" title="Tracked Anchor Recovery Monitor"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

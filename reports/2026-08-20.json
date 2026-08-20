@@ -1,0 +1,125 @@
+{
+  "date": "2026-08-20",
+  "headline": "trackedAnchors の集合変化からアンカー復旧キューを作る",
+  "headlineEn": "Build an anchor recovery queue from trackedAnchors set changes",
+  "summary": "WebXR Anchors Module、MDN の `XRFrame.trackedAnchors`、WebXR Device API の frame / transient input 処理、Immersive Web の anchors / hit-test anchors sample を確認し、複数アンカーの tracked / unlocatable / restore failed を監視する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Anchors Module, MDN `XRFrame.trackedAnchors`, WebXR Device API frame and transient input processing, and Immersive Web anchor samples, today's original HTML sample monitors multiple anchors across tracked, unlocatable, and restore-failed states.",
+  "keyTopics": [
+    "WebXR Anchors Module の 2026-04-27 Editor's Draft は、`XRFrame.trackedAnchors` を各 frame でまだ tracked な anchor の集合として扱い、`getPose(anchor.anchorSpace, referenceSpace)` が unlocatable になる frame もあり得ると整理しています。",
+    "`XRAnchor.delete()` は anchor を tracked set から取り除き、削除後の `anchorSpace` 参照は `InvalidStateError` になるため、UI 側の mesh / DOM row / persistent handle を同時に片付ける必要があります。",
+    "`restorePersistentAnchor(uuid)` は persistent map に uuid がない場合や session が終了している場合に `InvalidStateError` で reject されるため、復元 UI は成功前提ではなく失敗キューを持つべきです。",
+    "MDN の `XRFrame.trackedAnchors` は Limited availability / experimental で、HTTPS secure context が必要な API として説明されており、公開サンプルは実 API がない環境でも状態遷移を観察できる形が有効です。",
+    "Immersive Web の anchors sample は `frame.trackedAnchors.has(anchor)` と `frame.getPose(anchor.anchorSpace, referenceSpace)` で scene object の visible / remove を切り替える基本パターンを示しています。"
+  ],
+  "keyTopicsEn": [
+    "The 2026-04-27 WebXR Anchors Module Editor's Draft treats `XRFrame.trackedAnchors` as the per-frame set of anchors still tracked, while allowing frames where `getPose(anchor.anchorSpace, referenceSpace)` is unlocatable.",
+    "`XRAnchor.delete()` removes an anchor from the tracked set, and accessing `anchorSpace` after deletion can raise `InvalidStateError`, so UI meshes, DOM rows, and persistent handles need coordinated cleanup.",
+    "`restorePersistentAnchor(uuid)` rejects with `InvalidStateError` when the UUID is absent from the persistent map or the session has ended, so restore UI should keep a failure queue instead of assuming success.",
+    "MDN marks `XRFrame.trackedAnchors` as limited availability and experimental, requiring a secure context, making simulated state-transition samples useful on non-XR devices.",
+    "The Immersive Web anchors sample demonstrates the basic loop of `frame.trackedAnchors.has(anchor)` and `frame.getPose(anchor.anchorSpace, referenceSpace)` to toggle scene object visibility or removal."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Tracked Anchor Recovery Monitor",
+      "url": "../outputs/2026-08-20_html_tracked_anchor_recovery_monitor.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "MDN: XRFrame trackedAnchors property",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRFrame/trackedAnchors"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Web sample source: anchors.html",
+      "url": "https://github.com/immersive-web/webxr-samples/blob/main/anchors.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、単体 anchor の復元 UI ではなく、`trackedAnchors` の集合差分から復旧キューを作る考え方です。Immersive Web の anchors sample は、tracked set から消えた anchor の scene object を外し、pose が取れない frame では visible を落とす基本形を示しています。面白いのは、この処理を描画だけで終わらせず、unlocatable が何 frame 続いたか、persistent handle があるか、delete 済みかを並べると、復元・再 hit-test・mesh 削除の判断に変換できる点です。",
+      "bodyEn": "Today's notable idea is building a recovery queue from `trackedAnchors` set differences instead of only offering single-anchor restore UI. The Immersive Web anchors sample removes scene objects when anchors leave the tracked set and hides them when pose lookup fails. The useful extension is turning those rendering states into decisions: how many frames were unlocatable, whether a persistent handle exists, and whether delete has already been called.",
+      "links": [
+        {
+          "label": "Immersive Web sample source: anchors.html",
+          "url": "https://github.com/immersive-web/webxr-samples/blob/main/anchors.html"
+        },
+        {
+          "label": "Immersive Web: WebXR Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルでは 3 つの anchor を地図風 canvas に置き、frame を進めるたびに tracked、unlocatable、not in set、deleted を切り替えます。リングが実 pose、点線が unlocatable / lost、細い線が元 pose からの drift です。右側には recovery queue と JSON payload を出し、`restore selected` と `delete selected` で復元失敗や削除後の集合変化を観察できます。実演出では、空間内の物体を消す前に queue row を点滅させ、操作の理由を operator UI に残すと運用向きになります。",
+      "bodyEn": "The sample places three anchors on a map-like canvas and changes tracked, unlocatable, not-in-set, and deleted states as frames advance. Rings show current poses, dashed rings show unlocatable or lost states, and thin lines show drift from the original pose. The side panel exposes the recovery queue and JSON payload, while `restore selected` and `delete selected` demonstrate restore failure and deletion set changes. In a production display, queue rows can blink before spatial objects disappear, leaving an operator-visible reason.",
+      "links": [
+        {
+          "label": "Open Tracked Anchor Recovery Monitor",
+          "url": "../outputs/2026-08-20_html_tracked_anchor_recovery_monitor.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では、前 frame の `trackedAnchors` と現在 frame の `trackedAnchors` を比較し、消えた anchor は scene mesh を remove、集合に残っているが `getPose()` が null の anchor は `unlocatableFrames++` にします。`unlocatableFrames` が短ければ hold、長ければ persistent handle restore または re-hit-test replace に送ります。`delete()` 後は `anchorSpace` を読まないために、アプリ側の anchor record に `deletedAtFrame` を持たせるのが安全です。復元失敗は promise rejection を UI queue に残し、同じ uuid を連打しない cooldown を入れます。",
+      "bodyEn": "In production, compare the previous frame's `trackedAnchors` with the current frame. Anchors that disappeared remove scene meshes; anchors still in the set but returning null from `getPose()` increment `unlocatableFrames`. Short gaps hold pose, while longer gaps enter persistent-handle restore or re-hit-test replacement. After `delete()`, keep `deletedAtFrame` in the app record so code does not read `anchorSpace`. Promise rejections from restore should remain in a UI queue with cooldown to avoid repeatedly hitting the same UUID."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルからは frame、tracked anchor id、locatable flag、persistent handle、unlocatable frame count、drift cm、restore failure count、recovery queue、decision を取れます。2026-08-19 の confirm queue と組み合わせると、危険な `delete()` や re-hit-test replace だけを overlay confirm に送り、今日の monitor はその前段の検出器になります。業務用途なら、部屋スキャン・設置物管理・展示メンテナンスの監査ログとして、anchor の見失い理由と復旧結果を時系列で残せます。",
+      "bodyEn": "Today's sample emits frame number, tracked anchor IDs, locatable flags, persistent handles, unlocatable-frame counts, drift, restore-failure count, recovery queue, and decision. Combined with the 2026-08-19 confirm queue, dangerous `delete()` and re-hit-test replacement actions can be sent to overlay confirmation, while today's monitor acts as the detector. For operational use, this becomes an audit log for room scans, placed-object management, or exhibition maintenance."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "引き続き Anchors Module の persistent anchor map、`XRAnchor.delete()` 後の状態、`restorePersistentAnchor()` / `deletePersistentAnchor()` の rejection 条件、MDN の互換性表示、Immersive Web samples の anchors 実装を追います。次は、今日の recovery queue を DOM Overlay の confirm/cancel と接続し、複数 anchor の削除・復元・再配置を undo window 付きで扱う流れに進めます。",
+      "bodyEn": "Continue watching the Anchors Module persistent-anchor map, post-`XRAnchor.delete()` state, rejection conditions for `restorePersistentAnchor()` and `deletePersistentAnchor()`, MDN compatibility notes, and Immersive Web sample implementations. Next, connect today's recovery queue to DOM Overlay confirm/cancel and handle multi-anchor delete, restore, and replacement with an undo window."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開いて scenario を `occluded anchor` にし、`auto run` を押してください。B2 が数 frame unlocatable になると `hold-pose` から `restore-or-rehit` に変わります。次に scenario を `lost persistent map` にして A1 を選び、`restore selected` を押すと persistent handle があっても復元失敗として queue に残ります。`delete selected` では trackedAnchors が減り、削除後は復元ではなく mesh 削除の判断になることを確認できます。",
+      "bodyEn": "Open the sample, choose `occluded anchor`, and press `auto run`. When B2 becomes unlocatable for several frames, the queue moves from `hold-pose` to `restore-or-rehit`. Then choose `lost persistent map`, select A1, and press `restore selected`; even with a persistent handle, it stays in the queue as a restore failure. `delete selected` reduces the trackedAnchors count and turns the decision into mesh removal rather than restore.",
+      "links": [
+        {
+          "label": "Open Tracked Anchor Recovery Monitor",
+          "url": "../outputs/2026-08-20_html_tracked_anchor_recovery_monitor.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Anchors Module の trackedAnchors / restore / delete、MDN の limited availability、WebXR Device API の frame と transient input 処理、Immersive Web の anchors sample を確認。設計: 複数 anchor の集合差分、unlocatable frame、persistent handle、restore failure を同じ payload にまとめる。実装: canvas stage、scenario selector、drift / drop sliders、restore / delete buttons、recovery queue、JSON payload を持つ単一 HTML を作成。検証: JSON parse、HTML script 構文、gallery 再生成、publish、公開 URL 確認まで行う。",
+      "bodyEn": "Research: reviewed Anchors trackedAnchors / restore / delete, MDN limited availability, WebXR Device API frame and transient input processing, and Immersive Web anchor samples. Design: combine multi-anchor set differences, unlocatable frames, persistent handles, and restore failures in one payload. Implementation: created a single HTML file with a canvas stage, scenario selector, drift / drop sliders, restore / delete buttons, recovery queue, and JSON payload. Validation: parse JSON, check HTML script syntax, rebuild the gallery, publish, and verify public URLs."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日は、anchor を置く、ずれを検出する、DOM Overlay で確定する、という順で進めてきました。今日の監視盤はその間を埋める検出レイヤーです。AR の運用品質は、見えている物体だけでなく、見えなくなった瞬間をどう扱うかで決まります。`trackedAnchors` は小さな集合 API ですが、描画状態・復旧判断・監査ログをつなぐ起点になります。",
+      "bodyEn": "The recent sequence has covered placing anchors, detecting drift, and confirming operations through DOM Overlay. Today's monitor fills the detection layer between those steps. AR operational quality depends not only on visible objects but also on how the system handles the moment an object disappears. `trackedAnchors` is a small set API, but it can connect rendering state, recovery decisions, and audit logs."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Tracked Anchor Recovery Monitor` です。実 WebXR session がなくても、frame advance、unlocatable rate、drift、restore budget、scenario を変えながら、複数 anchor の tracking 状態と復旧キューを確認できます。次に足すなら、2026-08-19 の overlay confirm/cancel と接続し、queue item ごとに commit / rollback / cooldown を持たせることです。",
+      "bodyEn": "The selected prototype is `Tracked Anchor Recovery Monitor`. Without a real WebXR session, it lets you change frame advance, unlocatable rate, drift, restore budget, and scenario while watching multi-anchor tracking state and the recovery queue. The next addition is to connect it to the 2026-08-19 overlay confirm/cancel flow and give each queue item commit, rollback, and cooldown state."
+    }
+  ]
+}
