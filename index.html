@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 45</span>
+        <span>days: 47</span>
         <span>page: 1 / 4</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -301,6 +301,52 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-08-22">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.22</p>
+              <h2>bounded-floor から local-floor へ縮退するテレポート安全判定</h2>
+              <p class="card-subtitle">Teleport safety checks that degrade from bounded-floor to local-floor</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-22" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API、MDN の `requestReferenceSpace()` と bounded reference spaces、Immersive Web の teleportation sample、WebXR Layers API Level 1 を確認し、`XRBoundedReferenceSpace.boundsGeometry` がある場合とない場合でテレポート候補を判定する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Device API, MDN `requestReferenceSpace()` and bounded reference spaces guidance, the Immersive Web teleportation sample, and WebXR Layers API Level 1, today's original HTML sample checks teleport candidates differently when `XRBoundedReferenceSpace.boundsGeometry` is available versus when the app falls back to `local-floor`.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-08-22.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-08-22_html_bounded_space_teleport_guard.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-08-21">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.21</p>
+              <h2>required / optional feature の交渉を起動前に見える化する</h2>
+              <p class="card-subtitle">Visualize required and optional feature negotiation before launch</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-21" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API、MDN の `XRSystem.requestSession()`、WebXR Hit Test Module、Immersive Web DOM Overlay explainer を確認し、`requiredFeatures` と `optionalFeatures` の違い、Permissions-Policy、ユーザー操作、実端末サポートを分けて観察する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Device API, MDN `XRSystem.requestSession()`, the WebXR Hit Test Module, and the Immersive Web DOM Overlay explainer, today's original HTML sample visualizes required versus optional features, Permissions-Policy, user activation, and device support before launch.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-08-21.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-08-21_html_xr_feature_negotiation_ladder.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-08-20">
           <div class="card-top">
             <div>
@@ -527,52 +573,6 @@
           <div class="actions">
             <a class="primary" href="days/2026-08-11.html">その日のページ / Day</a>
             <a class="secondary-link" href="outputs/2026-08-11_html_hit_test_confidence_funnel.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-10">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.10</p>
-              <h2>Anchor 復元ログを運用データに変える</h2>
-              <p class="card-subtitle">Turn anchor restore logs into operations data</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-10" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Anchors、Plane Detection、DOM Overlay、Immersive Web Samples を確認し、persistent anchor の復元失敗を時系列ログ、原因分類、複数オペレーター競合、CSV 出力として扱う自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing WebXR Anchors, Plane Detection, DOM Overlay, and Immersive Web Samples, today's original HTML sample treats persistent-anchor restore failures as timeline logs, failure classifications, multi-operator conflicts, and CSV-ready operations data.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-08-10.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-08-10_html_anchor_ops_conflict_timeline.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-09">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.09</p>
-              <h2>Persistent anchor の復元失敗を回復 UI として扱う</h2>
-              <p class="card-subtitle">Treat persistent-anchor restore failure as recoverable UI</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-09" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Anchors、Plane Detection、Hand Input、Immersive Web Samples を確認し、保存済み anchor の復元失敗、quota、削除優先度、手入力による再キャリブレーションを試す自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing WebXR Anchors, Plane Detection, Hand Input, and Immersive Web Samples, today's original HTML sample models saved-anchor restore failures, quotas, deletion priority, and hand-driven recalibration.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-08-09.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-08-09_html_anchor_restore_recovery_lab.html">代表サンプル / Sample</a>
           </div>
         </article>
       

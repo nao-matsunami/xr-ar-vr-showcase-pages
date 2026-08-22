@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XR Feature Negotiation Ladder</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #08100f;
+      --panel: rgba(14, 22, 21, 0.94);
+      --panel-soft: rgba(255, 255, 255, 0.055);
+      --line: rgba(233, 247, 237, 0.18);
+      --text: #f4fff8;
+      --muted: #a9bbb0;
+      --mint: #9ef3c7;
+      --blue: #85c7ff;
+      --amber: #ffd36f;
+      --red: #ff7d8c;
+      --ink: #08100f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, rgba(133, 199, 255, 0.13), transparent 34%),
+        linear-gradient(210deg, rgba(158, 243, 199, 0.12), transparent 38%),
+        #08100f;
+    }
+
+    main {
+      width: min(1200px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.6vw, 2.35rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 850px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.55;
+    }
+
+    .badge,
+    .stage,
+    .panel,
+    .log {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+    }
+
+    .badge {
+      min-width: 244px;
+      padding: 12px 14px;
+    }
+
+    .badge b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .badge span {
+      display: block;
+      margin-top: 5px;
+      color: var(--mint);
+      font-weight: 760;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+      gap: 14px;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 640px;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 640px;
+      background: #08100f;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .readout {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(244, 255, 248, 0.13);
+      border-radius: 8px;
+      background: rgba(2, 9, 8, 0.78);
+    }
+
+    .readout small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .readout strong {
+      display: block;
+      margin-top: 4px;
+      font-size: clamp(0.9rem, 1.7vw, 1.12rem);
+      line-height: 1.16;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .panel,
+    .log {
+      padding: 14px;
+    }
+
+    .panel h2,
+    .log h2 {
+      margin: 0 0 12px;
+      color: var(--mint);
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .control {
+      display: grid;
+      gap: 7px;
+      margin: 11px 0;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    select,
+    button {
+      width: 100%;
+      border: 1px solid rgba(244, 255, 248, 0.15);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      font: inherit;
+    }
+
+    select { padding: 10px; }
+
+    button {
+      min-height: 42px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      color: var(--ink);
+      border-color: transparent;
+      background: var(--mint);
+      font-weight: 760;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(158, 243, 199, 0.58);
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .feature-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .feature-row {
+      display: grid;
+      grid-template-columns: minmax(105px, 1fr) 118px;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid rgba(244, 255, 248, 0.12);
+      border-radius: 8px;
+      background: var(--panel-soft);
+    }
+
+    .feature-row strong {
+      font-size: 0.88rem;
+    }
+
+    .feature-row small {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.74rem;
+      line-height: 1.3;
+    }
+
+    .switches {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      min-height: 42px;
+      padding: 9px;
+      border: 1px solid rgba(244, 255, 248, 0.12);
+      border-radius: 8px;
+      background: var(--panel-soft);
+      color: var(--text);
+      font-size: 0.82rem;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--mint);
+    }
+
+    .queue {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .queue-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 9px;
+      border: 1px solid rgba(244, 255, 248, 0.13);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+      font-size: 0.82rem;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--mint);
+    }
+
+    .dot.warn { background: var(--amber); }
+    .dot.fail { background: var(--red); }
+    .dot.info { background: var(--blue); }
+
+    pre {
+      min-height: 174px;
+      max-height: 240px;
+      overflow: auto;
+      margin: 0;
+      white-space: pre-wrap;
+      color: #d9ffe9;
+      font-size: 0.78rem;
+      line-height: 1.5;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .badge {
+        min-width: 0;
+      }
+
+      canvas,
+      .stage {
+        min-height: 540px;
+      }
+
+      canvas {
+        height: 540px;
+      }
+
+      .hud {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>XR Feature Negotiation Ladder</h1>
+        <p class="subtitle">
+          `requestSession()` に渡す required / optional feature、Permissions-Policy、ユーザー同意、実端末サポートを分けて、セッション起動前の fallback 判断を可視化する自作ミニサンプルです。
+        </p>
+      </div>
+      <div class="badge">
+        <b>Today's focus</b>
+        <span>requiredFeatures vs optionalFeatures</span>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <canvas id="stage" width="920" height="640" aria-label="Feature negotiation ladder visualization"></canvas>
+        <div class="hud">
+          <div class="readout"><small>session mode</small><strong id="modeReadout">immersive-ar</strong></div>
+          <div class="readout"><small>required pass</small><strong id="requiredReadout">0 / 0</strong></div>
+          <div class="readout"><small>optional enabled</small><strong id="optionalReadout">0 / 0</strong></div>
+          <div class="readout"><small>launch verdict</small><strong id="verdictReadout">ready</strong></div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>Session request</h2>
+          <div class="control">
+            <label for="profile">device profile</label>
+            <select id="profile">
+              <option value="phoneAr">Phone AR, DOM overlay, hit-test</option>
+              <option value="headsetVr">Headset VR, hands, layers</option>
+              <option value="inlineOnly">Inline only browser</option>
+              <option value="strictPolicy">AR device, blocked policy</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="mode">mode</label>
+            <select id="mode">
+              <option value="immersive-ar">immersive-ar</option>
+              <option value="immersive-vr">immersive-vr</option>
+              <option value="inline">inline</option>
+            </select>
+          </div>
+          <div class="feature-grid" id="features"></div>
+          <div class="switches">
+            <label class="toggle"><input id="policy" type="checkbox" checked> xr-spatial-tracking</label>
+            <label class="toggle"><input id="gesture" type="checkbox" checked> user activation</label>
+          </div>
+          <div class="button-grid">
+            <button class="primary" id="simulate" type="button">simulate request</button>
+            <button id="realCheck" type="button">real support check</button>
+          </div>
+          <p class="note">実際の `requestSession()` はデバイス・権限・HTTPS・ユーザー操作に依存するため、このサンプルでは判断過程を再現し、実チェックは `isSessionSupported()` までに留めています。</p>
+        </section>
+
+        <section class="panel">
+          <h2>Fallback ladder</h2>
+          <div class="queue" id="ladder"></div>
+        </section>
+
+        <section class="log">
+          <h2>XRSessionInit payload</h2>
+          <pre id="payload"></pre>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const profileEl = document.getElementById("profile");
+    const modeEl = document.getElementById("mode");
+    const featuresEl = document.getElementById("features");
+    const policyEl = document.getElementById("policy");
+    const gestureEl = document.getElementById("gesture");
+    const ladderEl = document.getElementById("ladder");
+    const payloadEl = document.getElementById("payload");
+    const modeReadout = document.getElementById("modeReadout");
+    const requiredReadout = document.getElementById("requiredReadout");
+    const optionalReadout = document.getElementById("optionalReadout");
+    const verdictReadout = document.getElementById("verdictReadout");
+
+    const featureMeta = [
+      { id: "hit-test", note: "AR placement rays", policy: true },
+      { id: "dom-overlay", note: "HTML control surface", overlay: true },
+      { id: "anchors", note: "placed object persistence", policy: true },
+      { id: "hand-tracking", note: "articulated hand input", consent: true },
+      { id: "layers", note: "compositor layers" },
+      { id: "depth-sensing", note: "occlusion / depth", policy: true }
+    ];
+
+    const supportProfiles = {
+      phoneAr: {
+        modes: ["inline", "immersive-ar"],
+        features: ["hit-test", "dom-overlay", "anchors", "depth-sensing"]
+      },
+      headsetVr: {
+        modes: ["inline", "immersive-vr"],
+        features: ["hand-tracking", "layers", "local-floor", "bounded-floor"]
+      },
+      inlineOnly: {
+        modes: ["inline"],
+        features: []
+      },
+      strictPolicy: {
+        modes: ["inline", "immersive-ar"],
+        features: ["hit-test", "dom-overlay", "anchors", "depth-sensing"]
+      }
+    };
+
+    const state = {
+      mode: "immersive-ar",
+      profile: "phoneAr",
+      featureState: {
+        "hit-test": "required",
+        "dom-overlay": "optional",
+        "anchors": "optional",
+        "hand-tracking": "off",
+        "layers": "off",
+        "depth-sensing": "optional"
+      },
+      realCheck: "not checked"
+    };
+
+    function renderFeatureControls() {
+      featuresEl.innerHTML = featureMeta.map((feature) => `
+        <div class="feature-row">
+          <div>
+            <strong>${feature.id}</strong>
+            <small>${feature.note}</small>
+          </div>
+          <select data-feature="${feature.id}">
+            <option value="off">off</option>
+            <option value="optional">optional</option>
+            <option value="required">required</option>
+          </select>
+        </div>
+      `).join("");
+
+      for (const select of featuresEl.querySelectorAll("select")) {
+        select.value = state.featureState[select.dataset.feature];
+        select.addEventListener("change", () => {
+          state.featureState[select.dataset.feature] = select.value;
+          update();
+        });
+      }
+    }
+
+    function getRequest() {
+      const requiredFeatures = [];
+      const optionalFeatures = [];
+      for (const [feature, bucket] of Object.entries(state.featureState)) {
+        if (bucket === "required") requiredFeatures.push(feature);
+        if (bucket === "optional") optionalFeatures.push(feature);
+      }
+
+      const init = { requiredFeatures, optionalFeatures };
+      if ([...requiredFeatures, ...optionalFeatures].includes("dom-overlay")) {
+        init.domOverlay = { root: "#xr-overlay" };
+      }
+      if ([...requiredFeatures, ...optionalFeatures].includes("depth-sensing")) {
+        init.depthSensing = {
+          usagePreference: ["cpu-optimized", "gpu-optimized"],
+          dataFormatPreference: ["luminance-alpha", "float32"]
+        };
+      }
+      return init;
+    }
+
+    function evaluate() {
+      const profile = supportProfiles[state.profile];
+      const request = getRequest();
+      const spatialPolicy = policyEl.checked && state.profile !== "strictPolicy";
+      const hasGesture = gestureEl.checked;
+      const rows = [];
+      let blocked = false;
+
+      rows.push({
+        label: `mode ${state.mode}`,
+        detail: profile.modes.includes(state.mode) ? "supported" : "unsupported session mode",
+        status: profile.modes.includes(state.mode) ? "pass" : "fail"
+      });
+      if (!profile.modes.includes(state.mode)) blocked = true;
+
+      for (const feature of request.requiredFeatures) {
+        const meta = featureMeta.find((item) => item.id === feature);
+        const supported = profile.features.includes(feature);
+        const policyOk = !meta?.policy || spatialPolicy;
+        const consentOk = !meta?.consent || hasGesture;
+        const pass = supported && policyOk && consentOk;
+        rows.push({
+          label: `required ${feature}`,
+          detail: pass ? "granted before launch" : (!supported ? "device lacks feature" : !policyOk ? "Permissions-Policy blocks it" : "user activation missing"),
+          status: pass ? "pass" : "fail"
+        });
+        if (!pass) blocked = true;
+      }
+
+      for (const feature of request.optionalFeatures) {
+        const meta = featureMeta.find((item) => item.id === feature);
+        const supported = profile.features.includes(feature);
+        const policyOk = !meta?.policy || spatialPolicy;
+        const consentOk = !meta?.consent || hasGesture;
+        const pass = supported && policyOk && consentOk;
+        rows.push({
+          label: `optional ${feature}`,
+          detail: pass ? "enabled if session starts" : "fallback path required",
+          status: pass ? "pass" : "warn"
+        });
+      }
+
+      rows.push({
+        label: "session result",
+        detail: blocked ? "requestSession would reject" : "session can start with enabled subset",
+        status: blocked ? "fail" : "pass"
+      });
+
+      const requiredPass = request.requiredFeatures.filter((feature) => {
+        const meta = featureMeta.find((item) => item.id === feature);
+        return profile.features.includes(feature) && (!meta?.policy || spatialPolicy) && (!meta?.consent || hasGesture);
+      }).length;
+      const optionalPass = request.optionalFeatures.filter((feature) => {
+        const meta = featureMeta.find((item) => item.id === feature);
+        return profile.features.includes(feature) && (!meta?.policy || spatialPolicy) && (!meta?.consent || hasGesture);
+      }).length;
+
+      return { request, rows, blocked, requiredPass, optionalPass };
+    }
+
+    function draw(result) {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#08100f";
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = "rgba(244,255,248,0.08)";
+      ctx.lineWidth = 1;
+      for (let x = 40; x < w; x += 56) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x - 120, h);
+        ctx.stroke();
+      }
+
+      const startX = 96;
+      const gap = Math.min(142, (w - 190) / Math.max(1, result.rows.length - 1));
+      const y = 280;
+      result.rows.forEach((row, index) => {
+        const x = startX + index * gap;
+        if (index > 0) {
+          ctx.strokeStyle = "rgba(244,255,248,0.23)";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(x - gap + 34, y);
+          ctx.lineTo(x - 34, y);
+          ctx.stroke();
+        }
+
+        const color = row.status === "pass" ? "#9ef3c7" : row.status === "warn" ? "#ffd36f" : "#ff7d8c";
+        ctx.fillStyle = "rgba(255,255,255,0.045)";
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, y, 34, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = color;
+        ctx.font = "700 14px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(row.status.toUpperCase(), x, y + 5);
+
+        ctx.fillStyle = "#f4fff8";
+        ctx.font = "700 13px Inter, sans-serif";
+        wrapText(row.label, x, y + 62, 112, 16);
+        ctx.fillStyle = "#a9bbb0";
+        ctx.font = "12px Inter, sans-serif";
+        wrapText(row.detail, x, y + 112, 118, 15);
+      });
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#f4fff8";
+      ctx.font = "800 24px Inter, sans-serif";
+      ctx.fillText(result.blocked ? "Launch blocked by required feature" : "Launch proceeds with negotiated feature set", 34, 58);
+      ctx.fillStyle = "#a9bbb0";
+      ctx.font = "14px Inter, sans-serif";
+      ctx.fillText(`real WebXR check: ${state.realCheck}`, 34, 84);
+
+      const fallback = result.blocked ? "show non-XR preview / reduce requiredFeatures" : "start XR / gate missing optional UI";
+      ctx.fillStyle = result.blocked ? "#ff7d8c" : "#9ef3c7";
+      ctx.font = "800 22px Inter, sans-serif";
+      ctx.fillText(fallback, 34, h - 92);
+    }
+
+    function wrapText(text, x, y, maxWidth, lineHeight) {
+      const words = String(text).split(" ");
+      let line = "";
+      for (const word of words) {
+        const test = line ? `${line} ${word}` : word;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          ctx.fillText(line, x, y);
+          line = word;
+          y += lineHeight;
+        } else {
+          line = test;
+        }
+      }
+      ctx.fillText(line, x, y);
+    }
+
+    function update() {
+      state.profile = profileEl.value;
+      state.mode = modeEl.value;
+      const result = evaluate();
+
+      modeReadout.textContent = state.mode;
+      requiredReadout.textContent = `${result.requiredPass} / ${result.request.requiredFeatures.length}`;
+      optionalReadout.textContent = `${result.optionalPass} / ${result.request.optionalFeatures.length}`;
+      verdictReadout.textContent = result.blocked ? "blocked" : "start";
+
+      ladderEl.innerHTML = result.rows.map((row) => {
+        const dotClass = row.status === "pass" ? "" : row.status === "warn" ? "warn" : "fail";
+        return `<div class="queue-item"><span class="dot ${dotClass}"></span><span><strong>${row.label}</strong><br>${row.detail}</span><span>${row.status}</span></div>`;
+      }).join("");
+
+      payloadEl.textContent = JSON.stringify({
+        mode: state.mode,
+        sessionInit: result.request,
+        fallback: result.blocked ? "downgrade required feature or route to inline preview" : "start session and branch on optional availability"
+      }, null, 2);
+
+      draw(result);
+    }
+
+    async function checkRealSupport() {
+      if (!("xr" in navigator)) {
+        state.realCheck = "navigator.xr is unavailable";
+        update();
+        return;
+      }
+      try {
+        const supported = await navigator.xr.isSessionSupported(state.mode);
+        state.realCheck = `${state.mode}: ${supported ? "supported" : "not supported"}`;
+      } catch (error) {
+        state.realCheck = `${state.mode}: ${error.name || "check failed"}`;
+      }
+      update();
+    }
+
+    renderFeatureControls();
+    profileEl.addEventListener("change", update);
+    modeEl.addEventListener("change", update);
+    policyEl.addEventListener("change", update);
+    gestureEl.addEventListener("change", update);
+    document.getElementById("simulate").addEventListener("click", update);
+    document.getElementById("realCheck").addEventListener("click", checkRealSupport);
+    update();
+  </script>
+</body>
+</html>

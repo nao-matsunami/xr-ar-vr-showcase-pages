@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bounded Space Teleport Guard</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07100f;
+      --panel: rgba(9, 17, 18, 0.92);
+      --panel-soft: rgba(255, 255, 255, 0.055);
+      --line: rgba(228, 248, 239, 0.18);
+      --text: #f7fff9;
+      --muted: #a7b9b4;
+      --cyan: #8cf4df;
+      --green: #a8ee8a;
+      --amber: #f5bd67;
+      --red: #ff766d;
+      --violet: #b7a0ff;
+      --ink: #06100f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 12%, rgba(140, 244, 223, 0.13), transparent 26%),
+        linear-gradient(145deg, #07100f, #111018 48%, #17110a);
+    }
+
+    main {
+      width: min(1220px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 2.7vw, 2.45rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 860px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.55;
+    }
+
+    .badge,
+    .stage,
+    .panel,
+    .event-log {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 20px 52px rgba(0, 0, 0, 0.34);
+    }
+
+    .badge {
+      min-width: 250px;
+      padding: 12px 14px;
+    }
+
+    .badge b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .badge strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--cyan);
+      font-size: 1.05rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+      gap: 14px;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 650px;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 650px;
+      background: #06100f;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .readout {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(247, 255, 249, 0.14);
+      border-radius: 8px;
+      background: rgba(2, 8, 8, 0.78);
+    }
+
+    .readout small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .readout strong {
+      display: block;
+      margin-top: 4px;
+      overflow-wrap: anywhere;
+      font-size: clamp(0.88rem, 1.55vw, 1.08rem);
+      line-height: 1.18;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .panel,
+    .event-log {
+      padding: 14px;
+    }
+
+    .panel h2,
+    .event-log h2 {
+      margin: 0 0 12px;
+      color: var(--cyan);
+      font-size: 0.92rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .control {
+      display: grid;
+      gap: 7px;
+      margin: 11px 0;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    select,
+    input,
+    button {
+      width: 100%;
+      border: 1px solid rgba(247, 255, 249, 0.15);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      font: inherit;
+    }
+
+    select,
+    input { padding: 10px; }
+
+    button {
+      min-height: 42px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      color: var(--ink);
+      border-color: transparent;
+      background: var(--cyan);
+      font-weight: 760;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(140, 244, 223, 0.58);
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .ladder {
+      display: grid;
+      gap: 8px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid rgba(247, 255, 249, 0.12);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      border: 2px solid var(--muted);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .step.pass .dot { border-color: var(--green); background: rgba(168, 238, 138, 0.22); }
+    .step.warn .dot { border-color: var(--amber); background: rgba(245, 189, 103, 0.24); }
+    .step.fail .dot { border-color: var(--red); background: rgba(255, 118, 109, 0.22); }
+
+    .step b {
+      display: block;
+      font-size: 0.88rem;
+    }
+
+    .step span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      line-height: 1.35;
+    }
+
+    .state {
+      padding: 4px 7px;
+      border: 1px solid rgba(247, 255, 249, 0.14);
+      border-radius: 999px;
+      color: var(--cyan);
+      font-size: 0.72rem;
+      white-space: nowrap;
+    }
+
+    .event-log pre {
+      min-height: 170px;
+      max-height: 220px;
+      margin: 0;
+      overflow: auto;
+      color: #dff8ee;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .hint {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 920px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .badge { min-width: 0; }
+      .stage { min-height: 560px; }
+      canvas { height: 560px; }
+
+      .hud {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      main {
+        width: min(100vw - 18px, 1220px);
+        padding-top: 14px;
+      }
+
+      .stage { min-height: 620px; }
+      canvas { height: 620px; }
+
+      .hud {
+        left: 9px;
+        right: 9px;
+        bottom: 9px;
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Bounded Space Teleport Guard</h1>
+        <p class="subtitle">`bounded-floor` が使える時は境界ポリゴン、使えない時は `local-floor` の保守半径で、テレポート先を「許可 / 注意 / 拒否」に分ける自作ミニ検証。</p>
+      </div>
+      <div class="badge">
+        <b>Reference space fallback</b>
+        <strong id="badgeText">bounded-floor first</strong>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="stage" aria-label="Teleport guard stage">
+        <canvas id="stage" width="960" height="650"></canvas>
+        <div class="hud">
+          <div class="readout">
+            <small>active space</small>
+            <strong id="spaceReadout">bounded-floor</strong>
+          </div>
+          <div class="readout">
+            <small>target verdict</small>
+            <strong id="verdictReadout">inside bounds</strong>
+          </div>
+          <div class="readout">
+            <small>fallback route</small>
+            <strong id="routeReadout">none</strong>
+          </div>
+          <div class="readout">
+            <small>teleport delta</small>
+            <strong id="deltaReadout">0.8m forward</strong>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>Session shape</h2>
+          <div class="control">
+            <label for="profile">device profile <span>support matrix</span></label>
+            <select id="profile">
+              <option value="quest">6DoF headset with guardian</option>
+              <option value="standing">6DoF headset, no boundary</option>
+              <option value="phone">AR phone, local-floor only</option>
+              <option value="inline">inline preview browser</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="room">bounds preset <span>meters</span></label>
+            <select id="room">
+              <option value="studio">small studio 3.0 x 2.4</option>
+              <option value="gallery">wide gallery bay</option>
+              <option value="notch">L-shaped obstacle zone</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="radius">local-floor guard radius <span id="radiusValue">1.25m</span></label>
+            <input id="radius" type="range" min="0.6" max="2.4" value="1.25" step="0.05">
+          </div>
+          <div class="button-grid">
+            <button class="primary" id="run">Resolve spaces</button>
+            <button id="target">Random target</button>
+          </div>
+          <p class="hint">キャンバスをクリックすると候補地点が移動します。実機では select event の floor hit をここに流し込みます。</p>
+        </section>
+
+        <section class="panel">
+          <h2>Request ladder</h2>
+          <div class="ladder" id="ladder"></div>
+        </section>
+
+        <section class="event-log">
+          <h2>Implementation log</h2>
+          <pre id="log"></pre>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const els = {
+      badge: document.getElementById("badgeText"),
+      space: document.getElementById("spaceReadout"),
+      verdict: document.getElementById("verdictReadout"),
+      route: document.getElementById("routeReadout"),
+      delta: document.getElementById("deltaReadout"),
+      profile: document.getElementById("profile"),
+      room: document.getElementById("room"),
+      radius: document.getElementById("radius"),
+      radiusValue: document.getElementById("radiusValue"),
+      run: document.getElementById("run"),
+      target: document.getElementById("target"),
+      ladder: document.getElementById("ladder"),
+      log: document.getElementById("log")
+    };
+
+    const profiles = {
+      quest: {
+        label: "6DoF headset with guardian",
+        mode: "immersive-vr",
+        supported: ["bounded-floor", "local-floor", "local", "viewer"],
+        notes: "境界あり。bounded-floor を優先し、boundsGeometry で候補を切る。"
+      },
+      standing: {
+        label: "6DoF headset, no boundary",
+        mode: "immersive-vr",
+        supported: ["local-floor", "local", "viewer"],
+        notes: "境界未設定。bounded-floor は失敗し、local-floor + 半径ガードへ縮退。"
+      },
+      phone: {
+        label: "AR phone, local-floor only",
+        mode: "immersive-ar",
+        supported: ["local-floor", "local", "viewer"],
+        notes: "AR 端末想定。床原点は使えるが事前境界はない。"
+      },
+      inline: {
+        label: "inline preview browser",
+        mode: "inline",
+        supported: ["viewer"],
+        notes: "実機なしのプレビュー。viewer のみでテレポートを無効化。"
+      }
+    };
+
+    const rooms = {
+      studio: [
+        [-1.5, -1.2],
+        [1.5, -1.2],
+        [1.5, 1.2],
+        [-1.5, 1.2]
+      ],
+      gallery: [
+        [-2.4, -1.1],
+        [2.4, -1.1],
+        [2.1, 1.25],
+        [-2.2, 1.35]
+      ],
+      notch: [
+        [-1.8, -1.3],
+        [1.7, -1.3],
+        [1.7, -0.2],
+        [0.55, -0.2],
+        [0.55, 1.25],
+        [-1.8, 1.25]
+      ]
+    };
+
+    const state = {
+      activeSpace: "bounded-floor",
+      fallback: "none",
+      target: { x: 0.4, y: -0.85 },
+      origin: { x: 0, y: 0 },
+      steps: []
+    };
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      draw();
+    }
+
+    function scale() {
+      const rect = canvas.getBoundingClientRect();
+      return Math.min(rect.width / 6.2, (rect.height - 130) / 5.2);
+    }
+
+    function toScreen(point) {
+      const rect = canvas.getBoundingClientRect();
+      const s = scale();
+      return {
+        x: rect.width / 2 + point.x * s,
+        y: (rect.height - 60) / 2 + point.y * s
+      };
+    }
+
+    function fromScreen(x, y) {
+      const rect = canvas.getBoundingClientRect();
+      const s = scale();
+      return {
+        x: (x - rect.width / 2) / s,
+        y: (y - (rect.height - 60) / 2) / s
+      };
+    }
+
+    function pointInPolygon(point, polygon) {
+      let inside = false;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i][0];
+        const yi = polygon[i][1];
+        const xj = polygon[j][0];
+        const yj = polygon[j][1];
+        const intersects = yi > point.y !== yj > point.y &&
+          point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi;
+        if (intersects) inside = !inside;
+      }
+      return inside;
+    }
+
+    function distance(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function resolveReferenceSpace() {
+      const profile = profiles[els.profile.value];
+      const wanted = ["bounded-floor", "local-floor", "local", "viewer"];
+      const steps = [];
+      let active = "viewer";
+      let fallback = "viewer-only";
+
+      for (const space of wanted) {
+        const ok = profile.supported.includes(space);
+        steps.push({
+          name: `requestReferenceSpace("${space}")`,
+          note: ok ? `${space} を使用可能` : `${space} は NotSupportedError 想定`,
+          status: ok ? "pass" : space === "bounded-floor" ? "warn" : "fail"
+        });
+        if (ok) {
+          active = space;
+          fallback = space === "bounded-floor" ? "none" : `bounded-floor -> ${space}`;
+          break;
+        }
+      }
+
+      state.activeSpace = active;
+      state.fallback = fallback;
+      state.steps = steps;
+      logPayload(profile);
+      update();
+    }
+
+    function evaluateTarget() {
+      const polygon = rooms[els.room.value];
+      const radius = Number(els.radius.value);
+      const d = distance(state.origin, state.target);
+
+      if (state.activeSpace === "bounded-floor") {
+        return pointInPolygon(state.target, polygon)
+          ? { label: "inside bounds", color: "#a8ee8a", severity: "pass" }
+          : { label: "outside bounds", color: "#ff766d", severity: "fail" };
+      }
+
+      if (state.activeSpace === "local-floor" || state.activeSpace === "local") {
+        if (d <= radius) return { label: "within radius", color: "#a8ee8a", severity: "pass" };
+        if (d <= radius + 0.45) return { label: "edge warning", color: "#f5bd67", severity: "warn" };
+        return { label: "radius blocked", color: "#ff766d", severity: "fail" };
+      }
+
+      return { label: "viewer only", color: "#f5bd67", severity: "warn" };
+    }
+
+    function updateLadder() {
+      els.ladder.innerHTML = "";
+      for (const step of state.steps) {
+        const item = document.createElement("div");
+        item.className = `step ${step.status}`;
+        item.innerHTML = `
+          <div class="dot"></div>
+          <div><b>${step.name}</b><span>${step.note}</span></div>
+          <div class="state">${step.status}</div>
+        `;
+        els.ladder.appendChild(item);
+      }
+    }
+
+    function drawGrid(rect, s) {
+      ctx.save();
+      ctx.translate(rect.width / 2, (rect.height - 60) / 2);
+      ctx.strokeStyle = "rgba(247, 255, 249, 0.07)";
+      ctx.lineWidth = 1;
+      for (let x = -3; x <= 3; x += 0.5) {
+        ctx.beginPath();
+        ctx.moveTo(x * s, -2.7 * s);
+        ctx.lineTo(x * s, 2.7 * s);
+        ctx.stroke();
+      }
+      for (let y = -2.5; y <= 2.5; y += 0.5) {
+        ctx.beginPath();
+        ctx.moveTo(-3.2 * s, y * s);
+        ctx.lineTo(3.2 * s, y * s);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = "rgba(140, 244, 223, 0.35)";
+      ctx.beginPath();
+      ctx.moveTo(-3.2 * s, 0);
+      ctx.lineTo(3.2 * s, 0);
+      ctx.moveTo(0, -2.7 * s);
+      ctx.lineTo(0, 2.7 * s);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawBounds(polygon) {
+      const verdict = evaluateTarget();
+      ctx.beginPath();
+      polygon.forEach(([x, y], index) => {
+        const p = toScreen({ x, y });
+        if (index === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = state.activeSpace === "bounded-floor"
+        ? "rgba(140, 244, 223, 0.12)"
+        : "rgba(140, 244, 223, 0.045)";
+      ctx.strokeStyle = state.activeSpace === "bounded-floor"
+        ? "rgba(140, 244, 223, 0.8)"
+        : "rgba(140, 244, 223, 0.26)";
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+
+      if (state.activeSpace !== "bounded-floor") {
+        const origin = toScreen(state.origin);
+        ctx.beginPath();
+        ctx.arc(origin.x, origin.y, Number(els.radius.value) * scale(), 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(245, 189, 103, 0.08)";
+        ctx.strokeStyle = "rgba(245, 189, 103, 0.72)";
+        ctx.setLineDash([8, 8]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      const origin = toScreen(state.origin);
+      const target = toScreen(state.target);
+      ctx.strokeStyle = verdict.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(origin.x, origin.y);
+      ctx.lineTo(target.x, target.y);
+      ctx.stroke();
+
+      ctx.fillStyle = "#f7fff9";
+      ctx.beginPath();
+      ctx.arc(origin.x, origin.y, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(6, 16, 15, 0.82)";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = verdict.color;
+      ctx.beginPath();
+      ctx.arc(target.x, target.y, 13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(247, 255, 249, 0.82)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(247, 255, 249, 0.9)";
+      ctx.font = "12px ui-sans-serif, system-ui";
+      ctx.fillText("viewer origin", origin.x + 14, origin.y - 12);
+      ctx.fillText("candidate floor hit", target.x + 16, target.y + 4);
+    }
+
+    function drawBanner(rect) {
+      const verdict = evaluateTarget();
+      ctx.fillStyle = "rgba(2, 8, 8, 0.72)";
+      ctx.fillRect(18, 18, Math.min(520, rect.width - 36), 82);
+      ctx.strokeStyle = "rgba(247, 255, 249, 0.14)";
+      ctx.strokeRect(18, 18, Math.min(520, rect.width - 36), 82);
+      ctx.fillStyle = verdict.color;
+      ctx.font = "700 20px ui-sans-serif, system-ui";
+      ctx.fillText(verdict.label, 34, 50);
+      ctx.fillStyle = "rgba(247, 255, 249, 0.76)";
+      ctx.font = "13px ui-sans-serif, system-ui";
+      const line = state.activeSpace === "bounded-floor"
+        ? "Use XRBoundedReferenceSpace.boundsGeometry before committing teleport."
+        : "No boundsGeometry: use local floor origin plus conservative radius.";
+      ctx.fillText(line, 34, 76);
+    }
+
+    function draw() {
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      const gradient = ctx.createLinearGradient(0, 0, rect.width, rect.height);
+      gradient.addColorStop(0, "#07100f");
+      gradient.addColorStop(0.55, "#10131a");
+      gradient.addColorStop(1, "#171008");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, rect.width, rect.height);
+      drawGrid(rect, scale());
+      drawBounds(rooms[els.room.value]);
+      drawBanner(rect);
+    }
+
+    function updateReadouts() {
+      const verdict = evaluateTarget();
+      const d = distance(state.origin, state.target);
+      els.space.textContent = state.activeSpace;
+      els.verdict.textContent = verdict.label;
+      els.verdict.style.color = verdict.color;
+      els.route.textContent = state.fallback;
+      els.delta.textContent = `${d.toFixed(2)}m @ x ${state.target.x.toFixed(2)}, z ${state.target.y.toFixed(2)}`;
+      els.badge.textContent = state.fallback === "none" ? "bounded-floor first" : state.fallback;
+      els.radiusValue.textContent = `${Number(els.radius.value).toFixed(2)}m`;
+    }
+
+    function logPayload(profile) {
+      const payload = {
+        requestSession: {
+          mode: profile.mode,
+          requiredFeatures: ["local-floor"],
+          optionalFeatures: ["bounded-floor"]
+        },
+        referenceSpaceAttemptOrder: ["bounded-floor", "local-floor", "local", "viewer"],
+        selectedProfile: profile.label,
+        activeSpace: state.activeSpace,
+        fallback: state.fallback,
+        note: profile.notes
+      };
+      els.log.textContent = JSON.stringify(payload, null, 2);
+    }
+
+    function update() {
+      updateLadder();
+      updateReadouts();
+      draw();
+    }
+
+    function randomTarget() {
+      state.target = {
+        x: Number((Math.random() * 4.4 - 2.2).toFixed(2)),
+        y: Number((Math.random() * 3.4 - 1.7).toFixed(2))
+      };
+      update();
+    }
+
+    canvas.addEventListener("click", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      state.target = fromScreen(event.clientX - rect.left, event.clientY - rect.top);
+      update();
+    });
+
+    els.profile.addEventListener("change", resolveReferenceSpace);
+    els.room.addEventListener("change", update);
+    els.radius.addEventListener("input", update);
+    els.run.addEventListener("click", resolveReferenceSpace);
+    els.target.addEventListener("click", randomTarget);
+    window.addEventListener("resize", resizeCanvas);
+
+    resolveReferenceSpace();
+    resizeCanvas();
+  </script>
+</body>
+</html>

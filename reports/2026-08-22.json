@@ -1,0 +1,119 @@
+{
+  "date": "2026-08-22",
+  "headline": "bounded-floor から local-floor へ縮退するテレポート安全判定",
+  "headlineEn": "Teleport safety checks that degrade from bounded-floor to local-floor",
+  "summary": "WebXR Device API、MDN の `requestReferenceSpace()` と bounded reference spaces、Immersive Web の teleportation sample、WebXR Layers API Level 1 を確認し、`XRBoundedReferenceSpace.boundsGeometry` がある場合とない場合でテレポート候補を判定する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Device API, MDN `requestReferenceSpace()` and bounded reference spaces guidance, the Immersive Web teleportation sample, and WebXR Layers API Level 1, today's original HTML sample checks teleport candidates differently when `XRBoundedReferenceSpace.boundsGeometry` is available versus when the app falls back to `local-floor`.",
+  "keyTopics": [
+    "WebXR Device API は `requestSession()` の後、セッションから `requestReferenceSpace()` を呼び出して `viewer`、`local`、`local-floor`、`bounded-floor` などの空間を取得する流れを定義しています。",
+    "MDN の `requestReferenceSpace()` は Limited availability / experimental / secure context の API として説明され、`bounded-floor` は `XRBoundedReferenceSpace` と `boundsGeometry` を返す参照空間として整理されています。",
+    "MDN の bounded reference spaces ガイドは、`requestSession()` で `bounded-floor` を optional にしても、実際に境界空間を使うには `requestReferenceSpace(\"bounded-floor\")` を呼び、失敗時に `local-floor` へ fallback する必要があると示しています。",
+    "Immersive Web の teleportation sample は、床上の点をコントローラーで選び、`XRSession` の reference space を更新して視点移動する例として、テレポート UI の最小形を確認できます。",
+    "WebXR Layers API Level 1 は `XRQuadLayer` / `XRCylinderLayer` を `local`、`local-floor`、`unbounded`、`bounded-floor`、anchor space へ配置できる例を示しており、境界判定済みの UI 面を世界固定する発展先になります。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Device API defines the flow of obtaining `viewer`, `local`, `local-floor`, and `bounded-floor` spaces from an `XRSession` via `requestReferenceSpace()` after `requestSession()`.",
+    "MDN documents `requestReferenceSpace()` as limited availability, experimental, and secure-context-only, and describes `bounded-floor` as a reference space returned as `XRBoundedReferenceSpace` with `boundsGeometry`.",
+    "MDN's bounded reference spaces guide notes that requesting `bounded-floor` as optional in `requestSession()` is not enough; apps still call `requestReferenceSpace(\"bounded-floor\")` and fall back to `local-floor` when that fails.",
+    "The Immersive Web teleportation sample demonstrates the smallest useful teleport UI: select a point on the floor with a controller, then update the session reference space.",
+    "WebXR Layers API Level 1 shows `XRQuadLayer` and `XRCylinderLayer` in `local`, `local-floor`, `unbounded`, `bounded-floor`, or anchor space, which suggests a next step for world-locked safety panels after boundary checks."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Bounded Space Teleport Guard",
+      "url": "../outputs/2026-08-22_html_bounded_space_teleport_guard.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "MDN: XRSession requestReferenceSpace()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestReferenceSpace"
+    },
+    {
+      "label": "MDN: Using bounded reference spaces",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Bounded_reference_spaces"
+    },
+    {
+      "label": "Immersive Web Sample: Teleportation",
+      "url": "https://immersive-web.github.io/webxr-samples/teleportation.html"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、テレポートを単なる移動操作ではなく、参照空間の可用性に応じて安全判定を切り替える UI として扱うことです。Immersive Web の teleportation sample は床の点を選んで reference space を更新する最小例です。一方で実運用では `bounded-floor` が返る端末ばかりではないため、MDN のガイドが示すように `requestReferenceSpace(\"bounded-floor\")` 失敗時の fallback が必要です。面白いのは、境界ポリゴンが取れる場合は厳密に、取れない場合は保守半径で判断するだけでも、展示や安全配慮の説明がかなり明確になる点です。",
+      "bodyEn": "Today's notable idea is treating teleportation not just as locomotion, but as UI that changes its safety check based on reference-space availability. The Immersive Web teleportation sample is the minimal example of selecting a floor point and updating the reference space. In real deployments, not every device returns `bounded-floor`, so the fallback path described by MDN is essential. The interesting part is that switching from exact boundary polygons to a conservative local-floor radius already makes installation and safety behavior much easier to explain.",
+      "links": [
+        {
+          "label": "Immersive Web Sample: Teleportation",
+          "url": "https://immersive-web.github.io/webxr-samples/teleportation.html"
+        },
+        {
+          "label": "MDN: Using bounded reference spaces",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Bounded_reference_spaces"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルでは device profile、bounds preset、`local-floor` 時のガード半径を切り替え、キャンバスクリックでテレポート候補地点を置けます。`bounded-floor` が使える profile では境界ポリゴンの内外で許可 / 拒否を判定し、境界がない profile では原点からの距離で許可 / 注意 / 拒否を出します。実アプリでは、床 hit reticle の色、コントローラーの haptics、DOM Overlay の理由表示を同じ verdict に接続できます。",
+      "bodyEn": "The sample lets you change device profile, bounds preset, and the local-floor guard radius, then place a teleport candidate by clicking the canvas. Profiles with `bounded-floor` use polygon containment for allow/block decisions, while profiles without bounds use distance from the local origin for allow/warn/block decisions. In a real app, the same verdict can drive reticle color, controller haptics, and DOM Overlay diagnostics."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "`requestSession(mode, { optionalFeatures: [\"bounded-floor\"], requiredFeatures: [\"local-floor\"] })` のように起動時は縮退を許し、セッション開始後に `session.requestReferenceSpace(\"bounded-floor\")` を試します。失敗したら `local-floor`、さらに失敗したら `local` や `viewer` へ順に落とし、どの空間で動いているかをログに残します。`bounded-floor` では `boundsGeometry` を使って floor hit を判定し、`local-floor` では半径、障害物、利用者の向きなどを別途持つのが現実的です。",
+      "bodyEn": "A production path can start permissively with `requestSession(mode, { optionalFeatures: [\"bounded-floor\"], requiredFeatures: [\"local-floor\"] })`, then call `session.requestReferenceSpace(\"bounded-floor\")` after session start. If that fails, fall back to `local-floor`, then `local` or `viewer`, and log the active space. With `bounded-floor`, use `boundsGeometry` to test floor hits; with `local-floor`, keep a separate radius, obstacle, and orientation policy."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルからは device profile、reference space attempt order、active space、fallback route、bounds polygon、target point、origin distance、guard radius、verdict を取れます。昨日の feature negotiation ladder と組み合わせると、起動前の optional feature 判断と、起動後の `requestReferenceSpace()` fallback を一本の診断ログにできます。さらに 2026-08-15 の haptic queue と合わせると、境界外候補は短い警告振動、境界内候補は確定振動として表現できます。",
+      "bodyEn": "Today's sample emits device profile, reference-space attempt order, active space, fallback route, bounds polygon, target point, origin distance, guard radius, and verdict. Combined with yesterday's feature negotiation ladder, it can produce one diagnostic log from pre-launch optional feature decisions through post-launch `requestReferenceSpace()` fallback. Combined with the 2026-08-15 haptic queue, out-of-bounds candidates can trigger warning pulses while accepted candidates trigger confirmation pulses."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "引き続き WebXR Device API の reference space 要件、MDN の互換性表、Immersive Web samples の locomotion 実装、WebXR Layers API の `XRQuadLayer` / `XRCylinderLayer` の配置要件を追います。次は、境界判定の verdict をアンカー復旧 UI や layer UI に渡し、床面だけでなく「壁際のパネル配置を安全にする」方向へ広げるとよさそうです。",
+      "bodyEn": "Continue watching WebXR reference-space requirements, MDN compatibility tables, locomotion patterns in Immersive Web samples, and WebXR Layers placement requirements for `XRQuadLayer` and `XRCylinderLayer`. A useful next step is passing the boundary verdict into anchor recovery or layer UI, expanding from floor teleport safety to safe wall-adjacent panel placement."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、device profile を `6DoF headset with guardian` にしたまま、境界の外をクリックしてください。`bounded-floor` のまま `outside bounds` で拒否されます。次に profile を `6DoF headset, no boundary` に変えると `bounded-floor -> local-floor` に縮退し、同じ候補が半径判定になります。radius slider を動かすと、境界がない時の安全側の厳しさを調整できます。",
+      "bodyEn": "Open the sample, keep the profile on `6DoF headset with guardian`, and click outside the boundary. It stays on `bounded-floor` and blocks the target as `outside bounds`. Then switch to `6DoF headset, no boundary`; the route degrades to `bounded-floor -> local-floor`, and the same candidate is judged by radius. Adjust the radius slider to tune how conservative the no-boundary policy is.",
+      "links": [
+        {
+          "label": "Open Bounded Space Teleport Guard",
+          "url": "../outputs/2026-08-22_html_bounded_space_teleport_guard.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、MDN `requestReferenceSpace()`、MDN bounded reference spaces、Immersive Web teleportation sample、W3C WebXR Layers API Level 1 を確認。設計: `bounded-floor` 優先、`local-floor` 半径 fallback、`viewer` only の無効化を状態として整理。実装: canvas の top-down 境界図、profile selector、bounds preset、radius slider、reference-space ladder、JSON payload log を持つ単一 HTML を追加。検証: report JSON parse、HTML 内 script 構文、gallery 再生成、publish を実行する。",
+      "bodyEn": "Research: reviewed the W3C WebXR Device API, MDN `requestReferenceSpace()`, MDN bounded reference spaces, the Immersive Web teleportation sample, and W3C WebXR Layers API Level 1. Design: model `bounded-floor` first, local-floor radius fallback, and viewer-only disablement as explicit states. Implementation: added a single HTML file with a top-down canvas boundary map, profile selector, bounds preset, radius slider, reference-space ladder, and JSON payload log. Validation: parse JSON, check the embedded script syntax, rebuild the gallery, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "昨日までは起動前の feature negotiation、今日は起動後に `requestReferenceSpace()` がどこまで成立したかを扱いました。XR の体験品質は描画だけでなく、「どの空間で責任を持って動いているか」をユーザーに返せるかで大きく変わります。`bounded-floor`、`local-floor`、`viewer` を同じ移動 UI で扱うと、理想端末向けの体験とフォールバック体験の差分が見えるようになります。",
+      "bodyEn": "Yesterday focused on pre-launch feature negotiation; today focuses on how far post-launch `requestReferenceSpace()` resolution succeeds. XR quality is shaped not only by rendering, but by whether the app can explain which space it is responsibly operating in. Handling `bounded-floor`, `local-floor`, and `viewer` inside the same locomotion UI makes the gap between ideal-device behavior and fallback behavior visible."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Bounded Space Teleport Guard` です。WebXR 実機がなくても、境界あり / 境界なし / AR phone / inline preview の profile を切り替え、テレポート候補の判定がどう変わるか確認できます。次に足すなら、実際の `XRBoundedReferenceSpace.boundsGeometry` を読み込む HTTPS 実機モード、床 hit-test 連携、haptic verdict、`XRQuadLayer` による世界固定の警告パネルです。",
+      "bodyEn": "The selected prototype is `Bounded Space Teleport Guard`. Even without real WebXR hardware, it shows how teleport verdicts change across bounded, unbounded, AR phone, and inline preview profiles. Next additions would be an HTTPS device mode that reads real `XRBoundedReferenceSpace.boundsGeometry`, floor hit-test integration, haptic verdicts, and a world-locked warning panel using `XRQuadLayer`."
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "date": "2026-08-21",
+  "headline": "required / optional feature の交渉を起動前に見える化する",
+  "headlineEn": "Visualize required and optional feature negotiation before launch",
+  "summary": "WebXR Device API、MDN の `XRSystem.requestSession()`、WebXR Hit Test Module、Immersive Web DOM Overlay explainer を確認し、`requiredFeatures` と `optionalFeatures` の違い、Permissions-Policy、ユーザー操作、実端末サポートを分けて観察する自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Device API, MDN `XRSystem.requestSession()`, the WebXR Hit Test Module, and the Immersive Web DOM Overlay explainer, today's original HTML sample visualizes required versus optional features, Permissions-Policy, user activation, and device support before launch.",
+  "keyTopics": [
+    "WebXR Device API は、`requiredFeatures` の未認識・未対応・ユーザー意図不足を `XRSession` 作成失敗の条件として扱い、`optionalFeatures` は未認識なら無視、未対応でもセッション作成をブロックしないと定義しています。",
+    "MDN の `XRSystem.requestSession()` は Limited availability / experimental / secure context の API として説明され、`NotSupportedError` はモードや required option が未対応の場合にも返り得ると整理しています。",
+    "`hit-test` は WebXR Hit Test Module が追加する feature descriptor で、現実環境への ray intersection を使った配置を可能にしますが、`xr-spatial-tracking` Permissions-Policy の対象です。",
+    "DOM Overlay explainer は `dom-overlay` を optional にした場合、セッションは進行し得るが `session.domOverlayState` がなければ DOM が見えない前提で代替 UI を用意すべきだと説明しています。",
+    "`isSessionSupported()` はモード単位の入口確認には使えますが、feature list の成立までは保証しないため、起動ボタン前に required / optional の判断表を作る価値があります。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Device API treats unrecognized, unsupported, or insufficiently consented `requiredFeatures` as conditions that prevent `XRSession` creation, while `optionalFeatures` can be ignored or absent without blocking the session.",
+    "MDN documents `XRSystem.requestSession()` as limited availability, experimental, and secure-context-only, and notes that `NotSupportedError` can also come from unsupported modes or required options.",
+    "`hit-test` is a feature descriptor introduced by the WebXR Hit Test Module for real-world ray intersections, and it is subject to the `xr-spatial-tracking` Permissions-Policy.",
+    "The DOM Overlay explainer states that an optional `dom-overlay` request may allow the session to continue; if `session.domOverlayState` is absent, the app must assume the DOM is not visible and provide a fallback.",
+    "`isSessionSupported()` is useful for mode-level entry checks, but it does not prove that a full feature list will be granted, so a pre-launch required / optional decision table is useful."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: XR Feature Negotiation Ladder",
+      "url": "../outputs/2026-08-21_html_xr_feature_negotiation_ladder.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "MDN: XRSystem requestSession()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession"
+    },
+    {
+      "label": "W3C: WebXR Hit Test Module",
+      "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+    },
+    {
+      "label": "Immersive Web: DOM Overlay explainer",
+      "url": "https://github.com/immersive-web/dom-overlays/blob/main/explainer.md"
+    },
+    {
+      "label": "Immersive Web Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、XR 体験の失敗を「起動できない」でまとめず、`requiredFeatures`、`optionalFeatures`、Permissions-Policy、ユーザー同意、デバイスサポートに分解して見せることです。W3C の WebXR Device API は required と optional の扱いを明確に分けています。DOM Overlay explainer も、optional overlay が有効でない場合に DOM が見えない前提で代替 UI を持つべきだと示しています。面白いのは、この仕様上の違いを launch UI の表現に変えると、開発者だけでなく展示運用者にも「なぜ fallback したか」が伝わる点です。",
+      "bodyEn": "Today's notable idea is not treating XR startup failure as a single generic failure. Instead, the sample separates required features, optional features, Permissions-Policy, user consent, and device support. The W3C WebXR Device API draws a clear line between required and optional behavior, and the DOM Overlay explainer says optional overlay usage needs alternate UI when the overlay is absent. The interesting part is turning that specification distinction into launch UI that tells both developers and operators why a fallback path was chosen.",
+      "links": [
+        {
+          "label": "W3C: WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        },
+        {
+          "label": "Immersive Web: DOM Overlay explainer",
+          "url": "https://github.com/immersive-web/dom-overlays/blob/main/explainer.md"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "サンプルでは feature ごとに off / optional / required を切り替え、device profile、session mode、`xr-spatial-tracking` policy、user activation を操作できます。中央の ladder は mode check、required feature、optional feature、session result を丸い checkpoint として表示します。required が落ちた場合は赤で起動停止、optional が落ちた場合は黄で fallback 継続です。実アプリではこの ladder を起動ボタンの裏側に置き、失敗後にだけ表示する diagnostic panel にできます。",
+      "bodyEn": "The sample lets you switch each feature between off, optional, and required, then adjust device profile, session mode, `xr-spatial-tracking` policy, and user activation. The center ladder shows mode checks, required features, optional features, and the final session result as checkpoints. A failed required feature blocks launch in red, while a missing optional feature continues through a yellow fallback. In a real app, this can live behind the launch button and surface only as a diagnostic panel after failure.",
+      "links": [
+        {
+          "label": "Open XR Feature Negotiation Ladder",
+          "url": "../outputs/2026-08-21_html_xr_feature_negotiation_ladder.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は、`isSessionSupported(mode)` を入口の可否確認に使い、`requestSession(mode, { requiredFeatures, optionalFeatures })` の失敗は DOMException name と要求 feature list を一緒にログ化します。`hit-test`、`anchors`、`depth-sensing` のように `xr-spatial-tracking` に依存する機能は、iframe や埋め込み環境の Permissions-Policy も診断項目に入れます。`dom-overlay` は optional なら `session.domOverlayState` の有無で UI 経路を分け、必須 UI なら required に上げて早く失敗させる方が運用しやすいです。",
+      "bodyEn": "In production, use `isSessionSupported(mode)` as the entry check, then log the DOMException name and requested feature list when `requestSession(mode, { requiredFeatures, optionalFeatures })` fails. Features such as `hit-test`, `anchors`, and `depth-sensing` depend on `xr-spatial-tracking`, so iframe and embedding Permissions-Policy should be part of diagnostics. If `dom-overlay` is optional, branch UI on `session.domOverlayState`; if the UI is essential, promoting it to required fails earlier and is easier to operate."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日のサンプルからは session mode、required / optional feature 配列、device profile、policy flag、user activation flag、required pass count、optional enabled count、fallback reason、`XRSessionInit` payload を取れます。2026-08-20 の anchor recovery monitor と組み合わせると、anchor 復旧 UI を出す前に `anchors` と `hit-test` が optional なのか required なのかを記録できます。展示用途なら、端末ごとの起動失敗理由を集計して、現場で必要なブラウザ設定・権限・代替 UI を絞り込めます。",
+      "bodyEn": "Today's sample emits session mode, required and optional feature arrays, device profile, policy flag, user-activation flag, required pass count, optional enabled count, fallback reason, and the `XRSessionInit` payload. Combined with the 2026-08-20 anchor recovery monitor, it can record whether `anchors` and `hit-test` were optional or required before showing recovery UI. For installations, these logs can identify browser settings, permissions, and fallback UI needed per device."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "引き続き WebXR Device API の feature descriptor 更新、MDN の互換性表、Hit Test / DOM Overlay / Anchors / Depth Sensing 各モジュールの permission requirement、Immersive Web samples の session init 実装を追います。次は、今日の preflight ladder と昨日の anchor recovery queue を接続し、optional feature が落ちた場合の「機能縮退したまま体験を続ける」UI に進めます。",
+      "bodyEn": "Continue watching updates to WebXR feature descriptors, MDN compatibility tables, permission requirements across Hit Test / DOM Overlay / Anchors / Depth Sensing, and session initialization patterns in Immersive Web samples. Next, connect today's preflight ladder to yesterday's anchor recovery queue and build UI that continues with degraded capability when optional features are absent."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "サンプルを開き、device profile を `Inline only browser` にして `hit-test` を required のまま simulate してください。mode が immersive-ar の時点で赤く止まり、fallback が inline preview になります。次に `hit-test` を optional に下げ、mode を inline にすると、session は進み、optional は黄の fallback として残ります。`real support check` を押すと、現在のブラウザで `navigator.xr.isSessionSupported(mode)` が使えるかも確認できます。",
+      "bodyEn": "Open the sample, choose `Inline only browser`, and simulate with `hit-test` still required. The ladder blocks at immersive-ar mode and routes to inline preview. Then lower `hit-test` to optional and switch the mode to inline; the session proceeds while the optional feature remains a yellow fallback. Press `real support check` to see whether the current browser exposes `navigator.xr.isSessionSupported(mode)`.",
+      "links": [
+        {
+          "label": "Open XR Feature Negotiation Ladder",
+          "url": "../outputs/2026-08-21_html_xr_feature_negotiation_ladder.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Device API の required / optional feature 解決、MDN の `requestSession()` 例外と secure context、Hit Test Module の feature descriptor と policy、DOM Overlay の optional fallback を確認。設計: 起動前の判断を device support、policy、consent、feature bucket に分解。実装: canvas ladder、feature selector、profile selector、policy / gesture toggle、payload preview、`isSessionSupported()` 実チェックを持つ単一 HTML を作成。検証: JSON parse、HTML script 構文、gallery 再生成、publish を実行する。",
+      "bodyEn": "Research: reviewed required / optional feature resolution in the WebXR Device API, MDN `requestSession()` exceptions and secure-context notes, the Hit Test feature descriptor and policy requirement, and DOM Overlay optional fallback behavior. Design: split pre-launch decisions into device support, policy, consent, and feature buckets. Implementation: created a single HTML file with a canvas ladder, feature selector, profile selector, policy / gesture toggles, payload preview, and a real `isSessionSupported()` check. Validation: parse JSON, check HTML script syntax, rebuild the gallery, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "7月からの流れは、ヒットテスト、アンカー、深度、ハンド、DOM Overlay と個別機能を触ってきました。今日のサンプルは、それらを体験内の部品ではなく、起動時に交渉される能力として俯瞰します。XR は feature が揃った端末だけを想定すると壊れやすいので、required を最小化し、optional の欠落を UI とログで受け止める設計が重要です。",
+      "bodyEn": "Since July, the archive has explored hit testing, anchors, depth, hands, and DOM Overlay as individual capabilities. Today's sample looks at those not as in-experience parts but as capabilities negotiated at launch. XR becomes fragile when it assumes ideal devices, so keeping required features minimal and handling missing optional features in UI and logs is important."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `XR Feature Negotiation Ladder` です。WebXR 実機がなくても、feature を required / optional に振り分けたときに何が session start を止め、何が fallback として残るかを確認できます。次に足すなら、実 `requestSession()` を試せる HTTPS 専用モード、`domOverlayState.type` の表示、失敗ログのローカル保存、端末別プリセットの追加です。",
+      "bodyEn": "The selected prototype is `XR Feature Negotiation Ladder`. Even without real WebXR hardware, it shows which feature choices block session start and which remain as fallback paths. The next additions would be an HTTPS-only real `requestSession()` mode, display of `domOverlayState.type`, local failure-log storage, and more device presets."
+    }
+  ]
+}

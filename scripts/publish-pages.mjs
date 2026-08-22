@@ -41,17 +41,19 @@ async function emptyTargetDir(targetPath) {
   const entries = await fs.readdir(targetPath, { withFileTypes: true });
   for (const entry of entries) {
     if (entry.name === ".git") continue;
+    if (entry.name === ".github") continue;
     await fs.rm(path.join(targetPath, entry.name), { recursive: true, force: true });
   }
 }
 
 async function copyProject() {
   await ensureDir(targetDir);
-  await emptyTargetDir(targetDir);
 
   const entries = await fs.readdir(sourceDir, { withFileTypes: true });
   for (const entry of entries) {
     if (entry.name === ".git") continue;
+    if (entry.name === ".github") continue;
+    if (entry.name === ".nojekyll") continue;
     if (entry.name === "node_modules") continue;
 
     const from = path.join(sourceDir, entry.name);

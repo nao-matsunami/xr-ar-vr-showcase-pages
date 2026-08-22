@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>required / optional feature の交渉を起動前に見える化する | 2026-08-21</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.08.21</p>
+      <h1>required / optional feature の交渉を起動前に見える化する</h1>
+      <p class="hero-subtitle">Visualize required and optional feature negotiation before launch</p>
+      <p>WebXR Device API、MDN の `XRSystem.requestSession()`、WebXR Hit Test Module、Immersive Web DOM Overlay explainer を確認し、`requiredFeatures` と `optionalFeatures` の違い、Permissions-Policy、ユーザー操作、実端末サポートを分けて観察する自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the WebXR Device API, MDN `XRSystem.requestSession()`, the WebXR Hit Test Module, and the Immersive Web DOM Overlay explainer, today's original HTML sample visualizes required versus optional features, Permissions-Policy, user activation, and device support before launch.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-08-21_html_xr_feature_negotiation_ladder.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-08-20.html">← 2026.08.20</a>
+      <a class="day-link" href="../days/2026-08-22.html">2026.08.22 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>XR Feature Negotiation Ladder</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-21_html_xr_feature_negotiation_ladder.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Device API は、`requiredFeatures` の未認識・未対応・ユーザー意図不足を `XRSession` 作成失敗の条件として扱い、`optionalFeatures` は未認識なら無視、未対応でもセッション作成をブロックしないと定義しています。</span>
+              <span class="en-copy">The WebXR Device API treats unrecognized, unsupported, or insufficiently consented `requiredFeatures` as conditions that prevent `XRSession` creation, while `optionalFeatures` can be ignored or absent without blocking the session.</span>
+            </li>
+          
+            <li>
+              <span>MDN の `XRSystem.requestSession()` は Limited availability / experimental / secure context の API として説明され、`NotSupportedError` はモードや required option が未対応の場合にも返り得ると整理しています。</span>
+              <span class="en-copy">MDN documents `XRSystem.requestSession()` as limited availability, experimental, and secure-context-only, and notes that `NotSupportedError` can also come from unsupported modes or required options.</span>
+            </li>
+          
+            <li>
+              <span>`hit-test` は WebXR Hit Test Module が追加する feature descriptor で、現実環境への ray intersection を使った配置を可能にしますが、`xr-spatial-tracking` Permissions-Policy の対象です。</span>
+              <span class="en-copy">`hit-test` is a feature descriptor introduced by the WebXR Hit Test Module for real-world ray intersections, and it is subject to the `xr-spatial-tracking` Permissions-Policy.</span>
+            </li>
+          
+            <li>
+              <span>DOM Overlay explainer は `dom-overlay` を optional にした場合、セッションは進行し得るが `session.domOverlayState` がなければ DOM が見えない前提で代替 UI を用意すべきだと説明しています。</span>
+              <span class="en-copy">The DOM Overlay explainer states that an optional `dom-overlay` request may allow the session to continue; if `session.domOverlayState` is absent, the app must assume the DOM is not visible and provide a fallback.</span>
+            </li>
+          
+            <li>
+              <span>`isSessionSupported()` はモード単位の入口確認には使えますが、feature list の成立までは保証しないため、起動ボタン前に required / optional の判断表を作る価値があります。</span>
+              <span class="en-copy">`isSessionSupported()` is useful for mode-level entry checks, but it does not prove that a full feature list will be granted, so a pre-launch required / optional decision table is useful.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は、XR 体験の失敗を「起動できない」でまとめず、`requiredFeatures`、`optionalFeatures`、Permissions-Policy、ユーザー同意、デバイスサポートに分解して見せることです。W3C の WebXR Device API は required と optional の扱いを明確に分けています。DOM Overlay explainer も、optional overlay が有効でない場合に DOM が見えない前提で代替 UI を持つべきだと示しています。面白いのは、この仕様上の違いを launch UI の表現に変えると、開発者だけでなく展示運用者にも「なぜ fallback したか」が伝わる点です。</p>
+          <p class="en-copy">Today's notable idea is not treating XR startup failure as a single generic failure. Instead, the sample separates required features, optional features, Permissions-Policy, user consent, and device support. The W3C WebXR Device API draws a clear line between required and optional behavior, and the DOM Overlay explainer says optional overlay usage needs alternate UI when the overlay is absent. The interesting part is turning that specification distinction into launch UI that tells both developers and operators why a fallback path was chosen.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://github.com/immersive-web/dom-overlays/blob/main/explainer.md" target="_blank" rel="noreferrer">Immersive Web: DOM Overlay explainer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>サンプルでは feature ごとに off / optional / required を切り替え、device profile、session mode、`xr-spatial-tracking` policy、user activation を操作できます。中央の ladder は mode check、required feature、optional feature、session result を丸い checkpoint として表示します。required が落ちた場合は赤で起動停止、optional が落ちた場合は黄で fallback 継続です。実アプリではこの ladder を起動ボタンの裏側に置き、失敗後にだけ表示する diagnostic panel にできます。</p>
+          <p class="en-copy">The sample lets you switch each feature between off, optional, and required, then adjust device profile, session mode, `xr-spatial-tracking` policy, and user activation. The center ladder shows mode checks, required features, optional features, and the final session result as checkpoints. A failed required feature blocks launch in red, while a missing optional feature continues through a yellow fallback. In a real app, this can live behind the launch button and surface only as a diagnostic panel after failure.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-21_html_xr_feature_negotiation_ladder.html" target="_blank" rel="noreferrer">Open XR Feature Negotiation Ladder</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装時は、`isSessionSupported(mode)` を入口の可否確認に使い、`requestSession(mode, { requiredFeatures, optionalFeatures })` の失敗は DOMException name と要求 feature list を一緒にログ化します。`hit-test`、`anchors`、`depth-sensing` のように `xr-spatial-tracking` に依存する機能は、iframe や埋め込み環境の Permissions-Policy も診断項目に入れます。`dom-overlay` は optional なら `session.domOverlayState` の有無で UI 経路を分け、必須 UI なら required に上げて早く失敗させる方が運用しやすいです。</p>
+          <p class="en-copy">In production, use `isSessionSupported(mode)` as the entry check, then log the DOMException name and requested feature list when `requestSession(mode, { requiredFeatures, optionalFeatures })` fails. Features such as `hit-test`, `anchors`, and `depth-sensing` depend on `xr-spatial-tracking`, so iframe and embedding Permissions-Policy should be part of diagnostics. If `dom-overlay` is optional, branch UI on `session.domOverlayState`; if the UI is essential, promoting it to required fails earlier and is easier to operate.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日のサンプルからは session mode、required / optional feature 配列、device profile、policy flag、user activation flag、required pass count、optional enabled count、fallback reason、`XRSessionInit` payload を取れます。2026-08-20 の anchor recovery monitor と組み合わせると、anchor 復旧 UI を出す前に `anchors` と `hit-test` が optional なのか required なのかを記録できます。展示用途なら、端末ごとの起動失敗理由を集計して、現場で必要なブラウザ設定・権限・代替 UI を絞り込めます。</p>
+          <p class="en-copy">Today's sample emits session mode, required and optional feature arrays, device profile, policy flag, user-activation flag, required pass count, optional enabled count, fallback reason, and the `XRSessionInit` payload. Combined with the 2026-08-20 anchor recovery monitor, it can record whether `anchors` and `hit-test` were optional or required before showing recovery UI. For installations, these logs can identify browser settings, permissions, and fallback UI needed per device.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>引き続き WebXR Device API の feature descriptor 更新、MDN の互換性表、Hit Test / DOM Overlay / Anchors / Depth Sensing 各モジュールの permission requirement、Immersive Web samples の session init 実装を追います。次は、今日の preflight ladder と昨日の anchor recovery queue を接続し、optional feature が落ちた場合の「機能縮退したまま体験を続ける」UI に進めます。</p>
+          <p class="en-copy">Continue watching updates to WebXR feature descriptors, MDN compatibility tables, permission requirements across Hit Test / DOM Overlay / Anchors / Depth Sensing, and session initialization patterns in Immersive Web samples. Next, connect today's preflight ladder to yesterday's anchor recovery queue and build UI that continues with degraded capability when optional features are absent.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルを開き、device profile を `Inline only browser` にして `hit-test` を required のまま simulate してください。mode が immersive-ar の時点で赤く止まり、fallback が inline preview になります。次に `hit-test` を optional に下げ、mode を inline にすると、session は進み、optional は黄の fallback として残ります。`real support check` を押すと、現在のブラウザで `navigator.xr.isSessionSupported(mode)` が使えるかも確認できます。</p>
+          <p class="en-copy">Open the sample, choose `Inline only browser`, and simulate with `hit-test` still required. The ladder blocks at immersive-ar mode and routes to inline preview. Then lower `hit-test` to optional and switch the mode to inline; the session proceeds while the optional feature remains a yellow fallback. Press `real support check` to see whether the current browser exposes `navigator.xr.isSessionSupported(mode)`.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-21_html_xr_feature_negotiation_ladder.html" target="_blank" rel="noreferrer">Open XR Feature Negotiation Ladder</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Device API の required / optional feature 解決、MDN の `requestSession()` 例外と secure context、Hit Test Module の feature descriptor と policy、DOM Overlay の optional fallback を確認。設計: 起動前の判断を device support、policy、consent、feature bucket に分解。実装: canvas ladder、feature selector、profile selector、policy / gesture toggle、payload preview、`isSessionSupported()` 実チェックを持つ単一 HTML を作成。検証: JSON parse、HTML script 構文、gallery 再生成、publish を実行する。</p>
+          <p class="en-copy">Research: reviewed required / optional feature resolution in the WebXR Device API, MDN `requestSession()` exceptions and secure-context notes, the Hit Test feature descriptor and policy requirement, and DOM Overlay optional fallback behavior. Design: split pre-launch decisions into device support, policy, consent, and feature buckets. Implementation: created a single HTML file with a canvas ladder, feature selector, profile selector, policy / gesture toggles, payload preview, and a real `isSessionSupported()` check. Validation: parse JSON, check HTML script syntax, rebuild the gallery, and publish.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>7月からの流れは、ヒットテスト、アンカー、深度、ハンド、DOM Overlay と個別機能を触ってきました。今日のサンプルは、それらを体験内の部品ではなく、起動時に交渉される能力として俯瞰します。XR は feature が揃った端末だけを想定すると壊れやすいので、required を最小化し、optional の欠落を UI とログで受け止める設計が重要です。</p>
+          <p class="en-copy">Since July, the archive has explored hit testing, anchors, depth, hands, and DOM Overlay as individual capabilities. Today's sample looks at those not as in-experience parts but as capabilities negotiated at launch. XR becomes fragile when it assumes ideal devices, so keeping required features minimal and handling missing optional features in UI and logs is important.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `XR Feature Negotiation Ladder` です。WebXR 実機がなくても、feature を required / optional に振り分けたときに何が session start を止め、何が fallback として残るかを確認できます。次に足すなら、実 `requestSession()` を試せる HTTPS 専用モード、`domOverlayState.type` の表示、失敗ログのローカル保存、端末別プリセットの追加です。</p>
+          <p class="en-copy">The selected prototype is `XR Feature Negotiation Ladder`. Even without real WebXR hardware, it shows which feature choices block session start and which remain as fallback paths. The next additions would be an HTTPS-only real `requestSession()` mode, display of `domOverlayState.type`, local failure-log storage, and more device presets.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-21_html_xr_feature_negotiation_ladder.html" target="_blank" rel="noreferrer">Today's sample: XR Feature Negotiation Ladder</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession" target="_blank" rel="noreferrer">MDN: XRSystem requestSession()</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hit-test-1/" target="_blank" rel="noreferrer">W3C: WebXR Hit Test Module</a></li>
+          
+            <li><a href="https://github.com/immersive-web/dom-overlays/blob/main/explainer.md" target="_blank" rel="noreferrer">Immersive Web: DOM Overlay explainer</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-08-21_html_xr_feature_negotiation_ladder.html" loading="lazy" title="XR Feature Negotiation Ladder"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
