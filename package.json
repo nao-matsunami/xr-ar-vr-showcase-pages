@@ -1,12 +1,1 @@
-{
-  "name": "xr-ar-vr-showcase",
-  "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "scripts": {
-    "build": "node scripts/build-gallery.mjs",
-    "build:gallery": "node scripts/build-gallery.mjs",
-    "upsert:report": "node scripts/upsert-report.mjs",
-    "publish:pages": "node scripts/publish-pages.mjs"
-  }
-}
+ewogICJuYW1lIjogInhyLWFyLXZyLXNob3djYXNlIiwKICAicHJpdmF0ZSI6IHRydWUsCiAgInZlcnNpb24iOiAiMC4xLjAiLAogICJ0eXBlIjogIm1vZHVsZSIsCiAgInNjcmlwdHMiOiB7CiAgICAiYnVpbGQiOiAibm9kZSBzY3JpcHRzL2J1aWxkLWdhbGxlcnkubWpzIiwKICAgICJidWlsZDpnYWxsZXJ5IjogIm5vZGUgc2NyaXB0cy9idWlsZC1nYWxsZXJ5Lm1qcyIsCiAgICAidXBzZXJ0OnJlcG9ydCI6ICJub2RlIHNjcmlwdHMvdXBzZXJ0LXJlcG9ydC5tanMiLAogICAgInB1Ymxpc2g6cGFnZXMiOiAibm9kZSBzY3JpcHRzL3B1Ymxpc2gtcGFnZXMubWpzIgogIH0KfQo=
