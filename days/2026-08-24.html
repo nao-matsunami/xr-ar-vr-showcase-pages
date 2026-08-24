@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR レイヤーの破棄順とメディアレイヤー fallback を自作サンプル化 | 2026-08-24</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.08.24</p>
+      <h1>WebXR レイヤーの破棄順とメディアレイヤー fallback を自作サンプル化</h1>
+      <p class="hero-subtitle">Original samples for WebXR layer destruction order and media layer fallback</p>
+      <p>WebXR Layers API Level 1、XRLayer / XRCompositionLayer の destroy、XRMediaBinding、Immersive Web の layers samples と media layer samples を確認し、composition layer の破棄待ちを可視化する本命サンプルと、メディアレイヤー再生経路を切り替える派生サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing WebXR Layers API Level 1, XRLayer / XRCompositionLayer destruction, XRMediaBinding, and Immersive Web layers and media-layer samples, today's original work adds a main sample for visualizing pending composition-layer destruction and a derivative sample for switching media-layer playback routes.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-08-24_html_media_layer_control_fallback_deck.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-08-23.html">← 2026.08.23</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Media Layer Control Fallback Deck</h3>
+              <p>XRMediaBinding の equirect / cylinder media layer を想定し、動画の準備状態、再生制御、decoder 負荷、fallback を1枚の操作デッキで確認します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-24_html_media_layer_control_fallback_deck.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Layer Lifecycle Destroy Queue</h3>
+              <p>WebXR Layers の composition stack を想定し、更新順、破棄待ち、media fallback、session end 時の掃除順を手で動かす最小サンプルです。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-24_html_layer_lifecycle_destroy_queue.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>W3C の WebXR Layers API Level 1 Working Draft は 2026-06-12 版で、composition layer の `destroy()` は color / depth-stencil texture 配列を空にし、GL attachment を破棄する手順として説明されています。</span>
+              <span class="en-copy">The W3C WebXR Layers API Level 1 Working Draft dated 2026-06-12 describes `destroy()` for composition layers as clearing color and depth-stencil texture arrays and destroying GL attachments.</span>
+            </li>
+          
+            <li>
+              <span>同仕様の Editor's Draft は `XRMediaBinding` に `createQuadLayer()`、`createCylinderLayer()`、`createEquirectLayer()` を持たせ、HTMLVideoElement を compositor 側の media layer に接続する入口を示しています。</span>
+              <span class="en-copy">The Editor's Draft exposes `createQuadLayer()`, `createCylinderLayer()`, and `createEquirectLayer()` on `XRMediaBinding`, providing the entry point for connecting an HTMLVideoElement to compositor-backed media layers.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の Layers Samples には Destroy Layer / Lifecycle と Media Layer / Basics があり、レイヤーの破棄と動画レイヤーの扱いを公式デモとして確認できます。</span>
+              <span class="en-copy">Immersive Web Layers Samples include Destroy Layer / Lifecycle and Media Layer / Basics, making layer destruction and video layers inspectable as official demos.</span>
+            </li>
+          
+            <li>
+              <span>MDN の `XRLayer` は secure context、experimental、limited availability とされ、現時点では production で feature detection と fallback 理由の表示が欠かせません。</span>
+              <span class="en-copy">MDN marks `XRLayer` as secure-context-only, experimental, and limited availability, so production code still needs feature detection and fallback reason copy.</span>
+            </li>
+          
+            <li>
+              <span>昨日の世界固定レイヤー可読性 budget を実運用へ近づけるには、読めない layer を作らないだけでなく、古い layer を安全に外してから破棄する状態遷移が必要です。</span>
+              <span class="en-copy">To evolve yesterday's world-locked readability budget toward real use, the app must not only avoid unreadable layers but also remove old layers safely before destroying them.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は Immersive Web の Layers Samples にある Destroy Layer / Lifecycle と Media Layer / Basics です。公式デモは API の実動確認として重要ですが、公開アーカイブの中心には置かず、自作サンプルでは「いつ `updateRenderState({ layers })` から外し、いつ `destroy()` 相当の掃除に進むか」を操作できる状態キューにしました。面白いのは、レイヤー破棄が単なる後片付けではなく、動画の差し替え、UI の可読性低下、session end、メモリ圧迫のすべてにまたがる UX の分岐点になることです。</p>
+          <p class="en-copy">Today's notable references are Destroy Layer / Lifecycle and Media Layer / Basics in the Immersive Web Layers Samples. The official demos are important for checking API behavior, but instead of making them the archive focus, today's original sample turns the question of when to remove a layer from `updateRenderState({ layers })` and when to proceed to `destroy()`-style cleanup into an interactive state queue. The interesting part is that layer destruction is not just cleanup; it is a UX branch shared by video replacement, UI readability drops, session end, and memory pressure.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers Samples</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/media-layer-sample.html" target="_blank" rel="noreferrer">Immersive Web: WebXR Media Layers sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Layer Lifecycle Destroy Queue` は、XR profile、composition layer 数、古い media layer 数、memory pressure、session end の状態を触ると、残す layer と破棄待ち layer がカード状に積み上がって見えます。`Process one frame` を押すと stale layer が1つ処理され、ログに renderState 更新や destroy 順の判断が残ります。派生サンプル `Media Layer Control Fallback Deck` は、equirect / cylinder / quad の形状、XRMediaBinding の有無、video readiness、decoder pressure を切り替え、media layer、projection texture、canvas fallback のどれに落とすかを大きな動画デッキとして表示します。</p>
+          <p class="en-copy">The main sample, `Layer Lifecycle Destroy Queue`, lets you change XR profile, composition-layer count, stale media-layer count, memory pressure, and session-end state; kept layers and queued-for-destruction layers appear as stacked cards. Pressing `Process one frame` handles one stale layer and records the render-state or destruction-order decision in the log. The derivative sample, `Media Layer Control Fallback Deck`, switches between equirect, cylinder, and quad shapes plus XRMediaBinding availability, video readiness, and decoder pressure, then displays whether playback should use a media layer, projection texture, or canvas fallback.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-24_html_layer_lifecycle_destroy_queue.html" target="_blank" rel="noreferrer">Open main sample</a></li>
+          
+            <li><a href="../outputs/2026-08-24_html_media_layer_control_fallback_deck.html" target="_blank" rel="noreferrer">Open derivative sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では、古い composition layer を `session.updateRenderState({ layers: nextLayers })` から外してから `layer.destroy()` に進む順を明示し、media layer の動画差し替え時も新 layer の準備完了後に旧 layer を queue へ入れるのが扱いやすいです。`XRMediaBinding` がある場合は HTMLVideoElement を直接 media layer 化できますが、無い場合は `XRWebGLBinding` / projection layer の texture 更新、さらに無ければ通常 canvas と DOM controls に縮退します。MDN が示す通り `XRLayer` は limited availability なので、`&quot;XRMediaBinding&quot; in window`、`&quot;XRWebGLBinding&quot; in window`、`navigator.xr?.isSessionSupported()` を分けて記録すると後日の実機差分を追いやすくなります。</p>
+          <p class="en-copy">In production code, make the ordering explicit: remove an old composition layer from `session.updateRenderState({ layers: nextLayers })`, then call `layer.destroy()`. For media replacement, it is easier to prepare the new layer first, then enqueue the previous layer for cleanup. When `XRMediaBinding` is available, an HTMLVideoElement can feed a media layer directly; otherwise, fall back to `XRWebGLBinding` / projection-layer texture updates, then to normal canvas and DOM controls. Since MDN marks `XRLayer` as limited availability, logging `&quot;XRMediaBinding&quot; in window`, `&quot;XRWebGLBinding&quot; in window`, and `navigator.xr?.isSessionSupported()` separately will make later device comparisons easier.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRLayer" target="_blank" rel="noreferrer">MDN: XRLayer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の2本からは profile、requested layers、stale media count、memory pressure、session ended、destroy queue length、fallback readiness、video readiness、decoder pressure、resolved playback route を取れます。2026-08-23 の可読性 budget と組み合わせると、読みにくくなった world-locked UI を新しい位置へ作り直し、旧 layer を destroy queue に送る一連の流れにできます。2026-08-15 の haptic queue と合わせれば、破棄中は visual-only、再配置成功は confirm pulse、media fallback は caution pulse のように通知できます。</p>
+          <p class="en-copy">The two samples produce profile, requested layers, stale media count, memory pressure, session-ended state, destroy-queue length, fallback readiness, video readiness, decoder pressure, and resolved playback route. Combined with the 2026-08-23 readability budget, an unreadable world-locked UI can be recreated at a better position while the previous layer enters the destroy queue. Combined with the 2026-08-15 haptic queue, cleanup can be visual-only, successful replacement can use a confirm pulse, and media fallback can use a caution pulse.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Layers API の Editor's Draft と Working Draft の差分、Immersive Web の layer hit test workaround、projection layer multiview、media layer video controls、WebXR Layers polyfill の更新を見ます。特に layer 上の UI を選択するには公式サンプルが示す透明 placeholder 的な workaround が必要になる場面があるため、次は「layer を描く場所」と「hit test 用 proxy geometry」をどう同期するかを扱うと発展します。</p>
+          <p class="en-copy">Watch the differences between the WebXR Layers API Editor's Draft and Working Draft, Immersive Web's layer hit-test workaround, projection-layer multiview, media-layer video controls, and WebXR Layers polyfill updates. Selecting UI on a layer may require transparent-placeholder-style workaround geometry like the official sample suggests, so the next useful topic is how to synchronize the rendered layer position and hit-test proxy geometry.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命サンプルを開き、Stale media layers と Memory pressure を上げて `Process one frame` を押してください。破棄待ちカードが減り、ログに renderState 更新と destroy 判断が残ります。次に Session ended を Yes にすると、全 layer を破棄対象にする end cleanup の流れに変わります。派生サンプルでは XR support を `No layers, canvas fallback` に変え、Video readiness を下げると、media layer ではなく poster / controls を残す判断に切り替わります。</p>
+          <p class="en-copy">Open the main sample, raise Stale media layers and Memory pressure, then press `Process one frame`. The queued cards decrease and the log records render-state and destruction decisions. Then set Session ended to Yes to switch into end-cleanup mode for all layers. In the derivative sample, change XR support to `No layers, canvas fallback` and lower Video readiness to switch from media-layer playback to poster and controls.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-24_html_layer_lifecycle_destroy_queue.html" target="_blank" rel="noreferrer">Open Layer Lifecycle Destroy Queue</a></li>
+          
+            <li><a href="../outputs/2026-08-24_html_media_layer_control_fallback_deck.html" target="_blank" rel="noreferrer">Open Media Layer Control Fallback Deck</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR Layers API Level 1、Editor's Draft、MDN XRLayer、Immersive Web layers samples、media layer sample と source を確認。設計: composition layer の keep / destroy / fallback を frame 単位の queue として扱う。実装: 本命 HTML で layer lifecycle と destroy queue を可視化し、派生 HTML で media layer 再生経路と fallback control deck を作成。検証: report JSON parse、HTML 内 script 構文、gallery 再生成、publish を実行する。</p>
+          <p class="en-copy">Research: reviewed W3C WebXR Layers API Level 1, the Editor's Draft, MDN XRLayer, Immersive Web layers samples, the media-layer sample, and its source. Design: treat composition-layer keep / destroy / fallback as a per-frame queue. Implementation: built the main HTML for layer lifecycle and destroy-queue visualization, and the derivative HTML for media-layer playback routing and fallback controls. Validation: parse the report JSON, check embedded HTML scripts, rebuild the gallery, and publish.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>ここ数日の流れは feature negotiation、bounded reference space、world-locked layer 可読性、haptic verdict と進んできました。今日の lifecycle は、それらの判定が「古い表示をどう外すか」に到達した段階です。XR では表示を作る API だけでなく、支えられない表示を安全に外して理由を伝える設計が体験品質を左右します。小さな queue と fallback reason を持つだけで、後から実機ログ、DOM Overlay、haptics、analytics に接続しやすくなります。</p>
+          <p class="en-copy">Recent work moved through feature negotiation, bounded reference spaces, world-locked layer readability, and haptic verdicts. Today's lifecycle sample is the point where those verdicts reach the question of how old presentation should be removed. In XR, experience quality depends not only on APIs that create display surfaces but also on safely removing unsupported surfaces and explaining why. A small queue plus fallback reason makes later connections to device logs, DOM Overlay, haptics, and analytics easier.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Layer Lifecycle Destroy Queue` です。WebXR 実機がなくても、composition layer の更新順、破棄待ち、session end cleanup、projection fallback を操作できます。次に足すなら、実際の `XRCompositionLayer.destroy()` 呼び出し、`session.updateRenderState()` の before / after ログ、media element の `readyState` と `error` の取り込み、実機ごとの attachment 数ログです。派生として `Media Layer Control Fallback Deck` も実装し、次に足すなら実動画 element、WebCodecs の decode 状態、controller trigger / squeeze での restart / pause、layer hit test proxy を足します。</p>
+          <p class="en-copy">The selected main prototype is `Layer Lifecycle Destroy Queue`. Even without WebXR hardware, it lets you operate composition-layer update order, pending destruction, session-end cleanup, and projection fallback. Next additions would be real `XRCompositionLayer.destroy()` calls, before / after logs for `session.updateRenderState()`, media element `readyState` and `error` capture, and per-device attachment-count logs. The derivative `Media Layer Control Fallback Deck` was also implemented; next additions would be a real video element, WebCodecs decode state, controller trigger / squeeze restart and pause, and layer hit-test proxy geometry.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-24_html_layer_lifecycle_destroy_queue.html" target="_blank" rel="noreferrer">Today's main sample: Layer Lifecycle Destroy Queue</a></li>
+          
+            <li><a href="../outputs/2026-08-24_html_media_layer_control_fallback_deck.html" target="_blank" rel="noreferrer">Today's derivative sample: Media Layer Control Fallback Deck</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers API Level 1 Editor's Draft</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRLayer" target="_blank" rel="noreferrer">MDN: XRLayer</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers Samples</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/media-layer-sample.html" target="_blank" rel="noreferrer">Immersive Web: WebXR Media Layers sample</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples/blob/main/layers-samples/media-layer-sample.html" target="_blank" rel="noreferrer">Immersive Web Samples source: media-layer-sample.html</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-08-24_html_media_layer_control_fallback_deck.html" loading="lazy" title="Media Layer Control Fallback Deck"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

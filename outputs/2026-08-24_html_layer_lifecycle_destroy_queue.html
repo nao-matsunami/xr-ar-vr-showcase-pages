@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Layer Lifecycle Destroy Queue</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080a0d;
+      --panel: rgba(13, 17, 19, 0.92);
+      --line: rgba(238, 243, 226, 0.16);
+      --text: #f3f5ec;
+      --muted: #abb1a5;
+      --mint: #7de2c8;
+      --blue: #89aefb;
+      --amber: #efc468;
+      --red: #ff7d72;
+      --ink: #07100e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(140deg, #080a0d 0%, #14201d 52%, #211a13 100%);
+    }
+
+    main {
+      width: min(1220px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.8vw, 2.42rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .badge,
+    .stage,
+    .panel,
+    .log {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+    }
+
+    .badge {
+      min-width: 260px;
+      padding: 12px 14px;
+    }
+
+    .badge small {
+      display: block;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.72rem;
+    }
+
+    .badge strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--mint);
+      font-size: 1.04rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+      gap: 14px;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 642px;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 642px;
+      background: #08100f;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .readout {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(243, 245, 236, 0.14);
+      border-radius: 8px;
+      background: rgba(3, 7, 8, 0.78);
+    }
+
+    .readout small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .readout strong {
+      display: block;
+      margin-top: 4px;
+      overflow-wrap: anywhere;
+      font-size: 0.98rem;
+      line-height: 1.18;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .panel,
+    .log {
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      color: var(--mint);
+      font-size: 0.88rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .control {
+      display: grid;
+      gap: 7px;
+      margin: 11px 0;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    select,
+    input,
+    button {
+      width: 100%;
+      border: 1px solid rgba(243, 245, 236, 0.15);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      font: inherit;
+    }
+
+    select,
+    input { padding: 10px; }
+
+    button {
+      min-height: 42px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      color: var(--ink);
+      border-color: transparent;
+      background: var(--mint);
+      font-weight: 760;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .queue {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .queue-row {
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr) 82px;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid rgba(243, 245, 236, 0.1);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+      font-size: 0.84rem;
+    }
+
+    .pill {
+      padding: 5px 8px;
+      border-radius: 999px;
+      text-align: center;
+      background: rgba(125, 226, 200, 0.14);
+      color: var(--mint);
+      font-size: 0.74rem;
+      font-weight: 760;
+    }
+
+    .meters {
+      display: grid;
+      gap: 9px;
+      margin-top: 11px;
+    }
+
+    .meter {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .meter span {
+      display: block;
+      height: 100%;
+      width: 50%;
+      border-radius: inherit;
+      background: var(--mint);
+    }
+
+    .log ul {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .log li {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .layout { grid-template-columns: 1fr; }
+      .badge { min-width: 0; }
+      canvas { height: 520px; }
+      .stage { min-height: 520px; }
+      .hud { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Layer Lifecycle Destroy Queue</h1>
+        <p>WebXR Layers の composition stack を想定し、更新順、破棄待ち、media fallback、session end 時の掃除順を手で動かす最小サンプルです。</p>
+      </div>
+      <div class="badge">
+        <small>Current verdict</small>
+        <strong id="verdict">Stable stack</strong>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <canvas id="stage" width="900" height="642"></canvas>
+        <div class="hud">
+          <div class="readout"><small>Active layers</small><strong id="activeRead">4</strong></div>
+          <div class="readout"><small>Destroy queue</small><strong id="queueRead">1 layer</strong></div>
+          <div class="readout"><small>Memory pressure</small><strong id="memoryRead">38%</strong></div>
+          <div class="readout"><small>Next action</small><strong id="actionRead">Update renderState</strong></div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>Session knobs</h2>
+          <div class="control">
+            <label for="profile">XR profile <span id="profileValue">layers granted</span></label>
+            <select id="profile">
+              <option value="layers">Immersive headset, layers granted</option>
+              <option value="optional">Immersive headset, layers optional</option>
+              <option value="projection">Projection fallback only</option>
+              <option value="inline">Inline preview</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="layers">Starting composition layers <span id="layersValue">4</span></label>
+            <input id="layers" type="range" min="1" max="7" value="4">
+          </div>
+          <div class="control">
+            <label for="stale">Stale media layers <span id="staleValue">1</span></label>
+            <input id="stale" type="range" min="0" max="5" value="1">
+          </div>
+          <div class="control">
+            <label for="pressure">Memory pressure <span id="pressureValue">38%</span></label>
+            <input id="pressure" type="range" min="0" max="100" value="38">
+          </div>
+          <div class="control">
+            <label for="ended">Session ended <span id="endedValue">no</span></label>
+            <select id="ended">
+              <option value="no">No, still presenting</option>
+              <option value="yes">Yes, session end cleanup</option>
+            </select>
+          </div>
+          <div class="button-grid">
+            <button class="primary" id="stepButton" type="button">Process one frame</button>
+            <button id="resetButton" type="button">Reset stack</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Lifecycle queue</h2>
+          <div class="queue" id="queue"></div>
+          <div class="meters">
+            <div>
+              <label>GPU attachment risk <span id="riskText">medium</span></label>
+              <div class="meter"><span id="riskBar"></span></div>
+            </div>
+            <div>
+              <label>Fallback readiness <span id="fallbackText">canvas ready</span></label>
+              <div class="meter"><span id="fallbackBar"></span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="log">
+          <h2>Frame log</h2>
+          <ul id="log"></ul>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("stage");
+    const ctx = canvas.getContext("2d");
+    const controls = {
+      profile: document.getElementById("profile"),
+      layers: document.getElementById("layers"),
+      stale: document.getElementById("stale"),
+      pressure: document.getElementById("pressure"),
+      ended: document.getElementById("ended")
+    };
+    const nodes = {
+      verdict: document.getElementById("verdict"),
+      activeRead: document.getElementById("activeRead"),
+      queueRead: document.getElementById("queueRead"),
+      memoryRead: document.getElementById("memoryRead"),
+      actionRead: document.getElementById("actionRead"),
+      queue: document.getElementById("queue"),
+      log: document.getElementById("log"),
+      riskText: document.getElementById("riskText"),
+      riskBar: document.getElementById("riskBar"),
+      fallbackText: document.getElementById("fallbackText"),
+      fallbackBar: document.getElementById("fallbackBar")
+    };
+    const layerTypes = ["projection", "quad-ui", "cylinder-video", "equirect-media", "debug-overlay", "map-quad", "caption-layer"];
+    let frame = 0;
+    let logEntries = [];
+
+    function value(id) {
+      return controls[id].value;
+    }
+
+    function pct(n) {
+      return `${Math.round(n)}%`;
+    }
+
+    function compute() {
+      const profile = value("profile");
+      const requested = Number(value("layers"));
+      const stale = Math.min(Number(value("stale")), requested);
+      const pressure = Number(value("pressure"));
+      const ended = value("ended") === "yes";
+      const layersSupported = profile === "layers" || profile === "optional";
+      const fallbackReady = profile === "inline" ? 94 : profile === "projection" ? 86 : Math.max(30, 88 - stale * 10);
+      const risk = Math.min(100, pressure * 0.64 + stale * 13 + requested * 4 + (ended ? 20 : 0));
+      const destroyNow = ended ? requested : stale + (pressure > 78 ? 1 : 0);
+      let verdict = "Stable stack";
+      let action = "Update renderState";
+      if (!layersSupported) {
+        verdict = "Projection fallback";
+        action = "Use XRWebGLLayer canvas";
+      } else if (ended) {
+        verdict = "Session cleanup";
+        action = "Destroy all composition layers";
+      } else if (risk > 78) {
+        verdict = "Destroy before redraw";
+        action = "Remove stale layers first";
+      } else if (stale > 0) {
+        verdict = "Queue stale media";
+        action = "Swap media layer, then destroy";
+      }
+      return { profile, requested, stale, pressure, ended, layersSupported, fallbackReady, risk, destroyNow, verdict, action };
+    }
+
+    function addLog(text) {
+      logEntries.unshift(`f${String(frame).padStart(3, "0")} - ${text}`);
+      logEntries = logEntries.slice(0, 6);
+    }
+
+    function drawLayerStack(state) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const grd = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grd.addColorStop(0, "#08110f");
+      grd.addColorStop(0.55, "#15201d");
+      grd.addColorStop(1, "#1e1711");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = "rgba(243,245,236,.08)";
+      for (let x = 48; x < canvas.width; x += 64) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 44; y < canvas.height; y += 64) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
+      const cx = canvas.width * 0.5;
+      const baseY = 490;
+      ctx.fillStyle = "#f3f5ec";
+      ctx.font = "700 15px Inter, sans-serif";
+      ctx.fillText("XRSession renderState.layers", 36, 42);
+      ctx.fillStyle = "rgba(243,245,236,.68)";
+      ctx.font = "13px Inter, sans-serif";
+      ctx.fillText("Each card is an original simulated layer. Red cards are removed before resources are destroyed.", 36, 66);
+
+      for (let i = 0; i < state.requested; i += 1) {
+        const isDestroy = i >= state.requested - state.destroyNow;
+        const x = cx - 250 + i * 82;
+        const y = baseY - i * 48;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-0.05);
+        ctx.fillStyle = isDestroy ? "rgba(255,125,114,.2)" : i === 0 ? "rgba(137,174,251,.24)" : "rgba(125,226,200,.18)";
+        ctx.strokeStyle = isDestroy ? "#ff7d72" : i === 0 ? "#89aefb" : "#7de2c8";
+        ctx.lineWidth = 2;
+        ctx.roundRect(0, 0, 190, 70, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#f3f5ec";
+        ctx.font = "700 13px Inter, sans-serif";
+        ctx.fillText(layerTypes[i], 14, 25);
+        ctx.fillStyle = isDestroy ? "#ffbbb5" : "rgba(243,245,236,.72)";
+        ctx.font = "12px Inter, sans-serif";
+        ctx.fillText(isDestroy ? "queued for destroy()" : "kept in render state", 14, 48);
+        ctx.restore();
+      }
+
+      const arrowY = 140;
+      const steps = state.ended
+        ? ["end event", "pause media", "update layers: []", "destroy attachments"]
+        : state.layersSupported
+          ? ["detect stale", "create replacement", "update renderState", "destroy old layer"]
+          : ["layers missing", "keep projection", "show DOM reason", "skip destroy()"];
+      steps.forEach((step, index) => {
+        const x = 54 + index * 200;
+        ctx.fillStyle = index === 2 ? "rgba(239,196,104,.2)" : "rgba(255,255,255,.06)";
+        ctx.strokeStyle = index === 2 ? "#efc468" : "rgba(243,245,236,.18)";
+        ctx.lineWidth = 1.5;
+        ctx.roundRect(x, arrowY, 162, 58, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#f3f5ec";
+        ctx.font = "700 13px Inter, sans-serif";
+        ctx.fillText(step, x + 12, arrowY + 34);
+        if (index < steps.length - 1) {
+          ctx.strokeStyle = "rgba(125,226,200,.65)";
+          ctx.beginPath();
+          ctx.moveTo(x + 166, arrowY + 29);
+          ctx.lineTo(x + 194, arrowY + 29);
+          ctx.stroke();
+        }
+      });
+
+      const riskColor = state.risk > 78 ? "#ff7d72" : state.risk > 54 ? "#efc468" : "#7de2c8";
+      ctx.fillStyle = riskColor;
+      ctx.beginPath();
+      ctx.arc(92, 310, 44 + state.risk * 0.18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#07100e";
+      ctx.font = "800 18px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(pct(state.risk), 92, 316);
+      ctx.textAlign = "start";
+      ctx.fillStyle = "rgba(243,245,236,.72)";
+      ctx.font = "13px Inter, sans-serif";
+      ctx.fillText("GPU attachment risk", 36, 386);
+    }
+
+    function update() {
+      const state = compute();
+      document.getElementById("profileValue").textContent = state.profile;
+      document.getElementById("layersValue").textContent = state.requested;
+      document.getElementById("staleValue").textContent = state.stale;
+      document.getElementById("pressureValue").textContent = pct(state.pressure);
+      document.getElementById("endedValue").textContent = state.ended ? "yes" : "no";
+
+      nodes.verdict.textContent = state.verdict;
+      nodes.activeRead.textContent = state.layersSupported ? Math.max(0, state.requested - state.destroyNow) : "projection";
+      nodes.queueRead.textContent = `${state.destroyNow} layer${state.destroyNow === 1 ? "" : "s"}`;
+      nodes.memoryRead.textContent = pct(state.pressure);
+      nodes.actionRead.textContent = state.action;
+      nodes.riskText.textContent = state.risk > 78 ? "high" : state.risk > 54 ? "medium" : "low";
+      nodes.riskBar.style.width = pct(state.risk);
+      nodes.riskBar.style.background = state.risk > 78 ? "var(--red)" : state.risk > 54 ? "var(--amber)" : "var(--mint)";
+      nodes.fallbackText.textContent = state.layersSupported ? "canvas ready" : "projection active";
+      nodes.fallbackBar.style.width = pct(state.fallbackReady);
+      nodes.fallbackBar.style.background = state.fallbackReady > 80 ? "var(--mint)" : "var(--amber)";
+
+      nodes.queue.innerHTML = layerTypes.slice(0, state.requested).map((type, index) => {
+        const queued = index >= state.requested - state.destroyNow;
+        const label = queued ? "destroy" : "keep";
+        const detail = queued ? "remove from renderState before releasing attachments" : "visible in compositor stack";
+        return `<div class="queue-row"><span class="pill">${label}</span><span>${type}<br><small>${detail}</small></span><span>${queued ? "old" : "live"}</span></div>`;
+      }).join("");
+      nodes.log.innerHTML = logEntries.map((entry) => `<li>${entry}</li>`).join("");
+      drawLayerStack(state);
+    }
+
+    Object.values(controls).forEach((control) => control.addEventListener("input", update));
+    document.getElementById("stepButton").addEventListener("click", () => {
+      frame += 1;
+      const state = compute();
+      addLog(state.action);
+      if (state.destroyNow > 0 && controls.stale.value !== "0" && !state.ended) {
+        controls.stale.value = String(Math.max(0, Number(controls.stale.value) - 1));
+      }
+      update();
+    });
+    document.getElementById("resetButton").addEventListener("click", () => {
+      frame += 1;
+      controls.profile.value = "layers";
+      controls.layers.value = "4";
+      controls.stale.value = "1";
+      controls.pressure.value = "38";
+      controls.ended.value = "no";
+      addLog("reset simulated XR layer stack");
+      update();
+    });
+    canvas.addEventListener("click", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width;
+      controls.pressure.value = String(Math.round(20 + x * 78));
+      frame += 1;
+      addLog("adjusted memory pressure from canvas probe");
+      update();
+    });
+
+    CanvasRenderingContext2D.prototype.roundRect ??= function roundRect(x, y, w, h, r) {
+      const radius = Math.min(r, w / 2, h / 2);
+      this.beginPath();
+      this.moveTo(x + radius, y);
+      this.arcTo(x + w, y, x + w, y + h, radius);
+      this.arcTo(x + w, y + h, x, y + h, radius);
+      this.arcTo(x, y + h, x, y, radius);
+      this.arcTo(x, y, x + w, y, radius);
+      this.closePath();
+    };
+
+    addLog("initialized composition layer lifecycle queue");
+    update();
+  </script>
+</body>
+</html>
