@@ -1,1 +1,141 @@
-ewogICJkYXRlIjogIjIwMjYtMDctMTQiLAogICJoZWFkbGluZSI6ICIzNjAg44Oh44OH44Kj44Ki6IOM5pmv44Go5rOo6YeI44Os44Kk44Ok44O844KS5YiG44GR44Gm6Kaz5a+f44GZ44KLIiwKICAiaGVhZGxpbmVFbiI6ICJTZXBhcmF0aW5nIDM2MCBtZWRpYSBiYWNrZ3JvdW5kcyBmcm9tIGFubm90YXRpb24gbGF5ZXJzIiwKICAic3VtbWFyeSI6ICJXZWJYUiBMYXllcnMgQVBJ44CBWFJFcXVpcmVjdExheWVy44CBWFJDdWJlTGF5ZXLjgIFYUk1lZGlhQmluZGluZyDjgpLnorroqo3jgZfjgIHku4rml6Xjga8gMzYwIOODoeODh+OCo+OCouiDjOaZr+OAgeWtl+W5lSBxdWFk44CB5rOo6YeIIHF1YWQg44Gu5YiG6Zui44Go5aWl6KGM44GN6aCG44KS6YCa5bi444OW44Op44Km44K244Gn6Kem44KM44KL6Ieq5L2cIEhUTUwg44K144Oz44OX44Or44KS6L+95Yqg44GX44G+44GX44Gf44CCIiwKICAic3VtbWFyeUVuIjogIkFmdGVyIHJldmlld2luZyB0aGUgV2ViWFIgTGF5ZXJzIEFQSSwgWFJFcXVpcmVjdExheWVyLCBYUkN1YmVMYXllciwgYW5kIFhSTWVkaWFCaW5kaW5nLCB0b2RheSdzIG9yaWdpbmFsIEhUTUwgc2FtcGxlIGV4cGxvcmVzIHNlcGFyYXRpbmcgYSAzNjAgbWVkaWEgYmFja2dyb3VuZCBmcm9tIGNhcHRpb24gYW5kIGFubm90YXRpb24gcXVhZCBsYXllcnMgaW4gYSBub3JtYWwgYnJvd3Nlci4iLAogICJrZXlUb3BpY3MiOiBbCiAgICAiV2ViWFIgTGF5ZXJzIEFQSSBMZXZlbCAxIOOBryAyMDI2LTA2LTEyIOeJiCBFZGl0b3IncyBEcmFmdCDjgafjgIFlcXVpcmVjdCAvIGN1YmUgLyBtZWRpYSBsYXllciDjgaggZGVwdGggc29ydGluZyDjga7oqK3oqIjngrnjgpLlkKvjgpPjgafjgYTjgovjgIIiLAogICAgIlhSRXF1aXJlY3RMYXllciDjga8gZXF1aXJlY3Rhbmd1bGFyIOW9ouW8j+OBruODh+ODvOOCv+OCkueQg+OBruWGheWBtOOBq+iyvOOCiyBsYXllciDjgafjgIEzNjAg5bqm5pig5YOP44KE5YaZ55yf44Gu6IOM5pmv44Gr5ZCR44GP44CCIiwKICAgICJYUk1lZGlhQmluZGluZyDjgavjga8gSFRNTFZpZGVvRWxlbWVudCDjgYvjgokgcXVhZCAvIGN5bGluZGVyIC8gZXF1aXJlY3Qg44GuIG1lZGlhIGxheWVyIOOCkuS9nOOCi+WFpeWPo+OBjOOBguOCiuOAgeWLleeUu+OCkumAmuW4uOOBriBwcm9qZWN0aW9uIGxheWVyIOOBi+OCieWIhumbouOBl+OChOOBmeOBhOOAgiIsCiAgICAiZGVwdGgtc29ydGVkLWxheWVycyDjga8gcHJvamVjdGlvbiAvIHF1YWQgLyBjeWxpbmRlciBsYXllciDjga7lpaXooYzjgY3poIbliLblvqHjgavplqLjgo/jgovjgYzjgIFlcXVpcmVjdCAvIGN1YmUg44Gu44KI44GG44Gq55Kw5aKDIGxheWVyIOOBr+WIpeOBruaJseOBhOOBqOOBl+OBpuiAg+OBiOOCi+W/heimgeOBjOOBguOCi+OAgiIsCiAgICAi5a2X5bmV44KE5rOo6YeI44Gv6IOM5pmv44Oh44OH44Kj44Ki44Go5ZCM44GY44OG44Kv44K544OB44Oj44Gr54S844GN6L6844G+44Ga44CBcXVhZCBsYXllciDjgajjgZfjgabliIbjgZHjgovjgajoqq3jgb/jgoTjgZnjgZXjgIHpgI/mmI7luqbjgIHmm7TmlrDpoLvluqbjgpLni6znq4vjgZfjgaboqr/mlbTjgafjgY3jgovjgIIiCiAgXSwKICAia2V5VG9waWNzRW4iOiBbCiAgICAiVGhlIFdlYlhSIExheWVycyBBUEkgTGV2ZWwgMSBFZGl0b3IncyBEcmFmdCBkYXRlZCAyMDI2LTA2LTEyIGluY2x1ZGVzIGVxdWlyZWN0LCBjdWJlLCBtZWRpYSBsYXllcnMsIGFuZCBkZXB0aC1zb3J0aW5nIGRlc2lnbiBwb2ludHMuIiwKICAgICJYUkVxdWlyZWN0TGF5ZXIgbWFwcyBlcXVpcmVjdGFuZ3VsYXIgZGF0YSBvbnRvIHRoZSBpbnNpZGUgb2YgYSBzcGhlcmUsIG1ha2luZyBpdCBzdWl0YWJsZSBmb3IgMzYwLWRlZ3JlZSB2aWRlbyBhbmQgcGhvdG8gYmFja2dyb3VuZHMuIiwKICAgICJYUk1lZGlhQmluZGluZyBwcm92aWRlcyBlbnRyeSBwb2ludHMgZm9yIGNyZWF0aW5nIHF1YWQsIGN5bGluZGVyLCBhbmQgZXF1aXJlY3QgbWVkaWEgbGF5ZXJzIGZyb20gYW4gSFRNTFZpZGVvRWxlbWVudCwgbWFraW5nIHZpZGVvIGVhc2llciB0byBzZXBhcmF0ZSBmcm9tIHRoZSByZWd1bGFyIHByb2plY3Rpb24gbGF5ZXIuIiwKICAgICJkZXB0aC1zb3J0ZWQtbGF5ZXJzIGFmZmVjdHMgZGVwdGggb3JkZXJpbmcgZm9yIHByb2plY3Rpb24sIHF1YWQsIGFuZCBjeWxpbmRlciBsYXllcnMsIHdoaWxlIGVudmlyb25tZW50YWwgbGF5ZXJzIHN1Y2ggYXMgZXF1aXJlY3QgYW5kIGN1YmUgbGF5ZXJzIG5lZWQgc2VwYXJhdGUgdHJlYXRtZW50LiIsCiAgICAiQ2FwdGlvbnMgYW5kIGFubm90YXRpb25zIHNob3VsZCBvZnRlbiBiZSBzZXBhcmF0ZWQgaW50byBxdWFkIGxheWVycyByYXRoZXIgdGhhbiBiYWtlZCBpbnRvIHRoZSBiYWNrZ3JvdW5kIG1lZGlhLCBzbyBsZWdpYmlsaXR5LCBvcGFjaXR5LCBhbmQgdXBkYXRlIGZyZXF1ZW5jeSBjYW4gYmUgdHVuZWQgaW5kZXBlbmRlbnRseS4iCiAgXSwKICAibGlua3MiOiBbCiAgICB7CiAgICAgICJsYWJlbCI6ICJUb2RheSdzIHNhbXBsZTogRXF1aXJlY3QgTWVkaWEgQW5ub3RhdGlvbiBEZWNrIiwKICAgICAgInVybCI6ICIuLi9vdXRwdXRzLzIwMjYtMDctMTRfaHRtbF9lcXVpcmVjdF9tZWRpYV9hbm5vdGF0aW9uX2RlY2suaHRtbCIKICAgIH0sCiAgICB7CiAgICAgICJsYWJlbCI6ICJXZWJYUiBMYXllcnMgQVBJIExldmVsIDEiLAogICAgICAidXJsIjogImh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vbGF5ZXJzLyIKICAgIH0sCiAgICB7CiAgICAgICJsYWJlbCI6ICJNRE46IFhSRXF1aXJlY3RMYXllciIsCiAgICAgICJ1cmwiOiAiaHR0cHM6Ly9kZXZlbG9wZXIubW96aWxsYS5vcmcvZW4tVVMvZG9jcy9XZWIvQVBJL1hSRXF1aXJlY3RMYXllciIKICAgIH0sCiAgICB7CiAgICAgICJsYWJlbCI6ICJNRE46IFhSQ3ViZUxheWVyIiwKICAgICAgInVybCI6ICJodHRwczovL2RldmVsb3Blci5tb3ppbGxhLm9yZy9lbi1VUy9kb2NzL1dlYi9BUEkvWFJDdWJlTGF5ZXIiCiAgICB9LAogICAgewogICAgICAibGFiZWwiOiAiTUROOiBYUk1lZGlhQmluZGluZyIsCiAgICAgICJ1cmwiOiAiaHR0cHM6Ly9kZXZlbG9wZXIubW96aWxsYS5vcmcvZW4tVVMvZG9jcy9XZWIvQVBJL1hSTWVkaWFCaW5kaW5nIgogICAgfSwKICAgIHsKICAgICAgImxhYmVsIjogIkltbWVyc2l2ZSBXZWIgV2ViWFIgU2FtcGxlcyIsCiAgICAgICJ1cmwiOiAiaHR0cHM6Ly9pbW1lcnNpdmUtd2ViLmdpdGh1Yi5pby93ZWJ4ci1zYW1wbGVzLyIKICAgIH0KICBdLAogICJzZWN0aW9ucyI6IFsKICAgIHsKICAgICAgInRpdGxlIjogIuazqOebruS6i+S+i+OBqOS9leOBjOmdoueZveOBhOOBiyIsCiAgICAgICJ0aXRsZUVuIjogIk5vdGFibGUgZXhhbXBsZSBhbmQgd2h5IGl0IG1hdHRlcnMiLAogICAgICAiYm9keSI6ICLku4rml6Xjga7ms6jnm67jga8gV2ViWFIgTGF5ZXJzIEFQSSDjga4gZXF1aXJlY3QgLyBtZWRpYSBsYXllciDjgafjgZnjgILpnaLnmb3jgYTngrnjga/jgIEzNjAg5bqm5pig5YOP44KE5YaZ55yf44KSIHNjZW5lIOOBrumAmuW4uOaPj+eUu+OBq+a3t+OBnOOCi+OBruOBp+OBr+OBquOBj+OAgeeSsOWigyBsYXllciDjgajjgZfjgaYgY29tcG9zaXRvciDlgbTjgavmuKHjgZfjgIHlrZfluZXjgoTms6jph4jjgpLliKXjga4gcXVhZCBsYXllciDjgajjgZfjgabph43jga3jgonjgozjgovjgZPjgajjgafjgZnjgILmmKDlg4/jga/mu5HjgonjgYvjgavli5XjgYvjgZfjgIHmloflrZfjga/oqq3jgb/jgoTjgZnjgYTop6Plg4/luqbjgajlronlrprjgZfjgZ/kvY3nva7jgpLkv53jgaTjgIHjgajjgYTjgYbliIbmpa3jgYzjgZfjgoTjgZnjgY/jgarjgorjgb7jgZnjgIIiLAogICAgICAiYm9keUVuIjogIlRvZGF5J3Mgbm90YWJsZSByZWZlcmVuY2UgaXMgdGhlIGVxdWlyZWN0IGFuZCBtZWRpYSBsYXllciBhcmVhIG9mIHRoZSBXZWJYUiBMYXllcnMgQVBJLiBUaGUgaW50ZXJlc3RpbmcgcGFydCBpcyB0aGF0IDM2MC1kZWdyZWUgdmlkZW8gb3IgcGhvdG9ncmFwaHkgY2FuIGJlIGhhbmRlZCB0byB0aGUgY29tcG9zaXRvciBhcyBhbiBlbnZpcm9ubWVudCBsYXllciBpbnN0ZWFkIG9mIGJlaW5nIG1peGVkIGludG8gbm9ybWFsIHNjZW5lIHJlbmRlcmluZywgd2hpbGUgY2FwdGlvbnMgYW5kIGFubm90YXRpb25zIGNhbiBzaXQgaW4gc2VwYXJhdGUgcXVhZCBsYXllcnMuIFRoaXMgbWFrZXMgaXQgZWFzaWVyIHRvIGxldCB2aWRlbyBtb3ZlIHNtb290aGx5IHdoaWxlIHRleHQga2VlcHMgcmVhZGFibGUgcmVzb2x1dGlvbiBhbmQgYSBzdGFibGUgcG9zaXRpb24uIiwKICAgICAgImxpbmtzIjogWwogICAgICAgIHsKICAgICAgICAgICJsYWJlbCI6ICJXZWJYUiBMYXllcnMgQVBJIExldmVsIDEiLAogICAgICAgICAgInVybCI6ICJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL2xheWVycy8iCiAgICAgICAgfSwKICAgICAgICB7CiAgICAgICAgICAibGFiZWwiOiAiTUROOiBYUk1lZGlhQmluZGluZyIsCiAgICAgICAgICAidXJsIjogImh0dHBzOi8vZGV2ZWxvcGVyLm1vemlsbGEub3JnL2VuLVVTL2RvY3MvV2ViL0FQSS9YUk1lZGlhQmluZGluZyIKICAgICAgICB9CiAgICAgIF0KICAgIH0sCiAgICB7CiAgICAgICJ0aXRsZSI6ICLooajnj77jg7vjgqTjg7Pjgr/jg6njgq/jgrfjg6fjg7Pjga7jgqLjgqTjg4fjgqIiLAogICAgICAidGl0bGVFbiI6ICJFeHByZXNzaW9uIGFuZCBpbnRlcmFjdGlvbiBpZGVhIiwKICAgICAgImJvZHkiOiAiMzYwIOiDjOaZr+OBr+OAjuWgtOOAj+OBqOOBl+OBpuW6g+OBj+WLleOBi+OBl+OAgeWtl+W5leOBqOazqOmHiOOBr+OAjuiqreOBvuOBm+OCiyBsYXllcuOAj+OBqOOBl+OBpuimlumHjuWGheOBq+WbuuWumuOBmeOCi+ani+aIkOOBjOacieWKueOBp+OBmeOAguS7iuaXpeOBruOCteODs+ODl+ODq+OBp+OBryBjYW52YXMg44KS44OJ44Op44OD44Kw44GX44GmIHZpZXdlciB5YXcgLyBwaXRjaCDjgpLli5XjgYvjgZfjgIFUb3VyIC8gU3BvcnRzIC8gTGFiIOOBriAzIOeorumhnuOBp+iDjOaZr+ODoeODh+OCo+OCouOBruWLleOBjeOBqOazqOmHiOOBruS5l+OCiuaWueOCkuavlOi8g+OBp+OBjeOBvuOBmeOAgmNhcHRpb24gZGVwdGgg44KS6L+R44Gl44GR44GZ44GO44KL44Go44CB5a2X5bmV44Gv55uu56uL44Gk5LiA5pa544Gn6KaW55WM44Gu5Zyn6L+r5oSf44GM5aKX44GI44KL44CB44Go44GE44GG6Kit6KiI5LiK44Gu44OI44Os44O844OJ44Kq44OV44KC6KaL44GI44G+44GZ44CCIiwKICAgICAgImJvZHlFbiI6ICJBIHVzZWZ1bCBjb21wb3NpdGlvbiBpcyB0byBsZXQgdGhlIDM2MCBiYWNrZ3JvdW5kIGJlaGF2ZSBhcyB0aGUgc3Vycm91bmRpbmcgcGxhY2UsIHdoaWxlIGNhcHRpb25zIGFuZCBhbm5vdGF0aW9ucyBzdGF5IGFzIHJlYWRhYmxlIGxheWVycyBpbnNpZGUgdGhlIHZpZXcuIFRvZGF5J3Mgc2FtcGxlIGxldHMgeW91IGRyYWcgdGhlIGNhbnZhcyB0byBjaGFuZ2Ugdmlld2VyIHlhdyBhbmQgcGl0Y2gsIHRoZW4gY29tcGFyZSBUb3VyLCBTcG9ydHMsIGFuZCBMYWIgbW9kZXMgZm9yIGhvdyBiYWNrZ3JvdW5kIG1vdGlvbiBhbmQgYW5ub3RhdGlvbnMgY29tYmluZS4gUHVsbGluZyBjYXB0aW9uIGRlcHRoIHRvbyBjbG9zZSBtYWtlcyBjYXB0aW9ucyBtb3JlIHByb21pbmVudCBidXQgYWxzbyBtb3JlIHZpc3VhbGx5IGludHJ1c2l2ZS4iLAogICAgICAibGlua3MiOiBbCiAgICAgICAgewogICAgICAgICAgImxhYmVsIjogIk9wZW4gdG9kYXkncyBzYW1wbGUiLAogICAgICAgICAgInVybCI6ICIuLi9vdXRwdXRzLzIwMjYtMDctMTRfaHRtbF9lcXVpcmVjdF9tZWRpYV9hbm5vdGF0aW9uX2RlY2suaHRtbCIKICAgICAgICB9CiAgICAgIF0KICAgIH0sCiAgICB7CiAgICAgICJ0aXRsZSI6ICLliLbkvZzjgavkvb/jgYjjgZ3jgYbjgarmioDooZPjg6Hjg6IiLAogICAgICAidGl0bGVFbiI6ICJQcm9kdWN0aW9uIG5vdGUiLAogICAgICAiYm9keSI6ICLlrp8gV2ViWFIg44Gn44GvIGBuYXZpZ2F0b3IueHIucmVxdWVzdFNlc3Npb24oXCJpbW1lcnNpdmUtdnJcIiwgeyBvcHRpb25hbEZlYXR1cmVzOiBbXCJsYXllcnNcIl0gfSlgIOOBpyBsYXllcnMg44KS5pyJ5Yq544Gr44GX44CB5YuV55S744KS5L2/44GG5aC05ZCI44GvIGBuZXcgWFJNZWRpYUJpbmRpbmcoc2Vzc2lvbikuY3JlYXRlRXF1aXJlY3RMYXllcih2aWRlbywgaW5pdClgIOOBruOCiOOBhuOBqua1geOCjOOCkuaknOiojuOBl+OBvuOBmeOAguWtl+W5leOChOazqOmHiOOBryBgWFJXZWJHTEJpbmRpbmdgIOeUseadpeOBriBxdWFkIGxheWVy44CB44G+44Gf44GvIG1lZGlhIC8gY2FudmFzIOeUseadpeOBruWIpSBsYXllciDjgajjgZfjgabmibHjgYTjgIFgb3BhY2l0eWDjgIFgcXVhbGl0eWDjgIFgYmxlbmRUZXh0dXJlU291cmNlQWxwaGFg44CBYGxheWVyc2Ag6YWN5YiX44Gu6aCG5bqP44KS5piO56S655qE44Gr566h55CG44GZ44KL44Gu44GM6KaB54K544Gn44GZ44CCIiwKICAgICAgImJvZHlFbiI6ICJJbiBhIHJlYWwgV2ViWFIgaW1wbGVtZW50YXRpb24sIGxheWVycyBjYW4gYmUgZW5hYmxlZCB0aHJvdWdoIGBuYXZpZ2F0b3IueHIucmVxdWVzdFNlc3Npb24oXCJpbW1lcnNpdmUtdnJcIiwgeyBvcHRpb25hbEZlYXR1cmVzOiBbXCJsYXllcnNcIl0gfSlgLCBhbmQgdmlkZW8tYmFja2VkIGVudmlyb25tZW50cyBjYW4gYmUgZXhwbG9yZWQgdGhyb3VnaCBhIGZsb3cgc3VjaCBhcyBgbmV3IFhSTWVkaWFCaW5kaW5nKHNlc3Npb24pLmNyZWF0ZUVxdWlyZWN0TGF5ZXIodmlkZW8sIGluaXQpYC4gQ2FwdGlvbnMgYW5kIGFubm90YXRpb25zIHNob3VsZCBiZSBoYW5kbGVkIGFzIHNlcGFyYXRlIHF1YWQgbGF5ZXJzIGZyb20gYFhSV2ViR0xCaW5kaW5nYCwgb3IgYXMgc2VwYXJhdGUgbWVkaWEvY2FudmFzLWJhY2tlZCBsYXllcnMsIHdpdGggZXhwbGljaXQgY29udHJvbCBvdmVyIGBvcGFjaXR5YCwgYHF1YWxpdHlgLCBgYmxlbmRUZXh0dXJlU291cmNlQWxwaGFgLCBhbmQgdGhlIGBsYXllcnNgIGFycmF5IG9yZGVyLiIsCiAgICAgICJsaW5rcyI6IFsKICAgICAgICB7CiAgICAgICAgICAibGFiZWwiOiAiTGF5ZXJzIGFwcGxpY2F0aW9uIGZsb3ciLAogICAgICAgICAgInVybCI6ICJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL2xheWVycy8jYXBwbGljYXRpb24tZmxvdyIKICAgICAgICB9LAogICAgICAgIHsKICAgICAgICAgICJsYWJlbCI6ICJWaWRlbyBsYXllciBjcmVhdGlvbiIsCiAgICAgICAgICAidXJsIjogImh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vbGF5ZXJzLyN2aWRlby1sYXllci1jcmVhdGlvbiIKICAgICAgICB9CiAgICAgIF0KICAgIH0sCiAgICB7CiAgICAgICJ0aXRsZSI6ICLmmI7ml6Xku6XpmY3jgqbjgqnjg4Pjg4HjgZnjgovlr77osaEiLAogICAgICAidGl0bGVFbiI6ICJXYXRjaCBuZXh0IiwKICAgICAgImJvZHkiOiAi5qyh44GvIFdlYlhSIExheWVycyDjga4gcmVkcmF3IC8gbmVlZHNSZWRyYXcg44Go44CB6Z2Z55qEIGxheWVyIOOCkuOBqeOBruOCv+OCpOODn+ODs+OCsOOBp+abtOaWsOOBmeOBueOBjeOBi+OCkuimi+OBn+OBhOOBp+OBmeOAguWtl+W5leOChOazqOmHiOOBr+avjuODleODrOODvOODoOaPj+OBjeebtOOBmeW/heimgeOBjOOBquOBhOWgtOWQiOOCguWkmuOBj+OAgeWLleeUuyBsYXllcuOAgemdmeeahOazqOmHiCBsYXllcuOAgeWLleeahOODneOCpOODs+OCvyBsYXllciDjga7mm7TmlrDpoLvluqbjgpLliIbjgZHjgovjgajjgIHpm7vlipvjgajoppbopprlronlrprmgKfjga7kuKHmlrnjgavlirnjgY3jgb7jgZnjgILjgYLjgo/jgZvjgaYgU3BhY2UgV2FycCDjgaggZm92ZWF0aW9uIOOCgui/vei3oeWvvuixoeOBq+OBl+OBvuOBmeOAgiIsCiAgICAgICJib2R5RW4iOiAiTmV4dCwgaXQgaXMgd29ydGggd2F0Y2hpbmcgcmVkcmF3IC8gbmVlZHNSZWRyYXcgYmVoYXZpb3IgaW4gV2ViWFIgTGF5ZXJzIGFuZCB3aGVuIHN0YXRpYyBsYXllcnMgc2hvdWxkIGJlIHVwZGF0ZWQuIENhcHRpb25zIGFuZCBhbm5vdGF0aW9ucyBvZnRlbiBkbyBub3QgbmVlZCB0byBiZSByZWRyYXduIGV2ZXJ5IGZyYW1lLCBzbyBzZXBhcmF0aW5nIHVwZGF0ZSByYXRlcyBhY3Jvc3MgdmlkZW8gbGF5ZXJzLCBzdGF0aWMgYW5ub3RhdGlvbiBsYXllcnMsIGFuZCBkeW5hbWljIHBvaW50ZXIgbGF5ZXJzIGNhbiBoZWxwIGJvdGggcG93ZXIgdXNlIGFuZCB2aXN1YWwgc3RhYmlsaXR5LiBTcGFjZSBXYXJwIGFuZCBmb3ZlYXRpb24gYXJlIGFsc28gd29ydGggdHJhY2tpbmcuIiwKICAgICAgImxpbmtzIjogWwogICAgICAgIHsKICAgICAgICAgICJsYWJlbCI6ICJMYXllciBldmVudHMgYW5kIHJlZHJhdyIsCiAgICAgICAgICAidXJsIjogImh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vbGF5ZXJzLyNldmVudHMiCiAgICAgICAgfQogICAgICBdCiAgICB9LAogICAgewogICAgICAidGl0bGUiOiAi6Kmm44GZ44Gq44KJ44GT44KMIiwKICAgICAgInRpdGxlRW4iOiAiSWYgeW91IHRyeSBvbmUgdGhpbmciLAogICAgICAiYm9keSI6ICJgRXF1aXJlY3QgTWVkaWEgQW5ub3RhdGlvbiBEZWNrYCDjgpLplovjgY3jgIFjYW52YXMg44KS5qiq44Gr44OJ44Op44OD44Kw44GX44GmIHZpZXdlciB5YXcg44KS5aSn44GN44GP5YuV44GL44GX44Gm44GP44Gg44GV44GE44CC6IOM5pmv44GuIDM2MCDjg6Hjg4fjgqPjgqLpoqjjgrDjg6rjg4Pjg4njga/mtYHjgozjgb7jgZnjgYzjgIHlrZfluZUgcXVhZCDjga/oppbph47lhoXjgavmrovjgorjgb7jgZnjgILmrKHjgasgY2FwdGlvbiBkZXB0aCDjgpIgMC4zNG0g5pyq5rqA44G46L+R44Gl44GR44KL44GoIHNvcnQgc3RhdGUg44GMIGB0b28gbmVhcmAg44Gr44Gq44KK44CB6Kqt44G/44KE44GZ44GV44Go5Zyn6L+r5oSf44Gu5aKD55uu44KS55+t5pmC6ZaT44Gn56K66KqN44Gn44GN44G+44GZ44CCIiwKICAgICAgImJvZHlFbiI6ICJPcGVuIEVxdWlyZWN0IE1lZGlhIEFubm90YXRpb24gRGVjayBhbmQgZHJhZyB0aGUgY2FudmFzIGhvcml6b250YWxseSB0byBtb3ZlIHZpZXdlciB5YXcuIFRoZSAzNjAtbWVkaWEtbGlrZSBiYWNrZ3JvdW5kIGdyaWQgbW92ZXMsIHdoaWxlIHRoZSBjYXB0aW9uIHF1YWQgcmVtYWlucyBpbiB2aWV3LiBUaGVuIHB1bGwgY2FwdGlvbiBkZXB0aCBiZWxvdyAwLjM0bSB0byBzd2l0Y2ggdGhlIHNvcnQgc3RhdGUgdG8gYHRvbyBuZWFyYCwgbWFraW5nIHRoZSByZWFkYWJpbGl0eSB2ZXJzdXMgaW50cnVzaW9uIHRyYWRlb2ZmIHF1aWNrIHRvIGluc3BlY3QuIiwKICAgICAgImxpbmtzIjogWwogICAgICAgIHsKICAgICAgICAgICJsYWJlbCI6ICJPcGVuIEVxdWlyZWN0IE1lZGlhIEFubm90YXRpb24gRGVjayIsCiAgICAgICAgICAidXJsIjogIi4uL291dHB1dHMvMjAyNi0wNy0xNF9odG1sX2VxdWlyZWN0X21lZGlhX2Fubm90YXRpb25fZGVjay5odG1sIgogICAgICAgIH0KICAgICAgXQogICAgfSwKICAgIHsKICAgICAgInRpdGxlIjogIumAsuihjOODnuODg+ODlyIsCiAgICAgICJ0aXRsZUVuIjogIlByb2dyZXNzIG1hcCIsCiAgICAgICJib2R5IjogIuiqv+afuzogV2ViWFIgTGF5ZXJzIEFQSeOAgVhSRXF1aXJlY3RMYXllcuOAgVhSQ3ViZUxheWVy44CBWFJNZWRpYUJpbmRpbmfjgIHlhazlvI8gV2ViWFIgU2FtcGxlcyDjgpLnorroqo3jgILjgqLjgqTjg4fjgqI6IDM2MCDjg6Hjg4fjgqPjgqLog4zmma/jgajlrZfluZXjg7vms6jph4ggbGF5ZXIg44Gu5YiG6Zui44KSIEhNRCDjgarjgZfjgafoprPlr5/jgZnjgovjgILlrp/oo4U6IHZpZXdlciB5YXcgLyBwaXRjaOOAgXZpZGVvIGRyaWZ044CBY2FwdGlvbiBkZXB0aOOAgWFubm90YXRpb24gYWxwaGHjgIFUb3VyIC8gU3BvcnRzIC8gTGFiIOODouODvOODieOAgWZvY3VzIGFuZ2xlIC8gY2FwdGlvbiBob2xkIC8gc29ydCBzdGF0ZSByZWFkb3V0IOOCkuS9nOaIkOOAguaknOiovDogSlNPTiBwYXJzZeOAgUhUTUwgc2NyaXB0IOani+aWh+OAgeeUn+aIkOODmuODvOOCuOOAgeWFrOmWiyBVUkwg44KS56K66KqN44GZ44KL44CCIiwKICAgICAgImJvZHlFbiI6ICJSZXNlYXJjaDogcmV2aWV3ZWQgdGhlIFdlYlhSIExheWVycyBBUEksIFhSRXF1aXJlY3RMYXllciwgWFJDdWJlTGF5ZXIsIFhSTWVkaWFCaW5kaW5nLCBhbmQgb2ZmaWNpYWwgV2ViWFIgU2FtcGxlcy4gSWRlYTogb2JzZXJ2ZSB0aGUgc2VwYXJhdGlvbiBiZXR3ZWVuIGEgMzYwIG1lZGlhIGJhY2tncm91bmQgYW5kIGNhcHRpb24vYW5ub3RhdGlvbiBsYXllcnMgd2l0aG91dCBhIGhlYWRzZXQuIEltcGxlbWVudGF0aW9uOiBhZGRlZCB2aWV3ZXIgeWF3IC8gcGl0Y2gsIHZpZGVvIGRyaWZ0LCBjYXB0aW9uIGRlcHRoLCBhbm5vdGF0aW9uIGFscGhhLCBUb3VyIC8gU3BvcnRzIC8gTGFiIG1vZGVzLCBhbmQgZm9jdXMgYW5nbGUgLyBjYXB0aW9uIGhvbGQgLyBzb3J0IHN0YXRlIHJlYWRvdXRzLiBWYWxpZGF0aW9uOiBKU09OIHBhcnNpbmcsIEhUTUwgc2NyaXB0IHN5bnRheCwgZ2VuZXJhdGVkIHBhZ2VzLCBhbmQgcHVibGljIFVSTHMgYXJlIGNoZWNrZWQuIiwKICAgICAgImxpbmtzIjogWwogICAgICAgIHsKICAgICAgICAgICJsYWJlbCI6ICJXZWJYUiBMYXllcnMgQVBJIExldmVsIDEiLAogICAgICAgICAgInVybCI6ICJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL2xheWVycy8iCiAgICAgICAgfQogICAgICBdCiAgICB9LAogICAgewogICAgICAidGl0bGUiOiAi5L+v556w44Oh44OiIiwKICAgICAgInRpdGxlRW4iOiAiQmlyZCdzLWV5ZSBtZW1vIiwKICAgICAgImJvZHkiOiAi44GT44KM44G+44Gn44Gu5rWB44KM44Gv44CB5aWl6KGM44GNIEhVROOAgWhpdCB0ZXN0IC8gYW5jaG9y44CBZGVwdGggb2NjbHVzaW9u44CBbGlnaHRpbmcgZXN0aW1hdGlvbuOAgWhhbmQgaW5wdXTjgIFsYXllciArIGhhbmQvZGVwdGjjgIHmm7LpnaIgbGF5ZXLjgIHjgZ3jgZfjgaYgMzYwIG1lZGlhICsgYW5ub3RhdGlvbiBsYXllciDjgafjgZnjgILnqbrplpPkvZPpqJPjga7jgI7opovjgYjjgovjgI/jgI7nva7jgY/jgI/jgI7pmqDjgozjgovjgI/jgI7jgarjgZjjgoDjgI/jgI7op6bjgovjgI/jgI7ph43jga3jgovjgI/jgI7ljIXjgoDjgI/jgI7oprPjgovjgI/jgpLjgIHoh6rkvZzjga7mnIDlsI/jgrXjg7Pjg5fjg6vjgajjgZfjgabml6XmrKHjgaflopfjgoTjgZfjgabjgYTjgb7jgZnjgIIiLAogICAgICAiYm9keUVuIjogIlRoZSBzZXF1ZW5jZSBzbyBmYXIgaXMgZGVwdGggSFVELCBoaXQgdGVzdCBhbmQgYW5jaG9ycywgZGVwdGggb2NjbHVzaW9uLCBsaWdodGluZyBlc3RpbWF0aW9uLCBoYW5kIGlucHV0LCBsYXllciBwbHVzIGhhbmQvZGVwdGgsIGN1cnZlZCBsYXllcnMsIGFuZCBub3cgMzYwIG1lZGlhIHBsdXMgYW5ub3RhdGlvbiBsYXllcnMuIFRoZSBhcmNoaXZlIGlzIGFkZGluZyBvcmlnaW5hbCBtaW5pbWFsIHNhbXBsZXMgYXJvdW5kIHNlZWluZywgcGxhY2luZywgaGlkaW5nLCBibGVuZGluZywgdG91Y2hpbmcsIGxheWVyaW5nLCB3cmFwcGluZywgYW5kIHdhdGNoaW5nLiIKICAgIH0sCiAgICB7CiAgICAgICJ0aXRsZSI6ICLku4rml6Xjga7jg5/jg4voqabkvZzlgJnoo5wiLAogICAgICAidGl0bGVFbiI6ICJUb2RheSdzIG1pbmkgcHJvdG90eXBlIGNhbmRpZGF0ZSIsCiAgICAgICJib2R5IjogIuaOoeeUqOOBl+OBn+WAmeijnOOBryBgRXF1aXJlY3QgTWVkaWEgQW5ub3RhdGlvbiBEZWNrYCDjgafjgZnjgIJYUkVxdWlyZWN0TGF5ZXIg44Gu5a6f5qmfIEFQSSDlkbzjgbPlh7rjgZfjgafjga/jgarjgY/jgIEzNjAg6IOM5pmv44CB5a2X5bmV44CB5rOo6YeI44CB5aWl6KGM44GN6aCG44CB6YCP5piO5bqm44Gu6Zai5L+C44KS6YCa5bi444OW44Op44Km44K244Gn6Kem44KM44KL44KI44GG44Gr44GX44G+44GX44Gf44CC5qyh44Gr6YCy44KB44KL44Gq44KJ44CB6Z2Z55qE5rOo6YeIIGxheWVyIOOBriBuZWVkc1JlZHJhdyDjgajjgIHli5XnmoTjg53jgqTjg7Pjgr8gbGF5ZXIg44Gu5pu05paw6aC75bqm44KS5YiG44GR44KL44K144Oz44OX44Or44G455m65bGV44GV44Gb44G+44GZ44CCIiwKICAgICAgImJvZHlFbiI6ICJUaGUgc2VsZWN0ZWQgcHJvdG90eXBlIGlzIEVxdWlyZWN0IE1lZGlhIEFubm90YXRpb24gRGVjay4gSW5zdGVhZCBvZiBjYWxsaW5nIFhSRXF1aXJlY3RMYXllciBvbiBoYXJkd2FyZSwgaXQgbWFrZXMgdGhlIHJlbGF0aW9uc2hpcCBiZXR3ZWVuIGEgMzYwIGJhY2tncm91bmQsIGNhcHRpb25zLCBhbm5vdGF0aW9ucywgZGVwdGggb3JkZXIsIGFuZCBvcGFjaXR5IGluc3BlY3RhYmxlIGluIGEgbm9ybWFsIGJyb3dzZXIuIEEgbmF0dXJhbCBuZXh0IHN0ZXAgaXMgdG8gc2VwYXJhdGUgbmVlZHNSZWRyYXcgYmVoYXZpb3IgZm9yIHN0YXRpYyBhbm5vdGF0aW9uIGxheWVycyBmcm9tIHVwZGF0ZSBmcmVxdWVuY3kgZm9yIGR5bmFtaWMgcG9pbnRlciBsYXllcnMuIgogICAgfQogIF0KfQo=
+{
+  "date": "2026-07-14",
+  "headline": "360 メディア背景と注釈レイヤーを分けて観察する",
+  "headlineEn": "Separating 360 media backgrounds from annotation layers",
+  "summary": "WebXR Layers API、XREquirectLayer、XRCubeLayer、XRMediaBinding を確認し、今日は 360 メディア背景、字幕 quad、注釈 quad の分離と奥行き順を通常ブラウザで触れる自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Layers API, XREquirectLayer, XRCubeLayer, and XRMediaBinding, today's original HTML sample explores separating a 360 media background from caption and annotation quad layers in a normal browser.",
+  "keyTopics": [
+    "WebXR Layers API Level 1 は 2026-06-12 版 Editor's Draft で、equirect / cube / media layer と depth sorting の設計点を含んでいる。",
+    "XREquirectLayer は equirectangular 形式のデータを球の内側に貼る layer で、360 度映像や写真の背景に向く。",
+    "XRMediaBinding には HTMLVideoElement から quad / cylinder / equirect の media layer を作る入口があり、動画を通常の projection layer から分離しやすい。",
+    "depth-sorted-layers は projection / quad / cylinder layer の奥行き順制御に関わるが、equirect / cube のような環境 layer は別の扱いとして考える必要がある。",
+    "字幕や注釈は背景メディアと同じテクスチャに焼き込まず、quad layer として分けると読みやすさ、透明度、更新頻度を独立して調整できる。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Layers API Level 1 Editor's Draft dated 2026-06-12 includes equirect, cube, media layers, and depth-sorting design points.",
+    "XREquirectLayer maps equirectangular data onto the inside of a sphere, making it suitable for 360-degree video and photo backgrounds.",
+    "XRMediaBinding provides entry points for creating quad, cylinder, and equirect media layers from an HTMLVideoElement, making video easier to separate from the regular projection layer.",
+    "depth-sorted-layers affects depth ordering for projection, quad, and cylinder layers, while environmental layers such as equirect and cube layers need separate treatment.",
+    "Captions and annotations should often be separated into quad layers rather than baked into the background media, so legibility, opacity, and update frequency can be tuned independently."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Equirect Media Annotation Deck",
+      "url": "../outputs/2026-07-14_html_equirect_media_annotation_deck.html"
+    },
+    {
+      "label": "WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "MDN: XREquirectLayer",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XREquirectLayer"
+    },
+    {
+      "label": "MDN: XRCubeLayer",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRCubeLayer"
+    },
+    {
+      "label": "MDN: XRMediaBinding",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRMediaBinding"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Layers API の equirect / media layer です。面白い点は、360 度映像や写真を scene の通常描画に混ぜるのではなく、環境 layer として compositor 側に渡し、字幕や注釈を別の quad layer として重ねられることです。映像は滑らかに動かし、文字は読みやすい解像度と安定した位置を保つ、という分業がしやすくなります。",
+      "bodyEn": "Today's notable reference is the equirect and media layer area of the WebXR Layers API. The interesting part is that 360-degree video or photography can be handed to the compositor as an environment layer instead of being mixed into normal scene rendering, while captions and annotations can sit in separate quad layers. This makes it easier to let video move smoothly while text keeps readable resolution and a stable position.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        },
+        {
+          "label": "MDN: XRMediaBinding",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRMediaBinding"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "360 背景は『場』として広く動かし、字幕と注釈は『読ませる layer』として視野内に固定する構成が有効です。今日のサンプルでは canvas をドラッグして viewer yaw / pitch を動かし、Tour / Sports / Lab の 3 種類で背景メディアの動きと注釈の乗り方を比較できます。caption depth を近づけすぎると、字幕は目立つ一方で視界の圧迫感が増える、という設計上のトレードオフも見えます。",
+      "bodyEn": "A useful composition is to let the 360 background behave as the surrounding place, while captions and annotations stay as readable layers inside the view. Today's sample lets you drag the canvas to change viewer yaw and pitch, then compare Tour, Sports, and Lab modes for how background motion and annotations combine. Pulling caption depth too close makes captions more prominent but also more visually intrusive.",
+      "links": [
+        {
+          "label": "Open today's sample",
+          "url": "../outputs/2026-07-14_html_equirect_media_annotation_deck.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実 WebXR では `navigator.xr.requestSession(\"immersive-vr\", { optionalFeatures: [\"layers\"] })` で layers を有効にし、動画を使う場合は `new XRMediaBinding(session).createEquirectLayer(video, init)` のような流れを検討します。字幕や注釈は `XRWebGLBinding` 由来の quad layer、または media / canvas 由来の別 layer として扱い、`opacity`、`quality`、`blendTextureSourceAlpha`、`layers` 配列の順序を明示的に管理するのが要点です。",
+      "bodyEn": "In a real WebXR implementation, layers can be enabled through `navigator.xr.requestSession(\"immersive-vr\", { optionalFeatures: [\"layers\"] })`, and video-backed environments can be explored through a flow such as `new XRMediaBinding(session).createEquirectLayer(video, init)`. Captions and annotations should be handled as separate quad layers from `XRWebGLBinding`, or as separate media/canvas-backed layers, with explicit control over `opacity`, `quality`, `blendTextureSourceAlpha`, and the `layers` array order.",
+      "links": [
+        {
+          "label": "Layers application flow",
+          "url": "https://immersive-web.github.io/layers/#application-flow"
+        },
+        {
+          "label": "Video layer creation",
+          "url": "https://immersive-web.github.io/layers/#video-layer-creation"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は WebXR Layers の redraw / needsRedraw と、静的 layer をどのタイミングで更新すべきかを見たいです。字幕や注釈は毎フレーム描き直す必要がない場合も多く、動画 layer、静的注釈 layer、動的ポインタ layer の更新頻度を分けると、電力と視覚安定性の両方に効きます。あわせて Space Warp と foveation も追跡対象にします。",
+      "bodyEn": "Next, it is worth watching redraw / needsRedraw behavior in WebXR Layers and when static layers should be updated. Captions and annotations often do not need to be redrawn every frame, so separating update rates across video layers, static annotation layers, and dynamic pointer layers can help both power use and visual stability. Space Warp and foveation are also worth tracking.",
+      "links": [
+        {
+          "label": "Layer events and redraw",
+          "url": "https://immersive-web.github.io/layers/#events"
+        }
+      ]
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Equirect Media Annotation Deck` を開き、canvas を横にドラッグして viewer yaw を大きく動かしてください。背景の 360 メディア風グリッドは流れますが、字幕 quad は視野内に残ります。次に caption depth を 0.34m 未満へ近づけると sort state が `too near` になり、読みやすさと圧迫感の境目を短時間で確認できます。",
+      "bodyEn": "Open Equirect Media Annotation Deck and drag the canvas horizontally to move viewer yaw. The 360-media-like background grid moves, while the caption quad remains in view. Then pull caption depth below 0.34m to switch the sort state to `too near`, making the readability versus intrusion tradeoff quick to inspect.",
+      "links": [
+        {
+          "label": "Open Equirect Media Annotation Deck",
+          "url": "../outputs/2026-07-14_html_equirect_media_annotation_deck.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Layers API、XREquirectLayer、XRCubeLayer、XRMediaBinding、公式 WebXR Samples を確認。アイデア: 360 メディア背景と字幕・注釈 layer の分離を HMD なしで観察する。実装: viewer yaw / pitch、video drift、caption depth、annotation alpha、Tour / Sports / Lab モード、focus angle / caption hold / sort state readout を作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。",
+      "bodyEn": "Research: reviewed the WebXR Layers API, XREquirectLayer, XRCubeLayer, XRMediaBinding, and official WebXR Samples. Idea: observe the separation between a 360 media background and caption/annotation layers without a headset. Implementation: added viewer yaw / pitch, video drift, caption depth, annotation alpha, Tour / Sports / Lab modes, and focus angle / caption hold / sort state readouts. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        }
+      ]
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion、lighting estimation、hand input、layer + hand/depth、曲面 layer、そして 360 media + annotation layer です。空間体験の『見える』『置く』『隠れる』『なじむ』『触る』『重ねる』『包む』『観る』を、自作の最小サンプルとして日次で増やしています。",
+      "bodyEn": "The sequence so far is depth HUD, hit test and anchors, depth occlusion, lighting estimation, hand input, layer plus hand/depth, curved layers, and now 360 media plus annotation layers. The archive is adding original minimal samples around seeing, placing, hiding, blending, touching, layering, wrapping, and watching."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Equirect Media Annotation Deck` です。XREquirectLayer の実機 API 呼び出しではなく、360 背景、字幕、注釈、奥行き順、透明度の関係を通常ブラウザで触れるようにしました。次に進めるなら、静的注釈 layer の needsRedraw と、動的ポインタ layer の更新頻度を分けるサンプルへ発展させます。",
+      "bodyEn": "The selected prototype is Equirect Media Annotation Deck. Instead of calling XREquirectLayer on hardware, it makes the relationship between a 360 background, captions, annotations, depth order, and opacity inspectable in a normal browser. A natural next step is to separate needsRedraw behavior for static annotation layers from update frequency for dynamic pointer layers."
+    }
+  ]
+}

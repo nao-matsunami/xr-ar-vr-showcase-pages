@@ -1,1 +1,125 @@
-ewogICJkYXRlIjogIjIwMjYtMDctMDgiLAogICJoZWFkbGluZSI6ICJBUiBoaXQgdGVzdCDjgaggYW5jaG9yIOOBruacgOWwj+ippuS9nCIsCiAgImhlYWRsaW5lRW4iOiAiTWluaW1hbCBBUiBoaXQtdGVzdCBhbmQgYW5jaG9yIHByb3RvdHlwZSIsCiAgInN1bW1hcnkiOiAiV2ViWFIgSGl0IFRlc3Qg44GoIEFuY2hvcnPjgIFET00gT3ZlcmxheSDjga7kuIDmrKHmg4XloLHjgpLlj4LnhafjgZfjgIFITUQg44Gq44GX44Gn5bqK6Z2i44G444GuIHJheeOAgXJldGljbGXjgIFhbmNob3Ig6YWN572u44CBdHJhY2tpbmcgZHJpZnQg44KS6Kaz5a+f44Gn44GN44KL6Ieq5L2cIEhUTUwg44K144Oz44OX44Or44KS6L+95Yqg44GX44G+44GX44Gf44CCIiwKICAic3VtbWFyeUVuIjogIkJhc2VkIG9uIHByaW1hcnkgcmVmZXJlbmNlcyBmb3IgV2ViWFIgSGl0IFRlc3QsIEFuY2hvcnMsIGFuZCBET00gT3ZlcmxheSwgdGhpcyBhZGRzIGFuIG9yaWdpbmFsIEhUTUwgcHJvdG90eXBlIGZvciBvYnNlcnZpbmcgYSBmbG9vciByYXksIHJldGljbGUsIGFuY2hvciBwbGFjZW1lbnQsIGFuZCB0cmFja2luZyBkcmlmdCB3aXRob3V0IGFuIEhNRC4iLAogICJrZXlUb3BpY3MiOiBbCiAgICAiV2ViWFIgSGl0IFRlc3QgTW9kdWxlIOOBryAyMDI1LTEyLTExIOOBriBXM0MgV29ya2luZyBEcmFmdCDjgajjgZfjgabjgIHnj77lrp/nqbrplpPjgrjjgqrjg6Hjg4jjg6rjgavlr77jgZnjgosgcmF5IGludGVyc2VjdGlvbiDjgpLmibHjgYbjgIIiLAogICAgIkhpdCBUZXN0IOOBruWFrOW8j+OCteODs+ODl+ODq+OBr+OAgeWun+epuumWk+OBruW6iuOChOmdouOBq+S7ruaDs+OCquODluOCuOOCp+OCr+ODiOOCkue9ruOBj+acgOWwj+Wwjue3muOCkueiuuiqjeOBmeOCi+WFpeWPo+OBq+OBquOCi+OAgiIsCiAgICAiQW5jaG9ycyBNb2R1bGUg44GvIGBYUkFuY2hvcmAg44GoIGBhbmNob3JTcGFjZWDjgIFwZXJzaXN0ZW50IGhhbmRsZSDjga7ogIPjgYjmlrnjgpLlrprnvqnjgZfjgabjgYrjgorjgIHphY3nva7lvozjga7kv53mjIHjgpLoqK3oqIjjgZnjgovou7jjgavjgarjgovjgIIiLAogICAgIkRPTSBPdmVybGF5IOOBryBpbW1lcnNpdmUgc2Vzc2lvbiDkuK3jga4gMkQgVUkg44KS5omx44GE44CBYGJlZm9yZXhyc2VsZWN0YCDjgacgRE9NIOaTjeS9nOOBqCBYUiB3b3JsZCBzZWxlY3Qg44Gu6KGd56qB44KS5YiG44GR44KJ44KM44KL44CCIiwKICAgICLku4rml6Xjga7oh6rkvZzjgrXjg7Pjg5fjg6vjga/jgIHmnKznianjga4gWFIg44K744OD44K344On44Oz5YmN44GrIHJheeOAgXJldGljbGXjgIFhbmNob3IgbGlzdOOAgWRyaWZ0IOOBrumWouS/guOBoOOBkeOCkuODluODqeOCpuOCtuS4iuOBp+WIh+OCiuWHuuOBl+OBn+OAgiIKICBdLAogICJrZXlUb3BpY3NFbiI6IFsKICAgICJUaGUgV2ViWFIgSGl0IFRlc3QgTW9kdWxlIGlzIGEgVzNDIFdvcmtpbmcgRHJhZnQgZGF0ZWQgMjAyNS0xMi0xMSBhbmQgZm9jdXNlcyBvbiByYXkgaW50ZXJzZWN0aW9ucyBhZ2FpbnN0IHJlYWwtd29ybGQgZ2VvbWV0cnkuIiwKICAgICJUaGUgb2ZmaWNpYWwgSGl0IFRlc3Qgc2FtcGxlIGlzIGEgY29tcGFjdCBlbnRyeSBwb2ludCBmb3IgcGxhY2luZyB2aXJ0dWFsIG9iamVjdHMgb24gcmVhbC13b3JsZCBmbG9vcnMgb3Igc3VyZmFjZXMuIiwKICAgICJUaGUgQW5jaG9ycyBNb2R1bGUgZGVmaW5lcyBgWFJBbmNob3JgLCBgYW5jaG9yU3BhY2VgLCBhbmQgcGVyc2lzdGVudCBoYW5kbGVzLCB3aGljaCBndWlkZSBob3cgcGxhY2VkIGNvbnRlbnQgY2FuIGJlIHJldGFpbmVkLiIsCiAgICAiRE9NIE92ZXJsYXkgY292ZXJzIDJEIFVJIGR1cmluZyBpbW1lcnNpdmUgc2Vzc2lvbnMgYW5kIHVzZXMgYGJlZm9yZXhyc2VsZWN0YCB0byBzZXBhcmF0ZSBET00gaW50ZXJhY3Rpb25zIGZyb20gWFIgd29ybGQgc2VsZWN0IGV2ZW50cy4iLAogICAgIlRvZGF5J3Mgb3JpZ2luYWwgc2FtcGxlIGlzb2xhdGVzIHJheSwgcmV0aWNsZSwgYW5jaG9yIGxpc3QsIGFuZCBkcmlmdCBiZWhhdmlvciBpbiB0aGUgYnJvd3NlciBiZWZvcmUgdXNpbmcgYSByZWFsIFhSIHNlc3Npb24uIgogIF0sCiAgImxpbmtzIjogWwogICAgewogICAgICAibGFiZWwiOiAiVG9kYXkncyBzYW1wbGU6IEFSIEhpdCBBbmNob3IgQm9hcmQiLAogICAgICAidXJsIjogIi4uL291dHB1dHMvMjAyNi0wNy0wOF9odG1sX2FyX2hpdF9hbmNob3JfYm9hcmQuaHRtbCIKICAgIH0sCiAgICB7CiAgICAgICJsYWJlbCI6ICJXZWJYUiBIaXQgVGVzdCBNb2R1bGUiLAogICAgICAidXJsIjogImh0dHBzOi8vd3d3LnczLm9yZy9UUi93ZWJ4ci1oaXQtdGVzdC0xLyIKICAgIH0sCiAgICB7CiAgICAgICJsYWJlbCI6ICJXZWJYUiBIaXQgVGVzdCBzYW1wbGUiLAogICAgICAidXJsIjogImh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vd2VieHItc2FtcGxlcy9oaXQtdGVzdC5odG1sIgogICAgfSwKICAgIHsKICAgICAgImxhYmVsIjogIldlYlhSIEFuY2hvcnMgTW9kdWxlIiwKICAgICAgInVybCI6ICJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL2FuY2hvcnMvIgogICAgfSwKICAgIHsKICAgICAgImxhYmVsIjogIldlYlhSIERPTSBPdmVybGF5cyBNb2R1bGUiLAogICAgICAidXJsIjogImh0dHBzOi8vd3d3LnczLm9yZy9UUi93ZWJ4ci1kb20tb3ZlcmxheXMtMS8iCiAgICB9CiAgXSwKICAic2VjdGlvbnMiOiBbCiAgICB7CiAgICAgICJ0aXRsZSI6ICLms6jnm67kuovkvovjgajkvZXjgYzpnaLnmb3jgYTjgYsiLAogICAgICAidGl0bGVFbiI6ICJOb3RhYmxlIGV4YW1wbGUgYW5kIHdoeSBpdCBtYXR0ZXJzIiwKICAgICAgImJvZHkiOiAi5LuK5pel44Gu5rOo55uu44GvIFdlYlhSIEhpdCBUZXN0IOOBruWFrOW8j+OCteODs+ODl+ODq+OBp+OBmeOAgumdoueZveOBhOeCueOBr+OAgeepuumWk+iqjeitmOOBneOBruOCguOBruOCkuWkp+OBjeOBj+imi+OBm+OCi+OBruOBp+OBr+OBquOBj+OAgXJheSDjgYzlrp/kuJbnlYzjga7pnaLjgavlvZPjgZ/jgaPjgZ/kuIDngrnjgpIgcmV0aWNsZSDjgajjgZfjgabnpLrjgZfjgIHjgZ3jgZPjgavjg6bjg7zjgrbjg7zjga7msbrlrprjgpLph43jga3jgovmp4vpgKDjgYzpnZ7luLjjgavlsI/jgZXjgYTjgZPjgajjgafjgZnjgILjgZPjgozjgasgQW5jaG9ycyDjga7nmbrmg7PjgpLotrPjgZnjgajjgIHnva7jgYTjgZ/nnqzplpPjgaDjgZHjgafjgarjgY/jgIHnva7jgYTjgZ/lvozjgavjganjgozjgaDjgZHkv6HnlKjjgafjgY3jgovjgYvjgpIgVUkg44Go44GX44Gm6KaL44Gb44KL5b+F6KaB44GM5Ye644Gm44GN44G+44GZ44CCIiwKICAgICAgImJvZHlFbiI6ICJUaGUgbm90YWJsZSByZWZlcmVuY2UgdG9kYXkgaXMgdGhlIG9mZmljaWFsIFdlYlhSIEhpdCBUZXN0IHNhbXBsZS4gV2hhdCBtYXR0ZXJzIGlzIGhvdyBzbWFsbCB0aGUgaW50ZXJhY3Rpb24gc3RydWN0dXJlIGlzOiBzaG93IHRoZSBwb2ludCB3aGVyZSBhIHJheSBoaXRzIGEgcmVhbC13b3JsZCBzdXJmYWNlIGFzIGEgcmV0aWNsZSwgdGhlbiBsZXQgdGhlIHVzZXIgY29tbWl0IHRvIHRoYXQgcG9pbnQuIEFkZGluZyB0aGUgQW5jaG9ycyBpZGVhIHNoaWZ0cyB0aGUgcXVlc3Rpb24gZnJvbSBwbGFjZW1lbnQgYWxvbmUgdG8gaG93IGNvbmZpZGVudGx5IHBsYWNlZCBjb250ZW50IGNhbiBwZXJzaXN0IGFmdGVyd2FyZC4iLAogICAgICAibGlua3MiOiBbCiAgICAgICAgewogICAgICAgICAgImxhYmVsIjogIk9mZmljaWFsIEhpdCBUZXN0IHNhbXBsZSIsCiAgICAgICAgICAidXJsIjogImh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vd2VieHItc2FtcGxlcy9oaXQtdGVzdC5odG1sIgogICAgICAgIH0sCiAgICAgICAgewogICAgICAgICAgImxhYmVsIjogIlczQyBIaXQgVGVzdCBNb2R1bGUiLAogICAgICAgICAgInVybCI6ICJodHRwczovL3d3dy53My5vcmcvVFIvd2VieHItaGl0LXRlc3QtMS8iCiAgICAgICAgfQogICAgICBdCiAgICB9LAogICAgewogICAgICAidGl0bGUiOiAi6KGo54++44O744Kk44Oz44K/44Op44Kv44K344On44Oz44Gu44Ki44Kk44OH44KiIiwKICAgICAgInRpdGxlRW4iOiAiRXhwcmVzc2lvbiBhbmQgaW50ZXJhY3Rpb24gaWRlYSIsCiAgICAgICJib2R5IjogInJldGljbGUg44KS5Y2Y44Gq44KL54Wn5rqW44Gn44Gv44Gq44GP44CB6Z2i44Gu5L+h6aC85bqm44CBcmF5IOOBruinkuW6puOAgWFuY2hvciDjga7mlbDjgpLlkIzmmYLjgavnpLrjgZnlsI/jgZXjgaroqIjlmajjgajjgZfjgabmibHjgYbjgajjgIFBUiDjgonjgZfjgYTphY3nva7liY3jga7ov7fjgYTjgpLooajnj77jgafjgY3jgb7jgZnjgILku4rml6Xjga/luorpnaIgZ3JpZCDjgajkuK3lv4MgcmF544CB44Kv44Oq44OD44Kv6YWN572u44CBZHJpZnQg44Oc44K/44Oz44Gr44KI44KL6L+96Leh44OO44Kk44K644Gg44GR44Gr57We44KK44CB5a6f6KOF44KI44KK5YWI44Gr44CO572u44GR44Gd44GG77yP572u44GP44G544GN44Gn44Gq44GE44CP44Gu44OV44Kj44O844OJ44OQ44OD44Kv6Kit6KiI44KS56K66KqN44GX44G+44GX44Gf44CCIiwKICAgICAgImJvZHlFbiI6ICJUcmVhdGluZyB0aGUgcmV0aWNsZSBub3QganVzdCBhcyBhIGN1cnNvciBidXQgYXMgYSBjb21wYWN0IGluc3RydW1lbnQgZm9yIHN1cmZhY2UgY29uZmlkZW5jZSwgcmF5IGFuZ2xlLCBhbmQgYW5jaG9yIGNvdW50IG1ha2VzIHRoZSB1bmNlcnRhaW50eSBiZWZvcmUgQVIgcGxhY2VtZW50IHZpc2libGUuIFRvZGF5J3MgcHJvdG90eXBlIGtlZXBzIG9ubHkgYSBmbG9vciBncmlkLCBjZW50ZXIgcmF5LCBjbGljayBwbGFjZW1lbnQsIGFuZCBkcmlmdCBidXR0b24gc28gdGhlIGZlZWRiYWNrIGRlc2lnbiBjYW4gYmUgdGVzdGVkIGJlZm9yZSBhIGZ1bGwgaW1wbGVtZW50YXRpb24uIiwKICAgICAgImxpbmtzIjogWwogICAgICAgIHsKICAgICAgICAgICJsYWJlbCI6ICJUb2RheSdzIHNhbXBsZSIsCiAgICAgICAgICAidXJsIjogIi4uL291dHB1dHMvMjAyNi0wNy0wOF9odG1sX2FyX2hpdF9hbmNob3JfYm9hcmQuaHRtbCIKICAgICAgICB9CiAgICAgIF0KICAgIH0sCiAgICB7CiAgICAgICJ0aXRsZSI6ICLliLbkvZzjgavkvb/jgYjjgZ3jgYbjgarmioDooZPjg6Hjg6IiLAogICAgICAidGl0bGVFbiI6ICJQcm9kdWN0aW9uIG5vdGUiLAogICAgICAiYm9keSI6ICLlrp8gV2ViWFIg44Gn44GvIHNlc3Npb24gcmVxdWVzdCDmmYLjgasgYGhpdC10ZXN0YCDjgoQgYGRvbS1vdmVybGF5YCDjgpIgb3B0aW9uYWxGZWF0dXJlcyAvIHJlcXVpcmVkRmVhdHVyZXMg44Go44GX44Gm5omx44GE44CBWFJGcmFtZSDjgYvjgokgaGl0IHRlc3QgcmVzdWx0IOOBriBwb3NlIOOCkuWPluOCiuOAgeW/heimgeOBquOCiSBhbmNob3Ig44KS5L2c44KL5rWB44KM44Gr44Gq44KK44G+44GZ44CC5LuK5Zue44GuIEhUTUwg54mI44GvIGNhbnZhcyDkuIrjgafnlpHkvLwgZmxvb3IgcHJvamVjdGlvbiDjgpLmj4/jgY/jgaDjgZHjgafjgZnjgYzjgIFVSSDliIbpm6LjgajjgZfjgabjga8gRE9NIE92ZXJsYXkg44Gu6ICD44GI5pa544Gr6L+R44GP44CBMkQg5pON5L2c6Z2i44Go56m66ZaT6YWN572u6Z2i44KS5YiG44GR44Gm5qSc6Ki844Gn44GN44G+44GZ44CCIiwKICAgICAgImJvZHlFbiI6ICJJbiByZWFsIFdlYlhSLCBhIHNlc3Npb24gd291bGQgcmVxdWVzdCBmZWF0dXJlcyBzdWNoIGFzIGBoaXQtdGVzdGAgYW5kIGBkb20tb3ZlcmxheWAsIHJlYWQgaGl0LXRlc3QgcG9zZXMgZnJvbSBYUkZyYW1lLCBhbmQgY3JlYXRlIGFuY2hvcnMgd2hlcmUgbmVlZGVkLiBUaGlzIEhUTUwgcHJvdG90eXBlIG9ubHkgZHJhd3MgYSBzaW11bGF0ZWQgZmxvb3IgcHJvamVjdGlvbiBvbiBjYW52YXMsIGJ1dCBpdHMgVUkgc2VwYXJhdGlvbiBtaXJyb3JzIHRoZSBET00gT3ZlcmxheSBpZGVhIGJ5IHNlcGFyYXRpbmcgdGhlIDJEIGNvbnRyb2wgc3VyZmFjZSBmcm9tIHNwYXRpYWwgcGxhY2VtZW50LiIsCiAgICAgICJsaW5rcyI6IFsKICAgICAgICB7CiAgICAgICAgICAibGFiZWwiOiAiRE9NIE92ZXJsYXlzIE1vZHVsZSIsCiAgICAgICAgICAidXJsIjogImh0dHBzOi8vd3d3LnczLm9yZy9UUi93ZWJ4ci1kb20tb3ZlcmxheXMtMS8iCiAgICAgICAgfSwKICAgICAgICB7CiAgICAgICAgICAibGFiZWwiOiAiQW5jaG9ycyBNb2R1bGUiLAogICAgICAgICAgInVybCI6ICJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL2FuY2hvcnMvIgogICAgICAgIH0KICAgICAgXQogICAgfSwKICAgIHsKICAgICAgInRpdGxlIjogIuaYjuaXpeS7pemZjeOCpuOCqeODg+ODgeOBmeOCi+WvvuixoSIsCiAgICAgICJ0aXRsZUVuIjogIldhdGNoIG5leHQiLAogICAgICAiYm9keSI6ICLmrKHjga8gV2ViWFIgRGVwdGggU2Vuc2luZ+OAgUxpZ2h0aW5nIEVzdGltYXRpb27jgIFIYW5kIElucHV0IOOCkuimi+OBpuOAgemFjee9ruOBl+OBnyBhbmNob3Ig44GM5ZGo5Zuy44Gu6YGu6JS944O75piO44KL44GV44O75omL5YWl5Yqb44Gr44Gp44GG5Y+N5b+c44GZ44G544GN44GL44KS5YiG44GR44Gm6Kmm44GX44Gf44GE44Gn44GZ44CC54m544GrIGRlcHRoIOOBr+OAjue9ruOBkeOBn+OAj+W+jOOBruimi+OBiOaWueOBruiqrOW+l+WKm+OBq+WKueOBj+OBruOBp+OAgeWNmOe0lOOBqiBvY2NsdXNpb24gcHJldmlldyDjgpLoh6rkvZzjgrXjg7Pjg5fjg6vjgavjgafjgY3jgb7jgZnjgIIiLAogICAgICAiYm9keUVuIjogIk5leHQsIHdhdGNoIFdlYlhSIERlcHRoIFNlbnNpbmcsIExpZ2h0aW5nIEVzdGltYXRpb24sIGFuZCBIYW5kIElucHV0IHRvIHNwbGl0IGhvdyBhIHBsYWNlZCBhbmNob3Igc2hvdWxkIHJlYWN0IHRvIG9jY2x1c2lvbiwgbGlnaHQsIGFuZCBoYW5kIGlucHV0LiBEZXB0aCBpcyBlc3BlY2lhbGx5IGltcG9ydGFudCBhZnRlciBwbGFjZW1lbnQgYmVjYXVzZSBpdCBhZmZlY3RzIHZpc3VhbCBiZWxpZXZhYmlsaXR5LCBtYWtpbmcgYSBzaW1wbGUgb2NjbHVzaW9uIHByZXZpZXcgYSBnb29kIG5leHQgc2FtcGxlLiIKICAgIH0sCiAgICB7CiAgICAgICJ0aXRsZSI6ICLoqabjgZnjgarjgonjgZPjgowiLAogICAgICAidGl0bGVFbiI6ICJJZiB5b3UgdHJ5IG9uZSB0aGluZyIsCiAgICAgICJib2R5IjogImBBUiBIaXQgQW5jaG9yIEJvYXJkYCDjgpLplovjgY3jgIHjg53jgqTjg7Pjgr/jgpLkuIvlgbTjgavli5XjgYvjgZfjgaYgcmV0aWNsZSDjga7lpKfjgY3jgZXjgaggY29uZmlkZW5jZSDjgpLopovjgarjgYzjgonjgq/jg6rjg4Pjgq/phY3nva7jgZfjgb7jgZnjgILjgZ3jga7lvowgRHJpZnQg44KS5oq844GZ44Go44CB6YWN572u5b6M44GuIGFuY2hvciDjgYzlsJHjgZfmj7rjgozjgIHkv6HpoLzluqbjgYzkuIvjgYzjgovjgZ/jgoHjgIFBUiBVSSDjgafjgI7kv53mjIHjgafjgY3jgabjgYTjgovmhJ/jgI/jgpLjganjgYblh7rjgZnjgYvjgpLogIPjgYjjgoTjgZnjgY/jgarjgorjgb7jgZnjgIIiLAogICAgICAiYm9keUVuIjogIk9wZW4gQVIgSGl0IEFuY2hvciBCb2FyZCwgbW92ZSB0aGUgcG9pbnRlciB0b3dhcmQgdGhlIGxvd2VyIGFyZWEsIGFuZCBwbGFjZSBhbmNob3JzIHdoaWxlIHdhdGNoaW5nIHJldGljbGUgc2l6ZSBhbmQgY29uZmlkZW5jZS4gUHJlc3NpbmcgRHJpZnQgbWFrZXMgcGxhY2VkIGFuY2hvcnMgbW92ZSBzbGlnaHRseSBhbmQgbG93ZXJzIGNvbmZpZGVuY2UsIG1ha2luZyBpdCBlYXNpZXIgdG8gdGhpbmsgYWJvdXQgaG93IEFSIFVJIHNob3VsZCBjb21tdW5pY2F0ZSBwZXJzaXN0ZW5jZSBxdWFsaXR5LiIsCiAgICAgICJsaW5rcyI6IFsKICAgICAgICB7CiAgICAgICAgICAibGFiZWwiOiAiT3BlbiBBUiBIaXQgQW5jaG9yIEJvYXJkIiwKICAgICAgICAgICJ1cmwiOiAiLi4vb3V0cHV0cy8yMDI2LTA3LTA4X2h0bWxfYXJfaGl0X2FuY2hvcl9ib2FyZC5odG1sIgogICAgICAgIH0KICAgICAgXQogICAgfSwKICAgIHsKICAgICAgInRpdGxlIjogIumAsuihjOODnuODg+ODlyIsCiAgICAgICJ0aXRsZUVuIjogIlByb2dyZXNzIG1hcCIsCiAgICAgICJib2R5IjogIuiqv+afuzogSGl0IFRlc3TjgIFBbmNob3Jz44CBRE9NIE92ZXJsYXkg44Gu5LiA5qyh5oOF5aCx44KS56K66KqN44CC44Ki44Kk44OH44KiOiDphY3nva7liY3jga4gcmF5IC8gcmV0aWNsZSDjgajphY3nva7lvozjga4gYW5jaG9yIGNvbmZpZGVuY2Ug44KS5LiA55S76Z2i44Gr44G+44Go44KB44KL44CC5a6f6KOFOiBjYW52YXMg44GoIERPTSBvdmVybGF5IOmiqCBIVUQg44GnIEhNRCDkuI3opoHjga7nlpHkvLwgQVIg44K144Oz44OX44Or44KS6L+95Yqg44CC5qSc6Ki8OiDmrKHjga/mnKznianjga4gV2ViWFIgc2Vzc2lvbiDjgavov5HjgYQgZmVhdHVyZSBjaGVjayDjgaggZmFsbGJhY2sgVUkg44KS6Laz44GZ5q616ZqO44Gn44GZ44CCIiwKICAgICAgImJvZHlFbiI6ICJSZXNlYXJjaDogY2hlY2tlZCBwcmltYXJ5IHNvdXJjZXMgZm9yIEhpdCBUZXN0LCBBbmNob3JzLCBhbmQgRE9NIE92ZXJsYXkuIElkZWE6IGNvbWJpbmUgcHJlLXBsYWNlbWVudCByYXkgYW5kIHJldGljbGUgd2l0aCBwb3N0LXBsYWNlbWVudCBhbmNob3IgY29uZmlkZW5jZSBvbiBvbmUgc2NyZWVuLiBJbXBsZW1lbnRhdGlvbjogYWRkZWQgYW4gSE1ELWZyZWUgc2ltdWxhdGVkIEFSIHNhbXBsZSB1c2luZyBjYW52YXMgcGx1cyBhIERPTS1vdmVybGF5LWxpa2UgSFVELiBWYWxpZGF0aW9uIG5leHQ6IGFkZCBmZWF0dXJlIGNoZWNrcyBhbmQgZmFsbGJhY2sgVUkgY2xvc2VyIHRvIGEgcmVhbCBXZWJYUiBzZXNzaW9uLiIKICAgIH0sCiAgICB7CiAgICAgICJ0aXRsZSI6ICLkv6/nnrDjg6Hjg6IiLAogICAgICAidGl0bGVFbiI6ICJCaXJkJ3MtZXllIG1lbW8iLAogICAgICAiYm9keSI6ICJYUiDjga7ml6XmrKHjgrXjg7Pjg5fjg6vjga/jgIFBUEkg44KS5a6M5YWo5a6f6KOF44GZ44KL5YmN44Gr44CO5L2T6aiT5LiK44Gu5pyA5bCP5Yik5pat44CP44KS5YiH44KK5Ye644GZ44Go6JOE56mN44GX44KE44GZ44GE44Gn44GZ44CC5pio5pel44GvIEhVRCDjgajlpaXooYzjgY3lsaTjgIHku4rml6Xjga8gaGl0IHRlc3Qg44GoIGFuY2hvcuOAguOBqeOBoeOCieOCguacgOe1gueahOOBqiBYUiDlrp/oo4Xjgafjga/jgarjgY/jgIHkvZPpqJPjga7oqq3jgb/jgoTjgZnjgZXjgoTkuI3norrjgYvjgZXjgpLlhYjjgavmpJzoqLzjgZnjgovjgZ/jgoHjga7pg6jlk4HjgafjgZnjgIIiLAogICAgICAiYm9keUVuIjogIkRhaWx5IFhSIHNhbXBsZXMgYXJlIGVhc2llciB0byBhY2N1bXVsYXRlIHdoZW4gZWFjaCBvbmUgZXh0cmFjdHMgdGhlIHNtYWxsZXN0IGV4cGVyaWVudGlhbCBkZWNpc2lvbiBiZWZvcmUgZnVsbHkgaW1wbGVtZW50aW5nIHRoZSBBUEkuIFllc3RlcmRheSBmb2N1c2VkIG9uIEhVRCBhbmQgZGVwdGggbGF5ZXJzOyB0b2RheSBmb2N1c2VzIG9uIGhpdCB0ZXN0aW5nIGFuZCBhbmNob3JzLiBCb3RoIGFyZSBub3QgZmluYWwgWFIgaW1wbGVtZW50YXRpb25zIGJ1dCBwYXJ0cyBmb3IgdGVzdGluZyByZWFkYWJpbGl0eSBhbmQgdW5jZXJ0YWludHkgZmlyc3QuIgogICAgfSwKICAgIHsKICAgICAgInRpdGxlIjogIuS7iuaXpeOBruODn+ODi+ippuS9nOWAmeijnCIsCiAgICAgICJ0aXRsZUVuIjogIlRvZGF5J3MgbWluaSBwcm90b3R5cGUgY2FuZGlkYXRlIiwKICAgICAgImJvZHkiOiAi5o6h55So44GX44Gf5YCZ6KOc44GvIGBBUiBIaXQgQW5jaG9yIEJvYXJkYCDjgafjgZnjgILlgJnoo5zjgajjgZfjgabjga/ku5bjgasgRE9NIE92ZXJsYXkg44Gg44GR44KS5qih44GX44GfIHBhbmVsIGJsb2NraW5nIHNhbXBsZSDjgoLjgYLjgorjgb7jgZfjgZ/jgYzjgIHku4rml6Xjga/phY3nva7kvZPpqJPjga7moLjjgavjgarjgosgcmF544CBcmV0aWNsZeOAgWFuY2hvcuOAgWRyaWZ0IOOCkuS4gOOBpOOBq+OBvuOBqOOCgeOBvuOBl+OBn+OAgiIsCiAgICAgICJib2R5RW4iOiAiVGhlIHNlbGVjdGVkIG1pbmkgcHJvdG90eXBlIGlzIEFSIEhpdCBBbmNob3IgQm9hcmQuIEFub3RoZXIgY2FuZGlkYXRlIHdhcyBhIERPTS1vdmVybGF5LW9ubHkgcGFuZWwgYmxvY2tpbmcgc2FtcGxlLCBidXQgdG9kYXkgY29tYmluZXMgcmF5LCByZXRpY2xlLCBhbmNob3IsIGFuZCBkcmlmdCBiZWNhdXNlIHRoZXkgZm9ybSB0aGUgY29yZSBvZiBwbGFjZW1lbnQgaW50ZXJhY3Rpb24uIgogICAgfQogIF0KfQo=
+{
+  "date": "2026-07-08",
+  "headline": "AR hit test と anchor の最小試作",
+  "headlineEn": "Minimal AR hit-test and anchor prototype",
+  "summary": "WebXR Hit Test と Anchors、DOM Overlay の一次情報を参照し、HMD なしで床面への ray、reticle、anchor 配置、tracking drift を観察できる自作 HTML サンプルを追加しました。",
+  "summaryEn": "Based on primary references for WebXR Hit Test, Anchors, and DOM Overlay, this adds an original HTML prototype for observing a floor ray, reticle, anchor placement, and tracking drift without an HMD.",
+  "keyTopics": [
+    "WebXR Hit Test Module は 2025-12-11 の W3C Working Draft として、現実空間ジオメトリに対する ray intersection を扱う。",
+    "Hit Test の公式サンプルは、実空間の床や面に仮想オブジェクトを置く最小導線を確認する入口になる。",
+    "Anchors Module は `XRAnchor` と `anchorSpace`、persistent handle の考え方を定義しており、配置後の保持を設計する軸になる。",
+    "DOM Overlay は immersive session 中の 2D UI を扱い、`beforexrselect` で DOM 操作と XR world select の衝突を分けられる。",
+    "今日の自作サンプルは、本物の XR セッション前に ray、reticle、anchor list、drift の関係だけをブラウザ上で切り出した。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Hit Test Module is a W3C Working Draft dated 2025-12-11 and focuses on ray intersections against real-world geometry.",
+    "The official Hit Test sample is a compact entry point for placing virtual objects on real-world floors or surfaces.",
+    "The Anchors Module defines `XRAnchor`, `anchorSpace`, and persistent handles, which guide how placed content can be retained.",
+    "DOM Overlay covers 2D UI during immersive sessions and uses `beforexrselect` to separate DOM interactions from XR world select events.",
+    "Today's original sample isolates ray, reticle, anchor list, and drift behavior in the browser before using a real XR session."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: AR Hit Anchor Board",
+      "url": "../outputs/2026-07-08_html_ar_hit_anchor_board.html"
+    },
+    {
+      "label": "WebXR Hit Test Module",
+      "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+    },
+    {
+      "label": "WebXR Hit Test sample",
+      "url": "https://immersive-web.github.io/webxr-samples/hit-test.html"
+    },
+    {
+      "label": "WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "WebXR DOM Overlays Module",
+      "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Hit Test の公式サンプルです。面白い点は、空間認識そのものを大きく見せるのではなく、ray が実世界の面に当たった一点を reticle として示し、そこにユーザーの決定を重ねる構造が非常に小さいことです。これに Anchors の発想を足すと、置いた瞬間だけでなく、置いた後にどれだけ信用できるかを UI として見せる必要が出てきます。",
+      "bodyEn": "The notable reference today is the official WebXR Hit Test sample. What matters is how small the interaction structure is: show the point where a ray hits a real-world surface as a reticle, then let the user commit to that point. Adding the Anchors idea shifts the question from placement alone to how confidently placed content can persist afterward.",
+      "links": [
+        {
+          "label": "Official Hit Test sample",
+          "url": "https://immersive-web.github.io/webxr-samples/hit-test.html"
+        },
+        {
+          "label": "W3C Hit Test Module",
+          "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "reticle を単なる照準ではなく、面の信頼度、ray の角度、anchor の数を同時に示す小さな計器として扱うと、AR らしい配置前の迷いを表現できます。今日は床面 grid と中心 ray、クリック配置、drift ボタンによる追跡ノイズだけに絞り、実装より先に『置けそう／置くべきでない』のフィードバック設計を確認しました。",
+      "bodyEn": "Treating the reticle not just as a cursor but as a compact instrument for surface confidence, ray angle, and anchor count makes the uncertainty before AR placement visible. Today's prototype keeps only a floor grid, center ray, click placement, and drift button so the feedback design can be tested before a full implementation.",
+      "links": [
+        {
+          "label": "Today's sample",
+          "url": "../outputs/2026-07-08_html_ar_hit_anchor_board.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実 WebXR では session request 時に `hit-test` や `dom-overlay` を optionalFeatures / requiredFeatures として扱い、XRFrame から hit test result の pose を取り、必要なら anchor を作る流れになります。今回の HTML 版は canvas 上で疑似 floor projection を描くだけですが、UI 分離としては DOM Overlay の考え方に近く、2D 操作面と空間配置面を分けて検証できます。",
+      "bodyEn": "In real WebXR, a session would request features such as `hit-test` and `dom-overlay`, read hit-test poses from XRFrame, and create anchors where needed. This HTML prototype only draws a simulated floor projection on canvas, but its UI separation mirrors the DOM Overlay idea by separating the 2D control surface from spatial placement.",
+      "links": [
+        {
+          "label": "DOM Overlays Module",
+          "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+        },
+        {
+          "label": "Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は WebXR Depth Sensing、Lighting Estimation、Hand Input を見て、配置した anchor が周囲の遮蔽・明るさ・手入力にどう反応すべきかを分けて試したいです。特に depth は『置けた』後の見え方の説得力に効くので、単純な occlusion preview を自作サンプルにできます。",
+      "bodyEn": "Next, watch WebXR Depth Sensing, Lighting Estimation, and Hand Input to split how a placed anchor should react to occlusion, light, and hand input. Depth is especially important after placement because it affects visual believability, making a simple occlusion preview a good next sample."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`AR Hit Anchor Board` を開き、ポインタを下側に動かして reticle の大きさと confidence を見ながらクリック配置します。その後 Drift を押すと、配置後の anchor が少し揺れ、信頼度が下がるため、AR UI で『保持できている感』をどう出すかを考えやすくなります。",
+      "bodyEn": "Open AR Hit Anchor Board, move the pointer toward the lower area, and place anchors while watching reticle size and confidence. Pressing Drift makes placed anchors move slightly and lowers confidence, making it easier to think about how AR UI should communicate persistence quality.",
+      "links": [
+        {
+          "label": "Open AR Hit Anchor Board",
+          "url": "../outputs/2026-07-08_html_ar_hit_anchor_board.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Hit Test、Anchors、DOM Overlay の一次情報を確認。アイデア: 配置前の ray / reticle と配置後の anchor confidence を一画面にまとめる。実装: canvas と DOM overlay 風 HUD で HMD 不要の疑似 AR サンプルを追加。検証: 次は本物の WebXR session に近い feature check と fallback UI を足す段階です。",
+      "bodyEn": "Research: checked primary sources for Hit Test, Anchors, and DOM Overlay. Idea: combine pre-placement ray and reticle with post-placement anchor confidence on one screen. Implementation: added an HMD-free simulated AR sample using canvas plus a DOM-overlay-like HUD. Validation next: add feature checks and fallback UI closer to a real WebXR session."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の日次サンプルは、API を完全実装する前に『体験上の最小判断』を切り出すと蓄積しやすいです。昨日は HUD と奥行き層、今日は hit test と anchor。どちらも最終的な XR 実装ではなく、体験の読みやすさや不確かさを先に検証するための部品です。",
+      "bodyEn": "Daily XR samples are easier to accumulate when each one extracts the smallest experiential decision before fully implementing the API. Yesterday focused on HUD and depth layers; today focuses on hit testing and anchors. Both are not final XR implementations but parts for testing readability and uncertainty first."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `AR Hit Anchor Board` です。候補としては他に DOM Overlay だけを模した panel blocking sample もありましたが、今日は配置体験の核になる ray、reticle、anchor、drift を一つにまとめました。",
+      "bodyEn": "The selected mini prototype is AR Hit Anchor Board. Another candidate was a DOM-overlay-only panel blocking sample, but today combines ray, reticle, anchor, and drift because they form the core of placement interaction."
+    }
+  ]
+}

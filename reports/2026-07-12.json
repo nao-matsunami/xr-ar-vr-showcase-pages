@@ -1,1 +1,137 @@
-ewogICJkYXRlIjogIjIwMjYtMDctMTIiLAogICJoZWFkbGluZSI6ICJMYXllcnMg44GoIEhhbmQvRGVwdGgg44KS6YeN44Gt44Gf6YGu6JS9IFVJIOOCkuippuOBmSIsCiAgImhlYWRsaW5lRW4iOiAiVGVzdGluZyBvY2NsdWRlZCBVSSBieSBjb21iaW5pbmcgTGF5ZXJzIHdpdGggSGFuZCBhbmQgRGVwdGggY3VlcyIsCiAgInN1bW1hcnkiOiAiV2ViWFIgTGF5ZXJzIEFQSeOAgURlcHRoIFNlbnNpbmfjgIFIYW5kIElucHV044CBTGlnaHRpbmcgRXN0aW1hdGlvbiDjga7kuIDmrKHmg4XloLHjgpLnorroqo3jgZfjgIHku4rml6Xjga/pq5jnsr7ntLAgcXVhZCBsYXllciDjgYzmiYvliY3jga7miYvjgafpmqDjgozjgIFwaW5jaCDjgajnhafmmI7jgafnirbmhYvjgYzlpInjgo/jgovoh6rkvZwgSFRNTCDjgrXjg7Pjg5fjg6vjgpLov73liqDjgZfjgb7jgZfjgZ/jgIIiLAogICJzdW1tYXJ5RW4iOiAiQWZ0ZXIgcmV2aWV3aW5nIHByaW1hcnkgc291cmNlcyBmb3IgdGhlIFdlYlhSIExheWVycyBBUEksIERlcHRoIFNlbnNpbmcsIEhhbmQgSW5wdXQsIGFuZCBMaWdodGluZyBFc3RpbWF0aW9uLCB0b2RheSdzIG9yaWdpbmFsIEhUTUwgc2FtcGxlIHNpbXVsYXRlcyBhIGhpZ2gtZmlkZWxpdHkgcXVhZCBsYXllciB0aGF0IGlzIG9jY2x1ZGVkIGJ5IGEgbmVhcmVyIGhhbmQgYW5kIGNoYW5nZXMgc3RhdGUgdGhyb3VnaCBwaW5jaCBhbmQgbGlnaHRpbmcgY29udHJvbHMuIiwKICAia2V5VG9waWNzIjogWwogICAgIldlYlhSIExheWVycyBBUEkgTGV2ZWwgMSDjga4gRWRpdG9yJ3MgRHJhZnQg44GvIDIwMjYtMDYtMTIg5pu05paw44Gn44CBV2ViWFIgc2Vzc2lvbiDlhoXjga4gcHJvamVjdGlvbiAvIHF1YWQgLyBjeWxpbmRlciAvIGVxdWlyZWN0IC8gY3ViZSDjgarjganjga4gY29tcG9zaXRpb24gbGF5ZXIg44KS5omx44GG44CCIiwKICAgICJMYXllcnMg44GvIGBsYXllcnNgIGZlYXR1cmUgZGVzY3JpcHRvciDjgpIgaW1tZXJzaXZlLXZyIC8gaW1tZXJzaXZlLWFyIHNlc3Npb24g44Gn6KaB5rGC44GX44CBYFhSV2ViR0xCaW5kaW5nYCDjgoQgYFhSTWVkaWFCaW5kaW5nYCDjgYvjgokgbGF5ZXIg44KS5L2c5oiQ44GX44GmIHJlbmRlciBzdGF0ZSDjgavov73liqDjgZnjgovmtYHjgozjgavjgarjgaPjgabjgYTjgovjgIIiLAogICAgIkNvbXBvc2l0aW9uIGxheWVyIOOBryB0ZXh0LW9wdGltaXplZCAvIGdyYXBoaWNzLW9wdGltaXplZCDjga4gcXVhbGl0eSDjgpLmjIHjgaHjgIFIVUQg44KE5Zyw5Zuz44CB5paH5a2XIFVJIOOBruWPr+iqreaAp+OCkiBleWUgYnVmZmVyIOOBoOOBkeOBq+S+neWtmOOBl+OBquOBhOW9ouOBp+mrmOOCgeOCieOCjOOCi+OAgiIsCiAgICAiRGVwdGggU2Vuc2luZyDjgaggSGFuZCBJbnB1dCDjgpLph43jga3jgovjgajjgIHmiYvjgYwgVUkg44KI44KK5omL5YmN44Gr44GC44KL5pmC44Gg44GR6YGu6JS944GX44CB5aWl44Gr44GC44KL5Luu5oOz54mp44KS6JaE44GP44GZ44KL44KI44GG44Gq56m66ZaTIFVJIOOBruaVtOWQiOaAp+OCkuS9nOOCiuOChOOBmeOBhOOAgiIsCiAgICAiTGlnaHRpbmcgRXN0aW1hdGlvbiDjga7ogIPjgYjmlrnjgpLotrPjgZnjgajjgIHmiYvlhYPjga4gbGF5ZXIg44Gu5b2x44CB5piO44KL44GV44CB6YG45oqeIGZlZWRiYWNrIOOCkueSsOWig+WFieOBq+WQiOOCj+OBm+OBpuiqv+aVtOOBp+OBjeOCi+OAgiIKICBdLAogICJrZXlUb3BpY3NFbiI6IFsKICAgICJUaGUgV2ViWFIgTGF5ZXJzIEFQSSBMZXZlbCAxIEVkaXRvcidzIERyYWZ0IHdhcyB1cGRhdGVkIG9uIDIwMjYtMDYtMTIgYW5kIGNvdmVycyBjb21wb3NpdGlvbiBsYXllcnMgc3VjaCBhcyBwcm9qZWN0aW9uLCBxdWFkLCBjeWxpbmRlciwgZXF1aXJlY3QsIGFuZCBjdWJlIGxheWVycyB3aXRoaW4gV2ViWFIgc2Vzc2lvbnMuIiwKICAgICJMYXllcnMgYXJlIHJlcXVlc3RlZCB0aHJvdWdoIHRoZSBgbGF5ZXJzYCBmZWF0dXJlIGRlc2NyaXB0b3IgaW4gaW1tZXJzaXZlLXZyIG9yIGltbWVyc2l2ZS1hciBzZXNzaW9ucywgdGhlbiBjcmVhdGVkIHRocm91Z2ggYFhSV2ViR0xCaW5kaW5nYCBvciBgWFJNZWRpYUJpbmRpbmdgIGFuZCBhZGRlZCB0byByZW5kZXIgc3RhdGUuIiwKICAgICJDb21wb3NpdGlvbiBsYXllcnMgY2FuIHVzZSB0ZXh0LW9wdGltaXplZCBvciBncmFwaGljcy1vcHRpbWl6ZWQgcXVhbGl0eSwgaW1wcm92aW5nIHJlYWRhYmlsaXR5IGZvciBIVURzLCBtYXBzLCBhbmQgdGV4dCBVSSB3aXRob3V0IHJlbHlpbmcgb25seSBvbiB0aGUgZXllIGJ1ZmZlci4iLAogICAgIkNvbWJpbmluZyBEZXB0aCBTZW5zaW5nIGFuZCBIYW5kIElucHV0IG1ha2VzIHNwYXRpYWwgVUkgY29oZXJlbmNlIGVhc2llcjogY29udGVudCBjYW4gaGlkZSBvbmx5IHdoZW4gYSBoYW5kIGlzIHBoeXNpY2FsbHkgaW4gZnJvbnQgb2YgdGhlIFVJLCB3aGlsZSBmYXJ0aGVyIHZpcnR1YWwgY29udGVudCBjYW4gZmFkZS4iLAogICAgIkFkZGluZyBMaWdodGluZyBFc3RpbWF0aW9uIGlkZWFzIGxldHMgaGFuZC1hZGphY2VudCBsYXllcnMgYWRqdXN0IHNoYWRvd3MsIGJyaWdodG5lc3MsIGFuZCBzZWxlY3Rpb24gZmVlZGJhY2sgdG8gdGhlIHN1cnJvdW5kaW5nIGxpZ2h0LiIKICBdLAogICJsaW5rcyI6IFsKICAgIHsKICAgICAgImxhYmVsIjogIlRvZGF5J3Mgc2FtcGxlOiBMYXllcmVkIEhhbmQgT2NjbHVzaW9uIFN0YWdlIiwKICAgICAgInVybCI6ICIuLi9vdXRwdXRzLzIwMjYtMDctMTJfaHRtbF9sYXllcmVkX2hhbmRfb2NjbHVzaW9uX3N0YWdlLmh0bWwiCiAgICB9LAogICAgewogICAgICAibGFiZWwiOiAiV2ViWFIgTGF5ZXJzIEFQSSBMZXZlbCAxIiwKICAgICAgInVybCI6ICJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL2xheWVycy8iCiAgICB9LAogICAgewogICAgICAibGFiZWwiOiAiV2ViWFIgRGVwdGggU2Vuc2luZyBNb2R1bGUiLAogICAgICAidXJsIjogImh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vZGVwdGgtc2Vuc2luZy8iCiAgICB9LAogICAgewogICAgICAibGFiZWwiOiAiV2ViWFIgSGFuZCBJbnB1dCBNb2R1bGUgLSBMZXZlbCAxIiwKICAgICAgInVybCI6ICJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL3dlYnhyLWhhbmQtaW5wdXQvIgogICAgfSwKICAgIHsKICAgICAgImxhYmVsIjogIldlYlhSIExpZ2h0aW5nIEVzdGltYXRpb24gQVBJIExldmVsIDEiLAogICAgICAidXJsIjogImh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vbGlnaHRpbmctZXN0aW1hdGlvbi8iCiAgICB9LAogICAgewogICAgICAibGFiZWwiOiAiSW1tZXJzaXZlIFdlYiBXZWJYUiBTYW1wbGVzIiwKICAgICAgInVybCI6ICJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL3dlYnhyLXNhbXBsZXMvIgogICAgfQogIF0sCiAgInNlY3Rpb25zIjogWwogICAgewogICAgICAidGl0bGUiOiAi5rOo55uu5LqL5L6L44Go5L2V44GM6Z2i55m944GE44GLIiwKICAgICAgInRpdGxlRW4iOiAiTm90YWJsZSBleGFtcGxlIGFuZCB3aHkgaXQgbWF0dGVycyIsCiAgICAgICJib2R5IjogIuS7iuaXpeOBruazqOebruOBryBXZWJYUiBMYXllcnMgQVBJIOOBp+OBmeOAgumdoueZveOBhOeCueOBr+OAgemAmuW4uOOBriBwcm9qZWN0aW9uIGxheWVyIOOBoOOBkeOBp+OBquOBj+OAgXF1YWQgbGF5ZXIg44KEIGN5bGluZGVyIGxheWVyIOOBruOCiOOBhuOBqiBjb21wb3NpdGlvbiBsYXllciDjgpIgY29tcG9zaXRvciDlgbTjgafmibHjgYTjgIHjg4bjgq3jgrnjg4jjgoTlnLDlm7Pjga7jgojjgYbjgarntLDjgYvjgYQgVUkg44KS6auY5ZOB6LOq44Gr5L+d44Gm44KL44GT44Go44Gn44GZ44CC5LuV5qeY5LiK44GvIGBYUkNvbXBvc2l0aW9uTGF5ZXIub3BhY2l0eWDjgIFgcXVhbGl0eWDjgIFgbmVlZHNSZWRyYXdgIOOBquOBqeOBjOOBguOCiuOAgeWLleOBjee2muOBkeOCiyAzRCBzY2VuZSDjgajjgIHoqq3jgb/jgoTjgZnjgYTlm7rlrpogVUkg44KS5YiG44GR44Gm6ICD44GI44KJ44KM44G+44GZ44CCIiwKICAgICAgImJvZHlFbiI6ICJUb2RheSdzIG5vdGFibGUgcmVmZXJlbmNlIGlzIHRoZSBXZWJYUiBMYXllcnMgQVBJLiBUaGUgaW50ZXJlc3RpbmcgcGFydCBpcyB0aGF0IGNvbXBvc2l0aW9uIGxheWVycyBzdWNoIGFzIHF1YWQgYW5kIGN5bGluZGVyIGxheWVycyBjYW4gYmUgaGFuZGxlZCBieSB0aGUgY29tcG9zaXRvciByYXRoZXIgdGhhbiByZWx5aW5nIG9ubHkgb24gdGhlIHByb2plY3Rpb24gbGF5ZXIsIGhlbHBpbmcgZGV0YWlsZWQgVUkgbGlrZSB0ZXh0IG9yIG1hcHMgcmVtYWluIGxlZ2libGUuIFRoZSBzcGVjaWZpY2F0aW9uIGluY2x1ZGVzIGNvbmNlcHRzIHN1Y2ggYXMgYFhSQ29tcG9zaXRpb25MYXllci5vcGFjaXR5YCwgYHF1YWxpdHlgLCBhbmQgYG5lZWRzUmVkcmF3YCwgbGV0dGluZyBhdXRob3JzIHNlcGFyYXRlIGEgbW92aW5nIDNEIHNjZW5lIGZyb20gcmVhZGFibGUgZml4ZWQgVUkuIiwKICAgICAgImxpbmtzIjogWwogICAgICAgIHsKICAgICAgICAgICJsYWJlbCI6ICJXZWJYUiBMYXllcnMgQVBJIExldmVsIDEiLAogICAgICAgICAgInVybCI6ICJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL2xheWVycy8iCiAgICAgICAgfQogICAgICBdCiAgICB9LAogICAgewogICAgICAidGl0bGUiOiAi6KGo54++44O744Kk44Oz44K/44Op44Kv44K344On44Oz44Gu44Ki44Kk44OH44KiIiwKICAgICAgInRpdGxlRW4iOiAiRXhwcmVzc2lvbiBhbmQgaW50ZXJhY3Rpb24gaWRlYSIsCiAgICAgICJib2R5IjogIkxheWVycyDjga7liKnngrnjgpIgVUkg44Gu6KaL44KE44GZ44GV44Gg44GR44Gn57WC44KP44KJ44Gb44Ga44CBSGFuZCBJbnB1dCDjgaggRGVwdGggU2Vuc2luZyDjga7oprPlr5/ngrnjgpLmt7fjgZzjgovjgajjgIHmiYvjgYwgcXVhZCBsYXllciDjgojjgormiYvliY3jgavlhaXjgaPjgZ/mmYLjgaDjgZEgVUkg44KS6Ieq54S244Gr6Zqg44GZ6KGo54++44Gr44Gq44KK44G+44GZ44CC5LuK5pel44Gu44K144Oz44OX44Or44Gn44GvIHBvaW50ZXIg44KS5omL44Go44GX44Gm5omx44GE44CBaGFuZCBkZXB0aCDjgaggbGF5ZXIgZGVwdGgg44Gu5beu44GL44KJ6YGu6JS9546H44KS6KiI566X44GX44CBcGluY2gg44GM5by344GE5pmC44Gg44GRIGhvdmVyIOOBi+OCiSBzZWxlY3Qg44Gr5aSJ44KP44KL44KI44GG44Gr44GX44G+44GX44Gf44CCIiwKICAgICAgImJvZHlFbiI6ICJMYXllcnMgYmVjb21lIG1vcmUgdGhhbiBhIHJlYWRhYmlsaXR5IHRvb2wgd2hlbiBjb21iaW5lZCB3aXRoIEhhbmQgSW5wdXQgYW5kIERlcHRoIFNlbnNpbmc6IFVJIGNhbiBiZSBoaWRkZW4gbmF0dXJhbGx5IG9ubHkgd2hlbiBhIGhhbmQgaXMgaW4gZnJvbnQgb2YgdGhlIHF1YWQgbGF5ZXIuIFRvZGF5J3Mgc2FtcGxlIHRyZWF0cyB0aGUgcG9pbnRlciBhcyBhIGhhbmQsIGNvbXB1dGVzIG9jY2x1c2lvbiBmcm9tIHRoZSBoYW5kL2xheWVyIGRlcHRoIGRpZmZlcmVuY2UsIGFuZCBjaGFuZ2VzIGhvdmVyIGludG8gc2VsZWN0IG9ubHkgd2hlbiBwaW5jaCBpcyBzdHJvbmcuIiwKICAgICAgImxpbmtzIjogWwogICAgICAgIHsKICAgICAgICAgICJsYWJlbCI6ICJPcGVuIHRvZGF5J3Mgc2FtcGxlIiwKICAgICAgICAgICJ1cmwiOiAiLi4vb3V0cHV0cy8yMDI2LTA3LTEyX2h0bWxfbGF5ZXJlZF9oYW5kX29jY2x1c2lvbl9zdGFnZS5odG1sIgogICAgICAgIH0KICAgICAgXQogICAgfSwKICAgIHsKICAgICAgInRpdGxlIjogIuWItuS9nOOBq+S9v+OBiOOBneOBhuOBquaKgOihk+ODoeODoiIsCiAgICAgICJ0aXRsZUVuIjogIlByb2R1Y3Rpb24gbm90ZSIsCiAgICAgICJib2R5IjogIuWun+ijheaZguOBryBgbmF2aWdhdG9yLnhyLnJlcXVlc3RTZXNzaW9uKFwiaW1tZXJzaXZlLWFyXCIsIHsgb3B0aW9uYWxGZWF0dXJlczogW1wibGF5ZXJzXCIsIFwiZGVwdGgtc2Vuc2luZ1wiLCBcImhhbmQtdHJhY2tpbmdcIiwgXCJsaWdodC1lc3RpbWF0aW9uXCJdIH0pYCDjga7jgojjgYbjgavmqZ/og73jgpLliIbjgZHjgabopoHmsYLjgZfjgIFsYXllciDjga8gYFhSV2ViR0xCaW5kaW5nYCDjgYvjgonkvZzjgorjgb7jgZnjgILpga7olL3jga8gZGVwdGggdGV4dHVyZSDjgb7jgZ/jga8gQ1BVIGRlcHRoIGRhdGEg44GoIGhhbmQgam9pbnQg44Gu5L2N572u44KS5ZCM44GYIHJlZmVyZW5jZSBzcGFjZSDjgavjgZ3jgo3jgYjjgIFVSSBsYXllciDjga7nn6nlvaLlhoXjgafliY3lvozplqLkv4LjgpLoqZXkvqHjgZnjgovjga7jgYzln7rmnKzjgavjgarjgorjgb7jgZnjgIIiLAogICAgICAiYm9keUVuIjogIkluIGEgcmVhbCBpbXBsZW1lbnRhdGlvbiwgZmVhdHVyZXMgY2FuIGJlIHJlcXVlc3RlZCBzZXBhcmF0ZWx5LCBmb3IgZXhhbXBsZSBgbmF2aWdhdG9yLnhyLnJlcXVlc3RTZXNzaW9uKFwiaW1tZXJzaXZlLWFyXCIsIHsgb3B0aW9uYWxGZWF0dXJlczogW1wibGF5ZXJzXCIsIFwiZGVwdGgtc2Vuc2luZ1wiLCBcImhhbmQtdHJhY2tpbmdcIiwgXCJsaWdodC1lc3RpbWF0aW9uXCJdIH0pYCwgd2hpbGUgbGF5ZXJzIGFyZSBjcmVhdGVkIGZyb20gYFhSV2ViR0xCaW5kaW5nYC4gRm9yIG9jY2x1c2lvbiwgZGVwdGggdGV4dHVyZXMgb3IgQ1BVIGRlcHRoIGRhdGEgYW5kIGhhbmQgam9pbnQgcG9zaXRpb25zIHNob3VsZCBiZSByZXNvbHZlZCBpbnRvIHRoZSBzYW1lIHJlZmVyZW5jZSBzcGFjZSwgdGhlbiB0ZXN0ZWQgYWdhaW5zdCB0aGUgVUkgbGF5ZXIgcmVjdGFuZ2xlLiIsCiAgICAgICJsaW5rcyI6IFsKICAgICAgICB7CiAgICAgICAgICAibGFiZWwiOiAiTGF5ZXJzIGluaXRpYWxpemF0aW9uIGZsb3ciLAogICAgICAgICAgInVybCI6ICJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL2xheWVycy8jaW5pdGlhbGl6YXRpb24iCiAgICAgICAgfSwKICAgICAgICB7CiAgICAgICAgICAibGFiZWwiOiAiRGVwdGggU2Vuc2luZyBNb2R1bGUiLAogICAgICAgICAgInVybCI6ICJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL2RlcHRoLXNlbnNpbmcvIgogICAgICAgIH0KICAgICAgXQogICAgfSwKICAgIHsKICAgICAgInRpdGxlIjogIuaYjuaXpeS7pemZjeOCpuOCqeODg+ODgeOBmeOCi+WvvuixoSIsCiAgICAgICJ0aXRsZUVuIjogIldhdGNoIG5leHQiLAogICAgICAiYm9keSI6ICLmrKHjga8gTGF5ZXJzIOOBruS4reOBp+OCgiBjeWxpbmRlciBsYXllciDjgaggc3RlcmVvIG1lZGlhIGxheWVyIOOCkuimi+OBn+OBhOOBp+OBmeOAguaJi+WJjeOBruaJi+OBp+mBruiUveOBleOCjOOCi+ODiuODk+OCsuODvOOCt+ODp+ODsyBIVUQg44GL44KJ44CB6KaW6YeO44KS5YyF44KA44OR44OO44Op44OeL+WLleeUuyBsYXllcuOAgeOBvuOBn+OBr+ikh+aVsOOBriBsYXllciDplpPjga4gZGVwdGggc29ydGluZyDjgbjluoPjgZLjgovjgajjgIHlrp/nlKggVUkg44Gr6L+R44Gl44GN44G+44GZ44CCIiwKICAgICAgImJvZHlFbiI6ICJOZXh0LCBjeWxpbmRlciBsYXllcnMgYW5kIHN0ZXJlbyBtZWRpYSBsYXllcnMgYXJlIHdvcnRoIHdhdGNoaW5nLiBFeHRlbmRpbmcgZnJvbSBhIGhhbmQtb2NjbHVkZWQgbmF2aWdhdGlvbiBIVUQgaW50byBwYW5vcmFtaWMvdmlkZW8gbGF5ZXJzIG9yIGRlcHRoIHNvcnRpbmcgYmV0d2VlbiBtdWx0aXBsZSBsYXllcnMgd291bGQgbW92ZSB0aGUgc2FtcGxlcyBjbG9zZXIgdG8gcHJhY3RpY2FsIHNwYXRpYWwgVUkuIiwKICAgICAgImxpbmtzIjogWwogICAgICAgIHsKICAgICAgICAgICJsYWJlbCI6ICJMYXllciB0eXBlcyIsCiAgICAgICAgICAidXJsIjogImh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vbGF5ZXJzLyNsYXllci10eXBlcyIKICAgICAgICB9CiAgICAgIF0KICAgIH0sCiAgICB7CiAgICAgICJ0aXRsZSI6ICLoqabjgZnjgarjgonjgZPjgowiLAogICAgICAidGl0bGVFbiI6ICJJZiB5b3UgdHJ5IG9uZSB0aGluZyIsCiAgICAgICJib2R5IjogImBMYXllcmVkIEhhbmQgT2NjbHVzaW9uIFN0YWdlYCDjgpLplovjgY3jgIFwb2ludGVyIOOCkuS4reWkruOBriBsYXllciDkuIrjgavnp7vli5XjgZfjgabjgYvjgokgaGFuZCBkZXB0aCDjgpIgbGF5ZXIgZGVwdGgg44KI44KK5bCP44GV44GP44GX44Gm44GP44Gg44GV44GE44CC5omL44GM5omL5YmN44Gr44GC44KL5pmC44Gg44GR6YGu6JS9546H44GM5LiK44GM44KK44CBcGluY2gg44KS5by344GP44GZ44KL44GoIGhvdmVyIOOBjCBzZWxlY3Qg44Gr5aSJ44KP44KK44G+44GZ44CCVGV4dCAvIE1lZGlhIC8gQWxlcnQg44KS5YiH44KK5pu/44GI44KL44Go44CB5ZCM44GYIGRlcHRoIOWIpOWumuOBp+eVsOOBquOCiyBsYXllciDnlKjpgJTjgpLnorroqo3jgafjgY3jgb7jgZnjgIIiLAogICAgICAiYm9keUVuIjogIk9wZW4gTGF5ZXJlZCBIYW5kIE9jY2x1c2lvbiBTdGFnZSwgbW92ZSB0aGUgcG9pbnRlciBvdmVyIHRoZSBjZW50cmFsIGxheWVyLCB0aGVuIHNldCBoYW5kIGRlcHRoIGxvd2VyIHRoYW4gbGF5ZXIgZGVwdGguIE9jY2x1c2lvbiBpbmNyZWFzZXMgb25seSB3aGVuIHRoZSBoYW5kIGlzIGluIGZyb250LCBhbmQgaW5jcmVhc2luZyBwaW5jaCBjaGFuZ2VzIGhvdmVyIGludG8gc2VsZWN0LiBTd2l0Y2hpbmcgVGV4dCwgTWVkaWEsIGFuZCBBbGVydCBzaG93cyBkaWZmZXJlbnQgbGF5ZXIgdXNlcyB3aXRoIHRoZSBzYW1lIGRlcHRoIGxvZ2ljLiIsCiAgICAgICJsaW5rcyI6IFsKICAgICAgICB7CiAgICAgICAgICAibGFiZWwiOiAiT3BlbiBMYXllcmVkIEhhbmQgT2NjbHVzaW9uIFN0YWdlIiwKICAgICAgICAgICJ1cmwiOiAiLi4vb3V0cHV0cy8yMDI2LTA3LTEyX2h0bWxfbGF5ZXJlZF9oYW5kX29jY2x1c2lvbl9zdGFnZS5odG1sIgogICAgICAgIH0KICAgICAgXQogICAgfSwKICAgIHsKICAgICAgInRpdGxlIjogIumAsuihjOODnuODg+ODlyIsCiAgICAgICJ0aXRsZUVuIjogIlByb2dyZXNzIG1hcCIsCiAgICAgICJib2R5IjogIuiqv+afuzogTGF5ZXJzIEFQSeOAgURlcHRoIFNlbnNpbmfjgIFIYW5kIElucHV044CBTGlnaHRpbmcgRXN0aW1hdGlvbuOAgeWFrOW8jyBXZWJYUiBTYW1wbGVzIOOCkueiuuiqjeOAguOCouOCpOODh+OCojog6auY57K+57SwIFVJIGxheWVyIOOBqOaJi+WJjeOBruaJi+OBrumBruiUveOCkiBITUQg44Gq44GX44Gn6Kaz5a+f44GZ44KL44CC5a6f6KOFOiBjYW52YXMg5LiK44GuIHF1YWQgbGF5ZXLjgIHmiYvjga7lhoblvaIgZGVwdGggdm9sdW1l44CBcGluY2ggc2xpZGVy44CBbGlnaHRpbmcgc2xpZGVy44CBdGV4dC9tZWRpYS9hbGVydCBwcmVzZXTjgIHpga7olL3njocgcmVhZG91dCDjgpLkvZzmiJDjgILmpJzoqLw6IEpTT04gcGFyc2XjgIFIVE1MIHNjcmlwdCDmp4vmlofjgIHnlJ/miJDjg5rjg7zjgrjjgIHlhazplosgVVJMIOOCkueiuuiqjeOBmeOCi+OAgiIsCiAgICAgICJib2R5RW4iOiAiUmVzZWFyY2g6IHJldmlld2VkIHRoZSBMYXllcnMgQVBJLCBEZXB0aCBTZW5zaW5nLCBIYW5kIElucHV0LCBMaWdodGluZyBFc3RpbWF0aW9uLCBhbmQgb2ZmaWNpYWwgV2ViWFIgU2FtcGxlcy4gSWRlYTogaW5zcGVjdCBoaWdoLWZpZGVsaXR5IFVJIGxheWVyIG9jY2x1c2lvbiBieSBhIG5lYXJlciBoYW5kIHdpdGhvdXQgYSBoZWFkc2V0LiBJbXBsZW1lbnRhdGlvbjogY3JlYXRlZCBhIGNhbnZhcyBxdWFkIGxheWVyLCBjaXJjdWxhciBoYW5kIGRlcHRoIHZvbHVtZSwgcGluY2ggc2xpZGVyLCBsaWdodGluZyBzbGlkZXIsIHRleHQvbWVkaWEvYWxlcnQgcHJlc2V0cywgYW5kIG9jY2x1c2lvbiByZWFkb3V0LiBWYWxpZGF0aW9uOiBKU09OIHBhcnNpbmcsIEhUTUwgc2NyaXB0IHN5bnRheCwgZ2VuZXJhdGVkIHBhZ2VzLCBhbmQgcHVibGljIFVSTHMgYXJlIGNoZWNrZWQuIiwKICAgICAgImxpbmtzIjogWwogICAgICAgIHsKICAgICAgICAgICJsYWJlbCI6ICJJbW1lcnNpdmUgV2ViIFdlYlhSIFNhbXBsZXMiLAogICAgICAgICAgInVybCI6ICJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL3dlYnhyLXNhbXBsZXMvIgogICAgICAgIH0KICAgICAgXQogICAgfSwKICAgIHsKICAgICAgInRpdGxlIjogIuS/r+eesOODoeODoiIsCiAgICAgICJ0aXRsZUVuIjogIkJpcmQncy1leWUgbWVtbyIsCiAgICAgICJib2R5IjogIuOBk+OCjOOBvuOBp+OBrua1geOCjOOBr+OAgeWlpeihjOOBjSBIVUTjgIFoaXQgdGVzdCAvIGFuY2hvcuOAgWRlcHRoIG9jY2x1c2lvbuOAgWxpZ2h0aW5nIGVzdGltYXRpb27jgIFoYW5kIGlucHV044CB44Gd44GX44GmIGxheWVyICsgaGFuZC9kZXB0aCDlkIjmiJDjgafjgZnjgILnqbrplpPkvZPpqJPjga7jgI7opovjgYjjgovjgI/jgI7nva7jgY/jgI/jgI7pmqDjgozjgovjgI/jgI7jgarjgZjjgoDjgI/jgI7op6bjgovjgI/jgI7oqq3jgb/jgoTjgZnjgY/ph43jga3jgovjgI/jgpLjgIHoh6rkvZzjga7mnIDlsI/jgrXjg7Pjg5fjg6vjgajjgZfjgabnqY3jgb/kuIrjgZLjgabjgYTjgb7jgZnjgIIiLAogICAgICAiYm9keUVuIjogIlRoZSBzZXF1ZW5jZSBzbyBmYXIgaXMgZGVwdGggSFVELCBoaXQgdGVzdCBhbmQgYW5jaG9ycywgZGVwdGggb2NjbHVzaW9uLCBsaWdodGluZyBlc3RpbWF0aW9uLCBoYW5kIGlucHV0LCBhbmQgbm93IGxheWVyIHBsdXMgaGFuZC9kZXB0aCBjb21wb3NpdGlvbi4gVGhlIGFyY2hpdmUgaXMgYnVpbGRpbmcgc21hbGwgb3JpZ2luYWwgc2FtcGxlcyBhcm91bmQgc2VlaW5nLCBwbGFjaW5nLCBoaWRpbmcsIGJsZW5kaW5nLCB0b3VjaGluZywgYW5kIHJlYWRhYmxlIGxheWVyaW5nLiIKICAgIH0sCiAgICB7CiAgICAgICJ0aXRsZSI6ICLku4rml6Xjga7jg5/jg4voqabkvZzlgJnoo5wiLAogICAgICAidGl0bGVFbiI6ICJUb2RheSdzIG1pbmkgcHJvdG90eXBlIGNhbmRpZGF0ZSIsCiAgICAgICJib2R5IjogIuaOoeeUqOOBl+OBn+WAmeijnOOBryBgTGF5ZXJlZCBIYW5kIE9jY2x1c2lvbiBTdGFnZWAg44Gn44GZ44CC5a6f5qmf44GuIFdlYlhSIExheWVycyDjgafjga/jgarjgY/jgIFsYXllciDjga4gb3BhY2l0eeOAgXF1YWxpdHnjgIHmiYvliY0v5aWl44GuIGRlcHRoIGdhcOOAgXBpbmNoIOOBq+OCiOOCiyBzZWxlY3Qg44KS44OW44Op44Km44K25Y2Y5L2T44Gn6Kem44KM44KL5b2i44Gr44GX44Gm44CB5qyh44Gu5a6fIFdlYlhSIOWun+ijheOBuOenu+OBl+OChOOBmeOBhOims+Wvn+WNmOS9jeOBq+OBl+OBvuOBl+OBn+OAgiIsCiAgICAgICJib2R5RW4iOiAiVGhlIHNlbGVjdGVkIHByb3RvdHlwZSBpcyBMYXllcmVkIEhhbmQgT2NjbHVzaW9uIFN0YWdlLiBJbnN0ZWFkIG9mIHJlcXVpcmluZyBsaXZlIFdlYlhSIExheWVycyBoYXJkd2FyZSwgaXQgbWFrZXMgbGF5ZXIgb3BhY2l0eSwgcXVhbGl0eSwgaGFuZC9sYXllciBkZXB0aCBnYXAsIGFuZCBwaW5jaCBzZWxlY3Rpb24gaW5zcGVjdGFibGUgaW4gYSBub3JtYWwgYnJvd3NlciwgY3JlYXRpbmcgYW4gb2JzZXJ2YXRpb24gdW5pdCB0aGF0IGNhbiBsYXRlciBtb3ZlIGludG8gYSByZWFsIFdlYlhSIGltcGxlbWVudGF0aW9uLiIKICAgIH0KICBdCn0K
+{
+  "date": "2026-07-12",
+  "headline": "Layers と Hand/Depth を重ねた遮蔽 UI を試す",
+  "headlineEn": "Testing occluded UI by combining Layers with Hand and Depth cues",
+  "summary": "WebXR Layers API、Depth Sensing、Hand Input、Lighting Estimation の一次情報を確認し、今日は高精細 quad layer が手前の手で隠れ、pinch と照明で状態が変わる自作 HTML サンプルを追加しました。",
+  "summaryEn": "After reviewing primary sources for the WebXR Layers API, Depth Sensing, Hand Input, and Lighting Estimation, today's original HTML sample simulates a high-fidelity quad layer that is occluded by a nearer hand and changes state through pinch and lighting controls.",
+  "keyTopics": [
+    "WebXR Layers API Level 1 の Editor's Draft は 2026-06-12 更新で、WebXR session 内の projection / quad / cylinder / equirect / cube などの composition layer を扱う。",
+    "Layers は `layers` feature descriptor を immersive-vr / immersive-ar session で要求し、`XRWebGLBinding` や `XRMediaBinding` から layer を作成して render state に追加する流れになっている。",
+    "Composition layer は text-optimized / graphics-optimized の quality を持ち、HUD や地図、文字 UI の可読性を eye buffer だけに依存しない形で高められる。",
+    "Depth Sensing と Hand Input を重ねると、手が UI より手前にある時だけ遮蔽し、奥にある仮想物を薄くするような空間 UI の整合性を作りやすい。",
+    "Lighting Estimation の考え方を足すと、手元の layer の影、明るさ、選択 feedback を環境光に合わせて調整できる。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Layers API Level 1 Editor's Draft was updated on 2026-06-12 and covers composition layers such as projection, quad, cylinder, equirect, and cube layers within WebXR sessions.",
+    "Layers are requested through the `layers` feature descriptor in immersive-vr or immersive-ar sessions, then created through `XRWebGLBinding` or `XRMediaBinding` and added to render state.",
+    "Composition layers can use text-optimized or graphics-optimized quality, improving readability for HUDs, maps, and text UI without relying only on the eye buffer.",
+    "Combining Depth Sensing and Hand Input makes spatial UI coherence easier: content can hide only when a hand is physically in front of the UI, while farther virtual content can fade.",
+    "Adding Lighting Estimation ideas lets hand-adjacent layers adjust shadows, brightness, and selection feedback to the surrounding light."
+  ],
+  "links": [
+    {
+      "label": "Today's sample: Layered Hand Occlusion Stage",
+      "url": "../outputs/2026-07-12_html_layered_hand_occlusion_stage.html"
+    },
+    {
+      "label": "WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "WebXR Depth Sensing Module",
+      "url": "https://immersive-web.github.io/depth-sensing/"
+    },
+    {
+      "label": "WebXR Hand Input Module - Level 1",
+      "url": "https://immersive-web.github.io/webxr-hand-input/"
+    },
+    {
+      "label": "WebXR Lighting Estimation API Level 1",
+      "url": "https://immersive-web.github.io/lighting-estimation/"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Layers API です。面白い点は、通常の projection layer だけでなく、quad layer や cylinder layer のような composition layer を compositor 側で扱い、テキストや地図のような細かい UI を高品質に保てることです。仕様上は `XRCompositionLayer.opacity`、`quality`、`needsRedraw` などがあり、動き続ける 3D scene と、読みやすい固定 UI を分けて考えられます。",
+      "bodyEn": "Today's notable reference is the WebXR Layers API. The interesting part is that composition layers such as quad and cylinder layers can be handled by the compositor rather than relying only on the projection layer, helping detailed UI like text or maps remain legible. The specification includes concepts such as `XRCompositionLayer.opacity`, `quality`, and `needsRedraw`, letting authors separate a moving 3D scene from readable fixed UI.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "Layers の利点を UI の見やすさだけで終わらせず、Hand Input と Depth Sensing の観察点を混ぜると、手が quad layer より手前に入った時だけ UI を自然に隠す表現になります。今日のサンプルでは pointer を手として扱い、hand depth と layer depth の差から遮蔽率を計算し、pinch が強い時だけ hover から select に変わるようにしました。",
+      "bodyEn": "Layers become more than a readability tool when combined with Hand Input and Depth Sensing: UI can be hidden naturally only when a hand is in front of the quad layer. Today's sample treats the pointer as a hand, computes occlusion from the hand/layer depth difference, and changes hover into select only when pinch is strong.",
+      "links": [
+        {
+          "label": "Open today's sample",
+          "url": "../outputs/2026-07-12_html_layered_hand_occlusion_stage.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は `navigator.xr.requestSession(\"immersive-ar\", { optionalFeatures: [\"layers\", \"depth-sensing\", \"hand-tracking\", \"light-estimation\"] })` のように機能を分けて要求し、layer は `XRWebGLBinding` から作ります。遮蔽は depth texture または CPU depth data と hand joint の位置を同じ reference space にそろえ、UI layer の矩形内で前後関係を評価するのが基本になります。",
+      "bodyEn": "In a real implementation, features can be requested separately, for example `navigator.xr.requestSession(\"immersive-ar\", { optionalFeatures: [\"layers\", \"depth-sensing\", \"hand-tracking\", \"light-estimation\"] })`, while layers are created from `XRWebGLBinding`. For occlusion, depth textures or CPU depth data and hand joint positions should be resolved into the same reference space, then tested against the UI layer rectangle.",
+      "links": [
+        {
+          "label": "Layers initialization flow",
+          "url": "https://immersive-web.github.io/layers/#initialization"
+        },
+        {
+          "label": "Depth Sensing Module",
+          "url": "https://immersive-web.github.io/depth-sensing/"
+        }
+      ]
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "次は Layers の中でも cylinder layer と stereo media layer を見たいです。手前の手で遮蔽されるナビゲーション HUD から、視野を包むパノラマ/動画 layer、または複数の layer 間の depth sorting へ広げると、実用 UI に近づきます。",
+      "bodyEn": "Next, cylinder layers and stereo media layers are worth watching. Extending from a hand-occluded navigation HUD into panoramic/video layers or depth sorting between multiple layers would move the samples closer to practical spatial UI.",
+      "links": [
+        {
+          "label": "Layer types",
+          "url": "https://immersive-web.github.io/layers/#layer-types"
+        }
+      ]
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Layered Hand Occlusion Stage` を開き、pointer を中央の layer 上に移動してから hand depth を layer depth より小さくしてください。手が手前にある時だけ遮蔽率が上がり、pinch を強くすると hover が select に変わります。Text / Media / Alert を切り替えると、同じ depth 判定で異なる layer 用途を確認できます。",
+      "bodyEn": "Open Layered Hand Occlusion Stage, move the pointer over the central layer, then set hand depth lower than layer depth. Occlusion increases only when the hand is in front, and increasing pinch changes hover into select. Switching Text, Media, and Alert shows different layer uses with the same depth logic.",
+      "links": [
+        {
+          "label": "Open Layered Hand Occlusion Stage",
+          "url": "../outputs/2026-07-12_html_layered_hand_occlusion_stage.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Layers API、Depth Sensing、Hand Input、Lighting Estimation、公式 WebXR Samples を確認。アイデア: 高精細 UI layer と手前の手の遮蔽を HMD なしで観察する。実装: canvas 上の quad layer、手の円形 depth volume、pinch slider、lighting slider、text/media/alert preset、遮蔽率 readout を作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。",
+      "bodyEn": "Research: reviewed the Layers API, Depth Sensing, Hand Input, Lighting Estimation, and official WebXR Samples. Idea: inspect high-fidelity UI layer occlusion by a nearer hand without a headset. Implementation: created a canvas quad layer, circular hand depth volume, pinch slider, lighting slider, text/media/alert presets, and occlusion readout. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.",
+      "links": [
+        {
+          "label": "Immersive Web WebXR Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/"
+        }
+      ]
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion、lighting estimation、hand input、そして layer + hand/depth 合成です。空間体験の『見える』『置く』『隠れる』『なじむ』『触る』『読みやすく重ねる』を、自作の最小サンプルとして積み上げています。",
+      "bodyEn": "The sequence so far is depth HUD, hit test and anchors, depth occlusion, lighting estimation, hand input, and now layer plus hand/depth composition. The archive is building small original samples around seeing, placing, hiding, blending, touching, and readable layering."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "採用した候補は `Layered Hand Occlusion Stage` です。実機の WebXR Layers ではなく、layer の opacity、quality、手前/奥の depth gap、pinch による select をブラウザ単体で触れる形にして、次の実 WebXR 実装へ移しやすい観察単位にしました。",
+      "bodyEn": "The selected prototype is Layered Hand Occlusion Stage. Instead of requiring live WebXR Layers hardware, it makes layer opacity, quality, hand/layer depth gap, and pinch selection inspectable in a normal browser, creating an observation unit that can later move into a real WebXR implementation."
+    }
+  ]
+}
