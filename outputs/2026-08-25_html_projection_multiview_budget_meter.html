@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Projection Multiview Budget Meter</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0e13;
+      --panel: rgba(15, 18, 22, 0.92);
+      --line: rgba(238, 242, 236, 0.15);
+      --text: #f4f5ee;
+      --muted: #aeb3aa;
+      --mint: #7ddfc5;
+      --blue: #91b7ff;
+      --amber: #ecc467;
+      --red: #ff7f7f;
+      --ink: #07100e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: linear-gradient(145deg, #0b0e13 0%, #17211e 50%, #221916 100%);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.7vw, 2.3rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .badge,
+    .stage,
+    .panel,
+    .log {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.3);
+    }
+
+    .badge {
+      min-width: 250px;
+      padding: 12px 14px;
+    }
+
+    .badge small {
+      display: block;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.72rem;
+    }
+
+    .badge strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--mint);
+      font-size: 1.04rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.22fr) minmax(330px, 0.78fr);
+      gap: 14px;
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      min-height: 620px;
+      padding: 18px;
+    }
+
+    .view-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      height: 360px;
+    }
+
+    .eye {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(244, 245, 238, 0.12);
+      border-radius: 8px;
+      background:
+        linear-gradient(0deg, rgba(126, 223, 197, 0.1), transparent 42%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 28px),
+        #091210;
+    }
+
+    .eye::before {
+      content: "";
+      position: absolute;
+      inset: 18% 14%;
+      border: 2px solid rgba(145, 183, 255, 0.72);
+      border-radius: 8px;
+      transform: perspective(420px) rotateY(var(--tilt, 7deg));
+      background: linear-gradient(135deg, rgba(126, 223, 197, 0.28), rgba(145, 183, 255, 0.18));
+    }
+
+    .eye::after {
+      content: attr(data-label);
+      position: absolute;
+      left: 14px;
+      top: 12px;
+      color: var(--text);
+      font-weight: 760;
+    }
+
+    .eye.right { --tilt: -7deg; }
+
+    .bars {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr) 70px;
+      gap: 10px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .bar {
+      height: 14px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .bar span {
+      display: block;
+      width: 50%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--mint);
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .readout {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(244, 245, 238, 0.13);
+      border-radius: 8px;
+      background: rgba(3, 8, 9, 0.7);
+    }
+
+    .readout small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .readout strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.98rem;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .panel,
+    .log {
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      color: var(--mint);
+      font-size: 0.88rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .control {
+      display: grid;
+      gap: 7px;
+      margin: 11px 0;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    select,
+    input,
+    button {
+      width: 100%;
+      border: 1px solid rgba(244, 245, 238, 0.15);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      font: inherit;
+    }
+
+    select,
+    input { padding: 10px; }
+
+    button {
+      min-height: 42px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      color: var(--ink);
+      border-color: transparent;
+      background: var(--mint);
+      font-weight: 760;
+    }
+
+    .log ol {
+      display: grid;
+      gap: 7px;
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .layout { grid-template-columns: 1fr; }
+      .badge { min-width: 0; }
+      .view-grid { height: 300px; }
+      .hud { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 120px minmax(0, 1fr) 62px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Projection Multiview Budget Meter</h1>
+      <p>XRProjectionLayer の texture-array / multiview 経路が、左右 eye の state change と GPU 予算をどれだけ減らすかを見積もる派生試作です。</p>
+    </div>
+    <div class="badge">
+      <small>Derived prototype</small>
+      <strong id="verdict">multiview preferred</strong>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="stage">
+      <div class="view-grid">
+        <div class="eye left" data-label="left eye"></div>
+        <div class="eye right" data-label="right eye"></div>
+      </div>
+      <div class="bars" id="bars"></div>
+      <div class="hud">
+        <div class="readout"><small>Draw route</small><strong id="routeOut">texture-array multiview</strong></div>
+        <div class="readout"><small>State changes</small><strong id="stateOut">18 / frame</strong></div>
+        <div class="readout"><small>Next addition</small><strong>real extension probe</strong></div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <h2>Render controls</h2>
+        <div class="control">
+          <label for="extension">Multiview extension <span id="extensionOut">OCULUS_multiview</span></label>
+          <select id="extension">
+            <option value="oculus">OCULUS_multiview</option>
+            <option value="ovr">OVR_multiview2</option>
+            <option value="none">not available</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="textureType">Projection texture <span id="textureTypeOut">texture-array</span></label>
+          <select id="textureType">
+            <option value="array">texture-array</option>
+            <option value="single">per-eye texture</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="views">Views <span id="viewsOut">2</span></label>
+          <input id="views" type="range" min="1" max="4" value="2">
+        </div>
+        <div class="control">
+          <label for="complexity">Scene complexity <span id="complexityOut">52%</span></label>
+          <input id="complexity" type="range" min="12" max="96" value="52">
+        </div>
+        <div class="control">
+          <label for="samples">MSAA samples <span id="samplesOut">4x</span></label>
+          <input id="samples" type="range" min="1" max="8" value="4">
+        </div>
+        <button class="primary" id="capture">Capture frame estimate</button>
+      </section>
+
+      <section class="log">
+        <h2>Budget log</h2>
+        <ol id="log"></ol>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<script>
+const controls = {
+  extension: document.getElementById("extension"),
+  textureType: document.getElementById("textureType"),
+  views: document.getElementById("views"),
+  complexity: document.getElementById("complexity"),
+  samples: document.getElementById("samples")
+};
+const out = {
+  verdict: document.getElementById("verdict"),
+  bars: document.getElementById("bars"),
+  route: document.getElementById("routeOut"),
+  state: document.getElementById("stateOut"),
+  extension: document.getElementById("extensionOut"),
+  textureType: document.getElementById("textureTypeOut"),
+  views: document.getElementById("viewsOut"),
+  complexity: document.getElementById("complexityOut"),
+  samples: document.getElementById("samplesOut"),
+  log: document.getElementById("log")
+};
+let logs = ["requiredFeatures: ['layers'] のあと XRWebGLBinding.createProjectionLayer を想定"];
+
+function estimate() {
+  const extensionReady = controls.extension.value !== "none";
+  const textureArray = controls.textureType.value === "array";
+  const views = Number(controls.views.value);
+  const complexity = Number(controls.complexity.value);
+  const samples = Number(controls.samples.value);
+  const canMultiview = extensionReady && textureArray && views >= 2;
+  const route = canMultiview ? "texture-array multiview" : textureArray ? "array without multiview" : "per-eye redraw";
+  const baseDraws = Math.ceil(complexity / 6);
+  const drawCalls = canMultiview ? baseDraws : baseDraws * views;
+  const stateChanges = canMultiview ? 12 + samples + views : 10 + (samples + 7) * views;
+  const gpuMs = Math.min(28, (drawCalls * 0.32) + (stateChanges * 0.08) + (samples * views * 0.18));
+  const spare = Math.max(0, Math.round(100 - gpuMs * 4.6));
+  const verdict = spare >= 54 ? "multiview preferred" : spare >= 28 ? "trim scene" : "fallback needed";
+  return { extensionReady, textureArray, views, complexity, samples, canMultiview, route, drawCalls, stateChanges, gpuMs, spare, verdict };
+}
+
+function color(value) {
+  if (value >= 62) return "#7ddfc5";
+  if (value >= 34) return "#ecc467";
+  return "#ff7f7f";
+}
+
+function render() {
+  const e = estimate();
+  out.verdict.textContent = e.verdict;
+  out.route.textContent = e.route;
+  out.state.textContent = `${e.stateChanges} / frame`;
+  out.extension.textContent = controls.extension.options[controls.extension.selectedIndex].text;
+  out.textureType.textContent = controls.textureType.options[controls.textureType.selectedIndex].text;
+  out.views.textContent = String(e.views);
+  out.complexity.textContent = `${e.complexity}%`;
+  out.samples.textContent = `${e.samples}x`;
+  const metrics = [
+    ["GPU spare", e.spare, "%"],
+    ["Draw calls saved", e.canMultiview ? Math.round(100 - (e.drawCalls / Math.max(1, e.drawCalls * e.views)) * 100) : 0, "%"],
+    ["Frame cost", Math.round(e.gpuMs * 10) / 10, "ms"],
+    ["Fallback readiness", e.extensionReady ? 72 : 38, "%"]
+  ];
+  out.bars.innerHTML = metrics.map(([label, value, unit]) => {
+    const pct = unit === "ms" ? Math.max(0, 100 - value * 4) : value;
+    return `<div class="bar-row"><span>${label}</span><div class="bar"><span style="width:${Math.min(100, Math.max(0, pct))}%; background:${color(pct)}"></span></div><strong>${value}${unit}</strong></div>`;
+  }).join("");
+}
+
+function addLog(message) {
+  logs.unshift(message);
+  logs = logs.slice(0, 6);
+  out.log.innerHTML = logs.map((item) => `<li>${item}</li>`).join("");
+}
+
+Object.values(controls).forEach((control) => control.addEventListener("input", () => {
+  const e = estimate();
+  render();
+  addLog(`${e.route}: draw ${e.drawCalls}, state ${e.stateChanges}, spare ${e.spare}%`);
+}));
+document.getElementById("capture").addEventListener("click", () => {
+  const e = estimate();
+  addLog(`frame estimate captured: ${e.verdict}, ${e.gpuMs.toFixed(1)}ms`);
+});
+
+render();
+addLog(logs[0]);
+</script>
+</body>
+</html>

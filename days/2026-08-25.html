@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR レイヤー選択用 proxy と projection multiview 予算を自作サンプル化 | 2026-08-25</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.08.25</p>
+      <h1>WebXR レイヤー選択用 proxy と projection multiview 予算を自作サンプル化</h1>
+      <p class="hero-subtitle">Original samples for WebXR layer hit-test proxies and projection multiview budgets</p>
+      <p>WebXR Layers API の 2026-08-11 Editor's Draft、W3C 公開版、Immersive Web の Layer Hit Test / Projection Layer with Multiview サンプル、WebXR Hit Test Module を確認し、composition layer と projection layer 内 proxy geometry の同期を扱う本命サンプルと、texture-array multiview の描画予算を見積もる派生サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the 2026-08-11 WebXR Layers API Editor's Draft, the W3C published draft, Immersive Web's Layer Hit Test and Projection Layer with Multiview samples, and the WebXR Hit Test Module, today's original work adds a main sample for synchronizing composition layers with projection-layer proxy geometry and a derivative sample for estimating texture-array multiview rendering budgets.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-08-25_html_projection_multiview_budget_meter.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-08-24.html">← 2026.08.24</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Projection Multiview Budget Meter</h3>
+              <p>XRProjectionLayer の texture-array / multiview 経路が、左右 eye の state change と GPU 予算をどれだけ減らすかを見積もる派生試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-25_html_projection_multiview_budget_meter.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Layer Hit Proxy Sync Lab</h3>
+              <p>WebXR の quad layer を直接 hit test できない前提で、projection layer 内の透明 proxy geometry と表示 layer のずれを検査する自作ミニ試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-25_html_layer_hit_proxy_sync_lab.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Layers API Editor's Draft は 2026-08-11 版で、composition layer の利点として compositor rate、可読性、電力、レイテンシを整理し、`layers` feature descriptor、`XRWebGLBinding` / `XRMediaBinding`、`updateRenderState({ layers })` の流れを示しています。</span>
+              <span class="en-copy">The WebXR Layers API Editor's Draft dated 2026-08-11 summarizes composition-layer benefits around compositor-rate presentation, legibility, power, and latency, and shows the flow through the `layers` feature descriptor, `XRWebGLBinding` / `XRMediaBinding`, and `updateRenderState({ layers })`.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の Layer Hit Test サンプルは、quad / cylinder / equirect / cube layer が projection layer に存在しないため直接 hit test できず、透明 placeholder を projection layer に置く workaround を実装しています。</span>
+              <span class="en-copy">Immersive Web's Layer Hit Test sample implements a workaround where transparent placeholders are placed in the projection layer because quad, cylinder, equirect, and cube layers cannot be hit tested directly when they are outside that projection layer.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Hit Test Module は、hit test API が現実環境への raycast を扱い、アプリ側の仮想シーングラフに対する hit test は範囲外であることを明確にしています。</span>
+              <span class="en-copy">The WebXR Hit Test Module makes clear that hit testing targets real-world ray intersections, while hit testing the application's own virtual scene graph is out of scope.</span>
+            </li>
+          
+            <li>
+              <span>Projection Layer with Multiview サンプルは `OCULUS_multiview` / `OVR_multiview2` と `texture-array` を前提に、左右 eye の state change を減らす方向を示しています。</span>
+              <span class="en-copy">The Projection Layer with Multiview sample points toward reducing per-eye state changes by using `OCULUS_multiview` / `OVR_multiview2` together with `texture-array` projection layers.</span>
+            </li>
+          
+            <li>
+              <span>昨日の layer destroy queue の次段階として、古い layer を外すだけでなく、表示 layer と選択 proxy の transform を同じ anchor / pose 更新単位で同期する必要があります。</span>
+              <span class="en-copy">As a next step after yesterday's layer destroy queue, it is not enough to remove old layers; visible layers and their selection proxies need to share the same anchor or pose update cadence.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は Immersive Web Layers Samples の Layer Hit Test と Projection Layer with Multiview です。前者は layer 上の UI を直接選べない制約を、projection layer に透明 proxy を置く設計で回避しています。後者は projection layer を texture-array と multiview extension で扱い、左右 eye の描画状態変更を減らす方向を示します。どちらも公式サンプルとして有用ですが、公開アーカイブでは外部デモではなく、自作サンプルとして proxy のずれと multiview 予算を操作できる形に落としました。</p>
+          <p class="en-copy">Today's notable references are Layer Hit Test and Projection Layer with Multiview in the Immersive Web Layers Samples. The former works around the inability to directly select UI drawn in layers by placing transparent proxies in the projection layer. The latter uses projection layers with texture arrays and multiview extensions to reduce left/right eye state changes. Both are useful official samples, but the archive now centers original prototypes that make proxy drift and multiview budget decisions directly adjustable.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers Samples</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples/blob/main/layers-samples/quad-select.html" target="_blank" rel="noreferrer">Layer Hit Test source</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples/blob/main/layers-samples/proj-multiview.html" target="_blank" rel="noreferrer">Projection Layer with Multiview source</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Layer Hit Proxy Sync Lab` は、quad UI、curved menu、media panel の layer 種別、transparent plane / expanded guard / one-frame stale の proxy、X drift、depth、head jitter を操作し、疑似 select ray が proxy に当たるかを確認します。confidence が落ちると proxy select から confirm reticle、DOM overlay fallback へ切り替わります。派生サンプル `Projection Multiview Budget Meter` は、multiview extension、texture-array、view 数、scene complexity、MSAA samples を切り替え、draw route、state changes、GPU spare を表示します。</p>
+          <p class="en-copy">The main sample, `Layer Hit Proxy Sync Lab`, lets you adjust layer type, proxy geometry, X drift, depth, and head jitter, then test whether a simulated select ray hits the proxy. As confidence drops, the route moves from proxy select to confirm reticle and then DOM overlay fallback. The derivative sample, `Projection Multiview Budget Meter`, switches multiview extension availability, texture-array use, view count, scene complexity, and MSAA samples, then reports draw route, state changes, and GPU spare budget.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-25_html_layer_hit_proxy_sync_lab.html" target="_blank" rel="noreferrer">Open main sample</a></li>
+          
+            <li><a href="../outputs/2026-08-25_html_projection_multiview_budget_meter.html" target="_blank" rel="noreferrer">Open derivative sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では、composition layer の transform と projection layer 内 proxy mesh の transform を別々に持たず、同じ pose record から生成するのが安全です。proxy は layer より少し広げる余地がありますが、広げすぎると誤選択が増えるため、confidence、confirm reticle、fallback route をログに残します。multiview は `gl.getExtension('OCULUS_multiview')` または `gl.getExtension('OVR_multiview2')` と `createProjectionLayer({ textureType: 'texture-array' })` の組み合わせを前提にし、未対応時は per-eye redraw へ落とす判定を明示します。</p>
+          <p class="en-copy">In production, avoid maintaining independent transforms for a composition layer and its projection-layer proxy mesh; generate both from the same pose record. A proxy can be slightly expanded, but excessive expansion increases false selection, so confidence, confirm-reticle routing, and fallback reasons should be logged. Multiview should be treated as a combination of `gl.getExtension('OCULUS_multiview')` or `gl.getExtension('OVR_multiview2')` plus `createProjectionLayer({ textureType: 'texture-array' })`; when unsupported, route explicitly to per-eye redraw.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Editor's Draft</a></li>
+          
+            <li><a href="https://immersive-web.github.io/hit-test/" target="_blank" rel="noreferrer">WebXR Hit Test Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の2本からは layer type、proxy mode、drift、depth、head jitter、select confidence、route、extension support、texture type、view count、state changes、GPU spare を取れます。2026-08-24 の destroy queue と組み合わせると、proxy が unsafe になった layer を表示から外し、新しい pose で作り直す運用にできます。2026-08-23 の readability budget と合わせれば、読めるが選びにくい layer、選べるが読みにくい layer を分けて扱えます。</p>
+          <p class="en-copy">The two samples expose layer type, proxy mode, drift, depth, head jitter, selection confidence, route, extension support, texture type, view count, state changes, and GPU spare. Combined with the 2026-08-24 destroy queue, an unsafe proxy can trigger removal of the old layer and recreation at a new pose. Combined with the 2026-08-23 readability budget, the system can distinguish layers that are readable but hard to select from layers that are selectable but hard to read.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Layers API の Editor's Draft、Immersive Web Samples の quad-select / projection multiview / multiview occlusion、WebXR Hit Test Module、Depth Sensing、DOM Overlay、Anchors の更新を追います。次は proxy geometry と anchor recovery を接続し、layer の見た目は維持しつつ、hit target だけが stale になったときの復旧キューを扱うと発展します。</p>
+          <p class="en-copy">Watch the WebXR Layers API Editor's Draft, Immersive Web's quad-select, projection multiview, multiview occlusion samples, the WebXR Hit Test Module, Depth Sensing, DOM Overlay, and Anchors. A useful next step is connecting proxy geometry with anchor recovery so the system can repair stale hit targets while keeping the visible layer stable.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命サンプルを開き、Proxy geometry を `one-frame stale` にして X drift と Head jitter を上げ、canvas 上をクリックしてください。confidence が下がり、proxy select から confirm reticle / DOM overlay fallback へ切り替わります。派生サンプルでは Multiview extension を `not available`、Projection texture を `per-eye texture` に変えると、state changes が増えて per-eye redraw 判断に落ちます。</p>
+          <p class="en-copy">Open the main sample, set Proxy geometry to `one-frame stale`, increase X drift and Head jitter, then click the canvas. Confidence drops and the route changes from proxy select to confirm reticle or DOM overlay fallback. In the derivative sample, set Multiview extension to `not available` and Projection texture to `per-eye texture` to see state changes rise and routing fall back to per-eye redraw.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-25_html_layer_hit_proxy_sync_lab.html" target="_blank" rel="noreferrer">Open Layer Hit Proxy Sync Lab</a></li>
+          
+            <li><a href="../outputs/2026-08-25_html_projection_multiview_budget_meter.html" target="_blank" rel="noreferrer">Open Projection Multiview Budget Meter</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Layers API Editor's Draft、W3C 公開版、Immersive Web Layers Samples、quad-select source、proj-multiview source、WebXR Hit Test Module を確認。設計: 表示 layer と透明 proxy を同じ pose record から生成する同期検査にする。実装: 本命 HTML で proxy drift / select confidence / fallback route を可視化し、派生 HTML で multiview 描画予算を見積もる。検証: report JSON parse、HTML 内 script 構文、gallery 再生成、publish を実行する。</p>
+          <p class="en-copy">Research: reviewed the WebXR Layers API Editor's Draft, W3C published draft, Immersive Web Layers Samples, quad-select source, proj-multiview source, and WebXR Hit Test Module. Design: make a sync check where visible layers and transparent proxies are generated from the same pose record. Implementation: built the main HTML for proxy drift, select confidence, and fallback routing, plus a derivative HTML for multiview rendering-budget estimates. Validation: parse the report JSON, check embedded HTML scripts, rebuild the gallery, and publish.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>ここ数日の流れは feature negotiation、bounded space、可読性、haptics、layer lifecycle と進み、今日は layer と入力の接点に移りました。XR の UI は見えているだけでは不十分で、選択できる面と描画される面の時間差や座標差を小さく保つ必要があります。proxy drift を数値化しておくと、DOM Overlay、haptic confirmation、anchor recovery、destroy queue のどれへ進むべきかを一つの判定にできます。</p>
+          <p class="en-copy">Recent work moved through feature negotiation, bounded spaces, readability, haptics, and layer lifecycle; today shifts to the junction between layers and input. XR UI is not complete just because it is visible; the selectable surface and the rendered surface must stay close in time and coordinates. Quantifying proxy drift makes it possible to choose between DOM Overlay, haptic confirmation, anchor recovery, and destroy queue from a single verdict.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Layer Hit Proxy Sync Lab` です。何が動くか: layer 種別、proxy 種別、ずれ、奥行き、頭部 jitter を変え、疑似 select ray の hit / miss と fallback route を確認できます。次に足すなら、実際の `select` event、`XRInputSource.targetRaySpace`、anchor id、`session.updateRenderState()` 前後の transform ログを入れます。派生として `Projection Multiview Budget Meter` も実装しました。何が動くか: multiview extension と texture-array の有無から draw route、state changes、GPU spare を見積もります。次に足すなら、実 WebGL2 context の extension probe と、実機の frame timing / dropped frame ログを足します。</p>
+          <p class="en-copy">The selected main prototype is `Layer Hit Proxy Sync Lab`. What it does: change layer type, proxy type, drift, depth, and head jitter, then inspect simulated select-ray hit/miss and fallback routing. Next additions would be real `select` events, `XRInputSource.targetRaySpace`, anchor IDs, and transform logs before and after `session.updateRenderState()`. The derivative `Projection Multiview Budget Meter` was also implemented. What it does: estimate draw route, state changes, and GPU spare from multiview extension and texture-array availability. Next additions would be a real WebGL2 extension probe plus device frame timing and dropped-frame logs.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-25_html_layer_hit_proxy_sync_lab.html" target="_blank" rel="noreferrer">Today's main sample: Layer Hit Proxy Sync Lab</a></li>
+          
+            <li><a href="../outputs/2026-08-25_html_projection_multiview_budget_meter.html" target="_blank" rel="noreferrer">Today's derivative sample: Projection Multiview Budget Meter</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers API Level 1 Editor's Draft</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers Samples</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples/blob/main/layers-samples/quad-select.html" target="_blank" rel="noreferrer">Immersive Web Samples source: Layer Hit Test</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples/blob/main/layers-samples/proj-multiview.html" target="_blank" rel="noreferrer">Immersive Web Samples source: Projection Layer with Multiview</a></li>
+          
+            <li><a href="https://immersive-web.github.io/hit-test/" target="_blank" rel="noreferrer">WebXR Hit Test Module Editor's Draft</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-08-25_html_projection_multiview_budget_meter.html" loading="lazy" title="Projection Multiview Budget Meter"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Layer Hit Proxy Sync Lab</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07100f;
+      --panel: rgba(11, 18, 19, 0.92);
+      --line: rgba(235, 242, 229, 0.16);
+      --text: #f2f5ec;
+      --muted: #a9b3ad;
+      --mint: #7ee0c3;
+      --blue: #88b7ff;
+      --amber: #f1c66d;
+      --red: #ff8585;
+      --ink: #07100f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: linear-gradient(135deg, #07100f 0%, #18201c 45%, #231a16 100%);
+    }
+
+    main {
+      width: min(1200px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.8vw, 2.35rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .badge,
+    .stage,
+    .panel,
+    .log {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.3);
+    }
+
+    .badge {
+      min-width: 260px;
+      padding: 12px 14px;
+    }
+
+    .badge small {
+      display: block;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.72rem;
+    }
+
+    .badge strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--mint);
+      font-size: 1.04rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.22fr) minmax(330px, 0.78fr);
+      gap: 14px;
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      min-height: 640px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 640px;
+      background: #061110;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .readout {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(242, 245, 236, 0.14);
+      border-radius: 8px;
+      background: rgba(3, 8, 9, 0.78);
+    }
+
+    .readout small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .readout strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.95rem;
+      line-height: 1.18;
+      overflow-wrap: anywhere;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .panel,
+    .log {
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      color: var(--mint);
+      font-size: 0.88rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .control {
+      display: grid;
+      gap: 7px;
+      margin: 11px 0;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    select,
+    input,
+    button {
+      width: 100%;
+      border: 1px solid rgba(242, 245, 236, 0.15);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      font: inherit;
+    }
+
+    select,
+    input { padding: 10px; }
+
+    button {
+      min-height: 42px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      color: var(--ink);
+      border-color: transparent;
+      background: var(--mint);
+      font-weight: 760;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .queue {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .queue-row {
+      display: grid;
+      grid-template-columns: 82px minmax(0, 1fr) 88px;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid rgba(242, 245, 236, 0.1);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+      font-size: 0.84rem;
+    }
+
+    .pill {
+      padding: 5px 8px;
+      border-radius: 999px;
+      text-align: center;
+      background: rgba(126, 224, 195, 0.14);
+      color: var(--mint);
+      font-size: 0.74rem;
+      font-weight: 760;
+    }
+
+    .pill.warn { color: var(--amber); background: rgba(241, 198, 109, 0.14); }
+    .pill.bad { color: var(--red); background: rgba(255, 133, 133, 0.13); }
+
+    .log ol {
+      display: grid;
+      gap: 7px;
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .layout { grid-template-columns: 1fr; }
+      .badge { min-width: 0; }
+      canvas { height: 560px; }
+      .stage { min-height: 560px; }
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Layer Hit Proxy Sync Lab</h1>
+      <p>WebXR の quad layer を直接 hit test できない前提で、projection layer 内の透明 proxy geometry と表示 layer のずれを検査する自作ミニ試作です。</p>
+    </div>
+    <div class="badge">
+      <small>Today's prototype</small>
+      <strong id="verdict">sync stable</strong>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="stage">
+      <canvas id="stage" width="980" height="640" aria-label="layer proxy hit test simulator"></canvas>
+      <div class="hud">
+        <div class="readout"><small>Proxy drift</small><strong id="driftOut">0.05 m</strong></div>
+        <div class="readout"><small>Hit route</small><strong id="routeOut">proxy select</strong></div>
+        <div class="readout"><small>Confidence</small><strong id="confidenceOut">92%</strong></div>
+        <div class="readout"><small>Next addition</small><strong>XR select event log</strong></div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <h2>Sync controls</h2>
+        <div class="control">
+          <label for="layerType">Layer type <span id="layerTypeOut">quad UI</span></label>
+          <select id="layerType">
+            <option value="quad">quad UI</option>
+            <option value="cylinder">curved menu</option>
+            <option value="media">media panel</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="proxyMode">Proxy geometry <span id="proxyModeOut">transparent plane</span></label>
+          <select id="proxyMode">
+            <option value="plane">transparent plane</option>
+            <option value="expanded">expanded guard</option>
+            <option value="stale">one-frame stale</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="xDrift">X drift <span id="xDriftOut">0.05 m</span></label>
+          <input id="xDrift" type="range" min="-35" max="35" value="5">
+        </div>
+        <div class="control">
+          <label for="zDepth">Layer depth <span id="zDepthOut">2.0 m</span></label>
+          <input id="zDepth" type="range" min="12" max="36" value="20">
+        </div>
+        <div class="control">
+          <label for="jitter">Head jitter <span id="jitterOut">3 mm</span></label>
+          <input id="jitter" type="range" min="0" max="22" value="3">
+        </div>
+        <div class="button-grid">
+          <button class="primary" id="scan">Run proxy scan</button>
+          <button id="align">Align proxy</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Layer candidates</h2>
+        <div class="queue" id="queue"></div>
+      </section>
+
+      <section class="log">
+        <h2>Frame log</h2>
+        <ol id="log"></ol>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<script>
+const canvas = document.getElementById("stage");
+const ctx = canvas.getContext("2d");
+const controls = {
+  layerType: document.getElementById("layerType"),
+  proxyMode: document.getElementById("proxyMode"),
+  xDrift: document.getElementById("xDrift"),
+  zDepth: document.getElementById("zDepth"),
+  jitter: document.getElementById("jitter")
+};
+const out = {
+  verdict: document.getElementById("verdict"),
+  drift: document.getElementById("driftOut"),
+  route: document.getElementById("routeOut"),
+  confidence: document.getElementById("confidenceOut"),
+  layerType: document.getElementById("layerTypeOut"),
+  proxyMode: document.getElementById("proxyModeOut"),
+  xDrift: document.getElementById("xDriftOut"),
+  zDepth: document.getElementById("zDepthOut"),
+  jitter: document.getElementById("jitterOut"),
+  queue: document.getElementById("queue"),
+  log: document.getElementById("log")
+};
+
+let pointer = { x: 0.52, y: 0.52 };
+let scanStep = 0;
+let logItems = [
+  "projection layer に proxy quad を置き、quad layer の transform と同じ anchor id で追跡する"
+];
+
+function state() {
+  const depth = Number(controls.zDepth.value) / 10;
+  const xDrift = Number(controls.xDrift.value) / 100;
+  const jitter = Number(controls.jitter.value) / 1000;
+  const proxyExtra = controls.proxyMode.value === "expanded" ? 0.08 : 0;
+  const stalePenalty = controls.proxyMode.value === "stale" ? 0.16 : 0;
+  const typePenalty = controls.layerType.value === "cylinder" ? 0.04 : controls.layerType.value === "media" ? 0.06 : 0;
+  const drift = Math.abs(xDrift) + stalePenalty + typePenalty;
+  const confidence = Math.max(28, Math.round(100 - drift * 190 - jitter * 1150 - Math.max(0, depth - 2.4) * 12 + proxyExtra * 80));
+  const route = confidence >= 78 ? "proxy select" : confidence >= 55 ? "confirm reticle" : "DOM overlay fallback";
+  const verdict = confidence >= 78 ? "sync stable" : confidence >= 55 ? "needs confirm" : "proxy unsafe";
+  return { depth, xDrift, jitter, proxyExtra, stalePenalty, drift, confidence, route, verdict };
+}
+
+function layerRects(s) {
+  const cx = canvas.width * 0.5;
+  const cy = canvas.height * 0.42;
+  const perspective = 2.1 / s.depth;
+  const w = 260 * perspective;
+  const h = (controls.layerType.value === "cylinder" ? 178 : 150) * perspective;
+  const layer = { x: cx - w / 2, y: cy - h / 2, w, h };
+  const proxy = {
+    x: layer.x + s.xDrift * 410 - (s.proxyExtra * 260),
+    y: layer.y + s.stalePenalty * 95 - (s.proxyExtra * 130),
+    w: layer.w + s.proxyExtra * 520,
+    h: layer.h + s.proxyExtra * 260
+  };
+  return { layer, proxy };
+}
+
+function drawGrid() {
+  ctx.fillStyle = "#061110";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = "rgba(242,245,236,0.08)";
+  ctx.lineWidth = 1;
+  for (let x = 40; x < canvas.width; x += 40) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = 40; y < canvas.height; y += 40) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+}
+
+function roundedRect(rect, radius) {
+  ctx.beginPath();
+  ctx.roundRect(rect.x, rect.y, rect.w, rect.h, radius);
+}
+
+function draw() {
+  const s = state();
+  const { layer, proxy } = layerRects(s);
+  drawGrid();
+
+  ctx.save();
+  ctx.translate(Math.sin(scanStep / 14) * Number(controls.jitter.value) * 0.55, Math.cos(scanStep / 17) * Number(controls.jitter.value) * 0.45);
+  roundedRect(layer, 10);
+  const grad = ctx.createLinearGradient(layer.x, layer.y, layer.x + layer.w, layer.y + layer.h);
+  grad.addColorStop(0, "rgba(126,224,195,0.92)");
+  grad.addColorStop(1, "rgba(136,183,255,0.86)");
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.fillStyle = "#07100f";
+  ctx.font = "700 20px system-ui";
+  ctx.fillText(controls.layerType.options[controls.layerType.selectedIndex].text, layer.x + 18, layer.y + 36);
+  ctx.font = "14px system-ui";
+  ctx.fillText("composition layer", layer.x + 18, layer.y + 60);
+  ctx.restore();
+
+  ctx.setLineDash([8, 8]);
+  roundedRect(proxy, 10);
+  ctx.strokeStyle = s.confidence >= 78 ? "#7ee0c3" : s.confidence >= 55 ? "#f1c66d" : "#ff8585";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(255,255,255,0.06)";
+  ctx.fill();
+
+  const px = pointer.x * canvas.width;
+  const py = pointer.y * canvas.height;
+  ctx.strokeStyle = "rgba(242,245,236,0.5)";
+  ctx.beginPath();
+  ctx.moveTo(canvas.width / 2, canvas.height - 80);
+  ctx.lineTo(px, py);
+  ctx.stroke();
+  ctx.fillStyle = s.confidence >= 78 ? "#7ee0c3" : s.confidence >= 55 ? "#f1c66d" : "#ff8585";
+  ctx.beginPath();
+  ctx.arc(px, py, 9, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(3,8,9,0.78)";
+  ctx.fillRect(22, 22, 306, 78);
+  ctx.fillStyle = "#f2f5ec";
+  ctx.font = "700 16px system-ui";
+  ctx.fillText("transparent proxy in projection layer", 36, 52);
+  ctx.fillStyle = "#a9b3ad";
+  ctx.font = "13px system-ui";
+  ctx.fillText("click / tap to cast a simulated select ray", 36, 76);
+
+  updateText(s);
+  requestAnimationFrame(draw);
+}
+
+function updateText(s) {
+  out.verdict.textContent = s.verdict;
+  out.drift.textContent = `${s.drift.toFixed(2)} m`;
+  out.route.textContent = s.route;
+  out.confidence.textContent = `${s.confidence}%`;
+  out.layerType.textContent = controls.layerType.options[controls.layerType.selectedIndex].text;
+  out.proxyMode.textContent = controls.proxyMode.options[controls.proxyMode.selectedIndex].text;
+  out.xDrift.textContent = `${s.xDrift.toFixed(2)} m`;
+  out.zDepth.textContent = `${s.depth.toFixed(1)} m`;
+  out.jitter.textContent = `${Number(controls.jitter.value)} mm`;
+  out.queue.innerHTML = [
+    ["layer", "XRQuadLayer transform", s.confidence >= 55 ? "active" : "fallback"],
+    ["proxy", "transparent collider", s.confidence >= 78 ? "hit" : "guard"],
+    ["reticle", "selection feedback", s.confidence >= 78 ? "hidden" : "visible"]
+  ].map(([kind, label, status]) => {
+    const cls = status === "fallback" ? "bad" : status === "guard" || status === "visible" ? "warn" : "";
+    return `<div class="queue-row"><span class="pill ${cls}">${kind}</span><span>${label}</span><span>${status}</span></div>`;
+  }).join("");
+}
+
+function addLog(message) {
+  logItems.unshift(message);
+  logItems = logItems.slice(0, 6);
+  out.log.innerHTML = logItems.map((item) => `<li>${item}</li>`).join("");
+}
+
+function hitTest(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  pointer = {
+    x: (clientX - rect.left) / rect.width,
+    y: (clientY - rect.top) / rect.height
+  };
+  const s = state();
+  const { proxy } = layerRects(s);
+  const px = pointer.x * canvas.width;
+  const py = pointer.y * canvas.height;
+  const hit = px >= proxy.x && px <= proxy.x + proxy.w && py >= proxy.y && py <= proxy.y + proxy.h;
+  addLog(hit ? `${s.route}: proxy hit, confidence ${s.confidence}%` : `miss: layer visual and proxy collider are not aligned for this ray`);
+}
+
+canvas.addEventListener("pointerdown", (event) => hitTest(event.clientX, event.clientY));
+document.getElementById("scan").addEventListener("click", () => {
+  scanStep += 1;
+  const s = state();
+  addLog(`scan ${scanStep}: drift ${s.drift.toFixed(2)} m, route ${s.route}`);
+});
+document.getElementById("align").addEventListener("click", () => {
+  controls.xDrift.value = "0";
+  controls.proxyMode.value = "plane";
+  addLog("proxy transform を layer transform に再同期した");
+});
+Object.values(controls).forEach((control) => control.addEventListener("input", () => {
+  const s = state();
+  addLog(`control update: ${s.verdict}`);
+}));
+addLog(logItems[0]);
+draw();
+</script>
+</body>
+</html>
