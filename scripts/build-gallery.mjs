@@ -928,6 +928,20 @@ async function main() {
     }
   }
 
+  for (const day of dayMap.values()) {
+    const linkOrder = new Map();
+    day.report?.links?.forEach((link, index) => {
+      const fileName = link.url?.split("/").pop();
+      if (fileName) linkOrder.set(decodeURIComponent(fileName), index);
+    });
+    day.samples.sort((a, b) => {
+      const rankA = linkOrder.has(a.fileName) ? linkOrder.get(a.fileName) : Number.MAX_SAFE_INTEGER;
+      const rankB = linkOrder.has(b.fileName) ? linkOrder.get(b.fileName) : Number.MAX_SAFE_INTEGER;
+      if (rankA !== rankB) return rankA - rankB;
+      return b.fileName.localeCompare(a.fileName);
+    });
+  }
+
   const days = Array.from(dayMap.values()).sort((a, b) => b.date.localeCompare(a.date));
 
   const totalPages = Math.max(1, Math.ceil(days.length / pageSize));
