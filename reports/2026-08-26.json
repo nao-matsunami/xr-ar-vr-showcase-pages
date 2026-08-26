@@ -1,0 +1,151 @@
+{
+  "date": "2026-08-26",
+  "headline": "WebXR の target ray pose 信頼度と gamepad action map を自作サンプル化",
+  "headlineEn": "Original samples for WebXR target-ray pose confidence and gamepad action mapping",
+  "summary": "W3C WebXR Device API の 2026-06-09 Candidate Recommendation Draft、WebXR Gamepads Module、MDN の入力解説、Immersive Web の Input Selection サンプルと input explainer を確認し、`XRInputSource.targetRaySpace` と `select` event の pose 信頼度を扱う本命サンプル、`XRInputSource.gamepad` を意味的 action に正規化する派生サンプルを追加しました。",
+  "summaryEn": "After reviewing the W3C WebXR Device API Candidate Recommendation Draft dated 2026-06-09, the WebXR Gamepads Module, MDN input guidance, Immersive Web's Input Selection sample, and the input explainer, today's original work adds a main sample for `XRInputSource.targetRaySpace` and `select` event pose confidence plus a derivative sample that normalizes `XRInputSource.gamepad` data into semantic actions.",
+  "keyTopics": [
+    "WebXR Device API の 2026-06-09 Candidate Recommendation Draft は、`XRInputSource`、transient input、`XRInputSourceEvent`、`inputsourceschange`、input profiles を仕様上の中心として整理しています。",
+    "Immersive Web の input explainer は、すべての input source が `targetRaySpace` を持ち、`XRFrame.getPose(inputSource.targetRaySpace, referenceSpace)` の戻り値は tracking lost などで `null` になり得るため検査が必要だと説明しています。",
+    "MDN の WebXR input 解説は、screen input が transient input source として `selectstart`、`select`、`selectend` を発生させる流れを示し、pointer と XR input の橋渡しを理解しやすくしています。",
+    "Immersive Web Samples の Input Selection は、`selectstart` / `selectend` / `select` を購読し、`targetRaySpace` の pose から scene hit test を行う最小の公式実装例として参照しやすいです。",
+    "WebXR Gamepads Module は、button、trigger、thumbstick、touchpad data を `XRInputSource.gamepad` に載せる前提を定義しており、profile 名や handedness と semantic action を分ける設計が重要です。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Device API Candidate Recommendation Draft dated 2026-06-09 centers `XRInputSource`, transient input, `XRInputSourceEvent`, `inputsourceschange`, and input profiles.",
+    "The Immersive Web input explainer states that every input source has `targetRaySpace`, and that `XRFrame.getPose(inputSource.targetRaySpace, referenceSpace)` must be checked because it can return `null` during tracking loss.",
+    "MDN's WebXR input guide explains how screen input can become a transient input source that emits `selectstart`, `select`, and `selectend`, which clarifies the bridge between pointer and XR input.",
+    "Immersive Web's Input Selection sample is a compact official reference for subscribing to `selectstart`, `selectend`, and `select`, then using `targetRaySpace` pose for scene hit testing.",
+    "The WebXR Gamepads Module defines how button, trigger, thumbstick, and touchpad data are exposed through `XRInputSource.gamepad`, making it important to separate profile labels, handedness, and semantic actions."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Target Ray Pose Confidence Lab",
+      "url": "../outputs/2026-08-26_html_target_ray_pose_confidence_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: XR Gamepad Action Mapper Probe",
+      "url": "../outputs/2026-08-26_html_gamepad_action_mapper_probe.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: WebXR Gamepads Module - Level 1",
+      "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+    },
+    {
+      "label": "MDN: Inputs and input sources",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Inputs"
+    },
+    {
+      "label": "Immersive Web: WebXR Device API Input Explainer",
+      "url": "https://immersive-web.github.io/webxr/input-explainer.html"
+    },
+    {
+      "label": "Immersive Web Samples: Input Selection source",
+      "url": "https://github.com/immersive-web/webxr-samples/blob/main/input-selection.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は Immersive Web Samples の Input Selection と、WebXR input explainer の target ray pose の説明です。公式サンプルは cube を選択する処理としてまとまっていますが、実プロダクトでは pose が `null` になる、3DoF / emulated position になる、screen transient source になる、event frame と描画 frame がずれる、といった状態を route 判断に変換する必要があります。公開ページでは外部デモをカードにせず、その考えを自作の confidence lab と action mapper に落としました。",
+      "bodyEn": "Today's notable references are Immersive Web's Input Selection sample and the target-ray pose explanation in the WebXR input explainer. The official sample is framed around selecting cubes, but production UI needs to turn states such as `null` poses, 3DoF or emulated position, screen transient sources, and event/render frame latency into routing decisions. The public archive keeps the focus on original confidence and action-mapping prototypes rather than external demo cards.",
+      "links": [
+        {
+          "label": "Input Selection source",
+          "url": "https://github.com/immersive-web/webxr-samples/blob/main/input-selection.html"
+        },
+        {
+          "label": "WebXR input explainer",
+          "url": "https://immersive-web.github.io/webxr/input-explainer.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Target Ray Pose Confidence Lab` は、targetRayMode、pose null 率、emulatedPosition 重み、ray jitter、event-frame latency を動かし、direct select、confirm reticle、DOM overlay fallback、stale pose ignore のどれに回すべきかを表示します。派生サンプル `XR Gamepad Action Mapper Probe` は、trigger、squeeze、thumbstick、primary、secondary を押し、profile、deadzone、handedness 欠落、poll cadence に応じて semantic action queue を変えます。",
+      "bodyEn": "The main sample, `Target Ray Pose Confidence Lab`, adjusts targetRayMode, pose-null rate, emulatedPosition weight, ray jitter, and event-frame latency, then routes input to direct select, confirm reticle, DOM overlay fallback, or stale-pose ignore. The derivative sample, `XR Gamepad Action Mapper Probe`, maps trigger, squeeze, thumbstick, primary, and secondary controls into a semantic action queue based on profile, deadzone, missing handedness, and poll cadence.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-08-26_html_target_ray_pose_confidence_lab.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-08-26_html_gamepad_action_mapper_probe.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "`select` event だけで確定処理を組むと、pose が取れない frame や transient source の寿命を見落としやすくなります。`selectstart` で候補を保持し、`select` で pose と confidence を再確認し、`selectend` でキャンセルや縮小演出を閉じる三段構えが扱いやすいです。gamepad 側は profile 名を UI ラベルに使い、アプリ内部は `select`、`grab`、`turn-left`、`confirm` のような semantic action に変換してから扱うと、デバイス差の影響を小さくできます。",
+      "bodyEn": "If confirmation is built only around the `select` event, it is easy to miss frames where no pose is available or where a transient source has already disappeared. A practical pattern is to hold a candidate on `selectstart`, re-check pose and confidence on `select`, and close cancellation or scale effects on `selectend`. For gamepad input, use profile names for UI labels, but convert to app-internal semantic actions such as `select`, `grab`, `turn-left`, and `confirm` before business logic.",
+      "links": [
+        {
+          "label": "W3C WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        },
+        {
+          "label": "W3C WebXR Gamepads Module",
+          "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+        }
+      ]
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは targetRayMode、pose loss、emulatedPosition、jitter、latency、confidence、route、profile、deadzone、axis、handedness fallback、poll cadence、semantic action を取れます。2026-08-25 の layer hit proxy と組み合わせると、proxy geometry の hit / miss を target ray pose confidence で補正できます。2026-08-23 の haptic verdict と合わせると、confidence が低い選択だけ confirm pulse に回すなど、入力品質から feedback を切り替えられます。",
+      "bodyEn": "The two samples expose targetRayMode, pose loss, emulatedPosition, jitter, latency, confidence, route, profile, deadzone, axis, handedness fallback, poll cadence, and semantic action. Combined with the 2026-08-25 layer hit proxy, proxy hit/miss can be corrected by target-ray pose confidence. Combined with the 2026-08-23 haptic verdict work, low-confidence selections can be routed to confirmation pulses or other feedback patterns."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Device API の input / events / privacy sections、WebXR Gamepads Module、Immersive Web Samples の Input Selection と Controller State、Input Profiles Registry、MDN の input source 解説を継続して追います。次は実 WebGL canvas 上で `navigator.xr` がある場合だけ inline session を開始し、実 `inputsourceschange` と gamepad snapshot をログする小サンプルへ進めると発展します。",
+      "bodyEn": "Continue watching the input, events, and privacy sections of the WebXR Device API, the WebXR Gamepads Module, Immersive Web's Input Selection and Controller State samples, the Input Profiles Registry, and MDN's input-source guidance. A useful next step is an inline-session sample that starts only when `navigator.xr` is present and records real `inputsourceschange` and gamepad snapshots."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命サンプルでは targetRayMode を `screen` にし、pose null と latency を上げて canvas をクリックしてください。direct select から DOM overlay fallback または stale pose ignore に落ちる流れが見えます。派生サンプルでは profile を `screen-emulated`、missing handedness を高めにして trigger 以外を押すと、transient source では危険な action を無視する設計を確認できます。",
+      "bodyEn": "In the main sample, set targetRayMode to `screen`, raise pose-null rate and latency, then click the canvas. You can see the route drop from direct select to DOM overlay fallback or stale-pose ignore. In the derivative sample, set the profile to `screen-emulated`, raise missing handedness, and press controls other than trigger to verify that risky actions are ignored for transient sources.",
+      "links": [
+        {
+          "label": "Open Target Ray Pose Confidence Lab",
+          "url": "../outputs/2026-08-26_html_target_ray_pose_confidence_lab.html"
+        },
+        {
+          "label": "Open XR Gamepad Action Mapper Probe",
+          "url": "../outputs/2026-08-26_html_gamepad_action_mapper_probe.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、WebXR Gamepads Module、MDN input guide、Immersive Web input explainer、Input Selection sample source を確認。設計: `targetRaySpace` pose の取得失敗や emulated state を UI route に変換する。実装: 本命 HTML で confidence と route を可視化し、派生 HTML で gamepad control を semantic action に正規化。検証: report JSON parse、2本の HTML 内 script 構文、gallery 再生成、publish を実行する。",
+      "bodyEn": "Research: reviewed the W3C WebXR Device API, WebXR Gamepads Module, MDN input guide, Immersive Web input explainer, and Input Selection sample source. Design: convert `targetRaySpace` pose failures and emulated states into UI routes. Implementation: visualize confidence and routing in the main HTML, then normalize gamepad controls to semantic actions in the derivative HTML. Validation: parse the report JSON, check both embedded scripts, rebuild the gallery, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日は layer 表示、hit proxy、multiview 予算まで来ていたので、今日は入力を同じ粒度で扱いました。XR UI は見える、読める、選べる、確定できる、取り消せる、という段階が分かれます。target ray と gamepad を confidence と semantic action に変換しておくと、layer、DOM Overlay、haptics、anchor recovery のどれへつなぐかを日別サンプル間で再利用できます。",
+      "bodyEn": "Recent samples reached layer presentation, hit proxies, and multiview budgets, so today treats input at the same level of detail. XR UI has separate stages: visible, readable, selectable, confirmable, and reversible. Converting target rays and gamepads into confidence and semantic actions makes it easier to reuse the data across layer, DOM Overlay, haptic, and anchor-recovery samples."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Target Ray Pose Confidence Lab` です。何が動くか: targetRayMode、pose loss、emulatedPosition、jitter、latency を変え、疑似 select event のログと fallback route を確認できます。次に足すなら、実 `navigator.xr.requestSession('inline')`、`inputsourceschange`、実 `XRFrame.getPose()` の null 率ログを入れます。派生として `XR Gamepad Action Mapper Probe` も実装しました。何が動くか: 左右コントローラ風 UI の button / axis を押し、profile と handedness 欠落に応じた semantic action map を確認できます。次に足すなら、Input Profiles Registry の component layout を読み込み、実 gamepad snapshots と並べます。",
+      "bodyEn": "The selected main prototype is `Target Ray Pose Confidence Lab`. What it does: adjust targetRayMode, pose loss, emulatedPosition, jitter, and latency, then inspect simulated select-event logs and fallback routing. Next additions would be real `navigator.xr.requestSession('inline')`, `inputsourceschange`, and `XRFrame.getPose()` null-rate logs. The derivative `XR Gamepad Action Mapper Probe` was also implemented. What it does: press controller-style button and axis controls, then inspect semantic action mapping under different profiles and missing-handedness conditions. Next additions would load component layouts from the Input Profiles Registry and compare them with real gamepad snapshots."
+    }
+  ]
+}

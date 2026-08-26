@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Target Ray Pose Confidence Lab</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #08110f;
+      --panel: rgba(9, 18, 16, 0.94);
+      --line: rgba(180, 224, 188, 0.24);
+      --text: #f1fbf2;
+      --muted: #a6b9aa;
+      --green: #9af2aa;
+      --cyan: #84d8ff;
+      --gold: #ffd470;
+      --red: #ff7e90;
+      --ink: #07110e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(115deg, rgba(132, 216, 255, 0.11), transparent 30%),
+        linear-gradient(225deg, rgba(154, 242, 170, 0.16), transparent 34%),
+        linear-gradient(180deg, #08110f, #14231f 58%, #08110f);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 28px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.8vw, 2.4rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      max-width: 850px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+
+    .badge,
+    .stage,
+    .panel,
+    .log {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.3);
+    }
+
+    .badge {
+      min-width: 260px;
+      padding: 12px 14px;
+    }
+
+    .badge b {
+      display: block;
+      color: var(--muted);
+      font-size: 0.76rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .badge span {
+      display: block;
+      margin-top: 5px;
+      color: var(--green);
+      font-weight: 780;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+      gap: 14px;
+    }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      min-height: 620px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 620px;
+      display: block;
+      background: #08110f;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .readouts {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .readout {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(241, 251, 242, 0.12);
+      border-radius: 8px;
+      background: rgba(5, 11, 10, 0.78);
+    }
+
+    .readout small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .readout strong {
+      display: block;
+      margin-top: 4px;
+      font-size: clamp(0.9rem, 1.6vw, 1.12rem);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel {
+      padding: 14px;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      letter-spacing: 0;
+    }
+
+    .control {
+      display: grid;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    input[type="range"],
+    select {
+      width: 100%;
+      accent-color: var(--green);
+    }
+
+    select {
+      min-height: 40px;
+      padding: 0 10px;
+      border: 1px solid rgba(241, 251, 242, 0.14);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(241, 251, 242, 0.08);
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 9px 10px;
+      border: 1px solid rgba(241, 251, 242, 0.18);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(241, 251, 242, 0.08);
+      font-weight: 730;
+      cursor: pointer;
+    }
+
+    button.primary {
+      color: var(--ink);
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+    }
+
+    .meter {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(241, 251, 242, 0.1);
+    }
+
+    .bar {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--green);
+      transition: width 180ms ease, background 180ms ease;
+    }
+
+    .log {
+      min-height: 152px;
+      max-height: 214px;
+      overflow: auto;
+      padding: 12px;
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: #d9f3dc;
+      background: rgba(4, 9, 8, 0.9);
+    }
+
+    .note {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 880px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .badge {
+        min-width: 0;
+      }
+
+      .readouts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stage,
+      canvas {
+        min-height: 560px;
+        height: 560px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Target Ray Pose Confidence Lab</h1>
+        <p class="subtitle">`selectstart` / `select` / `selectend` と `XRInputSource.targetRaySpace` の pose を、実機なしでも近い形で観察するための自作ミニ試作です。pose lost、emulated position、transient screen source、tracked-pointer の違いを信頼度と fallback route に落とします。</p>
+      </div>
+      <div class="badge">
+        <b>today's original sample</b>
+        <span id="verdict">proxy select ready</span>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <canvas id="stage" width="920" height="620" aria-label="target ray confidence simulation"></canvas>
+        <div class="readouts">
+          <div class="readout"><small>Target ray mode</small><strong id="modeRead">tracked-pointer</strong></div>
+          <div class="readout"><small>Pose confidence</small><strong id="confidenceRead">92%</strong></div>
+          <div class="readout"><small>Route</small><strong id="routeRead">direct select</strong></div>
+          <div class="readout"><small>Last event</small><strong id="eventRead">idle</strong></div>
+        </div>
+      </div>
+
+      <aside class="controls">
+        <div class="panel">
+          <h2>入力ソース</h2>
+          <div class="control">
+            <label for="rayMode">targetRayMode <span id="rayModeVal">tracked-pointer</span></label>
+            <select id="rayMode">
+              <option value="tracked-pointer">tracked-pointer controller</option>
+              <option value="gaze">gaze reticle</option>
+              <option value="screen">screen transient source</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="poseLoss">pose null / tracking loss <span id="poseLossVal">8%</span></label>
+            <input id="poseLoss" type="range" min="0" max="60" value="8">
+          </div>
+          <div class="control">
+            <label for="emulated">emulatedPosition weight <span id="emulatedVal">18%</span></label>
+            <input id="emulated" type="range" min="0" max="70" value="18">
+          </div>
+          <div class="control">
+            <label for="jitter">ray jitter <span id="jitterVal">14 mm</span></label>
+            <input id="jitter" type="range" min="0" max="80" value="14">
+          </div>
+          <div class="control">
+            <label for="latency">event-frame latency <span id="latencyVal">18 ms</span></label>
+            <input id="latency" type="range" min="0" max="120" value="18">
+          </div>
+          <div class="buttons">
+            <button class="primary" id="simulate">Select</button>
+            <button id="reset">Reset log</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>信頼度</h2>
+          <div class="meter"><div class="bar" id="confidenceBar"></div></div>
+          <p class="note" id="detail">Pose is stable enough for direct select. Keep a confirm reticle ready when the source becomes emulated or transient.</p>
+        </div>
+
+        <div class="log" id="log"></div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.querySelector("#stage");
+    const ctx = canvas.getContext("2d");
+    const ui = {
+      rayMode: document.querySelector("#rayMode"),
+      poseLoss: document.querySelector("#poseLoss"),
+      emulated: document.querySelector("#emulated"),
+      jitter: document.querySelector("#jitter"),
+      latency: document.querySelector("#latency"),
+      simulate: document.querySelector("#simulate"),
+      reset: document.querySelector("#reset"),
+      verdict: document.querySelector("#verdict"),
+      modeRead: document.querySelector("#modeRead"),
+      confidenceRead: document.querySelector("#confidenceRead"),
+      routeRead: document.querySelector("#routeRead"),
+      eventRead: document.querySelector("#eventRead"),
+      confidenceBar: document.querySelector("#confidenceBar"),
+      detail: document.querySelector("#detail"),
+      log: document.querySelector("#log")
+    };
+
+    const labels = {
+      rayModeVal: document.querySelector("#rayModeVal"),
+      poseLossVal: document.querySelector("#poseLossVal"),
+      emulatedVal: document.querySelector("#emulatedVal"),
+      jitterVal: document.querySelector("#jitterVal"),
+      latencyVal: document.querySelector("#latencyVal")
+    };
+
+    let lastPoint = { x: 0.58, y: 0.42 };
+    let lastEvent = "idle";
+    let logRows = [];
+    let tick = 0;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function getState() {
+      const mode = ui.rayMode.value;
+      const poseLoss = Number(ui.poseLoss.value);
+      const emulated = Number(ui.emulated.value);
+      const jitter = Number(ui.jitter.value);
+      const latency = Number(ui.latency.value);
+      const modePenalty = mode === "screen" ? 12 : mode === "gaze" ? 8 : 0;
+      const transientPenalty = mode === "screen" ? Math.max(0, latency - 32) * 0.22 : 0;
+      const confidence = clamp(100 - poseLoss * 0.72 - emulated * 0.42 - jitter * 0.33 - latency * 0.12 - modePenalty - transientPenalty, 0, 100);
+      const route = confidence >= 72 ? "direct select" : confidence >= 46 ? "confirm reticle" : confidence >= 25 ? "DOM overlay fallback" : "ignore stale pose";
+      return { mode, poseLoss, emulated, jitter, latency, confidence, route };
+    }
+
+    function addLog(type, state) {
+      const pose = state.confidence < state.poseLoss ? "null" : state.emulated > 42 ? "emulated" : "tracked";
+      const row = `${new Date().toLocaleTimeString("ja-JP")} ${type.padEnd(11)} mode=${state.mode} pose=${pose} conf=${Math.round(state.confidence)} route="${state.route}"`;
+      logRows.unshift(row);
+      logRows = logRows.slice(0, 9);
+      ui.log.textContent = logRows.join("\n");
+      lastEvent = type;
+    }
+
+    function routeColor(route) {
+      if (route === "direct select") return "#9af2aa";
+      if (route === "confirm reticle") return "#ffd470";
+      if (route === "DOM overlay fallback") return "#84d8ff";
+      return "#ff7e90";
+    }
+
+    function draw() {
+      tick += 1;
+      const state = getState();
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const grid = 44;
+      ctx.strokeStyle = "rgba(241,251,242,0.07)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += grid) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += grid) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      const target = { x: w * 0.64, y: h * 0.42, r: 64 };
+      ctx.fillStyle = "rgba(132,216,255,0.12)";
+      ctx.strokeStyle = "rgba(132,216,255,0.82)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(target.x - 108, target.y - 76, 216, 152, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#f1fbf2";
+      ctx.font = "700 18px Inter, sans-serif";
+      ctx.fillText("virtual target", target.x - 60, target.y - 12);
+      ctx.font = "12px Inter, sans-serif";
+      ctx.fillStyle = "rgba(241,251,242,0.72)";
+      ctx.fillText("proxy selectable surface", target.x - 68, target.y + 14);
+
+      const base = state.mode === "gaze"
+        ? { x: w * 0.5, y: h * 0.5 }
+        : state.mode === "screen"
+          ? { x: lastPoint.x * w, y: lastPoint.y * h }
+          : { x: w * 0.22, y: h * 0.76 };
+      const jitterPx = state.jitter * 0.42;
+      const rayEnd = {
+        x: target.x + Math.sin(tick * 0.05) * jitterPx + (state.latency * 0.22),
+        y: target.y + Math.cos(tick * 0.04) * jitterPx - (state.emulated * 0.16)
+      };
+      const hitDistance = Math.hypot(rayEnd.x - target.x, rayEnd.y - target.y);
+      const hit = hitDistance < target.r + 48 && state.confidence > 25;
+
+      ctx.strokeStyle = routeColor(state.route);
+      ctx.lineWidth = hit ? 5 : 3;
+      ctx.beginPath();
+      ctx.moveTo(base.x, base.y);
+      ctx.lineTo(rayEnd.x, rayEnd.y);
+      ctx.stroke();
+
+      ctx.fillStyle = routeColor(state.route);
+      ctx.beginPath();
+      ctx.arc(base.x, base.y, state.mode === "screen" ? 8 : 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(rayEnd.x, rayEnd.y, hit ? 13 : 9, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (state.route !== "direct select") {
+        ctx.strokeStyle = routeColor(state.route);
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 7]);
+        ctx.beginPath();
+        ctx.arc(target.x, target.y, 88, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.fillStyle = "rgba(5,11,10,0.72)";
+      ctx.fillRect(18, 18, 292, 92);
+      ctx.fillStyle = "#f1fbf2";
+      ctx.font = "700 15px Inter, sans-serif";
+      ctx.fillText("event order", 34, 46);
+      ctx.font = "13px ui-monospace, monospace";
+      ctx.fillStyle = state.confidence > 25 ? "#9af2aa" : "#ff7e90";
+      ctx.fillText("selectstart -> select -> selectend", 34, 74);
+      ctx.fillStyle = "rgba(241,251,242,0.68)";
+      ctx.fillText(hit ? "current ray intersects proxy" : "current ray needs fallback", 34, 96);
+
+      updateReadouts(state);
+      requestAnimationFrame(draw);
+    }
+
+    function updateReadouts(state) {
+      labels.rayModeVal.textContent = state.mode;
+      labels.poseLossVal.textContent = `${state.poseLoss}%`;
+      labels.emulatedVal.textContent = `${state.emulated}%`;
+      labels.jitterVal.textContent = `${state.jitter} mm`;
+      labels.latencyVal.textContent = `${state.latency} ms`;
+      ui.modeRead.textContent = state.mode;
+      ui.confidenceRead.textContent = `${Math.round(state.confidence)}%`;
+      ui.routeRead.textContent = state.route;
+      ui.eventRead.textContent = lastEvent;
+      ui.verdict.textContent = state.route;
+      ui.confidenceBar.style.width = `${state.confidence}%`;
+      ui.confidenceBar.style.background = routeColor(state.route);
+      ui.detail.textContent = state.route === "direct select"
+        ? "Pose is stable enough for direct select. Keep a confirm reticle ready when the source becomes emulated or transient."
+        : state.route === "confirm reticle"
+          ? "Use a visible reticle confirmation because pose quality is marginal."
+          : state.route === "DOM overlay fallback"
+            ? "Switch critical UI to DOM Overlay or a larger non-XR confirmation target."
+            : "Treat this as stale input and wait for a fresh pose before committing.";
+    }
+
+    function simulateSelect() {
+      const state = getState();
+      ["selectstart", "select", "selectend"].forEach((type, index) => {
+        window.setTimeout(() => addLog(type, state), index * Math.max(28, state.latency / 2));
+      });
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      lastPoint = {
+        x: clamp((event.clientX - rect.left) / rect.width, 0, 1),
+        y: clamp((event.clientY - rect.top) / rect.height, 0, 1)
+      };
+      simulateSelect();
+    });
+
+    ui.simulate.addEventListener("click", simulateSelect);
+    ui.reset.addEventListener("click", () => {
+      logRows = [];
+      ui.log.textContent = "";
+      lastEvent = "idle";
+    });
+
+    addLog("session", getState());
+    draw();
+  </script>
+</body>
+</html>
