@@ -1,0 +1,163 @@
+{
+  "date": "2026-08-27",
+  "headline": "WebXR Input Profiles の layout router と inputsourceschange lifecycle を自作サンプル化",
+  "headlineEn": "Original samples for WebXR input profile layout routing and inputsourceschange lifecycle",
+  "summary": "W3C WebXR Device API、WebXR Gamepads Module、Immersive Web の WebXR Input Profiles Registry / motion-controllers、MDN の `inputsourceschange`、Immersive Web Samples の Input Profiles / Controller State を確認し、`XRInputSource.profiles` の fallback と component layout を action に変換する本命サンプル、`inputsourceschange` の追加・削除・解放漏れを検査する派生サンプルを追加しました。",
+  "summaryEn": "After reviewing the W3C WebXR Device API, WebXR Gamepads Module, Immersive Web's WebXR Input Profiles Registry and motion-controllers package, MDN's `inputsourceschange` event, and Immersive Web's Input Profiles and Controller State samples, today's original work adds a main sample that maps `XRInputSource.profiles` fallback and component layouts into app actions plus a derivative lifecycle probe for input-source addition, removal, and cleanup leaks.",
+  "keyTopics": [
+    "WebXR Device API は `XRInputSource.profiles` を ordered array として扱い、アプリ側は先頭から対応 profile を探し、fallback を含めて入力表現を選ぶ必要があります。",
+    "WebXR Input Profiles Registry は profile id、fallbackProfileIds、handedness layout、components、selectComponentId、gamepad button / axes mapping を定義し、デバイス差を吸収する基準になります。",
+    "motion-controllers package は `inputsourceschange` で追加された `XRInputSource` から profile を fetch し、毎 frame `updateFromGamepad()` で component state を更新する流れを示しています。",
+    "MDN の `XRSession.inputsourceschange` は added / removed 配列を持つ `XRInputSourcesChangeEvent` として説明され、接続・切断・有効化の差分を扱う入口になります。",
+    "WebXR Gamepads Module は `XRInputSource.gamepad` が frame ごとに live update されることを明記しており、前 frame との比較には値の snapshot を別途持つ設計が必要です。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Device API treats `XRInputSource.profiles` as an ordered array, so applications need to search from the front and choose input presentation with fallback in mind.",
+    "The WebXR Input Profiles Registry defines profile ids, fallbackProfileIds, handedness layouts, components, selectComponentId, and gamepad button/axes mappings, making it the baseline for absorbing device differences.",
+    "The motion-controllers package shows a flow where `inputsourceschange` additions are used to fetch profiles and `updateFromGamepad()` refreshes component state every frame.",
+    "MDN describes `XRSession.inputsourceschange` as an `XRInputSourcesChangeEvent` with added and removed arrays, which is the entry point for connection, disconnection, and availability deltas.",
+    "The WebXR Gamepads Module states that `XRInputSource.gamepad` is updated live each frame, so applications need separate value snapshots for frame-to-frame comparisons."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: WebXR Input Profile Layout Router",
+      "url": "../outputs/2026-08-27_html_input_profile_layout_router.html"
+    },
+    {
+      "label": "Today's derivative sample: XRInputSourcesChange Lifecycle Probe",
+      "url": "../outputs/2026-08-27_html_inputsourceschange_lifecycle_probe.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: WebXR Gamepads Module - Level 1",
+      "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Input Profiles",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/"
+    },
+    {
+      "label": "Immersive Web: Input Profiles Registry",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/packages/registry/"
+    },
+    {
+      "label": "Immersive Web: Motion Controllers package",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/packages/motion-controllers/"
+    },
+    {
+      "label": "MDN: XRSession inputsourceschange event",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/inputsourceschange_event"
+    },
+    {
+      "label": "Immersive Web Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Web Samples: Controller State",
+      "url": "https://immersive-web.github.io/webxr-samples/controller-state.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は Immersive Web の WebXR Input Profiles Registry と motion-controllers package です。公式サンプルの Input Profiles / Controller State は controller model や gamepad state の扱いを見せていますが、公開アーカイブの中心は外部デモではなく、profile fallback、component layout、selectComponentId、added / removed lifecycle を自作 UI で検査する2本にしました。面白い点は、XR controller を機種名で分岐するのではなく、component と semantic action の薄い層に変換してから使えることです。",
+      "bodyEn": "Today's notable references are Immersive Web's WebXR Input Profiles Registry and motion-controllers package. The official Input Profiles and Controller State samples show controller models and gamepad state, but the archive focuses on two original UI probes for profile fallback, component layouts, selectComponentId, and added/removed lifecycle handling. The interesting part is converting XR controllers into a thin component-to-semantic-action layer rather than branching on device names.",
+      "links": [
+        {
+          "label": "WebXR Input Profiles Registry",
+          "url": "https://immersive-web.github.io/webxr-input-profiles/packages/registry/"
+        },
+        {
+          "label": "Motion Controllers package",
+          "url": "https://immersive-web.github.io/webxr-input-profiles/packages/motion-controllers/"
+        },
+        {
+          "label": "WebXR Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `WebXR Input Profile Layout Router` は、reported profiles、handedness、registry freshness、gamepad confidence、fallback penalty を変え、どの profile / layout / select component が採用されるかを表示します。controller 風の部品を押すと `select`、`grab`、`turn / move`、`cursor nudge` などの app action に変換されます。派生サンプル `XRInputSourcesChange Lifecycle Probe` は、paired controllers、controller swap、screen transient burst、tracking loss の4シナリオを step 実行し、active source と controller object のずれ、stale pose risk、解放 route を見ます。",
+      "bodyEn": "The main sample, `WebXR Input Profile Layout Router`, adjusts reported profiles, handedness, registry freshness, gamepad confidence, and fallback penalty, then shows the selected profile, layout, and select component. Pressing controller-like parts maps them to app actions such as `select`, `grab`, `turn / move`, and `cursor nudge`. The derivative sample, `XRInputSourcesChange Lifecycle Probe`, steps through paired controllers, controller swap, screen transient burst, and tracking-loss scenarios to inspect active-source/controller-object mismatches, stale pose risk, and cleanup routing.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-08-27_html_input_profile_layout_router.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-08-27_html_inputsourceschange_lifecycle_probe.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "`XRInputSource.profiles` は表示用の名前ではなく、利用可能な profile を順番に探すための候補列として扱うと実装が安定します。Registry の `selectComponentId` は primary action と `select` event の根拠になるので、trigger と同一視せず profile ごとに読みます。`inputsourceschange` では added で controller object と asset を作り、removed で frame poll、asset、haptic queue、pending select 候補をまとめて解放する必要があります。`gamepad` は live object なので、差分検出には buttons / axes の値だけを snapshot します。",
+      "bodyEn": "Treat `XRInputSource.profiles` as an ordered list of lookup candidates rather than just display names. Registry `selectComponentId` is the basis for primary action and `select` events, so it should be read per profile instead of assuming it is always a trigger. On `inputsourceschange`, create controller objects and assets from added sources, then release frame polling, assets, haptic queues, and pending select candidates on removed sources. Because `gamepad` is a live object, diffing should snapshot button and axis values rather than object references.",
+      "links": [
+        {
+          "label": "W3C WebXR Gamepads Module",
+          "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+        },
+        {
+          "label": "MDN inputsourceschange",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/inputsourceschange_event"
+        }
+      ]
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは matched profile、layout key、selectComponentId、component type、button / axes mapping、fallback depth、semantic action、active source count、controller object count、stale risk、release verdict を取れます。2026-08-26 の gamepad action mapper と接続すれば、実際の button 値を Registry component に寄せてから app action に変換できます。2026-08-25 の layer hit proxy と組み合わせると、controller swap や transient input の瞬間に proxy 選択を保留する設計を検証できます。",
+      "bodyEn": "The two samples expose matched profile, layout key, selectComponentId, component type, button/axes mapping, fallback depth, semantic action, active-source count, controller-object count, stale risk, and release verdict. Connected to the 2026-08-26 gamepad action mapper, real button values could first be normalized into Registry components and then into app actions. Combined with the 2026-08-25 layer hit proxy sample, controller swaps and transient-input moments can be used to pause proxy selection safely."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Input Profiles Registry の実 JSON、assets package の profile merge、motion-controllers の `fetchProfile()` / `MotionController`、WebXR Samples の input-profiles.html と controller-state.html、WebXR Device API の input source attribute changes、WebXR Gamepads Module の live frame update を継続して追います。次は CDN またはローカルの profile JSON を実際に fetch し、今日の router に差し込むと発展します。",
+      "bodyEn": "Continue watching the real JSON files in the Input Profiles Registry, profile merging in the assets package, motion-controllers `fetchProfile()` and `MotionController`, WebXR Samples input-profiles.html and controller-state.html, input-source attribute changes in the WebXR Device API, and live frame updates in the WebXR Gamepads Module. A useful next step is to fetch real profile JSON from a CDN or local bundle and plug it into today's router."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命サンプルでは reported profiles を `unknown-vendor` に変え、fallback penalty を上げてから trigger / squeeze / thumbstick を押してください。unknown profile から generic profile に落ちたとき、`select-only fallback` に寄る様子が見えます。派生サンプルでは scenario を `tracking loss and stale release` にして Step event を進め、cleanup strictness を下げて controller object が残る状態を確認してください。",
+      "bodyEn": "In the main sample, switch reported profiles to `unknown-vendor`, raise fallback penalty, then press trigger, squeeze, and thumbstick. You can see the route shift toward `select-only fallback` when an unknown profile drops to a generic profile. In the derivative sample, choose `tracking loss and stale release`, step through the events, and lower cleanup strictness to see controller objects remain after source removal.",
+      "links": [
+        {
+          "label": "Open WebXR Input Profile Layout Router",
+          "url": "../outputs/2026-08-27_html_input_profile_layout_router.html"
+        },
+        {
+          "label": "Open XRInputSourcesChange Lifecycle Probe",
+          "url": "../outputs/2026-08-27_html_inputsourceschange_lifecycle_probe.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、WebXR Gamepads Module、Immersive Web Input Profiles、Registry、motion-controllers、MDN `inputsourceschange`、WebXR Samples を確認。設計: profile fallback と lifecycle cleanup を、XR 端末なしでも触れる最小 UI にする。実装: 本命 HTML で component layout router、派生 HTML で input source lifecycle probe を追加。検証: JSON parse、2本の HTML 内 script 構文、gallery 再生成、publish 実行、必要なら公開先への反映確認を行う。",
+      "bodyEn": "Research: reviewed the W3C WebXR Device API, WebXR Gamepads Module, Immersive Web Input Profiles, Registry, motion-controllers, MDN `inputsourceschange`, and WebXR Samples. Design: make profile fallback and lifecycle cleanup inspectable without requiring an XR device. Implementation: add the main component-layout router HTML and the derivative input-source lifecycle probe HTML. Validation: parse JSON, check both embedded scripts, rebuild the gallery, run publish, and verify publication as needed."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日の流れは layer、hit proxy、target ray confidence、gamepad action と進んできました。今日はその入力系列を device profile と session lifecycle に引き上げました。XR の実装では、見た目の controller model、button 値、select event、handedness、transient source の寿命が別々に壊れます。profile router と lifecycle probe を持つと、UI がどの段階で fallback したのかを日別サンプル間で説明しやすくなります。",
+      "bodyEn": "Recent work moved through layers, hit proxies, target-ray confidence, and gamepad actions. Today lifts that input path into device profiles and session lifecycle. In XR implementations, controller models, button values, select events, handedness, and transient-source lifetime can fail separately. A profile router and lifecycle probe make it easier to explain where the UI fell back across daily samples."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `WebXR Input Profile Layout Router` です。何が動くか: reported profiles、handedness、registry freshness、gamepad confidence、fallback penalty を変え、疑似 Registry から matched profile、layout、selectComponentId、semantic action を選びます。次に足すなら、Input Profiles Registry の実 JSON を fetch し、component layout をサンプル内の疑似データから置き換えます。派生として `XRInputSourcesChange Lifecycle Probe` も実装しました。何が動くか: `inputsourceschange` の added / removed / stale を step 実行し、active source と controller object のずれ、stale risk、release verdict を表示します。次に足すなら、実 `navigator.xr.requestSession('inline')` で `inputsourceschange` を購読し、added / removed の実ログをこの timeline に流します。",
+      "bodyEn": "The selected main prototype is `WebXR Input Profile Layout Router`. What it does: adjust reported profiles, handedness, registry freshness, gamepad confidence, and fallback penalty, then select a matched profile, layout, selectComponentId, and semantic action from simulated Registry data. Next addition: fetch real Input Profiles Registry JSON and replace the simulated component data. The derivative `XRInputSourcesChange Lifecycle Probe` was also implemented. What it does: step through `inputsourceschange` added, removed, and stale events, then show active-source/controller-object mismatches, stale risk, and release verdict. Next addition: subscribe to real `inputsourceschange` from `navigator.xr.requestSession('inline')` and stream the actual added/removed log into this timeline."
+    }
+  ]
+}

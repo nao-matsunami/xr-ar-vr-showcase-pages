@@ -1,1 +1,445 @@
-PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImphIj4KPGhlYWQ+CiAgPG1ldGEgY2hhcnNldD0iVVRGLTgiIC8+CiAgPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCwgaW5pdGlhbC1zY2FsZT0xLjAiIC8+CiAgPHRpdGxlPkxheWVycyDjgaggSGFuZC9EZXB0aCDjgpLph43jga3jgZ/pga7olL0gVUkg44KS6Kmm44GZIHwgMjAyNi0wNy0xMjwvdGl0bGU+CiAgPHN0eWxlPgogICAgOnJvb3QgewogICAgICAtLWJnMDogIzA3MTExYTsKICAgICAgLS1iZzE6ICMxMDIzMzg7CiAgICAgIC0tcGFuZWw6IHJnYmEoOSwgMjAsIDMxLCAwLjg0KTsKICAgICAgLS1wYW5lbC0yOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDQpOwogICAgICAtLWxpbmU6IHJnYmEoMTI2LCAyMjgsIDI1NSwgMC4xMik7CiAgICAgIC0tdGV4dDogI2ViZjhmZjsKICAgICAgLS1tdXRlZDogIzlhYjZjODsKICAgICAgLS1hY2NlbnQ6ICM3Y2U0ZmY7CiAgICAgIC0tYWNjZW50MjogI2ZmZDg2ODsKICAgICAgLS1zaGFkb3c6IHJnYmEoMCwgMCwgMCwgMC4zMik7CiAgICB9CgogICAgKiB7IGJveC1zaXppbmc6IGJvcmRlci1ib3g7IH0KCiAgICBib2R5IHsKICAgICAgbWFyZ2luOiAwOwogICAgICBtaW4taGVpZ2h0OiAxMDB2aDsKICAgICAgZm9udC1mYW1pbHk6ICJBdmVuaXIgTmV4dCIsICJIaXJhZ2lubyBTYW5zIiwgc2Fucy1zZXJpZjsKICAgICAgY29sb3I6IHZhcigtLXRleHQpOwogICAgICBiYWNrZ3JvdW5kOgogICAgICAgIHJhZGlhbC1ncmFkaWVudChjaXJjbGUgYXQgMTYlIDE4JSwgcmdiYSgxMjQsIDIyOCwgMjU1LCAwLjE2KSwgdHJhbnNwYXJlbnQgMjQlKSwKICAgICAgICByYWRpYWwtZ3JhZGllbnQoY2lyY2xlIGF0IDg0JSAxMCUsIHJnYmEoMjU1LCAyMTYsIDEwNCwgMC4xMiksIHRyYW5zcGFyZW50IDIwJSksCiAgICAgICAgbGluZWFyLWdyYWRpZW50KDE4MGRlZywgdmFyKC0tYmcxKSwgdmFyKC0tYmcwKSk7CiAgICB9CgogICAgLnNoZWxsIHsKICAgICAgbWF4LXdpZHRoOiAxMTgwcHg7CiAgICAgIG1hcmdpbjogMCBhdXRvOwogICAgICBwYWRkaW5nOiAyOHB4IDIwcHggNDhweDsKICAgIH0KCiAgICAuaGVybywKICAgIC5kZXRhaWwtYmxvY2ssCiAgICAucHJldmlldywKICAgIC5kYXktbmF2IHsKICAgICAgYm9yZGVyLXJhZGl1czogMjRweDsKICAgICAgYmFja2dyb3VuZDogdmFyKC0tcGFuZWwpOwogICAgICBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1saW5lKTsKICAgICAgYm94LXNoYWRvdzogMCAxOHB4IDQycHggdmFyKC0tc2hhZG93KTsKICAgICAgYmFja2Ryb3AtZmlsdGVyOiBibHVyKDE0cHgpOwogICAgfQoKICAgIC5oZXJvIHsKICAgICAgcGFkZGluZzogMjhweDsKICAgIH0KCiAgICAuaGVybyBoMSB7CiAgICAgIG1hcmdpbjogMCAwIDEwcHg7CiAgICAgIGZvbnQtc2l6ZTogY2xhbXAoMS44cmVtLCA0dncsIDNyZW0pOwogICAgICBsaW5lLWhlaWdodDogMS4xNTsKICAgIH0KCiAgICAuaGVybyBwLAogICAgLmRldGFpbC1ibG9jayBwLAogICAgLmRldGFpbC1ibG9jayBsaSB7CiAgICAgIGNvbG9yOiB2YXIoLS1tdXRlZCk7CiAgICAgIGxpbmUtaGVpZ2h0OiAxLjc7CiAgICB9CgogICAgLmVuLWNvcHksCiAgICAuaGVhZGluZy1wYWlyLXNlY29uZGFyeSwKICAgIC5oZXJvLXN1YnRpdGxlIHsKICAgICAgY29sb3I6IHZhcigtLW11dGVkKTsKICAgICAgbGluZS1oZWlnaHQ6IDEuNzsKICAgIH0KCiAgICAuaGVhZGluZy1wYWlyIHsKICAgICAgZGlzcGxheTogZ3JpZDsKICAgICAgZ2FwOiA0cHg7CiAgICB9CgogICAgLmhlcm8tc3VidGl0bGUgewogICAgICBtYXJnaW46IDAgMCAxMnB4OwogICAgICBmb250LXNpemU6IDFyZW07CiAgICB9CgogICAgLmRhdGUgewogICAgICBtYXJnaW46IDAgMCAxMHB4OwogICAgICBjb2xvcjogdmFyKC0tYWNjZW50Mik7CiAgICAgIGZvbnQtc2l6ZTogMC45cmVtOwogICAgICBsZXR0ZXItc3BhY2luZzogMC4wNGVtOwogICAgICB0ZXh0LXRyYW5zZm9ybTogdXBwZXJjYXNlOwogICAgfQoKICAgIC5hY3Rpb25zLAogICAgLmRheS1uYXYgewogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBnYXA6IDEycHg7CiAgICAgIGZsZXgtd3JhcDogd3JhcDsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgIH0KCiAgICAuYWN0aW9ucyB7CiAgICAgIG1hcmdpbi10b3A6IDE4cHg7CiAgICB9CgogICAgLnByaW1hcnksCiAgICAuc2Vjb25kYXJ5LWxpbmssCiAgICAuZGF5LWxpbmsgewogICAgICBkaXNwbGF5OiBpbmxpbmUtZmxleDsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgICAgIG1pbi1oZWlnaHQ6IDQycHg7CiAgICAgIHBhZGRpbmc6IDAgMTRweDsKICAgICAgYm9yZGVyLXJhZGl1czogMTJweDsKICAgICAgdGV4dC1kZWNvcmF0aW9uOiBub25lOwogICAgICBmb250LXdlaWdodDogNzAwOwogICAgfQoKICAgIC5wcmltYXJ5IHsKICAgICAgYmFja2dyb3VuZDogbGluZWFyLWdyYWRpZW50KDEzNWRlZywgdmFyKC0tYWNjZW50KSwgIzhlZmZjOCk7CiAgICAgIGNvbG9yOiAjMDYyMzM0OwogICAgfQoKICAgIC5zZWNvbmRhcnktbGluaywKICAgIC5kYXktbGluayB7CiAgICAgIGJhY2tncm91bmQ6IHJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wNik7CiAgICAgIGNvbG9yOiB2YXIoLS10ZXh0KTsKICAgICAgYm9yZGVyOiAxcHggc29saWQgcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjA4KTsKICAgIH0KCiAgICAuZGF5LW5hdiB7CiAgICAgIGp1c3RpZnktY29udGVudDogc3BhY2UtYmV0d2VlbjsKICAgICAgbWFyZ2luLXRvcDogMThweDsKICAgICAgcGFkZGluZzogMThweDsKICAgIH0KCiAgICAuY29udGVudCB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdyaWQtdGVtcGxhdGUtY29sdW1uczogbWlubWF4KDAsIDEuMmZyKSBtaW5tYXgoMzIwcHgsIDAuOGZyKTsKICAgICAgZ2FwOiAxOHB4OwogICAgICBtYXJnaW4tdG9wOiAyMnB4OwogICAgfQoKICAgIC5zdGFjayB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdhcDogMThweDsKICAgIH0KCiAgICAuZGV0YWlsLWJsb2NrIHsKICAgICAgcGFkZGluZzogMjJweDsKICAgIH0KCiAgICAuZGV0YWlsLWJsb2NrIGgyIHsKICAgICAgbWFyZ2luOiAwIDAgMTJweDsKICAgICAgZm9udC1zaXplOiAxLjA1cmVtOwogICAgfQoKICAgIC5saW5rLWxpc3QgewogICAgICBkaXNwbGF5OiBncmlkOwogICAgICBnYXA6IDhweDsKICAgICAgcGFkZGluZy1sZWZ0OiAxOHB4OwogICAgICBtYXJnaW46IDEycHggMCAwOwogICAgfQoKICAgIC5saW5rLWxpc3QgYSB7CiAgICAgIGNvbG9yOiB2YXIoLS1hY2NlbnQpOwogICAgfQoKICAgIC50b3BpYy1saXN0IHsKICAgICAgZGlzcGxheTogZ3JpZDsKICAgICAgZ2FwOiAxMnB4OwogICAgICBwYWRkaW5nLWxlZnQ6IDIycHg7CiAgICAgIG1hcmdpbjogMTJweCAwIDA7CiAgICB9CgogICAgLnRvcGljLWxpc3QgbGkgc3BhbiB7CiAgICAgIGRpc3BsYXk6IGJsb2NrOwogICAgfQoKICAgIC5zYW1wbGUtbGlzdCB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdhcDogMTJweDsKICAgIH0KCiAgICAuc2FtcGxlLWl0ZW0gewogICAgICBwYWRkaW5nOiAxNnB4OwogICAgICBib3JkZXItcmFkaXVzOiAxOHB4OwogICAgICBiYWNrZ3JvdW5kOiB2YXIoLS1wYW5lbC0yKTsKICAgICAgYm9yZGVyOiAxcHggc29saWQgcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjA2KTsKICAgIH0KCiAgICAuc2FtcGxlLWl0ZW0taGVhZCB7CiAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgIGFsaWduLWl0ZW1zOiBzdGFydDsKICAgICAganVzdGlmeS1jb250ZW50OiBzcGFjZS1iZXR3ZWVuOwogICAgICBnYXA6IDEycHg7CiAgICAgIGZsZXgtd3JhcDogd3JhcDsKICAgIH0KCiAgICAuc2FtcGxlLWl0ZW0gaDMgewogICAgICBtYXJnaW46IDAgMCA4cHg7CiAgICAgIGZvbnQtc2l6ZTogMXJlbTsKICAgIH0KCiAgICAuc2FtcGxlLWl0ZW0gcCB7CiAgICAgIG1hcmdpbjogMDsKICAgIH0KCiAgICAucHJldmlldyB7CiAgICAgIHBhZGRpbmc6IDE4cHg7CiAgICAgIHBvc2l0aW9uOiBzdGlja3k7CiAgICAgIHRvcDogMjBweDsKICAgICAgaGVpZ2h0OiBmaXQtY29udGVudDsKICAgIH0KCiAgICAucHJldmlldyBoMiB7CiAgICAgIG1hcmdpbjogMCAwIDEycHg7CiAgICAgIGZvbnQtc2l6ZTogMS4wNXJlbTsKICAgIH0KCiAgICBpZnJhbWUgewogICAgICB3aWR0aDogMTAwJTsKICAgICAgaGVpZ2h0OiA1MjBweDsKICAgICAgYm9yZGVyOiAwOwogICAgICBib3JkZXItcmFkaXVzOiAxNnB4OwogICAgICBiYWNrZ3JvdW5kOiByZ2JhKDAsIDAsIDAsIDAuMjUpOwogICAgfQoKICAgIEBtZWRpYSAobWF4LXdpZHRoOiA5NjBweCkgewogICAgICAuY29udGVudCB7CiAgICAgICAgZ3JpZC10ZW1wbGF0ZS1jb2x1bW5zOiAxZnI7CiAgICAgIH0KCiAgICAgIC5wcmV2aWV3IHsKICAgICAgICBwb3NpdGlvbjogc3RhdGljOwogICAgICB9CgogICAgICBpZnJhbWUgewogICAgICAgIGhlaWdodDogNDIwcHg7CiAgICAgIH0KICAgIH0KICA8L3N0eWxlPgo8L2hlYWQ+Cjxib2R5PgogIDxtYWluIGNsYXNzPSJzaGVsbCI+CiAgICA8c2VjdGlvbiBjbGFzcz0iaGVybyI+CiAgICAgIDxwIGNsYXNzPSJkYXRlIj4yMDI2LjA3LjEyPC9wPgogICAgICA8aDE+TGF5ZXJzIOOBqCBIYW5kL0RlcHRoIOOCkumHjeOBreOBn+mBruiUvSBVSSDjgpLoqabjgZk8L2gxPgogICAgICA8cCBjbGFzcz0iaGVyby1zdWJ0aXRsZSI+VGVzdGluZyBvY2NsdWRlZCBVSSBieSBjb21iaW5pbmcgTGF5ZXJzIHdpdGggSGFuZCBhbmQgRGVwdGggY3VlczwvcD4KICAgICAgPHA+V2ViWFIgTGF5ZXJzIEFQSeOAgURlcHRoIFNlbnNpbmfjgIFIYW5kIElucHV044CBTGlnaHRpbmcgRXN0aW1hdGlvbiDjga7kuIDmrKHmg4XloLHjgpLnorroqo3jgZfjgIHku4rml6Xjga/pq5jnsr7ntLAgcXVhZCBsYXllciDjgYzmiYvliY3jga7miYvjgafpmqDjgozjgIFwaW5jaCDjgajnhafmmI7jgafnirbmhYvjgYzlpInjgo/jgovoh6rkvZwgSFRNTCDjgrXjg7Pjg5fjg6vjgpLov73liqDjgZfjgb7jgZfjgZ/jgII8L3A+CiAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5BZnRlciByZXZpZXdpbmcgcHJpbWFyeSBzb3VyY2VzIGZvciB0aGUgV2ViWFIgTGF5ZXJzIEFQSSwgRGVwdGggU2Vuc2luZywgSGFuZCBJbnB1dCwgYW5kIExpZ2h0aW5nIEVzdGltYXRpb24sIHRvZGF5J3Mgb3JpZ2luYWwgSFRNTCBzYW1wbGUgc2ltdWxhdGVzIGEgaGlnaC1maWRlbGl0eSBxdWFkIGxheWVyIHRoYXQgaXMgb2NjbHVkZWQgYnkgYSBuZWFyZXIgaGFuZCBhbmQgY2hhbmdlcyBzdGF0ZSB0aHJvdWdoIHBpbmNoIGFuZCBsaWdodGluZyBjb250cm9scy48L3A+CiAgICAgIDxkaXYgY2xhc3M9ImFjdGlvbnMiPgogICAgICAgIDxhIGNsYXNzPSJwcmltYXJ5IiBocmVmPSIuLi9vdXRwdXRzLzIwMjYtMDctMTJfaHRtbF9sYXllcmVkX2hhbmRfb2NjbHVzaW9uX3N0YWdlLmh0bWwiPuS7o+ihqOOCteODs+ODl+ODq+OCkumWi+OBjyAvIE9wZW4gc2FtcGxlPC9hPgogICAgICAgIDxhIGNsYXNzPSJzZWNvbmRhcnktbGluayIgaHJlZj0iLi4vcGFnZXMvNC5odG1sIj7kuIDopqfjgbjmiLvjgosgLyBCYWNrIHRvIGFyY2hpdmU8L2E+CiAgICAgIDwvZGl2PgogICAgPC9zZWN0aW9uPgoKICAgIDxuYXYgY2xhc3M9ImRheS1uYXYiIGFyaWEtbGFiZWw9IuaXpeS7mOenu+WLlSI+CiAgICAgIDxhIGNsYXNzPSJkYXktbGluayIgaHJlZj0iLi4vZGF5cy8yMDI2LTA3LTExLmh0bWwiPuKGkCAyMDI2LjA3LjExPC9hPgogICAgICA8YSBjbGFzcz0iZGF5LWxpbmsiIGhyZWY9Ii4uL2RheXMvMjAyNi0wNy0xMy5odG1sIj4yMDI2LjA3LjEzIOKGkjwvYT4KICAgIDwvbmF2PgoKICAgIDxzZWN0aW9uIGNsYXNzPSJjb250ZW50Ij4KICAgICAgPGRpdiBjbGFzcz0ic3RhY2siPgogICAgICAgIDxzZWN0aW9uIGNsYXNzPSJkZXRhaWwtYmxvY2siPgogICAgICAgICAgPGgyPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXIiPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItcHJpbWFyeSI+44GT44Gu5pel44Gu44K144Oz44OX44OrPC9zcGFuPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItc2Vjb25kYXJ5Ij5TYW1wbGVzIGZvciB0aGlzIGRheTwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgIDxkaXYgY2xhc3M9InNhbXBsZS1saXN0Ij4KICAgICAgICAgICAgCiAgICAgICAgPGFydGljbGUgY2xhc3M9InNhbXBsZS1pdGVtIj4KICAgICAgICAgIDxkaXYgY2xhc3M9InNhbXBsZS1pdGVtLWhlYWQiPgogICAgICAgICAgICA8ZGl2PgogICAgICAgICAgICAgIDxoMz5MYXllcmVkIEhhbmQgT2NjbHVzaW9uIFN0YWdlPC9oMz4KICAgICAgICAgICAgICA8cD5XZWJYUiBMYXllcnMg44GuIHRleHQtb3B0aW1pemVkIHF1YWQgbGF5ZXLjgIFEZXB0aCBTZW5zaW5nIOeahOOBquaJi+WJjS/lpaXjga7pga7olL3jgIFIYW5kIElucHV0IOOBriBwaW5jaCDjgpLnlpHkvLzljJbjgZnjgovmnIDlsI/jgrXjg7Pjg5fjg6vjgafjgZnjgII8L3A+CiAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICA8YSBjbGFzcz0ic2Vjb25kYXJ5LWxpbmsiIGhyZWY9Ii4uL291dHB1dHMvMjAyNi0wNy0xMl9odG1sX2xheWVyZWRfaGFuZF9vY2NsdXNpb25fc3RhZ2UuaHRtbCI+6ZaL44GPIC8gT3BlbjwvYT4KICAgICAgICAgIDwvZGl2PgogICAgICAgIDwvYXJ0aWNsZT4KICAgICAgCiAgICAgICAgICA8L2Rpdj4KICAgICAgICA8L3NlY3Rpb24+CiAgICAgICAgCiAgICAgIDxzZWN0aW9uIGNsYXNzPSJkZXRhaWwtYmxvY2siPgogICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuS7iuaXpeOBrumHjeimgeODiOODlOODg+OCrzwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+S2V5IHRvcGljcyB0b2RheTwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICA8b2wgY2xhc3M9InRvcGljLWxpc3QiPgogICAgICAgICAgCiAgICAgICAgICAgIDxsaT4KICAgICAgICAgICAgICA8c3Bhbj5XZWJYUiBMYXllcnMgQVBJIExldmVsIDEg44GuIEVkaXRvcidzIERyYWZ0IOOBryAyMDI2LTA2LTEyIOabtOaWsOOBp+OAgVdlYlhSIHNlc3Npb24g5YaF44GuIHByb2plY3Rpb24gLyBxdWFkIC8gY3lsaW5kZXIgLyBlcXVpcmVjdCAvIGN1YmUg44Gq44Gp44GuIGNvbXBvc2l0aW9uIGxheWVyIOOCkuaJseOBhuOAgjwvc3Bhbj4KICAgICAgICAgICAgICA8c3BhbiBjbGFzcz0iZW4tY29weSI+VGhlIFdlYlhSIExheWVycyBBUEkgTGV2ZWwgMSBFZGl0b3IncyBEcmFmdCB3YXMgdXBkYXRlZCBvbiAyMDI2LTA2LTEyIGFuZCBjb3ZlcnMgY29tcG9zaXRpb24gbGF5ZXJzIHN1Y2ggYXMgcHJvamVjdGlvbiwgcXVhZCwgY3lsaW5kZXIsIGVxdWlyZWN0LCBhbmQgY3ViZSBsYXllcnMgd2l0aGluIFdlYlhSIHNlc3Npb25zLjwvc3Bhbj4KICAgICAgICAgICAgPC9saT4KICAgICAgICAgIAogICAgICAgICAgICA8bGk+CiAgICAgICAgICAgICAgPHNwYW4+TGF5ZXJzIOOBryBgbGF5ZXJzYCBmZWF0dXJlIGRlc2NyaXB0b3Ig44KSIGltbWVyc2l2ZS12ciAvIGltbWVyc2l2ZS1hciBzZXNzaW9uIOOBp+imgeaxguOBl+OAgWBYUldlYkdMQmluZGluZ2Ag44KEIGBYUk1lZGlhQmluZGluZ2Ag44GL44KJIGxheWVyIOOCkuS9nOaIkOOBl+OBpiByZW5kZXIgc3RhdGUg44Gr6L+95Yqg44GZ44KL5rWB44KM44Gr44Gq44Gj44Gm44GE44KL44CCPC9zcGFuPgogICAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJlbi1jb3B5Ij5MYXllcnMgYXJlIHJlcXVlc3RlZCB0aHJvdWdoIHRoZSBgbGF5ZXJzYCBmZWF0dXJlIGRlc2NyaXB0b3IgaW4gaW1tZXJzaXZlLXZyIG9yIGltbWVyc2l2ZS1hciBzZXNzaW9ucywgdGhlbiBjcmVhdGVkIHRocm91Z2ggYFhSV2ViR0xCaW5kaW5nYCBvciBgWFJNZWRpYUJpbmRpbmdgIGFuZCBhZGRlZCB0byByZW5kZXIgc3RhdGUuPC9zcGFuPgogICAgICAgICAgICA8L2xpPgogICAgICAgICAgCiAgICAgICAgICAgIDxsaT4KICAgICAgICAgICAgICA8c3Bhbj5Db21wb3NpdGlvbiBsYXllciDjga8gdGV4dC1vcHRpbWl6ZWQgLyBncmFwaGljcy1vcHRpbWl6ZWQg44GuIHF1YWxpdHkg44KS5oyB44Gh44CBSFVEIOOChOWcsOWbs+OAgeaWh+WtlyBVSSDjga7lj6/oqq3mgKfjgpIgZXllIGJ1ZmZlciDjgaDjgZHjgavkvp3lrZjjgZfjgarjgYTlvaLjgafpq5jjgoHjgonjgozjgovjgII8L3NwYW4+CiAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImVuLWNvcHkiPkNvbXBvc2l0aW9uIGxheWVycyBjYW4gdXNlIHRleHQtb3B0aW1pemVkIG9yIGdyYXBoaWNzLW9wdGltaXplZCBxdWFsaXR5LCBpbXByb3ZpbmcgcmVhZGFiaWxpdHkgZm9yIEhVRHMsIG1hcHMsIGFuZCB0ZXh0IFVJIHdpdGhvdXQgcmVseWluZyBvbmx5IG9uIHRoZSBleWUgYnVmZmVyLjwvc3Bhbj4KICAgICAgICAgICAgPC9saT4KICAgICAgICAgIAogICAgICAgICAgICA8bGk+CiAgICAgICAgICAgICAgPHNwYW4+RGVwdGggU2Vuc2luZyDjgaggSGFuZCBJbnB1dCDjgpLph43jga3jgovjgajjgIHmiYvjgYwgVUkg44KI44KK5omL5YmN44Gr44GC44KL5pmC44Gg44GR6YGu6JS944GX44CB5aWl44Gr44GC44KL5Luu5oOz54mp44KS6JaE44GP44GZ44KL44KI44GG44Gq56m66ZaTIFVJIOOBruaVtOWQiOaAp+OCkuS9nOOCiuOChOOBmeOBhOOAgjwvc3Bhbj4KICAgICAgICAgICAgICA8c3BhbiBjbGFzcz0iZW4tY29weSI+Q29tYmluaW5nIERlcHRoIFNlbnNpbmcgYW5kIEhhbmQgSW5wdXQgbWFrZXMgc3BhdGlhbCBVSSBjb2hlcmVuY2UgZWFzaWVyOiBjb250ZW50IGNhbiBoaWRlIG9ubHkgd2hlbiBhIGhhbmQgaXMgcGh5c2ljYWxseSBpbiBmcm9udCBvZiB0aGUgVUksIHdoaWxlIGZhcnRoZXIgdmlydHVhbCBjb250ZW50IGNhbiBmYWRlLjwvc3Bhbj4KICAgICAgICAgICAgPC9saT4KICAgICAgICAgIAogICAgICAgICAgICA8bGk+CiAgICAgICAgICAgICAgPHNwYW4+TGlnaHRpbmcgRXN0aW1hdGlvbiDjga7ogIPjgYjmlrnjgpLotrPjgZnjgajjgIHmiYvlhYPjga4gbGF5ZXIg44Gu5b2x44CB5piO44KL44GV44CB6YG45oqeIGZlZWRiYWNrIOOCkueSsOWig+WFieOBq+WQiOOCj+OBm+OBpuiqv+aVtOOBp+OBjeOCi+OAgjwvc3Bhbj4KICAgICAgICAgICAgICA8c3BhbiBjbGFzcz0iZW4tY29weSI+QWRkaW5nIExpZ2h0aW5nIEVzdGltYXRpb24gaWRlYXMgbGV0cyBoYW5kLWFkamFjZW50IGxheWVycyBhZGp1c3Qgc2hhZG93cywgYnJpZ2h0bmVzcywgYW5kIHNlbGVjdGlvbiBmZWVkYmFjayB0byB0aGUgc3Vycm91bmRpbmcgbGlnaHQuPC9zcGFuPgogICAgICAgICAgICA8L2xpPgogICAgICAgICAgCiAgICAgICAgPC9vbD4KICAgICAgPC9zZWN0aW9uPgogIAogICAgICAgIDxzZWN0aW9uIGNsYXNzPSJkZXRhaWwtYmxvY2siPgogICAgICAgICAgPGgyPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXIiPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItcHJpbWFyeSI+5rOo55uu5LqL5L6L44Go5L2V44GM6Z2i55m944GE44GLPC9zcGFuPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItc2Vjb25kYXJ5Ij5Ob3RhYmxlIGV4YW1wbGUgYW5kIHdoeSBpdCBtYXR0ZXJzPC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPHA+5LuK5pel44Gu5rOo55uu44GvIFdlYlhSIExheWVycyBBUEkg44Gn44GZ44CC6Z2i55m944GE54K544Gv44CB6YCa5bi444GuIHByb2plY3Rpb24gbGF5ZXIg44Gg44GR44Gn44Gq44GP44CBcXVhZCBsYXllciDjgoQgY3lsaW5kZXIgbGF5ZXIg44Gu44KI44GG44GqIGNvbXBvc2l0aW9uIGxheWVyIOOCkiBjb21wb3NpdG9yIOWBtOOBp+aJseOBhOOAgeODhuOCreOCueODiOOChOWcsOWbs+OBruOCiOOBhuOBque0sOOBi+OBhCBVSSDjgpLpq5jlk4Hos6rjgavkv53jgabjgovjgZPjgajjgafjgZnjgILku5Xmp5jkuIrjga8gYFhSQ29tcG9zaXRpb25MYXllci5vcGFjaXR5YOOAgWBxdWFsaXR5YOOAgWBuZWVkc1JlZHJhd2Ag44Gq44Gp44GM44GC44KK44CB5YuV44GN57aa44GR44KLIDNEIHNjZW5lIOOBqOOAgeiqreOBv+OChOOBmeOBhOWbuuWumiBVSSDjgpLliIbjgZHjgabogIPjgYjjgonjgozjgb7jgZnjgII8L3A+CiAgICAgICAgICA8cCBjbGFzcz0iZW4tY29weSI+VG9kYXkncyBub3RhYmxlIHJlZmVyZW5jZSBpcyB0aGUgV2ViWFIgTGF5ZXJzIEFQSS4gVGhlIGludGVyZXN0aW5nIHBhcnQgaXMgdGhhdCBjb21wb3NpdGlvbiBsYXllcnMgc3VjaCBhcyBxdWFkIGFuZCBjeWxpbmRlciBsYXllcnMgY2FuIGJlIGhhbmRsZWQgYnkgdGhlIGNvbXBvc2l0b3IgcmF0aGVyIHRoYW4gcmVseWluZyBvbmx5IG9uIHRoZSBwcm9qZWN0aW9uIGxheWVyLCBoZWxwaW5nIGRldGFpbGVkIFVJIGxpa2UgdGV4dCBvciBtYXBzIHJlbWFpbiBsZWdpYmxlLiBUaGUgc3BlY2lmaWNhdGlvbiBpbmNsdWRlcyBjb25jZXB0cyBzdWNoIGFzIGBYUkNvbXBvc2l0aW9uTGF5ZXIub3BhY2l0eWAsIGBxdWFsaXR5YCwgYW5kIGBuZWVkc1JlZHJhd2AsIGxldHRpbmcgYXV0aG9ycyBzZXBhcmF0ZSBhIG1vdmluZyAzRCBzY2VuZSBmcm9tIHJlYWRhYmxlIGZpeGVkIFVJLjwvcD4KICAgICAgICAgIAogICAgPHVsIGNsYXNzPSJsaW5rLWxpc3QiPgogICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vbGF5ZXJzLyIgdGFyZ2V0PSJfYmxhbmsiIHJlbD0ibm9yZWZlcnJlciI+V2ViWFIgTGF5ZXJzIEFQSSBMZXZlbCAxPC9hPjwvbGk+CiAgICAgICAgICAKICAgIDwvdWw+CiAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7ooajnj77jg7vjgqTjg7Pjgr/jg6njgq/jgrfjg6fjg7Pjga7jgqLjgqTjg4fjgqI8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPkV4cHJlc3Npb24gYW5kIGludGVyYWN0aW9uIGlkZWE8L3NwYW4+PC9zcGFuPjwvaDI+CiAgICAgICAgICA8cD5MYXllcnMg44Gu5Yip54K544KSIFVJIOOBruimi+OChOOBmeOBleOBoOOBkeOBp+e1guOCj+OCieOBm+OBmuOAgUhhbmQgSW5wdXQg44GoIERlcHRoIFNlbnNpbmcg44Gu6Kaz5a+f54K544KS5re344Gc44KL44Go44CB5omL44GMIHF1YWQgbGF5ZXIg44KI44KK5omL5YmN44Gr5YWl44Gj44Gf5pmC44Gg44GRIFVJIOOCkuiHqueEtuOBq+maoOOBmeihqOePvuOBq+OBquOCiuOBvuOBmeOAguS7iuaXpeOBruOCteODs+ODl+ODq+OBp+OBryBwb2ludGVyIOOCkuaJi+OBqOOBl+OBpuaJseOBhOOAgWhhbmQgZGVwdGgg44GoIGxheWVyIGRlcHRoIOOBruW3ruOBi+OCiemBruiUveeOh+OCkuioiOeul+OBl+OAgXBpbmNoIOOBjOW8t+OBhOaZguOBoOOBkSBob3ZlciDjgYvjgokgc2VsZWN0IOOBq+WkieOCj+OCi+OCiOOBhuOBq+OBl+OBvuOBl+OBn+OAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5MYXllcnMgYmVjb21lIG1vcmUgdGhhbiBhIHJlYWRhYmlsaXR5IHRvb2wgd2hlbiBjb21iaW5lZCB3aXRoIEhhbmQgSW5wdXQgYW5kIERlcHRoIFNlbnNpbmc6IFVJIGNhbiBiZSBoaWRkZW4gbmF0dXJhbGx5IG9ubHkgd2hlbiBhIGhhbmQgaXMgaW4gZnJvbnQgb2YgdGhlIHF1YWQgbGF5ZXIuIFRvZGF5J3Mgc2FtcGxlIHRyZWF0cyB0aGUgcG9pbnRlciBhcyBhIGhhbmQsIGNvbXB1dGVzIG9jY2x1c2lvbiBmcm9tIHRoZSBoYW5kL2xheWVyIGRlcHRoIGRpZmZlcmVuY2UsIGFuZCBjaGFuZ2VzIGhvdmVyIGludG8gc2VsZWN0IG9ubHkgd2hlbiBwaW5jaCBpcyBzdHJvbmcuPC9wPgogICAgICAgICAgCiAgICA8dWwgY2xhc3M9ImxpbmstbGlzdCI+CiAgICAgIAogICAgICAgICAgICA8bGk+PGEgaHJlZj0iLi4vb3V0cHV0cy8yMDI2LTA3LTEyX2h0bWxfbGF5ZXJlZF9oYW5kX29jY2x1c2lvbl9zdGFnZS5odG1sIiB0YXJnZXQ9Il9ibGFuayIgcmVsPSJub3JlZmVycmVyIj5PcGVuIHRvZGF5J3Mgc2FtcGxlPC9hPjwvbGk+CiAgICAgICAgICAKICAgIDwvdWw+CiAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7liLbkvZzjgavkvb/jgYjjgZ3jgYbjgarmioDooZPjg6Hjg6I8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPlByb2R1Y3Rpb24gbm90ZTwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgIDxwPuWun+ijheaZguOBryBgbmF2aWdhdG9yLnhyLnJlcXVlc3RTZXNzaW9uKCZxdW90O2ltbWVyc2l2ZS1hciZxdW90OywgeyBvcHRpb25hbEZlYXR1cmVzOiBbJnF1b3Q7bGF5ZXJzJnF1b3Q7LCAmcXVvdDtkZXB0aC1zZW5zaW5nJnF1b3Q7LCAmcXVvdDtoYW5kLXRyYWNraW5nJnF1b3Q7LCAmcXVvdDtsaWdodC1lc3RpbWF0aW9uJnF1b3Q7XSB9KWAg44Gu44KI44GG44Gr5qmf6IO944KS5YiG44GR44Gm6KaB5rGC44GX44CBbGF5ZXIg44GvIGBYUldlYkdMQmluZGluZ2Ag44GL44KJ5L2c44KK44G+44GZ44CC6YGu6JS944GvIGRlcHRoIHRleHR1cmUg44G+44Gf44GvIENQVSBkZXB0aCBkYXRhIOOBqCBoYW5kIGpvaW50IOOBruS9jee9ruOCkuWQjOOBmCByZWZlcmVuY2Ugc3BhY2Ug44Gr44Gd44KN44GI44CBVUkgbGF5ZXIg44Gu55+p5b2i5YaF44Gn5YmN5b6M6Zai5L+C44KS6KmV5L6h44GZ44KL44Gu44GM5Z+65pys44Gr44Gq44KK44G+44GZ44CCPC9wPgogICAgICAgICAgPHAgY2xhc3M9ImVuLWNvcHkiPkluIGEgcmVhbCBpbXBsZW1lbnRhdGlvbiwgZmVhdHVyZXMgY2FuIGJlIHJlcXVlc3RlZCBzZXBhcmF0ZWx5LCBmb3IgZXhhbXBsZSBgbmF2aWdhdG9yLnhyLnJlcXVlc3RTZXNzaW9uKCZxdW90O2ltbWVyc2l2ZS1hciZxdW90OywgeyBvcHRpb25hbEZlYXR1cmVzOiBbJnF1b3Q7bGF5ZXJzJnF1b3Q7LCAmcXVvdDtkZXB0aC1zZW5zaW5nJnF1b3Q7LCAmcXVvdDtoYW5kLXRyYWNraW5nJnF1b3Q7LCAmcXVvdDtsaWdodC1lc3RpbWF0aW9uJnF1b3Q7XSB9KWAsIHdoaWxlIGxheWVycyBhcmUgY3JlYXRlZCBmcm9tIGBYUldlYkdMQmluZGluZ2AuIEZvciBvY2NsdXNpb24sIGRlcHRoIHRleHR1cmVzIG9yIENQVSBkZXB0aCBkYXRhIGFuZCBoYW5kIGpvaW50IHBvc2l0aW9ucyBzaG91bGQgYmUgcmVzb2x2ZWQgaW50byB0aGUgc2FtZSByZWZlcmVuY2Ugc3BhY2UsIHRoZW4gdGVzdGVkIGFnYWluc3QgdGhlIFVJIGxheWVyIHJlY3RhbmdsZS48L3A+CiAgICAgICAgICAKICAgIDx1bCBjbGFzcz0ibGluay1saXN0Ij4KICAgICAgCiAgICAgICAgICAgIDxsaT48YSBocmVmPSJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL2xheWVycy8jaW5pdGlhbGl6YXRpb24iIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPkxheWVycyBpbml0aWFsaXphdGlvbiBmbG93PC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vZGVwdGgtc2Vuc2luZy8iIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPkRlcHRoIFNlbnNpbmcgTW9kdWxlPC9hPjwvbGk+CiAgICAgICAgICAKICAgIDwvdWw+CiAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7mmI7ml6Xku6XpmY3jgqbjgqnjg4Pjg4HjgZnjgovlr77osaE8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPldhdGNoIG5leHQ8L3NwYW4+PC9zcGFuPjwvaDI+CiAgICAgICAgICA8cD7mrKHjga8gTGF5ZXJzIOOBruS4reOBp+OCgiBjeWxpbmRlciBsYXllciDjgaggc3RlcmVvIG1lZGlhIGxheWVyIOOCkuimi+OBn+OBhOOBp+OBmeOAguaJi+WJjeOBruaJi+OBp+mBruiUveOBleOCjOOCi+ODiuODk+OCsuODvOOCt+ODp+ODsyBIVUQg44GL44KJ44CB6KaW6YeO44KS5YyF44KA44OR44OO44Op44OeL+WLleeUuyBsYXllcuOAgeOBvuOBn+OBr+ikh+aVsOOBriBsYXllciDplpPjga4gZGVwdGggc29ydGluZyDjgbjluoPjgZLjgovjgajjgIHlrp/nlKggVUkg44Gr6L+R44Gl44GN44G+44GZ44CCPC9wPgogICAgICAgICAgPHAgY2xhc3M9ImVuLWNvcHkiPk5leHQsIGN5bGluZGVyIGxheWVycyBhbmQgc3RlcmVvIG1lZGlhIGxheWVycyBhcmUgd29ydGggd2F0Y2hpbmcuIEV4dGVuZGluZyBmcm9tIGEgaGFuZC1vY2NsdWRlZCBuYXZpZ2F0aW9uIEhVRCBpbnRvIHBhbm9yYW1pYy92aWRlbyBsYXllcnMgb3IgZGVwdGggc29ydGluZyBiZXR3ZWVuIG11bHRpcGxlIGxheWVycyB3b3VsZCBtb3ZlIHRoZSBzYW1wbGVzIGNsb3NlciB0byBwcmFjdGljYWwgc3BhdGlhbCBVSS48L3A+CiAgICAgICAgICAKICAgIDx1bCBjbGFzcz0ibGluay1saXN0Ij4KICAgICAgCiAgICAgICAgICAgIDxsaT48YSBocmVmPSJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL2xheWVycy8jbGF5ZXItdHlwZXMiIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPkxheWVyIHR5cGVzPC9hPjwvbGk+CiAgICAgICAgICAKICAgIDwvdWw+CiAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7oqabjgZnjgarjgonjgZPjgow8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPklmIHlvdSB0cnkgb25lIHRoaW5nPC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPHA+YExheWVyZWQgSGFuZCBPY2NsdXNpb24gU3RhZ2VgIOOCkumWi+OBjeOAgXBvaW50ZXIg44KS5Lit5aSu44GuIGxheWVyIOS4iuOBq+enu+WLleOBl+OBpuOBi+OCiSBoYW5kIGRlcHRoIOOCkiBsYXllciBkZXB0aCDjgojjgorlsI/jgZXjgY/jgZfjgabjgY/jgaDjgZXjgYTjgILmiYvjgYzmiYvliY3jgavjgYLjgovmmYLjgaDjgZHpga7olL3njofjgYzkuIrjgYzjgorjgIFwaW5jaCDjgpLlvLfjgY/jgZnjgovjgaggaG92ZXIg44GMIHNlbGVjdCDjgavlpInjgo/jgorjgb7jgZnjgIJUZXh0IC8gTWVkaWEgLyBBbGVydCDjgpLliIfjgormm7/jgYjjgovjgajjgIHlkIzjgZggZGVwdGgg5Yik5a6a44Gn55Ww44Gq44KLIGxheWVyIOeUqOmAlOOCkueiuuiqjeOBp+OBjeOBvuOBmeOAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5PcGVuIExheWVyZWQgSGFuZCBPY2NsdXNpb24gU3RhZ2UsIG1vdmUgdGhlIHBvaW50ZXIgb3ZlciB0aGUgY2VudHJhbCBsYXllciwgdGhlbiBzZXQgaGFuZCBkZXB0aCBsb3dlciB0aGFuIGxheWVyIGRlcHRoLiBPY2NsdXNpb24gaW5jcmVhc2VzIG9ubHkgd2hlbiB0aGUgaGFuZCBpcyBpbiBmcm9udCwgYW5kIGluY3JlYXNpbmcgcGluY2ggY2hhbmdlcyBob3ZlciBpbnRvIHNlbGVjdC4gU3dpdGNoaW5nIFRleHQsIE1lZGlhLCBhbmQgQWxlcnQgc2hvd3MgZGlmZmVyZW50IGxheWVyIHVzZXMgd2l0aCB0aGUgc2FtZSBkZXB0aCBsb2dpYy48L3A+CiAgICAgICAgICAKICAgIDx1bCBjbGFzcz0ibGluay1saXN0Ij4KICAgICAgCiAgICAgICAgICAgIDxsaT48YSBocmVmPSIuLi9vdXRwdXRzLzIwMjYtMDctMTJfaHRtbF9sYXllcmVkX2hhbmRfb2NjbHVzaW9uX3N0YWdlLmh0bWwiIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPk9wZW4gTGF5ZXJlZCBIYW5kIE9jY2x1c2lvbiBTdGFnZTwvYT48L2xpPgogICAgICAgICAgCiAgICA8L3VsPgogIAogICAgICAgIDwvc2VjdGlvbj4KICAgICAgCgogICAgICAgIDxzZWN0aW9uIGNsYXNzPSJkZXRhaWwtYmxvY2siPgogICAgICAgICAgPGgyPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXIiPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItcHJpbWFyeSI+6YCy6KGM44Oe44OD44OXPC9zcGFuPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItc2Vjb25kYXJ5Ij5Qcm9ncmVzcyBtYXA8L3NwYW4+PC9zcGFuPjwvaDI+CiAgICAgICAgICA8cD7oqr/mn7s6IExheWVycyBBUEnjgIFEZXB0aCBTZW5zaW5n44CBSGFuZCBJbnB1dOOAgUxpZ2h0aW5nIEVzdGltYXRpb27jgIHlhazlvI8gV2ViWFIgU2FtcGxlcyDjgpLnorroqo3jgILjgqLjgqTjg4fjgqI6IOmrmOeyvue0sCBVSSBsYXllciDjgajmiYvliY3jga7miYvjga7pga7olL3jgpIgSE1EIOOBquOBl+OBp+ims+Wvn+OBmeOCi+OAguWun+ijhTogY2FudmFzIOS4iuOBriBxdWFkIGxheWVy44CB5omL44Gu5YaG5b2iIGRlcHRoIHZvbHVtZeOAgXBpbmNoIHNsaWRlcuOAgWxpZ2h0aW5nIHNsaWRlcuOAgXRleHQvbWVkaWEvYWxlcnQgcHJlc2V044CB6YGu6JS9546HIHJlYWRvdXQg44KS5L2c5oiQ44CC5qSc6Ki8OiBKU09OIHBhcnNl44CBSFRNTCBzY3JpcHQg5qeL5paH44CB55Sf5oiQ44Oa44O844K444CB5YWs6ZaLIFVSTCDjgpLnorroqo3jgZnjgovjgII8L3A+CiAgICAgICAgICA8cCBjbGFzcz0iZW4tY29weSI+UmVzZWFyY2g6IHJldmlld2VkIHRoZSBMYXllcnMgQVBJLCBEZXB0aCBTZW5zaW5nLCBIYW5kIElucHV0LCBMaWdodGluZyBFc3RpbWF0aW9uLCBhbmQgb2ZmaWNpYWwgV2ViWFIgU2FtcGxlcy4gSWRlYTogaW5zcGVjdCBoaWdoLWZpZGVsaXR5IFVJIGxheWVyIG9jY2x1c2lvbiBieSBhIG5lYXJlciBoYW5kIHdpdGhvdXQgYSBoZWFkc2V0LiBJbXBsZW1lbnRhdGlvbjogY3JlYXRlZCBhIGNhbnZhcyBxdWFkIGxheWVyLCBjaXJjdWxhciBoYW5kIGRlcHRoIHZvbHVtZSwgcGluY2ggc2xpZGVyLCBsaWdodGluZyBzbGlkZXIsIHRleHQvbWVkaWEvYWxlcnQgcHJlc2V0cywgYW5kIG9jY2x1c2lvbiByZWFkb3V0LiBWYWxpZGF0aW9uOiBKU09OIHBhcnNpbmcsIEhUTUwgc2NyaXB0IHN5bnRheCwgZ2VuZXJhdGVkIHBhZ2VzLCBhbmQgcHVibGljIFVSTHMgYXJlIGNoZWNrZWQuPC9wPgogICAgICAgICAgCiAgICA8dWwgY2xhc3M9ImxpbmstbGlzdCI+CiAgICAgIAogICAgICAgICAgICA8bGk+PGEgaHJlZj0iaHR0cHM6Ly9pbW1lcnNpdmUtd2ViLmdpdGh1Yi5pby93ZWJ4ci1zYW1wbGVzLyIgdGFyZ2V0PSJfYmxhbmsiIHJlbD0ibm9yZWZlcnJlciI+SW1tZXJzaXZlIFdlYiBXZWJYUiBTYW1wbGVzPC9hPjwvbGk+CiAgICAgICAgICAKICAgIDwvdWw+CiAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7kv6/nnrDjg6Hjg6I8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPkJpcmQncy1leWUgbWVtbzwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgIDxwPuOBk+OCjOOBvuOBp+OBrua1geOCjOOBr+OAgeWlpeihjOOBjSBIVUTjgIFoaXQgdGVzdCAvIGFuY2hvcuOAgWRlcHRoIG9jY2x1c2lvbuOAgWxpZ2h0aW5nIGVzdGltYXRpb27jgIFoYW5kIGlucHV044CB44Gd44GX44GmIGxheWVyICsgaGFuZC9kZXB0aCDlkIjmiJDjgafjgZnjgILnqbrplpPkvZPpqJPjga7jgI7opovjgYjjgovjgI/jgI7nva7jgY/jgI/jgI7pmqDjgozjgovjgI/jgI7jgarjgZjjgoDjgI/jgI7op6bjgovjgI/jgI7oqq3jgb/jgoTjgZnjgY/ph43jga3jgovjgI/jgpLjgIHoh6rkvZzjga7mnIDlsI/jgrXjg7Pjg5fjg6vjgajjgZfjgabnqY3jgb/kuIrjgZLjgabjgYTjgb7jgZnjgII8L3A+CiAgICAgICAgICA8cCBjbGFzcz0iZW4tY29weSI+VGhlIHNlcXVlbmNlIHNvIGZhciBpcyBkZXB0aCBIVUQsIGhpdCB0ZXN0IGFuZCBhbmNob3JzLCBkZXB0aCBvY2NsdXNpb24sIGxpZ2h0aW5nIGVzdGltYXRpb24sIGhhbmQgaW5wdXQsIGFuZCBub3cgbGF5ZXIgcGx1cyBoYW5kL2RlcHRoIGNvbXBvc2l0aW9uLiBUaGUgYXJjaGl2ZSBpcyBidWlsZGluZyBzbWFsbCBvcmlnaW5hbCBzYW1wbGVzIGFyb3VuZCBzZWVpbmcsIHBsYWNpbmcsIGhpZGluZywgYmxlbmRpbmcsIHRvdWNoaW5nLCBhbmQgcmVhZGFibGUgbGF5ZXJpbmcuPC9wPgogICAgICAgICAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7ku4rml6Xjga7jg5/jg4voqabkvZzlgJnoo5w8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPlRvZGF5J3MgbWluaSBwcm90b3R5cGUgY2FuZGlkYXRlPC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPHA+5o6h55So44GX44Gf5YCZ6KOc44GvIGBMYXllcmVkIEhhbmQgT2NjbHVzaW9uIFN0YWdlYCDjgafjgZnjgILlrp/mqZ/jga4gV2ViWFIgTGF5ZXJzIOOBp+OBr+OBquOBj+OAgWxheWVyIOOBriBvcGFjaXR544CBcXVhbGl0eeOAgeaJi+WJjS/lpaXjga4gZGVwdGggZ2Fw44CBcGluY2gg44Gr44KI44KLIHNlbGVjdCDjgpLjg5bjg6njgqbjgrbljZjkvZPjgafop6bjgozjgovlvaLjgavjgZfjgabjgIHmrKHjga7lrp8gV2ViWFIg5a6f6KOF44G456e744GX44KE44GZ44GE6Kaz5a+f5Y2Y5L2N44Gr44GX44G+44GX44Gf44CCPC9wPgogICAgICAgICAgPHAgY2xhc3M9ImVuLWNvcHkiPlRoZSBzZWxlY3RlZCBwcm90b3R5cGUgaXMgTGF5ZXJlZCBIYW5kIE9jY2x1c2lvbiBTdGFnZS4gSW5zdGVhZCBvZiByZXF1aXJpbmcgbGl2ZSBXZWJYUiBMYXllcnMgaGFyZHdhcmUsIGl0IG1ha2VzIGxheWVyIG9wYWNpdHksIHF1YWxpdHksIGhhbmQvbGF5ZXIgZGVwdGggZ2FwLCBhbmQgcGluY2ggc2VsZWN0aW9uIGluc3BlY3RhYmxlIGluIGEgbm9ybWFsIGJyb3dzZXIsIGNyZWF0aW5nIGFuIG9ic2VydmF0aW9uIHVuaXQgdGhhdCBjYW4gbGF0ZXIgbW92ZSBpbnRvIGEgcmVhbCBXZWJYUiBpbXBsZW1lbnRhdGlvbi48L3A+CiAgICAgICAgICAKICAgICAgICA8L3NlY3Rpb24+CiAgICAgIAogICAgICAgIAogICAgICAgICAgICAgIDxzZWN0aW9uIGNsYXNzPSJkZXRhaWwtYmxvY2siPgogICAgICAgICAgICAgICAgPGgyPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXIiPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItcHJpbWFyeSI+5Y+C6ICD44Oq44Oz44KvPC9zcGFuPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItc2Vjb25kYXJ5Ij5SZWZlcmVuY2UgbGlua3M8L3NwYW4+PC9zcGFuPjwvaDI+CiAgICAgICAgICAgICAgICAKICAgIDx1bCBjbGFzcz0ibGluay1saXN0Ij4KICAgICAgCiAgICAgICAgICAgIDxsaT48YSBocmVmPSIuLi9vdXRwdXRzLzIwMjYtMDctMTJfaHRtbF9sYXllcmVkX2hhbmRfb2NjbHVzaW9uX3N0YWdlLmh0bWwiIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPlRvZGF5J3Mgc2FtcGxlOiBMYXllcmVkIEhhbmQgT2NjbHVzaW9uIFN0YWdlPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vbGF5ZXJzLyIgdGFyZ2V0PSJfYmxhbmsiIHJlbD0ibm9yZWZlcnJlciI+V2ViWFIgTGF5ZXJzIEFQSSBMZXZlbCAxPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vZGVwdGgtc2Vuc2luZy8iIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPldlYlhSIERlcHRoIFNlbnNpbmcgTW9kdWxlPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vd2VieHItaGFuZC1pbnB1dC8iIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPldlYlhSIEhhbmQgSW5wdXQgTW9kdWxlIC0gTGV2ZWwgMTwvYT48L2xpPgogICAgICAgICAgCiAgICAgICAgICAgIDxsaT48YSBocmVmPSJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL2xpZ2h0aW5nLWVzdGltYXRpb24vIiB0YXJnZXQ9Il9ibGFuayIgcmVsPSJub3JlZmVycmVyIj5XZWJYUiBMaWdodGluZyBFc3RpbWF0aW9uIEFQSSBMZXZlbCAxPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vd2VieHItc2FtcGxlcy8iIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPkltbWVyc2l2ZSBXZWIgV2ViWFIgU2FtcGxlczwvYT48L2xpPgogICAgICAgICAgCiAgICA8L3VsPgogIAogICAgICAgICAgICAgIDwvc2VjdGlvbj4KICAgICAgICAgICAgCiAgICAgIDwvZGl2PgoKICAgICAgPGFzaWRlIGNsYXNzPSJwcmV2aWV3Ij4KICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7jgrXjg7Pjg5fjg6vjg5fjg6zjg5Pjg6Xjg7w8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPlNhbXBsZSBwcmV2aWV3PC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgIDxpZnJhbWUgc3JjPSIuLi9vdXRwdXRzLzIwMjYtMDctMTJfaHRtbF9sYXllcmVkX2hhbmRfb2NjbHVzaW9uX3N0YWdlLmh0bWwiIGxvYWRpbmc9ImxhenkiIHRpdGxlPSJMYXllcmVkIEhhbmQgT2NjbHVzaW9uIFN0YWdlIj48L2lmcmFtZT4KICAgICAgPC9hc2lkZT4KICAgIDwvc2VjdGlvbj4KICA8L21haW4+CjwvYm9keT4KPC9odG1sPg==
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Layers と Hand/Depth を重ねた遮蔽 UI を試す | 2026-07-12</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.12</p>
+      <h1>Layers と Hand/Depth を重ねた遮蔽 UI を試す</h1>
+      <p class="hero-subtitle">Testing occluded UI by combining Layers with Hand and Depth cues</p>
+      <p>WebXR Layers API、Depth Sensing、Hand Input、Lighting Estimation の一次情報を確認し、今日は高精細 quad layer が手前の手で隠れ、pinch と照明で状態が変わる自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing primary sources for the WebXR Layers API, Depth Sensing, Hand Input, and Lighting Estimation, today's original HTML sample simulates a high-fidelity quad layer that is occluded by a nearer hand and changes state through pinch and lighting controls.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-12_html_layered_hand_occlusion_stage.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../pages/4.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-11.html">← 2026.07.11</a>
+      <a class="day-link" href="../days/2026-07-13.html">2026.07.13 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Layered Hand Occlusion Stage</h3>
+              <p>WebXR Layers の text-optimized quad layer、Depth Sensing 的な手前/奥の遮蔽、Hand Input の pinch を疑似化する最小サンプルです。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-12_html_layered_hand_occlusion_stage.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Layers API Level 1 の Editor's Draft は 2026-06-12 更新で、WebXR session 内の projection / quad / cylinder / equirect / cube などの composition layer を扱う。</span>
+              <span class="en-copy">The WebXR Layers API Level 1 Editor's Draft was updated on 2026-06-12 and covers composition layers such as projection, quad, cylinder, equirect, and cube layers within WebXR sessions.</span>
+            </li>
+          
+            <li>
+              <span>Layers は `layers` feature descriptor を immersive-vr / immersive-ar session で要求し、`XRWebGLBinding` や `XRMediaBinding` から layer を作成して render state に追加する流れになっている。</span>
+              <span class="en-copy">Layers are requested through the `layers` feature descriptor in immersive-vr or immersive-ar sessions, then created through `XRWebGLBinding` or `XRMediaBinding` and added to render state.</span>
+            </li>
+          
+            <li>
+              <span>Composition layer は text-optimized / graphics-optimized の quality を持ち、HUD や地図、文字 UI の可読性を eye buffer だけに依存しない形で高められる。</span>
+              <span class="en-copy">Composition layers can use text-optimized or graphics-optimized quality, improving readability for HUDs, maps, and text UI without relying only on the eye buffer.</span>
+            </li>
+          
+            <li>
+              <span>Depth Sensing と Hand Input を重ねると、手が UI より手前にある時だけ遮蔽し、奥にある仮想物を薄くするような空間 UI の整合性を作りやすい。</span>
+              <span class="en-copy">Combining Depth Sensing and Hand Input makes spatial UI coherence easier: content can hide only when a hand is physically in front of the UI, while farther virtual content can fade.</span>
+            </li>
+          
+            <li>
+              <span>Lighting Estimation の考え方を足すと、手元の layer の影、明るさ、選択 feedback を環境光に合わせて調整できる。</span>
+              <span class="en-copy">Adding Lighting Estimation ideas lets hand-adjacent layers adjust shadows, brightness, and selection feedback to the surrounding light.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は WebXR Layers API です。面白い点は、通常の projection layer だけでなく、quad layer や cylinder layer のような composition layer を compositor 側で扱い、テキストや地図のような細かい UI を高品質に保てることです。仕様上は `XRCompositionLayer.opacity`、`quality`、`needsRedraw` などがあり、動き続ける 3D scene と、読みやすい固定 UI を分けて考えられます。</p>
+          <p class="en-copy">Today's notable reference is the WebXR Layers API. The interesting part is that composition layers such as quad and cylinder layers can be handled by the compositor rather than relying only on the projection layer, helping detailed UI like text or maps remain legible. The specification includes concepts such as `XRCompositionLayer.opacity`, `quality`, and `needsRedraw`, letting authors separate a moving 3D scene from readable fixed UI.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>Layers の利点を UI の見やすさだけで終わらせず、Hand Input と Depth Sensing の観察点を混ぜると、手が quad layer より手前に入った時だけ UI を自然に隠す表現になります。今日のサンプルでは pointer を手として扱い、hand depth と layer depth の差から遮蔽率を計算し、pinch が強い時だけ hover から select に変わるようにしました。</p>
+          <p class="en-copy">Layers become more than a readability tool when combined with Hand Input and Depth Sensing: UI can be hidden naturally only when a hand is in front of the quad layer. Today's sample treats the pointer as a hand, computes occlusion from the hand/layer depth difference, and changes hover into select only when pinch is strong.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-12_html_layered_hand_occlusion_stage.html" target="_blank" rel="noreferrer">Open today's sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装時は `navigator.xr.requestSession(&quot;immersive-ar&quot;, { optionalFeatures: [&quot;layers&quot;, &quot;depth-sensing&quot;, &quot;hand-tracking&quot;, &quot;light-estimation&quot;] })` のように機能を分けて要求し、layer は `XRWebGLBinding` から作ります。遮蔽は depth texture または CPU depth data と hand joint の位置を同じ reference space にそろえ、UI layer の矩形内で前後関係を評価するのが基本になります。</p>
+          <p class="en-copy">In a real implementation, features can be requested separately, for example `navigator.xr.requestSession(&quot;immersive-ar&quot;, { optionalFeatures: [&quot;layers&quot;, &quot;depth-sensing&quot;, &quot;hand-tracking&quot;, &quot;light-estimation&quot;] })`, while layers are created from `XRWebGLBinding`. For occlusion, depth textures or CPU depth data and hand joint positions should be resolved into the same reference space, then tested against the UI layer rectangle.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/#initialization" target="_blank" rel="noreferrer">Layers initialization flow</a></li>
+          
+            <li><a href="https://immersive-web.github.io/depth-sensing/" target="_blank" rel="noreferrer">Depth Sensing Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>次は Layers の中でも cylinder layer と stereo media layer を見たいです。手前の手で遮蔽されるナビゲーション HUD から、視野を包むパノラマ/動画 layer、または複数の layer 間の depth sorting へ広げると、実用 UI に近づきます。</p>
+          <p class="en-copy">Next, cylinder layers and stereo media layers are worth watching. Extending from a hand-occluded navigation HUD into panoramic/video layers or depth sorting between multiple layers would move the samples closer to practical spatial UI.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/#layer-types" target="_blank" rel="noreferrer">Layer types</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Layered Hand Occlusion Stage` を開き、pointer を中央の layer 上に移動してから hand depth を layer depth より小さくしてください。手が手前にある時だけ遮蔽率が上がり、pinch を強くすると hover が select に変わります。Text / Media / Alert を切り替えると、同じ depth 判定で異なる layer 用途を確認できます。</p>
+          <p class="en-copy">Open Layered Hand Occlusion Stage, move the pointer over the central layer, then set hand depth lower than layer depth. Occlusion increases only when the hand is in front, and increasing pinch changes hover into select. Switching Text, Media, and Alert shows different layer uses with the same depth logic.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-12_html_layered_hand_occlusion_stage.html" target="_blank" rel="noreferrer">Open Layered Hand Occlusion Stage</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Layers API、Depth Sensing、Hand Input、Lighting Estimation、公式 WebXR Samples を確認。アイデア: 高精細 UI layer と手前の手の遮蔽を HMD なしで観察する。実装: canvas 上の quad layer、手の円形 depth volume、pinch slider、lighting slider、text/media/alert preset、遮蔽率 readout を作成。検証: JSON parse、HTML script 構文、生成ページ、公開 URL を確認する。</p>
+          <p class="en-copy">Research: reviewed the Layers API, Depth Sensing, Hand Input, Lighting Estimation, and official WebXR Samples. Idea: inspect high-fidelity UI layer occlusion by a nearer hand without a headset. Implementation: created a canvas quad layer, circular hand depth volume, pinch slider, lighting slider, text/media/alert presets, and occlusion readout. Validation: JSON parsing, HTML script syntax, generated pages, and public URLs are checked.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web WebXR Samples</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>これまでの流れは、奥行き HUD、hit test / anchor、depth occlusion、lighting estimation、hand input、そして layer + hand/depth 合成です。空間体験の『見える』『置く』『隠れる』『なじむ』『触る』『読みやすく重ねる』を、自作の最小サンプルとして積み上げています。</p>
+          <p class="en-copy">The sequence so far is depth HUD, hit test and anchors, depth occlusion, lighting estimation, hand input, and now layer plus hand/depth composition. The archive is building small original samples around seeing, placing, hiding, blending, touching, and readable layering.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Layered Hand Occlusion Stage` です。実機の WebXR Layers ではなく、layer の opacity、quality、手前/奥の depth gap、pinch による select をブラウザ単体で触れる形にして、次の実 WebXR 実装へ移しやすい観察単位にしました。</p>
+          <p class="en-copy">The selected prototype is Layered Hand Occlusion Stage. Instead of requiring live WebXR Layers hardware, it makes layer opacity, quality, hand/layer depth gap, and pinch selection inspectable in a normal browser, creating an observation unit that can later move into a real WebXR implementation.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-12_html_layered_hand_occlusion_stage.html" target="_blank" rel="noreferrer">Today's sample: Layered Hand Occlusion Stage</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/depth-sensing/" target="_blank" rel="noreferrer">WebXR Depth Sensing Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-hand-input/" target="_blank" rel="noreferrer">WebXR Hand Input Module - Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/lighting-estimation/" target="_blank" rel="noreferrer">WebXR Lighting Estimation API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-12_html_layered_hand_occlusion_stage.html" loading="lazy" title="Layered Hand Occlusion Stage"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

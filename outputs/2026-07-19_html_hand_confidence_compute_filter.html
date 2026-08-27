@@ -1,1 +1,656 @@
-PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImphIj4KPGhlYWQ+CiAgPG1ldGEgY2hhcnNldD0iVVRGLTgiIC8+CiAgPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCwgaW5pdGlhbC1zY2FsZT0xLjAiIC8+CiAgPHRpdGxlPkhhbmQgQ29uZmlkZW5jZSBDb21wdXRlIEZpbHRlcjwvdGl0bGU+CiAgPHN0eWxlPgogICAgOnJvb3QgewogICAgICBjb2xvci1zY2hlbWU6IGRhcms7CiAgICAgIC0tYmc6ICMwOTEwMTU7CiAgICAgIC0tcGFuZWw6ICMxMDFhMjE7CiAgICAgIC0tcGFuZWwyOiAjMTUyNTJkOwogICAgICAtLWluazogI2VmZjhmNzsKICAgICAgLS1tdXRlZDogIzllYjNiMjsKICAgICAgLS1saW5lOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMTMpOwogICAgICAtLWN5YW46ICM3MGUxZDQ7CiAgICAgIC0tbGltZTogI2I5ZWM2YTsKICAgICAgLS1hbWJlcjogI2ZmY2I2ODsKICAgICAgLS1yZWQ6ICNmZjZmNmY7CiAgICAgIC0tdmlvbGV0OiAjYTk5Y2ZmOwogICAgfQoKICAgICogeyBib3gtc2l6aW5nOiBib3JkZXItYm94OyB9CgogICAgYm9keSB7CiAgICAgIG1hcmdpbjogMDsKICAgICAgbWluLWhlaWdodDogMTAwdmg7CiAgICAgIGZvbnQtZmFtaWx5OiBJbnRlciwgIkF2ZW5pciBOZXh0IiwgIkhpcmFnaW5vIFNhbnMiLCBzYW5zLXNlcmlmOwogICAgICBiYWNrZ3JvdW5kOgogICAgICAgIHJhZGlhbC1ncmFkaWVudChjaXJjbGUgYXQgMjAlIDEyJSwgcmdiYSgxMTIsIDIyNSwgMjEyLCAwLjE4KSwgdHJhbnNwYXJlbnQgMjUlKSwKICAgICAgICByYWRpYWwtZ3JhZGllbnQoY2lyY2xlIGF0IDc4JSA4JSwgcmdiYSgxODUsIDIzNiwgMTA2LCAwLjEyKSwgdHJhbnNwYXJlbnQgMjMlKSwKICAgICAgICBsaW5lYXItZ3JhZGllbnQoMTM1ZGVnLCAjMDkxMDE1LCAjMTMyMDI2IDQ4JSwgIzE3MTcyMik7CiAgICAgIGNvbG9yOiB2YXIoLS1pbmspOwogICAgfQoKICAgIG1haW4gewogICAgICB3aWR0aDogbWluKDExODBweCwgY2FsYygxMDB2dyAtIDI4cHgpKTsKICAgICAgbWFyZ2luOiAwIGF1dG87CiAgICAgIHBhZGRpbmc6IDI0cHggMCAzNHB4OwogICAgfQoKICAgIGhlYWRlciB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdyaWQtdGVtcGxhdGUtY29sdW1uczogMWZyIGF1dG87CiAgICAgIGdhcDogMThweDsKICAgICAgYWxpZ24taXRlbXM6IGVuZDsKICAgICAgbWFyZ2luLWJvdHRvbTogMTZweDsKICAgIH0KCiAgICBoMSB7CiAgICAgIG1hcmdpbjogMCAwIDhweDsKICAgICAgZm9udC1zaXplOiBjbGFtcCgxLjdyZW0sIDR2dywgMy40cmVtKTsKICAgICAgbGluZS1oZWlnaHQ6IDEuMDM7CiAgICAgIGxldHRlci1zcGFjaW5nOiAwOwogICAgfQoKICAgIHAgewogICAgICBtYXJnaW46IDA7CiAgICAgIGNvbG9yOiB2YXIoLS1tdXRlZCk7CiAgICAgIGxpbmUtaGVpZ2h0OiAxLjY1OwogICAgfQoKICAgIC5iYWRnZS1yb3cgewogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBmbGV4LXdyYXA6IHdyYXA7CiAgICAgIGdhcDogOHB4OwogICAgICBqdXN0aWZ5LWNvbnRlbnQ6IGZsZXgtZW5kOwogICAgfQoKICAgIC5iYWRnZSB7CiAgICAgIG1pbi13aWR0aDogMTIwcHg7CiAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHZhcigtLWxpbmUpOwogICAgICBib3JkZXItcmFkaXVzOiA4cHg7CiAgICAgIHBhZGRpbmc6IDhweCAxMHB4OwogICAgICBiYWNrZ3JvdW5kOiByZ2JhKDE2LCAyNiwgMzMsIDAuNzgpOwogICAgICBjb2xvcjogdmFyKC0tbXV0ZWQpOwogICAgICBmb250LXNpemU6IDAuODJyZW07CiAgICB9CgogICAgLmJhZGdlIHN0cm9uZyB7CiAgICAgIGRpc3BsYXk6IGJsb2NrOwogICAgICBtYXJnaW4tdG9wOiAycHg7CiAgICAgIGNvbG9yOiB2YXIoLS1pbmspOwogICAgICBmb250LXNpemU6IDFyZW07CiAgICB9CgogICAgLmxheW91dCB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdyaWQtdGVtcGxhdGUtY29sdW1uczogbWlubWF4KDAsIDFmcikgMzIwcHg7CiAgICAgIGdhcDogMTZweDsKICAgICAgYWxpZ24taXRlbXM6IHN0YXJ0OwogICAgfQoKICAgIC5zdGFnZSB7CiAgICAgIHBvc2l0aW9uOiByZWxhdGl2ZTsKICAgICAgbWluLWhlaWdodDogNjQwcHg7CiAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHZhcigtLWxpbmUpOwogICAgICBib3JkZXItcmFkaXVzOiA4cHg7CiAgICAgIG92ZXJmbG93OiBoaWRkZW47CiAgICAgIGJhY2tncm91bmQ6CiAgICAgICAgbGluZWFyLWdyYWRpZW50KHJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wMzUpIDFweCwgdHJhbnNwYXJlbnQgMXB4KSwKICAgICAgICBsaW5lYXItZ3JhZGllbnQoOTBkZWcsIHJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wMzUpIDFweCwgdHJhbnNwYXJlbnQgMXB4KSwKICAgICAgICBsaW5lYXItZ3JhZGllbnQoMTgwZGVnLCByZ2JhKDEwLCAyNCwgMjcsIDAuOTIpLCByZ2JhKDEyLCAxNCwgMjEsIDAuOTQpKTsKICAgICAgYmFja2dyb3VuZC1zaXplOiA0MHB4IDQwcHgsIDQwcHggNDBweCwgYXV0bzsKICAgICAgYm94LXNoYWRvdzogMCAyMHB4IDUwcHggcmdiYSgwLCAwLCAwLCAwLjMyKTsKICAgICAgdG91Y2gtYWN0aW9uOiBub25lOwogICAgfQoKICAgIGNhbnZhcyB7CiAgICAgIGRpc3BsYXk6IGJsb2NrOwogICAgICB3aWR0aDogMTAwJTsKICAgICAgaGVpZ2h0OiA2NDBweDsKICAgIH0KCiAgICAuaGludCB7CiAgICAgIHBvc2l0aW9uOiBhYnNvbHV0ZTsKICAgICAgbGVmdDogMTRweDsKICAgICAgYm90dG9tOiAxMnB4OwogICAgICBwYWRkaW5nOiA4cHggMTBweDsKICAgICAgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tbGluZSk7CiAgICAgIGJvcmRlci1yYWRpdXM6IDhweDsKICAgICAgYmFja2dyb3VuZDogcmdiYSg5LCAxNiwgMjEsIDAuNzYpOwogICAgICBjb2xvcjogdmFyKC0tbXV0ZWQpOwogICAgICBmb250LXNpemU6IDAuODRyZW07CiAgICAgIHBvaW50ZXItZXZlbnRzOiBub25lOwogICAgfQoKICAgIC5jb250cm9scyB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdhcDogMTBweDsKICAgIH0KCiAgICAucGFuZWwgewogICAgICBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1saW5lKTsKICAgICAgYm9yZGVyLXJhZGl1czogOHB4OwogICAgICBiYWNrZ3JvdW5kOiByZ2JhKDE2LCAyNiwgMzMsIDAuODQpOwogICAgICBwYWRkaW5nOiAxNHB4OwogICAgfQoKICAgIC5wYW5lbCBoMiB7CiAgICAgIG1hcmdpbjogMCAwIDEycHg7CiAgICAgIGZvbnQtc2l6ZTogMXJlbTsKICAgICAgbGV0dGVyLXNwYWNpbmc6IDA7CiAgICB9CgogICAgbGFiZWwgewogICAgICBkaXNwbGF5OiBncmlkOwogICAgICBnYXA6IDZweDsKICAgICAgbWFyZ2luOiAxMnB4IDA7CiAgICAgIGNvbG9yOiB2YXIoLS1tdXRlZCk7CiAgICAgIGZvbnQtc2l6ZTogMC44NHJlbTsKICAgIH0KCiAgICBpbnB1dFt0eXBlPSJyYW5nZSJdIHsKICAgICAgd2lkdGg6IDEwMCU7CiAgICAgIGFjY2VudC1jb2xvcjogdmFyKC0tY3lhbik7CiAgICB9CgogICAgc2VsZWN0LAogICAgYnV0dG9uIHsKICAgICAgd2lkdGg6IDEwMCU7CiAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHZhcigtLWxpbmUpOwogICAgICBib3JkZXItcmFkaXVzOiA4cHg7CiAgICAgIGJhY2tncm91bmQ6IHZhcigtLXBhbmVsMik7CiAgICAgIGNvbG9yOiB2YXIoLS1pbmspOwogICAgICBwYWRkaW5nOiAxMHB4IDExcHg7CiAgICAgIGZvbnQ6IGluaGVyaXQ7CiAgICB9CgogICAgYnV0dG9uIHsKICAgICAgY3Vyc29yOiBwb2ludGVyOwogICAgfQoKICAgIGJ1dHRvbjpob3ZlciB7CiAgICAgIGJvcmRlci1jb2xvcjogcmdiYSgxMTIsIDIyNSwgMjEyLCAwLjYyKTsKICAgIH0KCiAgICAuYnV0dG9uLWdyaWQgewogICAgICBkaXNwbGF5OiBncmlkOwogICAgICBncmlkLXRlbXBsYXRlLWNvbHVtbnM6IDFmciAxZnI7CiAgICAgIGdhcDogOHB4OwogICAgfQoKICAgIC5tZXRlciB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdyaWQtdGVtcGxhdGUtY29sdW1uczogOTJweCAxZnIgNDRweDsKICAgICAgZ2FwOiA4cHg7CiAgICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICAgIG1hcmdpbjogMTBweCAwOwogICAgICBjb2xvcjogdmFyKC0tbXV0ZWQpOwogICAgICBmb250LXNpemU6IDAuODJyZW07CiAgICB9CgogICAgLmJhciB7CiAgICAgIGhlaWdodDogOXB4OwogICAgICBib3JkZXItcmFkaXVzOiA5OTlweDsKICAgICAgYmFja2dyb3VuZDogcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjA4KTsKICAgICAgb3ZlcmZsb3c6IGhpZGRlbjsKICAgIH0KCiAgICAuZmlsbCB7CiAgICAgIGhlaWdodDogMTAwJTsKICAgICAgd2lkdGg6IDUwJTsKICAgICAgYm9yZGVyLXJhZGl1czogaW5oZXJpdDsKICAgICAgYmFja2dyb3VuZDogbGluZWFyLWdyYWRpZW50KDkwZGVnLCB2YXIoLS1jeWFuKSwgdmFyKC0tbGltZSkpOwogICAgfQoKICAgIC5yZWFkb3V0IHsKICAgICAgZGlzcGxheTogZ3JpZDsKICAgICAgZ3JpZC10ZW1wbGF0ZS1jb2x1bW5zOiAxZnIgYXV0bzsKICAgICAgZ2FwOiA4cHg7CiAgICAgIHBhZGRpbmc6IDdweCAwOwogICAgICBib3JkZXItYm90dG9tOiAxcHggc29saWQgcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjA4KTsKICAgICAgY29sb3I6IHZhcigtLW11dGVkKTsKICAgICAgZm9udC1zaXplOiAwLjg0cmVtOwogICAgfQoKICAgIC5yZWFkb3V0Omxhc3QtY2hpbGQgeyBib3JkZXItYm90dG9tOiAwOyB9CiAgICAucmVhZG91dCBzdHJvbmcgeyBjb2xvcjogdmFyKC0taW5rKTsgZm9udC13ZWlnaHQ6IDY1MDsgfQoKICAgIEBtZWRpYSAobWF4LXdpZHRoOiA4NjBweCkgewogICAgICBoZWFkZXIgewogICAgICAgIGdyaWQtdGVtcGxhdGUtY29sdW1uczogMWZyOwogICAgICB9CgogICAgICAuYmFkZ2Utcm93IHsKICAgICAgICBqdXN0aWZ5LWNvbnRlbnQ6IGZsZXgtc3RhcnQ7CiAgICAgIH0KCiAgICAgIC5sYXlvdXQgewogICAgICAgIGdyaWQtdGVtcGxhdGUtY29sdW1uczogMWZyOwogICAgICB9CgogICAgICAuc3RhZ2UsCiAgICAgIGNhbnZhcyB7CiAgICAgICAgbWluLWhlaWdodDogYXV0bzsKICAgICAgICBoZWlnaHQ6IG1pbig3NHZoLCA1OTBweCk7CiAgICAgIH0KICAgIH0KICA8L3N0eWxlPgogIDxsaW5rIHJlbD0ic3R5bGVzaGVldCIgaHJlZj0iLi4vZGF0YS9mdXR1cmUtc2FtcGxlLXRoZW1lLmNzcyI+CjwvaGVhZD4KPGJvZHk+CiAgPG1haW4+CiAgICA8aGVhZGVyPgogICAgICA8ZGl2PgogICAgICAgIDxoMT5IYW5kIENvbmZpZGVuY2UgQ29tcHV0ZSBGaWx0ZXI8L2gxPgogICAgICAgIDxwPjI1IGpvaW50IGhhbmQgaW5wdXQg44KS5oOz5a6a44GX44CB5qyg5pCN44O7aml0dGVy44O7ZGVwdGggbWlzbWF0Y2gg44KSIGNvbXB1dGUgcGFzcyDpoqjjgavlubPmu5HljJbjgZfjgabjgIFYUiBsYXllciDjgbjmuKHjgZnliY3jga7kv6HpoLzluqbjgpLoprPlr5/jgZnjgovmnIDlsI/jgrXjg7Pjg5fjg6vjgafjgZnjgII8L3A+CiAgICAgIDwvZGl2PgogICAgICA8ZGl2IGNsYXNzPSJiYWRnZS1yb3ciIGFyaWEtbGFiZWw9ImNhcGFiaWxpdHkgcHJvYmUiPgogICAgICAgIDxkaXYgY2xhc3M9ImJhZGdlIj5XZWJHUFU8c3Ryb25nIGlkPSJncHVTdGF0ZSI+Y2hlY2tpbmc8L3N0cm9uZz48L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJiYWRnZSI+V2ViWFI8c3Ryb25nIGlkPSJ4clN0YXRlIj5jaGVja2luZzwvc3Ryb25nPjwvZGl2PgogICAgICAgIDxkaXYgY2xhc3M9ImJhZGdlIj5YUkhhbmQ8c3Ryb25nIGlkPSJoYW5kU3RhdGUiPmNoZWNraW5nPC9zdHJvbmc+PC9kaXY+CiAgICAgIDwvZGl2PgogICAgPC9oZWFkZXI+CgogICAgPHNlY3Rpb24gY2xhc3M9ImxheW91dCI+CiAgICAgIDxkaXYgY2xhc3M9InN0YWdlIiBpZD0ic3RhZ2UiPgogICAgICAgIDxjYW52YXMgaWQ9ImNhbnZhcyIgd2lkdGg9Ijk4MCIgaGVpZ2h0PSI2NDAiPjwvY2FudmFzPgogICAgICAgIDxkaXYgY2xhc3M9ImhpbnQiPuODieODqeODg+OCsOOBp+aJi+OBruS9jee9ruOCkuenu+WLleOAguasoOaQjeeOh+OBqCBkZXB0aCBnYXRlIOOCkuS4iuOBkuOCi+OBqOOAgei1pOOBhCByYXcgam9pbnQg44Go57eR44GuIGZpbHRlcmVkIGpvaW50IOOBruW3ruOBjOW6g+OBjOOCiuOBvuOBmeOAgjwvZGl2PgogICAgICA8L2Rpdj4KCiAgICAgIDxhc2lkZSBjbGFzcz0iY29udHJvbHMiPgogICAgICAgIDxkaXYgY2xhc3M9InBhbmVsIj4KICAgICAgICAgIDxoMj5TY2VuYXJpbzwvaDI+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJidXR0b24tZ3JpZCI+CiAgICAgICAgICAgIDxidXR0b24gdHlwZT0iYnV0dG9uIiBkYXRhLXByZXNldD0ic3RhYmxlIj5TdGFibGU8L2J1dHRvbj4KICAgICAgICAgICAgPGJ1dHRvbiB0eXBlPSJidXR0b24iIGRhdGEtcHJlc2V0PSJvY2NsdWRlZCI+T2NjbHVkZWQ8L2J1dHRvbj4KICAgICAgICAgICAgPGJ1dHRvbiB0eXBlPSJidXR0b24iIGRhdGEtcHJlc2V0PSJsYXRlbmN5Ij5MYXRlbmN5PC9idXR0b24+CiAgICAgICAgICAgIDxidXR0b24gdHlwZT0iYnV0dG9uIiBkYXRhLXByZXNldD0iZGVwdGgiPkRlcHRoIEdhdGU8L2J1dHRvbj4KICAgICAgICAgIDwvZGl2PgogICAgICAgICAgPGxhYmVsPkdlc3R1cmUKICAgICAgICAgICAgPHNlbGVjdCBpZD0iZ2VzdHVyZSI+CiAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0ib3BlbiI+T3BlbiBwYWxtPC9vcHRpb24+CiAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0icGluY2giPlBpbmNoIHNlbGVjdDwvb3B0aW9uPgogICAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9InBva2UiPkluZGV4IHBva2U8L29wdGlvbj4KICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJncmFiIj5HcmFiIGN1cmw8L29wdGlvbj4KICAgICAgICAgICAgPC9zZWxlY3Q+CiAgICAgICAgICA8L2xhYmVsPgogICAgICAgIDwvZGl2PgoKICAgICAgICA8ZGl2IGNsYXNzPSJwYW5lbCI+CiAgICAgICAgICA8aDI+RmlsdGVyIENvbnRyb2xzPC9oMj4KICAgICAgICAgIDxsYWJlbD5NaXNzaW5nIGpvaW50cyA8c3BhbiBpZD0ibWlzc2luZ0xhYmVsIj4yMiU8L3NwYW4+CiAgICAgICAgICAgIDxpbnB1dCBpZD0ibWlzc2luZyIgdHlwZT0icmFuZ2UiIG1pbj0iMCIgbWF4PSI3MiIgdmFsdWU9IjIyIiAvPgogICAgICAgICAgPC9sYWJlbD4KICAgICAgICAgIDxsYWJlbD5KaXR0ZXIgPHNwYW4gaWQ9ImppdHRlckxhYmVsIj4xOCBweDwvc3Bhbj4KICAgICAgICAgICAgPGlucHV0IGlkPSJqaXR0ZXIiIHR5cGU9InJhbmdlIiBtaW49IjAiIG1heD0iNTIiIHZhbHVlPSIxOCIgLz4KICAgICAgICAgIDwvbGFiZWw+CiAgICAgICAgICA8bGFiZWw+U21vb3RoaW5nIDxzcGFuIGlkPSJzbW9vdGhMYWJlbCI+NjQlPC9zcGFuPgogICAgICAgICAgICA8aW5wdXQgaWQ9InNtb290aCIgdHlwZT0icmFuZ2UiIG1pbj0iMCIgbWF4PSI5MiIgdmFsdWU9IjY0IiAvPgogICAgICAgICAgPC9sYWJlbD4KICAgICAgICAgIDxsYWJlbD5EZXB0aCBnYXRlIDxzcGFuIGlkPSJnYXRlTGFiZWwiPjAuMTggbTwvc3Bhbj4KICAgICAgICAgICAgPGlucHV0IGlkPSJnYXRlIiB0eXBlPSJyYW5nZSIgbWluPSIyIiBtYXg9IjUwIiB2YWx1ZT0iMTgiIC8+CiAgICAgICAgICA8L2xhYmVsPgogICAgICAgIDwvZGl2PgoKICAgICAgICA8ZGl2IGNsYXNzPSJwYW5lbCI+CiAgICAgICAgICA8aDI+Q29tcHV0ZSBSZWFkb3V0PC9oMj4KICAgICAgICAgIDxkaXYgY2xhc3M9Im1ldGVyIj48c3Bhbj5jb25maWRlbmNlPC9zcGFuPjxkaXYgY2xhc3M9ImJhciI+PGRpdiBjbGFzcz0iZmlsbCIgaWQ9ImNvbmZpZGVuY2VCYXIiPjwvZGl2PjwvZGl2PjxzdHJvbmcgaWQ9ImNvbmZpZGVuY2VUZXh0Ij4wJTwvc3Ryb25nPjwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0ibWV0ZXIiPjxzcGFuPnN0YWJpbGl0eTwvc3Bhbj48ZGl2IGNsYXNzPSJiYXIiPjxkaXYgY2xhc3M9ImZpbGwiIGlkPSJzdGFiaWxpdHlCYXIiPjwvZGl2PjwvZGl2PjxzdHJvbmcgaWQ9InN0YWJpbGl0eVRleHQiPjAlPC9zdHJvbmc+PC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJtZXRlciI+PHNwYW4+ZGVwdGggcGFzczwvc3Bhbj48ZGl2IGNsYXNzPSJiYXIiPjxkaXYgY2xhc3M9ImZpbGwiIGlkPSJkZXB0aEJhciI+PC9kaXY+PC9kaXY+PHN0cm9uZyBpZD0iZGVwdGhUZXh0Ij4wJTwvc3Ryb25nPjwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzcz0icmVhZG91dCI+PHNwYW4+dmFsaWQgam9pbnRzPC9zcGFuPjxzdHJvbmcgaWQ9InZhbGlkVGV4dCI+MCAvIDI1PC9zdHJvbmc+PC9kaXY+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJyZWFkb3V0Ij48c3Bhbj5waW5jaCBkaXN0YW5jZTwvc3Bhbj48c3Ryb25nIGlkPSJwaW5jaFRleHQiPjAgbW08L3N0cm9uZz48L2Rpdj4KICAgICAgICAgIDxkaXYgY2xhc3M9InJlYWRvdXQiPjxzcGFuPmxheWVyIGRlY2lzaW9uPC9zcGFuPjxzdHJvbmcgaWQ9ImxheWVyVGV4dCI+aG9sZDwvc3Ryb25nPjwvZGl2PgogICAgICAgIDwvZGl2PgogICAgICA8L2FzaWRlPgogICAgPC9zZWN0aW9uPgogIDwvbWFpbj4KCiAgPHNjcmlwdD4KICAgIGNvbnN0IGNhbnZhcyA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJjYW52YXMiKTsKICAgIGNvbnN0IGN0eCA9IGNhbnZhcy5nZXRDb250ZXh0KCIyZCIpOwogICAgY29uc3Qgc3RhZ2UgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgic3RhZ2UiKTsKICAgIGNvbnN0IGNvbnRyb2xzID0gewogICAgICBnZXN0dXJlOiBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgiZ2VzdHVyZSIpLAogICAgICBtaXNzaW5nOiBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgibWlzc2luZyIpLAogICAgICBqaXR0ZXI6IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJqaXR0ZXIiKSwKICAgICAgc21vb3RoOiBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgic21vb3RoIiksCiAgICAgIGdhdGU6IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJnYXRlIikKICAgIH07CgogICAgY29uc3QgZWxzID0gewogICAgICBncHVTdGF0ZTogZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImdwdVN0YXRlIiksCiAgICAgIHhyU3RhdGU6IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJ4clN0YXRlIiksCiAgICAgIGhhbmRTdGF0ZTogZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImhhbmRTdGF0ZSIpLAogICAgICBtaXNzaW5nTGFiZWw6IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJtaXNzaW5nTGFiZWwiKSwKICAgICAgaml0dGVyTGFiZWw6IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJqaXR0ZXJMYWJlbCIpLAogICAgICBzbW9vdGhMYWJlbDogZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInNtb290aExhYmVsIiksCiAgICAgIGdhdGVMYWJlbDogZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImdhdGVMYWJlbCIpLAogICAgICBjb25maWRlbmNlQmFyOiBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgiY29uZmlkZW5jZUJhciIpLAogICAgICBzdGFiaWxpdHlCYXI6IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJzdGFiaWxpdHlCYXIiKSwKICAgICAgZGVwdGhCYXI6IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJkZXB0aEJhciIpLAogICAgICBjb25maWRlbmNlVGV4dDogZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImNvbmZpZGVuY2VUZXh0IiksCiAgICAgIHN0YWJpbGl0eVRleHQ6IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJzdGFiaWxpdHlUZXh0IiksCiAgICAgIGRlcHRoVGV4dDogZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImRlcHRoVGV4dCIpLAogICAgICB2YWxpZFRleHQ6IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJ2YWxpZFRleHQiKSwKICAgICAgcGluY2hUZXh0OiBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgicGluY2hUZXh0IiksCiAgICAgIGxheWVyVGV4dDogZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImxheWVyVGV4dCIpCiAgICB9OwoKICAgIGNvbnN0IGpvaW50TmFtZXMgPSBbCiAgICAgICJ3cmlzdCIsCiAgICAgICJ0aHVtYi1tZXRhY2FycGFsIiwgInRodW1iLXBoYWxhbngtcHJveGltYWwiLCAidGh1bWItcGhhbGFueC1kaXN0YWwiLCAidGh1bWItdGlwIiwKICAgICAgImluZGV4LWZpbmdlci1tZXRhY2FycGFsIiwgImluZGV4LWZpbmdlci1waGFsYW54LXByb3hpbWFsIiwgImluZGV4LWZpbmdlci1waGFsYW54LWludGVybWVkaWF0ZSIsICJpbmRleC1maW5nZXItcGhhbGFueC1kaXN0YWwiLCAiaW5kZXgtZmluZ2VyLXRpcCIsCiAgICAgICJtaWRkbGUtZmluZ2VyLW1ldGFjYXJwYWwiLCAibWlkZGxlLWZpbmdlci1waGFsYW54LXByb3hpbWFsIiwgIm1pZGRsZS1maW5nZXItcGhhbGFueC1pbnRlcm1lZGlhdGUiLCAibWlkZGxlLWZpbmdlci1waGFsYW54LWRpc3RhbCIsICJtaWRkbGUtZmluZ2VyLXRpcCIsCiAgICAgICJyaW5nLWZpbmdlci1tZXRhY2FycGFsIiwgInJpbmctZmluZ2VyLXBoYWxhbngtcHJveGltYWwiLCAicmluZy1maW5nZXItcGhhbGFueC1pbnRlcm1lZGlhdGUiLCAicmluZy1maW5nZXItcGhhbGFueC1kaXN0YWwiLCAicmluZy1maW5nZXItdGlwIiwKICAgICAgInBpbmt5LWZpbmdlci1tZXRhY2FycGFsIiwgInBpbmt5LWZpbmdlci1waGFsYW54LXByb3hpbWFsIiwgInBpbmt5LWZpbmdlci1waGFsYW54LWludGVybWVkaWF0ZSIsICJwaW5reS1maW5nZXItcGhhbGFueC1kaXN0YWwiLCAicGlua3ktZmluZ2VyLXRpcCIKICAgIF07CiAgICBjb25zdCBib25lcyA9IFsKICAgICAgWzAsIDFdLCBbMSwgMl0sIFsyLCAzXSwgWzMsIDRdLAogICAgICBbMCwgNV0sIFs1LCA2XSwgWzYsIDddLCBbNywgOF0sIFs4LCA5XSwKICAgICAgWzAsIDEwXSwgWzEwLCAxMV0sIFsxMSwgMTJdLCBbMTIsIDEzXSwgWzEzLCAxNF0sCiAgICAgIFswLCAxNV0sIFsxNSwgMTZdLCBbMTYsIDE3XSwgWzE3LCAxOF0sIFsxOCwgMTldLAogICAgICBbMCwgMjBdLCBbMjAsIDIxXSwgWzIxLCAyMl0sIFsyMiwgMjNdLCBbMjMsIDI0XQogICAgXTsKICAgIGNvbnN0IHN0YXRlID0gewogICAgICBoYW5kWDogMC41LAogICAgICBoYW5kWTogMC41NiwKICAgICAgcG9pbnRlckRvd246IGZhbHNlLAogICAgICBmaWx0ZXJlZDogW10sCiAgICAgIGxhc3RSYXc6IFtdLAogICAgICB0aW1lOiAwLAogICAgICBzZWVkOiAxMgogICAgfTsKCiAgICBmdW5jdGlvbiByZXNpemUoKSB7CiAgICAgIGNvbnN0IHJlY3QgPSBjYW52YXMuZ2V0Qm91bmRpbmdDbGllbnRSZWN0KCk7CiAgICAgIGNvbnN0IGRwciA9IE1hdGgubWluKHdpbmRvdy5kZXZpY2VQaXhlbFJhdGlvIHx8IDEsIDIpOwogICAgICBjYW52YXMud2lkdGggPSBNYXRoLm1heCg2NDAsIE1hdGguZmxvb3IocmVjdC53aWR0aCAqIGRwcikpOwogICAgICBjYW52YXMuaGVpZ2h0ID0gTWF0aC5tYXgoNDQwLCBNYXRoLmZsb29yKHJlY3QuaGVpZ2h0ICogZHByKSk7CiAgICAgIGN0eC5zZXRUcmFuc2Zvcm0oZHByLCAwLCAwLCBkcHIsIDAsIDApOwogICAgfQoKICAgIGZ1bmN0aW9uIG5vaXNlKGluZGV4LCB0KSB7CiAgICAgIHJldHVybiBNYXRoLnNpbihpbmRleCAqIDE3LjEzICsgdCAqIDAuMDA0ICsgc3RhdGUuc2VlZCkgKiBNYXRoLmNvcyhpbmRleCAqIDUuMzcgKyB0ICogMC4wMDMpOwogICAgfQoKICAgIGZ1bmN0aW9uIGJhc2VIYW5kKGdlc3R1cmUsIHQpIHsKICAgICAgY29uc3QgdyA9IGNhbnZhcy5jbGllbnRXaWR0aDsKICAgICAgY29uc3QgaCA9IGNhbnZhcy5jbGllbnRIZWlnaHQ7CiAgICAgIGNvbnN0IHBhbG1YID0gc3RhdGUuaGFuZFggKiB3OwogICAgICBjb25zdCBwYWxtWSA9IHN0YXRlLmhhbmRZICogaDsKICAgICAgY29uc3Qgc3dheSA9IE1hdGguc2luKHQgKiAwLjAwMTYpICogMTA7CiAgICAgIGNvbnN0IGN1cmxNYXAgPSB7IG9wZW46IDAuMDYsIHBpbmNoOiAwLjM0LCBwb2tlOiAwLjE0LCBncmFiOiAwLjU4IH07CiAgICAgIGNvbnN0IGN1cmwgPSBjdXJsTWFwW2dlc3R1cmVdIHx8IDAuMTsKICAgICAgY29uc3Qgc3ByZWFkID0gZ2VzdHVyZSA9PT0gImdyYWIiID8gMC41OCA6IDE7CiAgICAgIGNvbnN0IGpvaW50cyA9IFtdOwogICAgICBjb25zdCBiYXNlcyA9IFsKICAgICAgICB7IGFuZ2xlOiAtMi40OCwgbGVuZ3RoOiA1NCwgY3VybDogZ2VzdHVyZSA9PT0gInBpbmNoIiA/IDAuNTYgOiBjdXJsICogMC41NSB9LAogICAgICAgIHsgYW5nbGU6IC0xLjk2LCBsZW5ndGg6IDgyLCBjdXJsOiBnZXN0dXJlID09PSAicGluY2giID8gMC4yNCA6IGN1cmwgKiAwLjQgfSwKICAgICAgICB7IGFuZ2xlOiAtMS41OCwgbGVuZ3RoOiA5MiwgY3VybCB9LAogICAgICAgIHsgYW5nbGU6IC0xLjIyLCBsZW5ndGg6IDgyLCBjdXJsOiBjdXJsICogMS4wOCB9LAogICAgICAgIHsgYW5nbGU6IC0wLjksIGxlbmd0aDogNzAsIGN1cmw6IGN1cmwgKiAxLjE2IH0KICAgICAgXTsKICAgICAgam9pbnRzWzBdID0geyB4OiBwYWxtWCArIHN3YXksIHk6IHBhbG1ZLCB6OiAwLjY0LCByYWRpdXM6IDIwLCBuYW1lOiBqb2ludE5hbWVzWzBdIH07CiAgICAgIGxldCBpbmRleCA9IDE7CiAgICAgIGJhc2VzLmZvckVhY2goKGZpbmdlciwgZmkpID0+IHsKICAgICAgICBsZXQgeCA9IHBhbG1YICsgKGZpIC0gMikgKiAyMCAqIHNwcmVhZCArIChmaSA9PT0gMCA/IC0yMCA6IDApICsgc3dheTsKICAgICAgICBsZXQgeSA9IHBhbG1ZIC0gOCAtIE1hdGguYWJzKGZpIC0gMikgKiAyOwogICAgICAgIGNvbnN0IHNlZ21lbnRzID0gZmkgPT09IDAgPyBbMC40MiwgMC4zNCwgMC4yNCwgMF0gOiBbMC4zLCAwLjI3LCAwLjIzLCAwLjJdOwogICAgICAgIGNvbnN0IHN0YXJ0ID0gaW5kZXg7CiAgICAgICAgZm9yIChsZXQgc2kgPSAwOyBzaSA8IDQ7IHNpICs9IDEpIHsKICAgICAgICAgIGNvbnN0IGJlbmQgPSBmaW5nZXIuY3VybCAqIChzaSArIDAuNikgKiAwLjc0OwogICAgICAgICAgY29uc3QgYW5nbGUgPSBmaW5nZXIuYW5nbGUgKyAoZmkgLSAyKSAqIDAuMDcgKiBzcHJlYWQgKyBiZW5kOwogICAgICAgICAgY29uc3QgbGVuID0gZmluZ2VyLmxlbmd0aCAqIHNlZ21lbnRzW3NpXTsKICAgICAgICAgIGlmIChzaSA+IDApIHsKICAgICAgICAgICAgeCArPSBNYXRoLmNvcyhhbmdsZSkgKiBsZW47CiAgICAgICAgICAgIHkgKz0gTWF0aC5zaW4oYW5nbGUpICogbGVuOwogICAgICAgICAgfQogICAgICAgICAgam9pbnRzW2luZGV4XSA9IHsKICAgICAgICAgICAgeCwKICAgICAgICAgICAgeSwKICAgICAgICAgICAgejogMC41MiArIHNpICogMC4wMzUgKyBmaSAqIDAuMDEyICsgKGdlc3R1cmUgPT09ICJwb2tlIiAmJiBmaSA9PT0gMSA/IC0wLjEyICogc2kgOiAwKSwKICAgICAgICAgICAgcmFkaXVzOiBzaSA9PT0gMyA/IDggOiAxMSwKICAgICAgICAgICAgbmFtZTogam9pbnROYW1lc1tpbmRleF0KICAgICAgICAgIH07CiAgICAgICAgICBpbmRleCArPSAxOwogICAgICAgIH0KICAgICAgICBpZiAoZmkgPiAwKSB7CiAgICAgICAgICBqb2ludHNbc3RhcnRdLnggPSBwYWxtWCArIChmaSAtIDIpICogMjIgKiBzcHJlYWQgKyBzd2F5OwogICAgICAgICAgam9pbnRzW3N0YXJ0XS55ID0gcGFsbVkgLSAyMDsKICAgICAgICB9CiAgICAgIH0pOwogICAgICBpZiAoZ2VzdHVyZSA9PT0gInBpbmNoIikgewogICAgICAgIGpvaW50c1s0XS54ID0gam9pbnRzWzldLnggLSA0OwogICAgICAgIGpvaW50c1s0XS55ID0gam9pbnRzWzldLnkgKyA4OwogICAgICAgIGpvaW50c1s0XS56ID0gam9pbnRzWzldLnogKyAwLjAxOwogICAgICB9CiAgICAgIHJldHVybiBqb2ludHM7CiAgICB9CgogICAgZnVuY3Rpb24gcmF3RnJvbUJhc2UoYmFzZSwgdCkgewogICAgICBjb25zdCBtaXNzaW5nID0gTnVtYmVyKGNvbnRyb2xzLm1pc3NpbmcudmFsdWUpIC8gMTAwOwogICAgICBjb25zdCBqaXR0ZXIgPSBOdW1iZXIoY29udHJvbHMuaml0dGVyLnZhbHVlKTsKICAgICAgY29uc3QgZ2F0ZSA9IE51bWJlcihjb250cm9scy5nYXRlLnZhbHVlKSAvIDEwMDsKICAgICAgcmV0dXJuIGJhc2UubWFwKChqb2ludCwgaW5kZXgpID0+IHsKICAgICAgICBjb25zdCBkcm9wb3V0V2F2ZSA9IChub2lzZShpbmRleCwgTWF0aC5mbG9vcih0IC8gMjEwKSAqIDIxMCkgKyAxKSAvIDI7CiAgICAgICAgY29uc3QgbWlzc2luZ0Jvb3N0ID0gaW5kZXggPiAxNCAmJiBjb250cm9scy5nZXN0dXJlLnZhbHVlID09PSAib2NjbHVkZWQiID8gMC4xIDogMDsKICAgICAgICBjb25zdCB2aXNpYmxlID0gZHJvcG91dFdhdmUgPiBNYXRoLm1pbigwLjksIG1pc3NpbmcgKyBtaXNzaW5nQm9vc3QpIHx8IGluZGV4ID09PSAwOwogICAgICAgIGNvbnN0IGRlcHRoTWlzbWF0Y2ggPSBNYXRoLmFicyhqb2ludC56IC0gMC41OCkgPiBnYXRlOwogICAgICAgIGNvbnN0IG4gPSBub2lzZShpbmRleCwgdCk7CiAgICAgICAgcmV0dXJuIHsKICAgICAgICAgIC4uLmpvaW50LAogICAgICAgICAgeDogam9pbnQueCArIG4gKiBqaXR0ZXIsCiAgICAgICAgICB5OiBqb2ludC55ICsgbm9pc2UoaW5kZXggKyA0MCwgdCkgKiBqaXR0ZXIsCiAgICAgICAgICB6OiBqb2ludC56ICsgbm9pc2UoaW5kZXggKyA4MCwgdCkgKiBqaXR0ZXIgKiAwLjAwMiwKICAgICAgICAgIHZpc2libGUsCiAgICAgICAgICBkZXB0aFBhc3M6ICFkZXB0aE1pc21hdGNoLAogICAgICAgICAgY29uZmlkZW5jZTogdmlzaWJsZSA/IE1hdGgubWF4KDAsIDEgLSBNYXRoLmFicyhuKSAqIDAuMzggLSAoZGVwdGhNaXNtYXRjaCA/IDAuNDIgOiAwKSkgOiAwCiAgICAgICAgfTsKICAgICAgfSk7CiAgICB9CgogICAgZnVuY3Rpb24gZmlsdGVySm9pbnRzKHJhdykgewogICAgICBjb25zdCBzbW9vdGggPSBOdW1iZXIoY29udHJvbHMuc21vb3RoLnZhbHVlKSAvIDEwMDsKICAgICAgc3RhdGUuZmlsdGVyZWQgPSByYXcubWFwKChqb2ludCwgaW5kZXgpID0+IHsKICAgICAgICBjb25zdCBwcmV2ID0gc3RhdGUuZmlsdGVyZWRbaW5kZXhdIHx8IGpvaW50OwogICAgICAgIGNvbnN0IGZhbGxiYWNrID0gc3RhdGUubGFzdFJhd1tpbmRleF0gfHwgcHJldjsKICAgICAgICBjb25zdCB0YXJnZXQgPSBqb2ludC52aXNpYmxlID8gam9pbnQgOiBmYWxsYmFjazsKICAgICAgICBjb25zdCBkZXB0aFdlaWdodCA9IGpvaW50LmRlcHRoUGFzcyA/IDEgOiAwLjQ4OwogICAgICAgIGNvbnN0IGFscGhhID0gKDEgLSBzbW9vdGgpICogTWF0aC5tYXgoMC4wOCwgam9pbnQuY29uZmlkZW5jZSAqIGRlcHRoV2VpZ2h0KTsKICAgICAgICByZXR1cm4gewogICAgICAgICAgLi4uam9pbnQsCiAgICAgICAgICB4OiBwcmV2LnggKyAodGFyZ2V0LnggLSBwcmV2LngpICogYWxwaGEsCiAgICAgICAgICB5OiBwcmV2LnkgKyAodGFyZ2V0LnkgLSBwcmV2LnkpICogYWxwaGEsCiAgICAgICAgICB6OiBwcmV2LnogKyAodGFyZ2V0LnogLSBwcmV2LnopICogYWxwaGEsCiAgICAgICAgICBjb25maWRlbmNlOiBwcmV2LmNvbmZpZGVuY2UgKiBzbW9vdGggKyBqb2ludC5jb25maWRlbmNlICogKDEgLSBzbW9vdGgpLAogICAgICAgICAgaW1wdXRlZDogIWpvaW50LnZpc2libGUKICAgICAgICB9OwogICAgICB9KTsKICAgICAgc3RhdGUubGFzdFJhdyA9IHJhdy5tYXAoKGpvaW50LCBpbmRleCkgPT4gam9pbnQudmlzaWJsZSA/IGpvaW50IDogKHN0YXRlLmxhc3RSYXdbaW5kZXhdIHx8IGpvaW50KSk7CiAgICB9CgogICAgZnVuY3Rpb24gZHJhd1RleHRCb3goeCwgeSwgdGl0bGUsIGJvZHksIGNvbG9yKSB7CiAgICAgIGN0eC5maWxsU3R5bGUgPSAicmdiYSg5LCAxNiwgMjEsIDAuNzgpIjsKICAgICAgY3R4LnN0cm9rZVN0eWxlID0gY29sb3I7CiAgICAgIGN0eC5saW5lV2lkdGggPSAxOwogICAgICBjdHguYmVnaW5QYXRoKCk7CiAgICAgIGN0eC5yb3VuZFJlY3QoeCwgeSwgMjMwLCA3NCwgOCk7CiAgICAgIGN0eC5maWxsKCk7CiAgICAgIGN0eC5zdHJva2UoKTsKICAgICAgY3R4LmZpbGxTdHlsZSA9ICIjZWZmOGY3IjsKICAgICAgY3R4LmZvbnQgPSAiNzAwIDE1cHggSW50ZXIsIHNhbnMtc2VyaWYiOwogICAgICBjdHguZmlsbFRleHQodGl0bGUsIHggKyAxMiwgeSArIDI1KTsKICAgICAgY3R4LmZpbGxTdHlsZSA9ICIjOWViM2IyIjsKICAgICAgY3R4LmZvbnQgPSAiMTJweCBJbnRlciwgc2Fucy1zZXJpZiI7CiAgICAgIGN0eC5maWxsVGV4dChib2R5LCB4ICsgMTIsIHkgKyA0OCk7CiAgICB9CgogICAgZnVuY3Rpb24gZHJhd0xheWVyUGxhbmUodywgaCkgewogICAgICBjb25zdCBwbGFuZVkgPSBoICogMC4yOwogICAgICBjb25zdCBwbGFuZUggPSBoICogMC41NjsKICAgICAgY3R4LmZpbGxTdHlsZSA9ICJyZ2JhKDE2OSwgMTU2LCAyNTUsIDAuMDgpIjsKICAgICAgY3R4LnN0cm9rZVN0eWxlID0gInJnYmEoMTY5LCAxNTYsIDI1NSwgMC40NSkiOwogICAgICBjdHgubGluZVdpZHRoID0gMTsKICAgICAgY3R4LnNldExpbmVEYXNoKFs4LCA4XSk7CiAgICAgIGN0eC5zdHJva2VSZWN0KHcgKiAwLjA4LCBwbGFuZVksIHcgKiAwLjg0LCBwbGFuZUgpOwogICAgICBjdHguc2V0TGluZURhc2goW10pOwogICAgICBjdHguZmlsbFJlY3QodyAqIDAuMDgsIHBsYW5lWSwgdyAqIDAuODQsIHBsYW5lSCk7CiAgICAgIGN0eC5maWxsU3R5bGUgPSAicmdiYSgyNTUsIDI1NSwgMjU1LCAwLjA4KSI7CiAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgOTsgaSArPSAxKSB7CiAgICAgICAgY29uc3QgeCA9IHcgKiAwLjEzICsgaSAqIHcgKiAwLjA5OwogICAgICAgIGN0eC5maWxsUmVjdCh4LCBwbGFuZVkgKyAyMCwgMiwgcGxhbmVIIC0gNDApOwogICAgICB9CiAgICAgIGRyYXdUZXh0Qm94KHcgKiAwLjEsIHBsYW5lWSArIDE2LCAiUHJvamVjdGlvbiBsYXllciBkZXB0aCIsICJ0YXJnZXQgc3VyZmFjZSB6ID0gMC41OCBtIiwgInJnYmEoMTY5LDE1NiwyNTUsMC42NSkiKTsKICAgIH0KCiAgICBmdW5jdGlvbiBkcmF3U2tlbGV0b24oam9pbnRzLCBjb2xvciwgYWxwaGEsIHJhdykgewogICAgICBjdHguZ2xvYmFsQWxwaGEgPSBhbHBoYTsKICAgICAgY3R4LnN0cm9rZVN0eWxlID0gY29sb3I7CiAgICAgIGN0eC5saW5lV2lkdGggPSByYXcgPyAxLjIgOiAzOwogICAgICBib25lcy5mb3JFYWNoKChbYSwgYl0pID0+IHsKICAgICAgICBjb25zdCBqYSA9IGpvaW50c1thXTsKICAgICAgICBjb25zdCBqYiA9IGpvaW50c1tiXTsKICAgICAgICBpZiAoIWphIHx8ICFqYikgcmV0dXJuOwogICAgICAgIGN0eC5iZWdpblBhdGgoKTsKICAgICAgICBjdHgubW92ZVRvKGphLngsIGphLnkpOwogICAgICAgIGN0eC5saW5lVG8oamIueCwgamIueSk7CiAgICAgICAgY3R4LnN0cm9rZSgpOwogICAgICB9KTsKICAgICAgam9pbnRzLmZvckVhY2goKGpvaW50KSA9PiB7CiAgICAgICAgY29uc3QgciA9IHJhdyA/IDMuNSA6IE1hdGgubWF4KDQsIGpvaW50LnJhZGl1cyAqIDAuNDgpOwogICAgICAgIGN0eC5maWxsU3R5bGUgPSBqb2ludC52aXNpYmxlID09PSBmYWxzZSA/ICJyZ2JhKDI1NSwxMTEsMTExLDAuNDIpIiA6IGNvbG9yOwogICAgICAgIGlmICgham9pbnQuZGVwdGhQYXNzKSBjdHguZmlsbFN0eWxlID0gInJnYmEoMjU1LDIwMywxMDQsMC43KSI7CiAgICAgICAgaWYgKGpvaW50LmltcHV0ZWQpIGN0eC5maWxsU3R5bGUgPSAicmdiYSgxMTIsMjI1LDIxMiwwLjM2KSI7CiAgICAgICAgY3R4LmJlZ2luUGF0aCgpOwogICAgICAgIGN0eC5hcmMoam9pbnQueCwgam9pbnQueSwgciwgMCwgTWF0aC5QSSAqIDIpOwogICAgICAgIGN0eC5maWxsKCk7CiAgICAgIH0pOwogICAgICBjdHguZ2xvYmFsQWxwaGEgPSAxOwogICAgfQoKICAgIGZ1bmN0aW9uIGRyYXcoKSB7CiAgICAgIGNvbnN0IHcgPSBjYW52YXMuY2xpZW50V2lkdGg7CiAgICAgIGNvbnN0IGggPSBjYW52YXMuY2xpZW50SGVpZ2h0OwogICAgICBjdHguY2xlYXJSZWN0KDAsIDAsIHcsIGgpOwogICAgICBkcmF3TGF5ZXJQbGFuZSh3LCBoKTsKICAgICAgY29uc3QgcmF3ID0gcmF3RnJvbUJhc2UoYmFzZUhhbmQoY29udHJvbHMuZ2VzdHVyZS52YWx1ZSwgc3RhdGUudGltZSksIHN0YXRlLnRpbWUpOwogICAgICBmaWx0ZXJKb2ludHMocmF3KTsKICAgICAgZHJhd1NrZWxldG9uKHJhdywgInJnYmEoMjU1LCAxMTEsIDExMSwgMC44NikiLCAwLjYyLCB0cnVlKTsKICAgICAgZHJhd1NrZWxldG9uKHN0YXRlLmZpbHRlcmVkLCAicmdiYSgxMTIsIDIyNSwgMjEyLCAwLjk1KSIsIDEsIGZhbHNlKTsKCiAgICAgIGNvbnN0IGluZGV4VGlwID0gc3RhdGUuZmlsdGVyZWRbOV07CiAgICAgIGNvbnN0IHRodW1iVGlwID0gc3RhdGUuZmlsdGVyZWRbNF07CiAgICAgIGNvbnN0IHBpbmNoID0gTWF0aC5oeXBvdChpbmRleFRpcC54IC0gdGh1bWJUaXAueCwgaW5kZXhUaXAueSAtIHRodW1iVGlwLnkpOwogICAgICBjb25zdCB0YXJnZXRYID0gdyAqIDAuNjk7CiAgICAgIGNvbnN0IHRhcmdldFkgPSBoICogMC40MzsKICAgICAgY29uc3QgZGlzdCA9IE1hdGguaHlwb3QoaW5kZXhUaXAueCAtIHRhcmdldFgsIGluZGV4VGlwLnkgLSB0YXJnZXRZKTsKICAgICAgY3R4LnN0cm9rZVN0eWxlID0gZGlzdCA8IDcwID8gInJnYmEoMTg1LDIzNiwxMDYsMC45MikiIDogInJnYmEoMjU1LDI1NSwyNTUsMC4yNSkiOwogICAgICBjdHgubGluZVdpZHRoID0gMjsKICAgICAgY3R4LmJlZ2luUGF0aCgpOwogICAgICBjdHgubW92ZVRvKGluZGV4VGlwLngsIGluZGV4VGlwLnkpOwogICAgICBjdHgubGluZVRvKHRhcmdldFgsIHRhcmdldFkpOwogICAgICBjdHguc3Ryb2tlKCk7CiAgICAgIGN0eC5maWxsU3R5bGUgPSBkaXN0IDwgNzAgPyAicmdiYSgxODUsMjM2LDEwNiwwLjIyKSIgOiAicmdiYSgyNTUsMjU1LDI1NSwwLjA4KSI7CiAgICAgIGN0eC5zdHJva2VTdHlsZSA9IGRpc3QgPCA3MCA/ICJyZ2JhKDE4NSwyMzYsMTA2LDAuOSkiIDogInJnYmEoMjU1LDI1NSwyNTUsMC4yMikiOwogICAgICBjdHguYmVnaW5QYXRoKCk7CiAgICAgIGN0eC5yb3VuZFJlY3QodGFyZ2V0WCAtIDU2LCB0YXJnZXRZIC0gNDIsIDExMiwgODQsIDgpOwogICAgICBjdHguZmlsbCgpOwogICAgICBjdHguc3Ryb2tlKCk7CiAgICAgIGN0eC5maWxsU3R5bGUgPSAiI2VmZjhmNyI7CiAgICAgIGN0eC5mb250ID0gIjcwMCAxM3B4IEludGVyLCBzYW5zLXNlcmlmIjsKICAgICAgY3R4LnRleHRBbGlnbiA9ICJjZW50ZXIiOwogICAgICBjdHguZmlsbFRleHQoIlhSIFVJIiwgdGFyZ2V0WCwgdGFyZ2V0WSAtIDQpOwogICAgICBjdHguZmlsbFN0eWxlID0gIiM5ZWIzYjIiOwogICAgICBjdHguZm9udCA9ICIxMXB4IEludGVyLCBzYW5zLXNlcmlmIjsKICAgICAgY3R4LmZpbGxUZXh0KCJzZWxlY3QgZ2F0ZSIsIHRhcmdldFgsIHRhcmdldFkgKyAxNyk7CiAgICAgIGN0eC50ZXh0QWxpZ24gPSAic3RhcnQiOwoKICAgICAgY29uc3QgdmFsaWQgPSByYXcuZmlsdGVyKChqb2ludCkgPT4gam9pbnQudmlzaWJsZSkubGVuZ3RoOwogICAgICBjb25zdCBjb25maWRlbmNlID0gc3RhdGUuZmlsdGVyZWQucmVkdWNlKChzdW0sIGpvaW50KSA9PiBzdW0gKyBqb2ludC5jb25maWRlbmNlLCAwKSAvIHN0YXRlLmZpbHRlcmVkLmxlbmd0aDsKICAgICAgY29uc3QgcmF3TW90aW9uID0gcmF3LnJlZHVjZSgoc3VtLCBqb2ludCwgaW5kZXgpID0+IHsKICAgICAgICBjb25zdCBmaWx0ZXJlZCA9IHN0YXRlLmZpbHRlcmVkW2luZGV4XTsKICAgICAgICByZXR1cm4gc3VtICsgTWF0aC5oeXBvdChqb2ludC54IC0gZmlsdGVyZWQueCwgam9pbnQueSAtIGZpbHRlcmVkLnkpOwogICAgICB9LCAwKSAvIHJhdy5sZW5ndGg7CiAgICAgIGNvbnN0IHN0YWJpbGl0eSA9IE1hdGgubWF4KDAsIDEgLSByYXdNb3Rpb24gLyA0Mik7CiAgICAgIGNvbnN0IGRlcHRoUGFzcyA9IHJhdy5maWx0ZXIoKGpvaW50KSA9PiBqb2ludC5kZXB0aFBhc3MpLmxlbmd0aCAvIHJhdy5sZW5ndGg7CiAgICAgIGNvbnN0IGxheWVyRGVjaXNpb24gPSBjb25maWRlbmNlID4gMC42OCAmJiBzdGFiaWxpdHkgPiAwLjUyICYmIGRlcHRoUGFzcyA+IDAuNTUgPyAic3VibWl0IiA6IGNvbmZpZGVuY2UgPiAwLjQ0ID8gInJlcHJvamVjdCIgOiAiaG9sZCI7CiAgICAgIHNldE1ldGVyKGVscy5jb25maWRlbmNlQmFyLCBlbHMuY29uZmlkZW5jZVRleHQsIGNvbmZpZGVuY2UpOwogICAgICBzZXRNZXRlcihlbHMuc3RhYmlsaXR5QmFyLCBlbHMuc3RhYmlsaXR5VGV4dCwgc3RhYmlsaXR5KTsKICAgICAgc2V0TWV0ZXIoZWxzLmRlcHRoQmFyLCBlbHMuZGVwdGhUZXh0LCBkZXB0aFBhc3MpOwogICAgICBlbHMudmFsaWRUZXh0LnRleHRDb250ZW50ID0gYCR7dmFsaWR9IC8gMjVgOwogICAgICBlbHMucGluY2hUZXh0LnRleHRDb250ZW50ID0gYCR7TWF0aC5yb3VuZChwaW5jaCAqIDIuOCl9IG1tYDsKICAgICAgZWxzLmxheWVyVGV4dC50ZXh0Q29udGVudCA9IGxheWVyRGVjaXNpb247CgogICAgICBkcmF3VGV4dEJveCgxOCwgMTgsICJjb21wdXRlLXN0eWxlIHBhc3MiLCBgJHt2YWxpZH0gdmFsaWQsICR7TWF0aC5yb3VuZChjb25maWRlbmNlICogMTAwKX0lIGNvbmZpZGVuY2VgLCAicmdiYSgxMTIsMjI1LDIxMiwwLjcpIik7CiAgICAgIHN0YXRlLnRpbWUgKz0gMTYuNjc7CiAgICAgIHJlcXVlc3RBbmltYXRpb25GcmFtZShkcmF3KTsKICAgIH0KCiAgICBmdW5jdGlvbiBzZXRNZXRlcihiYXIsIHRleHQsIHZhbHVlKSB7CiAgICAgIGNvbnN0IHBjdCA9IE1hdGgucm91bmQoTWF0aC5tYXgoMCwgTWF0aC5taW4oMSwgdmFsdWUpKSAqIDEwMCk7CiAgICAgIGJhci5zdHlsZS53aWR0aCA9IGAke3BjdH0lYDsKICAgICAgYmFyLnN0eWxlLmJhY2tncm91bmQgPSBwY3QgPCA0NSA/ICJsaW5lYXItZ3JhZGllbnQoOTBkZWcsICNmZjZmNmYsICNmZmNiNjgpIiA6ICJsaW5lYXItZ3JhZGllbnQoOTBkZWcsICM3MGUxZDQsICNiOWVjNmEpIjsKICAgICAgdGV4dC50ZXh0Q29udGVudCA9IGAke3BjdH0lYDsKICAgIH0KCiAgICBmdW5jdGlvbiBzeW5jTGFiZWxzKCkgewogICAgICBlbHMubWlzc2luZ0xhYmVsLnRleHRDb250ZW50ID0gYCR7Y29udHJvbHMubWlzc2luZy52YWx1ZX0lYDsKICAgICAgZWxzLmppdHRlckxhYmVsLnRleHRDb250ZW50ID0gYCR7Y29udHJvbHMuaml0dGVyLnZhbHVlfSBweGA7CiAgICAgIGVscy5zbW9vdGhMYWJlbC50ZXh0Q29udGVudCA9IGAke2NvbnRyb2xzLnNtb290aC52YWx1ZX0lYDsKICAgICAgZWxzLmdhdGVMYWJlbC50ZXh0Q29udGVudCA9IGAkeyhOdW1iZXIoY29udHJvbHMuZ2F0ZS52YWx1ZSkgLyAxMDApLnRvRml4ZWQoMil9IG1gOwogICAgfQoKICAgIGZ1bmN0aW9uIGFwcGx5UHJlc2V0KG5hbWUpIHsKICAgICAgY29uc3QgcHJlc2V0cyA9IHsKICAgICAgICBzdGFibGU6IFsib3BlbiIsIDgsIDcsIDcwLCAyNF0sCiAgICAgICAgb2NjbHVkZWQ6IFsiZ3JhYiIsIDQ4LCAyMiwgNzIsIDE4XSwKICAgICAgICBsYXRlbmN5OiBbInBpbmNoIiwgMjIsIDM0LCA4OCwgMTVdLAogICAgICAgIGRlcHRoOiBbInBva2UiLCAyOCwgMTYsIDY0LCA4XQogICAgICB9OwogICAgICBjb25zdCBbZ2VzdHVyZSwgbWlzc2luZywgaml0dGVyLCBzbW9vdGgsIGdhdGVdID0gcHJlc2V0c1tuYW1lXTsKICAgICAgY29udHJvbHMuZ2VzdHVyZS52YWx1ZSA9IGdlc3R1cmU7CiAgICAgIGNvbnRyb2xzLm1pc3NpbmcudmFsdWUgPSBtaXNzaW5nOwogICAgICBjb250cm9scy5qaXR0ZXIudmFsdWUgPSBqaXR0ZXI7CiAgICAgIGNvbnRyb2xzLnNtb290aC52YWx1ZSA9IHNtb290aDsKICAgICAgY29udHJvbHMuZ2F0ZS52YWx1ZSA9IGdhdGU7CiAgICAgIHN5bmNMYWJlbHMoKTsKICAgIH0KCiAgICBmdW5jdGlvbiB1cGRhdGVQcm9iZSgpIHsKICAgICAgZWxzLmdwdVN0YXRlLnRleHRDb250ZW50ID0gImdwdSIgaW4gbmF2aWdhdG9yID8gImF2YWlsYWJsZSIgOiAibWlzc2luZyI7CiAgICAgIGVscy54clN0YXRlLnRleHRDb250ZW50ID0gInhyIiBpbiBuYXZpZ2F0b3IgPyAiYXZhaWxhYmxlIiA6ICJtaXNzaW5nIjsKICAgICAgZWxzLmhhbmRTdGF0ZS50ZXh0Q29udGVudCA9ICJYUkhhbmQiIGluIHdpbmRvdyA/ICJhdmFpbGFibGUiIDogImZhbGxiYWNrIjsKICAgIH0KCiAgICBPYmplY3QudmFsdWVzKGNvbnRyb2xzKS5mb3JFYWNoKChjb250cm9sKSA9PiB7CiAgICAgIGNvbnRyb2wuYWRkRXZlbnRMaXN0ZW5lcigiaW5wdXQiLCBzeW5jTGFiZWxzKTsKICAgIH0pOwogICAgZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgiW2RhdGEtcHJlc2V0XSIpLmZvckVhY2goKGJ1dHRvbikgPT4gewogICAgICBidXR0b24uYWRkRXZlbnRMaXN0ZW5lcigiY2xpY2siLCAoKSA9PiBhcHBseVByZXNldChidXR0b24uZGF0YXNldC5wcmVzZXQpKTsKICAgIH0pOwogICAgc3RhZ2UuYWRkRXZlbnRMaXN0ZW5lcigicG9pbnRlcmRvd24iLCAoZXZlbnQpID0+IHsKICAgICAgc3RhdGUucG9pbnRlckRvd24gPSB0cnVlOwogICAgICBzdGFnZS5zZXRQb2ludGVyQ2FwdHVyZShldmVudC5wb2ludGVySWQpOwogICAgfSk7CiAgICBzdGFnZS5hZGRFdmVudExpc3RlbmVyKCJwb2ludGVybW92ZSIsIChldmVudCkgPT4gewogICAgICBpZiAoIXN0YXRlLnBvaW50ZXJEb3duKSByZXR1cm47CiAgICAgIGNvbnN0IHJlY3QgPSBzdGFnZS5nZXRCb3VuZGluZ0NsaWVudFJlY3QoKTsKICAgICAgc3RhdGUuaGFuZFggPSBNYXRoLm1heCgwLjE1LCBNYXRoLm1pbigwLjg1LCAoZXZlbnQuY2xpZW50WCAtIHJlY3QubGVmdCkgLyByZWN0LndpZHRoKSk7CiAgICAgIHN0YXRlLmhhbmRZID0gTWF0aC5tYXgoMC4yOCwgTWF0aC5taW4oMC44NCwgKGV2ZW50LmNsaWVudFkgLSByZWN0LnRvcCkgLyByZWN0LmhlaWdodCkpOwogICAgfSk7CiAgICBbInBvaW50ZXJ1cCIsICJwb2ludGVyY2FuY2VsIiwgInBvaW50ZXJsZWF2ZSJdLmZvckVhY2goKHR5cGUpID0+IHsKICAgICAgc3RhZ2UuYWRkRXZlbnRMaXN0ZW5lcih0eXBlLCAoKSA9PiB7CiAgICAgICAgc3RhdGUucG9pbnRlckRvd24gPSBmYWxzZTsKICAgICAgfSk7CiAgICB9KTsKICAgIHdpbmRvdy5hZGRFdmVudExpc3RlbmVyKCJyZXNpemUiLCByZXNpemUpOwogICAgcmVzaXplKCk7CiAgICBzeW5jTGFiZWxzKCk7CiAgICB1cGRhdGVQcm9iZSgpOwogICAgZHJhdygpOwogIDwvc2NyaXB0Pgo8L2JvZHk+CjwvaHRtbD4K
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hand Confidence Compute Filter</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #091015;
+      --panel: #101a21;
+      --panel2: #15252d;
+      --ink: #eff8f7;
+      --muted: #9eb3b2;
+      --line: rgba(255, 255, 255, 0.13);
+      --cyan: #70e1d4;
+      --lime: #b9ec6a;
+      --amber: #ffcb68;
+      --red: #ff6f6f;
+      --violet: #a99cff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Avenir Next", "Hiragino Sans", sans-serif;
+      background:
+        radial-gradient(circle at 20% 12%, rgba(112, 225, 212, 0.18), transparent 25%),
+        radial-gradient(circle at 78% 8%, rgba(185, 236, 106, 0.12), transparent 23%),
+        linear-gradient(135deg, #091015, #132026 48%, #171722);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 34px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 4vw, 3.4rem);
+      line-height: 1.03;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .badge {
+      min-width: 120px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: rgba(16, 26, 33, 0.78);
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .badge strong {
+      display: block;
+      margin-top: 2px;
+      color: var(--ink);
+      font-size: 1rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 640px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(10, 24, 27, 0.92), rgba(12, 14, 21, 0.94));
+      background-size: 40px 40px, 40px 40px, auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.32);
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 640px;
+    }
+
+    .hint {
+      position: absolute;
+      left: 14px;
+      bottom: 12px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(9, 16, 21, 0.76);
+      color: var(--muted);
+      font-size: 0.84rem;
+      pointer-events: none;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(16, 26, 33, 0.84);
+      padding: 14px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      margin: 12px 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+    }
+
+    select,
+    button {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--ink);
+      padding: 10px 11px;
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: rgba(112, 225, 212, 0.62);
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .meter {
+      display: grid;
+      grid-template-columns: 92px 1fr 44px;
+      gap: 8px;
+      align-items: center;
+      margin: 10px 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .bar {
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      width: 50%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--cyan), var(--lime));
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .readout:last-child { border-bottom: 0; }
+    .readout strong { color: var(--ink); font-weight: 650; }
+
+    @media (max-width: 860px) {
+      header {
+        grid-template-columns: 1fr;
+      }
+
+      .badge-row {
+        justify-content: flex-start;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .stage,
+      canvas {
+        min-height: auto;
+        height: min(74vh, 590px);
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Hand Confidence Compute Filter</h1>
+        <p>25 joint hand input を想定し、欠損・jitter・depth mismatch を compute pass 風に平滑化して、XR layer へ渡す前の信頼度を観察する最小サンプルです。</p>
+      </div>
+      <div class="badge-row" aria-label="capability probe">
+        <div class="badge">WebGPU<strong id="gpuState">checking</strong></div>
+        <div class="badge">WebXR<strong id="xrState">checking</strong></div>
+        <div class="badge">XRHand<strong id="handState">checking</strong></div>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage" id="stage">
+        <canvas id="canvas" width="980" height="640"></canvas>
+        <div class="hint">ドラッグで手の位置を移動。欠損率と depth gate を上げると、赤い raw joint と緑の filtered joint の差が広がります。</div>
+      </div>
+
+      <aside class="controls">
+        <div class="panel">
+          <h2>Scenario</h2>
+          <div class="button-grid">
+            <button type="button" data-preset="stable">Stable</button>
+            <button type="button" data-preset="occluded">Occluded</button>
+            <button type="button" data-preset="latency">Latency</button>
+            <button type="button" data-preset="depth">Depth Gate</button>
+          </div>
+          <label>Gesture
+            <select id="gesture">
+              <option value="open">Open palm</option>
+              <option value="pinch">Pinch select</option>
+              <option value="poke">Index poke</option>
+              <option value="grab">Grab curl</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="panel">
+          <h2>Filter Controls</h2>
+          <label>Missing joints <span id="missingLabel">22%</span>
+            <input id="missing" type="range" min="0" max="72" value="22" />
+          </label>
+          <label>Jitter <span id="jitterLabel">18 px</span>
+            <input id="jitter" type="range" min="0" max="52" value="18" />
+          </label>
+          <label>Smoothing <span id="smoothLabel">64%</span>
+            <input id="smooth" type="range" min="0" max="92" value="64" />
+          </label>
+          <label>Depth gate <span id="gateLabel">0.18 m</span>
+            <input id="gate" type="range" min="2" max="50" value="18" />
+          </label>
+        </div>
+
+        <div class="panel">
+          <h2>Compute Readout</h2>
+          <div class="meter"><span>confidence</span><div class="bar"><div class="fill" id="confidenceBar"></div></div><strong id="confidenceText">0%</strong></div>
+          <div class="meter"><span>stability</span><div class="bar"><div class="fill" id="stabilityBar"></div></div><strong id="stabilityText">0%</strong></div>
+          <div class="meter"><span>depth pass</span><div class="bar"><div class="fill" id="depthBar"></div></div><strong id="depthText">0%</strong></div>
+          <div class="readout"><span>valid joints</span><strong id="validText">0 / 25</strong></div>
+          <div class="readout"><span>pinch distance</span><strong id="pinchText">0 mm</strong></div>
+          <div class="readout"><span>layer decision</span><strong id="layerText">hold</strong></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const stage = document.getElementById("stage");
+    const controls = {
+      gesture: document.getElementById("gesture"),
+      missing: document.getElementById("missing"),
+      jitter: document.getElementById("jitter"),
+      smooth: document.getElementById("smooth"),
+      gate: document.getElementById("gate")
+    };
+
+    const els = {
+      gpuState: document.getElementById("gpuState"),
+      xrState: document.getElementById("xrState"),
+      handState: document.getElementById("handState"),
+      missingLabel: document.getElementById("missingLabel"),
+      jitterLabel: document.getElementById("jitterLabel"),
+      smoothLabel: document.getElementById("smoothLabel"),
+      gateLabel: document.getElementById("gateLabel"),
+      confidenceBar: document.getElementById("confidenceBar"),
+      stabilityBar: document.getElementById("stabilityBar"),
+      depthBar: document.getElementById("depthBar"),
+      confidenceText: document.getElementById("confidenceText"),
+      stabilityText: document.getElementById("stabilityText"),
+      depthText: document.getElementById("depthText"),
+      validText: document.getElementById("validText"),
+      pinchText: document.getElementById("pinchText"),
+      layerText: document.getElementById("layerText")
+    };
+
+    const jointNames = [
+      "wrist",
+      "thumb-metacarpal", "thumb-phalanx-proximal", "thumb-phalanx-distal", "thumb-tip",
+      "index-finger-metacarpal", "index-finger-phalanx-proximal", "index-finger-phalanx-intermediate", "index-finger-phalanx-distal", "index-finger-tip",
+      "middle-finger-metacarpal", "middle-finger-phalanx-proximal", "middle-finger-phalanx-intermediate", "middle-finger-phalanx-distal", "middle-finger-tip",
+      "ring-finger-metacarpal", "ring-finger-phalanx-proximal", "ring-finger-phalanx-intermediate", "ring-finger-phalanx-distal", "ring-finger-tip",
+      "pinky-finger-metacarpal", "pinky-finger-phalanx-proximal", "pinky-finger-phalanx-intermediate", "pinky-finger-phalanx-distal", "pinky-finger-tip"
+    ];
+    const bones = [
+      [0, 1], [1, 2], [2, 3], [3, 4],
+      [0, 5], [5, 6], [6, 7], [7, 8], [8, 9],
+      [0, 10], [10, 11], [11, 12], [12, 13], [13, 14],
+      [0, 15], [15, 16], [16, 17], [17, 18], [18, 19],
+      [0, 20], [20, 21], [21, 22], [22, 23], [23, 24]
+    ];
+    const state = {
+      handX: 0.5,
+      handY: 0.56,
+      pointerDown: false,
+      filtered: [],
+      lastRaw: [],
+      time: 0,
+      seed: 12
+    };
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(640, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(440, Math.floor(rect.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function noise(index, t) {
+      return Math.sin(index * 17.13 + t * 0.004 + state.seed) * Math.cos(index * 5.37 + t * 0.003);
+    }
+
+    function baseHand(gesture, t) {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const palmX = state.handX * w;
+      const palmY = state.handY * h;
+      const sway = Math.sin(t * 0.0016) * 10;
+      const curlMap = { open: 0.06, pinch: 0.34, poke: 0.14, grab: 0.58 };
+      const curl = curlMap[gesture] || 0.1;
+      const spread = gesture === "grab" ? 0.58 : 1;
+      const joints = [];
+      const bases = [
+        { angle: -2.48, length: 54, curl: gesture === "pinch" ? 0.56 : curl * 0.55 },
+        { angle: -1.96, length: 82, curl: gesture === "pinch" ? 0.24 : curl * 0.4 },
+        { angle: -1.58, length: 92, curl },
+        { angle: -1.22, length: 82, curl: curl * 1.08 },
+        { angle: -0.9, length: 70, curl: curl * 1.16 }
+      ];
+      joints[0] = { x: palmX + sway, y: palmY, z: 0.64, radius: 20, name: jointNames[0] };
+      let index = 1;
+      bases.forEach((finger, fi) => {
+        let x = palmX + (fi - 2) * 20 * spread + (fi === 0 ? -20 : 0) + sway;
+        let y = palmY - 8 - Math.abs(fi - 2) * 2;
+        const segments = fi === 0 ? [0.42, 0.34, 0.24, 0] : [0.3, 0.27, 0.23, 0.2];
+        const start = index;
+        for (let si = 0; si < 4; si += 1) {
+          const bend = finger.curl * (si + 0.6) * 0.74;
+          const angle = finger.angle + (fi - 2) * 0.07 * spread + bend;
+          const len = finger.length * segments[si];
+          if (si > 0) {
+            x += Math.cos(angle) * len;
+            y += Math.sin(angle) * len;
+          }
+          joints[index] = {
+            x,
+            y,
+            z: 0.52 + si * 0.035 + fi * 0.012 + (gesture === "poke" && fi === 1 ? -0.12 * si : 0),
+            radius: si === 3 ? 8 : 11,
+            name: jointNames[index]
+          };
+          index += 1;
+        }
+        if (fi > 0) {
+          joints[start].x = palmX + (fi - 2) * 22 * spread + sway;
+          joints[start].y = palmY - 20;
+        }
+      });
+      if (gesture === "pinch") {
+        joints[4].x = joints[9].x - 4;
+        joints[4].y = joints[9].y + 8;
+        joints[4].z = joints[9].z + 0.01;
+      }
+      return joints;
+    }
+
+    function rawFromBase(base, t) {
+      const missing = Number(controls.missing.value) / 100;
+      const jitter = Number(controls.jitter.value);
+      const gate = Number(controls.gate.value) / 100;
+      return base.map((joint, index) => {
+        const dropoutWave = (noise(index, Math.floor(t / 210) * 210) + 1) / 2;
+        const missingBoost = index > 14 && controls.gesture.value === "occluded" ? 0.1 : 0;
+        const visible = dropoutWave > Math.min(0.9, missing + missingBoost) || index === 0;
+        const depthMismatch = Math.abs(joint.z - 0.58) > gate;
+        const n = noise(index, t);
+        return {
+          ...joint,
+          x: joint.x + n * jitter,
+          y: joint.y + noise(index + 40, t) * jitter,
+          z: joint.z + noise(index + 80, t) * jitter * 0.002,
+          visible,
+          depthPass: !depthMismatch,
+          confidence: visible ? Math.max(0, 1 - Math.abs(n) * 0.38 - (depthMismatch ? 0.42 : 0)) : 0
+        };
+      });
+    }
+
+    function filterJoints(raw) {
+      const smooth = Number(controls.smooth.value) / 100;
+      state.filtered = raw.map((joint, index) => {
+        const prev = state.filtered[index] || joint;
+        const fallback = state.lastRaw[index] || prev;
+        const target = joint.visible ? joint : fallback;
+        const depthWeight = joint.depthPass ? 1 : 0.48;
+        const alpha = (1 - smooth) * Math.max(0.08, joint.confidence * depthWeight);
+        return {
+          ...joint,
+          x: prev.x + (target.x - prev.x) * alpha,
+          y: prev.y + (target.y - prev.y) * alpha,
+          z: prev.z + (target.z - prev.z) * alpha,
+          confidence: prev.confidence * smooth + joint.confidence * (1 - smooth),
+          imputed: !joint.visible
+        };
+      });
+      state.lastRaw = raw.map((joint, index) => joint.visible ? joint : (state.lastRaw[index] || joint));
+    }
+
+    function drawTextBox(x, y, title, body, color) {
+      ctx.fillStyle = "rgba(9, 16, 21, 0.78)";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(x, y, 230, 74, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#eff8f7";
+      ctx.font = "700 15px Inter, sans-serif";
+      ctx.fillText(title, x + 12, y + 25);
+      ctx.fillStyle = "#9eb3b2";
+      ctx.font = "12px Inter, sans-serif";
+      ctx.fillText(body, x + 12, y + 48);
+    }
+
+    function drawLayerPlane(w, h) {
+      const planeY = h * 0.2;
+      const planeH = h * 0.56;
+      ctx.fillStyle = "rgba(169, 156, 255, 0.08)";
+      ctx.strokeStyle = "rgba(169, 156, 255, 0.45)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([8, 8]);
+      ctx.strokeRect(w * 0.08, planeY, w * 0.84, planeH);
+      ctx.setLineDash([]);
+      ctx.fillRect(w * 0.08, planeY, w * 0.84, planeH);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+      for (let i = 0; i < 9; i += 1) {
+        const x = w * 0.13 + i * w * 0.09;
+        ctx.fillRect(x, planeY + 20, 2, planeH - 40);
+      }
+      drawTextBox(w * 0.1, planeY + 16, "Projection layer depth", "target surface z = 0.58 m", "rgba(169,156,255,0.65)");
+    }
+
+    function drawSkeleton(joints, color, alpha, raw) {
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = raw ? 1.2 : 3;
+      bones.forEach(([a, b]) => {
+        const ja = joints[a];
+        const jb = joints[b];
+        if (!ja || !jb) return;
+        ctx.beginPath();
+        ctx.moveTo(ja.x, ja.y);
+        ctx.lineTo(jb.x, jb.y);
+        ctx.stroke();
+      });
+      joints.forEach((joint) => {
+        const r = raw ? 3.5 : Math.max(4, joint.radius * 0.48);
+        ctx.fillStyle = joint.visible === false ? "rgba(255,111,111,0.42)" : color;
+        if (!joint.depthPass) ctx.fillStyle = "rgba(255,203,104,0.7)";
+        if (joint.imputed) ctx.fillStyle = "rgba(112,225,212,0.36)";
+        ctx.beginPath();
+        ctx.arc(joint.x, joint.y, r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    function draw() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+      drawLayerPlane(w, h);
+      const raw = rawFromBase(baseHand(controls.gesture.value, state.time), state.time);
+      filterJoints(raw);
+      drawSkeleton(raw, "rgba(255, 111, 111, 0.86)", 0.62, true);
+      drawSkeleton(state.filtered, "rgba(112, 225, 212, 0.95)", 1, false);
+
+      const indexTip = state.filtered[9];
+      const thumbTip = state.filtered[4];
+      const pinch = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y);
+      const targetX = w * 0.69;
+      const targetY = h * 0.43;
+      const dist = Math.hypot(indexTip.x - targetX, indexTip.y - targetY);
+      ctx.strokeStyle = dist < 70 ? "rgba(185,236,106,0.92)" : "rgba(255,255,255,0.25)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(indexTip.x, indexTip.y);
+      ctx.lineTo(targetX, targetY);
+      ctx.stroke();
+      ctx.fillStyle = dist < 70 ? "rgba(185,236,106,0.22)" : "rgba(255,255,255,0.08)";
+      ctx.strokeStyle = dist < 70 ? "rgba(185,236,106,0.9)" : "rgba(255,255,255,0.22)";
+      ctx.beginPath();
+      ctx.roundRect(targetX - 56, targetY - 42, 112, 84, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#eff8f7";
+      ctx.font = "700 13px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("XR UI", targetX, targetY - 4);
+      ctx.fillStyle = "#9eb3b2";
+      ctx.font = "11px Inter, sans-serif";
+      ctx.fillText("select gate", targetX, targetY + 17);
+      ctx.textAlign = "start";
+
+      const valid = raw.filter((joint) => joint.visible).length;
+      const confidence = state.filtered.reduce((sum, joint) => sum + joint.confidence, 0) / state.filtered.length;
+      const rawMotion = raw.reduce((sum, joint, index) => {
+        const filtered = state.filtered[index];
+        return sum + Math.hypot(joint.x - filtered.x, joint.y - filtered.y);
+      }, 0) / raw.length;
+      const stability = Math.max(0, 1 - rawMotion / 42);
+      const depthPass = raw.filter((joint) => joint.depthPass).length / raw.length;
+      const layerDecision = confidence > 0.68 && stability > 0.52 && depthPass > 0.55 ? "submit" : confidence > 0.44 ? "reproject" : "hold";
+      setMeter(els.confidenceBar, els.confidenceText, confidence);
+      setMeter(els.stabilityBar, els.stabilityText, stability);
+      setMeter(els.depthBar, els.depthText, depthPass);
+      els.validText.textContent = `${valid} / 25`;
+      els.pinchText.textContent = `${Math.round(pinch * 2.8)} mm`;
+      els.layerText.textContent = layerDecision;
+
+      drawTextBox(18, 18, "compute-style pass", `${valid} valid, ${Math.round(confidence * 100)}% confidence`, "rgba(112,225,212,0.7)");
+      state.time += 16.67;
+      requestAnimationFrame(draw);
+    }
+
+    function setMeter(bar, text, value) {
+      const pct = Math.round(Math.max(0, Math.min(1, value)) * 100);
+      bar.style.width = `${pct}%`;
+      bar.style.background = pct < 45 ? "linear-gradient(90deg, #ff6f6f, #ffcb68)" : "linear-gradient(90deg, #70e1d4, #b9ec6a)";
+      text.textContent = `${pct}%`;
+    }
+
+    function syncLabels() {
+      els.missingLabel.textContent = `${controls.missing.value}%`;
+      els.jitterLabel.textContent = `${controls.jitter.value} px`;
+      els.smoothLabel.textContent = `${controls.smooth.value}%`;
+      els.gateLabel.textContent = `${(Number(controls.gate.value) / 100).toFixed(2)} m`;
+    }
+
+    function applyPreset(name) {
+      const presets = {
+        stable: ["open", 8, 7, 70, 24],
+        occluded: ["grab", 48, 22, 72, 18],
+        latency: ["pinch", 22, 34, 88, 15],
+        depth: ["poke", 28, 16, 64, 8]
+      };
+      const [gesture, missing, jitter, smooth, gate] = presets[name];
+      controls.gesture.value = gesture;
+      controls.missing.value = missing;
+      controls.jitter.value = jitter;
+      controls.smooth.value = smooth;
+      controls.gate.value = gate;
+      syncLabels();
+    }
+
+    function updateProbe() {
+      els.gpuState.textContent = "gpu" in navigator ? "available" : "missing";
+      els.xrState.textContent = "xr" in navigator ? "available" : "missing";
+      els.handState.textContent = "XRHand" in window ? "available" : "fallback";
+    }
+
+    Object.values(controls).forEach((control) => {
+      control.addEventListener("input", syncLabels);
+    });
+    document.querySelectorAll("[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => applyPreset(button.dataset.preset));
+    });
+    stage.addEventListener("pointerdown", (event) => {
+      state.pointerDown = true;
+      stage.setPointerCapture(event.pointerId);
+    });
+    stage.addEventListener("pointermove", (event) => {
+      if (!state.pointerDown) return;
+      const rect = stage.getBoundingClientRect();
+      state.handX = Math.max(0.15, Math.min(0.85, (event.clientX - rect.left) / rect.width));
+      state.handY = Math.max(0.28, Math.min(0.84, (event.clientY - rect.top) / rect.height));
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach((type) => {
+      stage.addEventListener(type, () => {
+        state.pointerDown = false;
+      });
+    });
+    window.addEventListener("resize", resize);
+    resize();
+    syncLabels();
+    updateProbe();
+    draw();
+  </script>
+</body>
+</html>

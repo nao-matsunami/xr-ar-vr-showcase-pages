@@ -1,1 +1,421 @@
-PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImphIj4KPGhlYWQ+CiAgPG1ldGEgY2hhcnNldD0iVVRGLTgiIC8+CiAgPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCwgaW5pdGlhbC1zY2FsZT0xLjAiIC8+CiAgPHRpdGxlPmFuY2hvciDjga4gZHJpZnQg44KS6KaL44Gm5b+F6KaB44Gq5pmC44Gg44GR5YaNIGhpdC10ZXN0IOOBmeOCiyB8IDIwMjYtMDctMjE8L3RpdGxlPgogIDxzdHlsZT4KICAgIDpyb290IHsKICAgICAgLS1iZzA6ICMwNzExMWE7CiAgICAgIC0tYmcxOiAjMTAyMzM4OwogICAgICAtLXBhbmVsOiByZ2JhKDksIDIwLCAzMSwgMC44NCk7CiAgICAgIC0tcGFuZWwtMjogcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjA0KTsKICAgICAgLS1saW5lOiByZ2JhKDEyNiwgMjI4LCAyNTUsIDAuMTIpOwogICAgICAtLXRleHQ6ICNlYmY4ZmY7CiAgICAgIC0tbXV0ZWQ6ICM5YWI2Yzg7CiAgICAgIC0tYWNjZW50OiAjN2NlNGZmOwogICAgICAtLWFjY2VudDI6ICNmZmQ4Njg7CiAgICAgIC0tc2hhZG93OiByZ2JhKDAsIDAsIDAsIDAuMzIpOwogICAgfQoKICAgICogeyBib3gtc2l6aW5nOiBib3JkZXItYm94OyB9CgogICAgYm9keSB7CiAgICAgIG1hcmdpbjogMDsKICAgICAgbWluLWhlaWdodDogMTAwdmg7CiAgICAgIGZvbnQtZmFtaWx5OiAiQXZlbmlyIE5leHQiLCAiSGlyYWdpbm8gU2FucyIsIHNhbnMtc2VyaWY7CiAgICAgIGNvbG9yOiB2YXIoLS10ZXh0KTsKICAgICAgYmFja2dyb3VuZDoKICAgICAgICByYWRpYWwtZ3JhZGllbnQoY2lyY2xlIGF0IDE2JSAxOCUsIHJnYmEoMTI0LCAyMjgsIDI1NSwgMC4xNiksIHRyYW5zcGFyZW50IDI0JSksCiAgICAgICAgcmFkaWFsLWdyYWRpZW50KGNpcmNsZSBhdCA4NCUgMTAlLCByZ2JhKDI1NSwgMjE2LCAxMDQsIDAuMTIpLCB0cmFuc3BhcmVudCAyMCUpLAogICAgICAgIGxpbmVhci1ncmFkaWVudCgxODBkZWcsIHZhcigtLWJnMSksIHZhcigtLWJnMCkpOwogICAgfQoKICAgIC5zaGVsbCB7CiAgICAgIG1heC13aWR0aDogMTE4MHB4OwogICAgICBtYXJnaW46IDAgYXV0bzsKICAgICAgcGFkZGluZzogMjhweCAyMHB4IDQ4cHg7CiAgICB9CgogICAgLmhlcm8sCiAgICAuZGV0YWlsLWJsb2NrLAogICAgLnByZXZpZXcsCiAgICAuZGF5LW5hdiB7CiAgICAgIGJvcmRlci1yYWRpdXM6IDI0cHg7CiAgICAgIGJhY2tncm91bmQ6IHZhcigtLXBhbmVsKTsKICAgICAgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tbGluZSk7CiAgICAgIGJveC1zaGFkb3c6IDAgMThweCA0MnB4IHZhcigtLXNoYWRvdyk7CiAgICAgIGJhY2tkcm9wLWZpbHRlcjogYmx1cigxNHB4KTsKICAgIH0KCiAgICAuaGVybyB7CiAgICAgIHBhZGRpbmc6IDI4cHg7CiAgICB9CgogICAgLmhlcm8gaDEgewogICAgICBtYXJnaW46IDAgMCAxMHB4OwogICAgICBmb250LXNpemU6IGNsYW1wKDEuOHJlbSwgNHZ3LCAzcmVtKTsKICAgICAgbGluZS1oZWlnaHQ6IDEuMTU7CiAgICB9CgogICAgLmhlcm8gcCwKICAgIC5kZXRhaWwtYmxvY2sgcCwKICAgIC5kZXRhaWwtYmxvY2sgbGkgewogICAgICBjb2xvcjogdmFyKC0tbXV0ZWQpOwogICAgICBsaW5lLWhlaWdodDogMS43OwogICAgfQoKICAgIC5lbi1jb3B5LAogICAgLmhlYWRpbmctcGFpci1zZWNvbmRhcnksCiAgICAuaGVyby1zdWJ0aXRsZSB7CiAgICAgIGNvbG9yOiB2YXIoLS1tdXRlZCk7CiAgICAgIGxpbmUtaGVpZ2h0OiAxLjc7CiAgICB9CgogICAgLmhlYWRpbmctcGFpciB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdhcDogNHB4OwogICAgfQoKICAgIC5oZXJvLXN1YnRpdGxlIHsKICAgICAgbWFyZ2luOiAwIDAgMTJweDsKICAgICAgZm9udC1zaXplOiAxcmVtOwogICAgfQoKICAgIC5kYXRlIHsKICAgICAgbWFyZ2luOiAwIDAgMTBweDsKICAgICAgY29sb3I6IHZhcigtLWFjY2VudDIpOwogICAgICBmb250LXNpemU6IDAuOXJlbTsKICAgICAgbGV0dGVyLXNwYWNpbmc6IDAuMDRlbTsKICAgICAgdGV4dC10cmFuc2Zvcm06IHVwcGVyY2FzZTsKICAgIH0KCiAgICAuYWN0aW9ucywKICAgIC5kYXktbmF2IHsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAgZ2FwOiAxMnB4OwogICAgICBmbGV4LXdyYXA6IHdyYXA7CiAgICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICB9CgogICAgLmFjdGlvbnMgewogICAgICBtYXJnaW4tdG9wOiAxOHB4OwogICAgfQoKICAgIC5wcmltYXJ5LAogICAgLnNlY29uZGFyeS1saW5rLAogICAgLmRheS1saW5rIHsKICAgICAgZGlzcGxheTogaW5saW5lLWZsZXg7CiAgICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICAgIGp1c3RpZnktY29udGVudDogY2VudGVyOwogICAgICBtaW4taGVpZ2h0OiA0MnB4OwogICAgICBwYWRkaW5nOiAwIDE0cHg7CiAgICAgIGJvcmRlci1yYWRpdXM6IDEycHg7CiAgICAgIHRleHQtZGVjb3JhdGlvbjogbm9uZTsKICAgICAgZm9udC13ZWlnaHQ6IDcwMDsKICAgIH0KCiAgICAucHJpbWFyeSB7CiAgICAgIGJhY2tncm91bmQ6IGxpbmVhci1ncmFkaWVudCgxMzVkZWcsIHZhcigtLWFjY2VudCksICM4ZWZmYzgpOwogICAgICBjb2xvcjogIzA2MjMzNDsKICAgIH0KCiAgICAuc2Vjb25kYXJ5LWxpbmssCiAgICAuZGF5LWxpbmsgewogICAgICBiYWNrZ3JvdW5kOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDYpOwogICAgICBjb2xvcjogdmFyKC0tdGV4dCk7CiAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wOCk7CiAgICB9CgogICAgLmRheS1uYXYgewogICAgICBqdXN0aWZ5LWNvbnRlbnQ6IHNwYWNlLWJldHdlZW47CiAgICAgIG1hcmdpbi10b3A6IDE4cHg7CiAgICAgIHBhZGRpbmc6IDE4cHg7CiAgICB9CgogICAgLmNvbnRlbnQgewogICAgICBkaXNwbGF5OiBncmlkOwogICAgICBncmlkLXRlbXBsYXRlLWNvbHVtbnM6IG1pbm1heCgwLCAxLjJmcikgbWlubWF4KDMyMHB4LCAwLjhmcik7CiAgICAgIGdhcDogMThweDsKICAgICAgbWFyZ2luLXRvcDogMjJweDsKICAgIH0KCiAgICAuc3RhY2sgewogICAgICBkaXNwbGF5OiBncmlkOwogICAgICBnYXA6IDE4cHg7CiAgICB9CgogICAgLmRldGFpbC1ibG9jayB7CiAgICAgIHBhZGRpbmc6IDIycHg7CiAgICB9CgogICAgLmRldGFpbC1ibG9jayBoMiB7CiAgICAgIG1hcmdpbjogMCAwIDEycHg7CiAgICAgIGZvbnQtc2l6ZTogMS4wNXJlbTsKICAgIH0KCiAgICAubGluay1saXN0IHsKICAgICAgZGlzcGxheTogZ3JpZDsKICAgICAgZ2FwOiA4cHg7CiAgICAgIHBhZGRpbmctbGVmdDogMThweDsKICAgICAgbWFyZ2luOiAxMnB4IDAgMDsKICAgIH0KCiAgICAubGluay1saXN0IGEgewogICAgICBjb2xvcjogdmFyKC0tYWNjZW50KTsKICAgIH0KCiAgICAudG9waWMtbGlzdCB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdhcDogMTJweDsKICAgICAgcGFkZGluZy1sZWZ0OiAyMnB4OwogICAgICBtYXJnaW46IDEycHggMCAwOwogICAgfQoKICAgIC50b3BpYy1saXN0IGxpIHNwYW4gewogICAgICBkaXNwbGF5OiBibG9jazsKICAgIH0KCiAgICAuc2FtcGxlLWxpc3QgewogICAgICBkaXNwbGF5OiBncmlkOwogICAgICBnYXA6IDEycHg7CiAgICB9CgogICAgLnNhbXBsZS1pdGVtIHsKICAgICAgcGFkZGluZzogMTZweDsKICAgICAgYm9yZGVyLXJhZGl1czogMThweDsKICAgICAgYmFja2dyb3VuZDogdmFyKC0tcGFuZWwtMik7CiAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wNik7CiAgICB9CgogICAgLnNhbXBsZS1pdGVtLWhlYWQgewogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBhbGlnbi1pdGVtczogc3RhcnQ7CiAgICAgIGp1c3RpZnktY29udGVudDogc3BhY2UtYmV0d2VlbjsKICAgICAgZ2FwOiAxMnB4OwogICAgICBmbGV4LXdyYXA6IHdyYXA7CiAgICB9CgogICAgLnNhbXBsZS1pdGVtIGgzIHsKICAgICAgbWFyZ2luOiAwIDAgOHB4OwogICAgICBmb250LXNpemU6IDFyZW07CiAgICB9CgogICAgLnNhbXBsZS1pdGVtIHAgewogICAgICBtYXJnaW46IDA7CiAgICB9CgogICAgLnByZXZpZXcgewogICAgICBwYWRkaW5nOiAxOHB4OwogICAgICBwb3NpdGlvbjogc3RpY2t5OwogICAgICB0b3A6IDIwcHg7CiAgICAgIGhlaWdodDogZml0LWNvbnRlbnQ7CiAgICB9CgogICAgLnByZXZpZXcgaDIgewogICAgICBtYXJnaW46IDAgMCAxMnB4OwogICAgICBmb250LXNpemU6IDEuMDVyZW07CiAgICB9CgogICAgaWZyYW1lIHsKICAgICAgd2lkdGg6IDEwMCU7CiAgICAgIGhlaWdodDogNTIwcHg7CiAgICAgIGJvcmRlcjogMDsKICAgICAgYm9yZGVyLXJhZGl1czogMTZweDsKICAgICAgYmFja2dyb3VuZDogcmdiYSgwLCAwLCAwLCAwLjI1KTsKICAgIH0KCiAgICBAbWVkaWEgKG1heC13aWR0aDogOTYwcHgpIHsKICAgICAgLmNvbnRlbnQgewogICAgICAgIGdyaWQtdGVtcGxhdGUtY29sdW1uczogMWZyOwogICAgICB9CgogICAgICAucHJldmlldyB7CiAgICAgICAgcG9zaXRpb246IHN0YXRpYzsKICAgICAgfQoKICAgICAgaWZyYW1lIHsKICAgICAgICBoZWlnaHQ6IDQyMHB4OwogICAgICB9CiAgICB9CiAgPC9zdHlsZT4KPC9oZWFkPgo8Ym9keT4KICA8bWFpbiBjbGFzcz0ic2hlbGwiPgogICAgPHNlY3Rpb24gY2xhc3M9Imhlcm8iPgogICAgICA8cCBjbGFzcz0iZGF0ZSI+MjAyNi4wNy4yMTwvcD4KICAgICAgPGgxPmFuY2hvciDjga4gZHJpZnQg44KS6KaL44Gm5b+F6KaB44Gq5pmC44Gg44GR5YaNIGhpdC10ZXN0IOOBmeOCizwvaDE+CiAgICAgIDxwIGNsYXNzPSJoZXJvLXN1YnRpdGxlIj5SZS1oaXQtdGVzdGluZyBvbmx5IHdoZW4gYW5jaG9yIGRyaWZ0IGNhbGxzIGZvciBpdDwvcD4KICAgICAgPHA+V2ViWFIgQW5jaG9ycyBNb2R1bGXjgIFXZWJYUiBIaXQgVGVzdCBNb2R1bGXjgIFXZWJYUiBEZXZpY2UgQVBJ44CBRE9NIE92ZXJsYXlz44CBSW1tZXJzaXZlIFdlYiDlhazlvI8gc2FtcGxlcyDjgpLnorroqo3jgZfjgIHku4rml6Xjga8gaGl0LXRlc3Qg44Gn5L+d5a2Y44GX44GfIGFuY2hvciDlgJnoo5zjga4gZHJpZnQg44KS5Y+v6KaW5YyW44GX44CB44GX44GN44GE5YCk44KS6LaF44GI44GfIGFuY2hvciDjgaDjgZHlho0gaGl0LXRlc3Qg44GZ44KL6Ieq5L2cIEhUTUwg44K144Oz44OX44Or44KS6L+95Yqg44GX44G+44GX44Gf44CCPC9wPgogICAgICA8cCBjbGFzcz0iZW4tY29weSI+QWZ0ZXIgcmV2aWV3aW5nIHRoZSBXZWJYUiBBbmNob3JzIE1vZHVsZSwgV2ViWFIgSGl0IFRlc3QgTW9kdWxlLCBXZWJYUiBEZXZpY2UgQVBJLCBET00gT3ZlcmxheXMsIGFuZCBJbW1lcnNpdmUgV2ViIG9mZmljaWFsIHNhbXBsZXMsIHRvZGF5J3Mgb3JpZ2luYWwgSFRNTCBzYW1wbGUgdmlzdWFsaXplcyBkcmlmdCBvbiBoaXQtdGVzdC1jcmVhdGVkIGFuY2hvciBjYW5kaWRhdGVzIGFuZCByZS1ydW5zIGhpdCB0ZXN0cyBvbmx5IGZvciBhbmNob3JzIHRoYXQgZXhjZWVkIGEgdGhyZXNob2xkLjwvcD4KICAgICAgPGRpdiBjbGFzcz0iYWN0aW9ucyI+CiAgICAgICAgPGEgY2xhc3M9InByaW1hcnkiIGhyZWY9Ii4uL291dHB1dHMvMjAyNi0wNy0yMV9odG1sX2FuY2hvcl9kcmlmdF9yZWhpdF9sYWIuaHRtbCI+5Luj6KGo44K144Oz44OX44Or44KS6ZaL44GPIC8gT3BlbiBzYW1wbGU8L2E+CiAgICAgICAgPGEgY2xhc3M9InNlY29uZGFyeS1saW5rIiBocmVmPSIuLi9wYWdlcy8zLmh0bWwiPuS4gOimp+OBuOaIu+OCiyAvIEJhY2sgdG8gYXJjaGl2ZTwvYT4KICAgICAgPC9kaXY+CiAgICA8L3NlY3Rpb24+CgogICAgPG5hdiBjbGFzcz0iZGF5LW5hdiIgYXJpYS1sYWJlbD0i5pel5LuY56e75YuVIj4KICAgICAgPGEgY2xhc3M9ImRheS1saW5rIiBocmVmPSIuLi9kYXlzLzIwMjYtMDctMjAuaHRtbCI+4oaQIDIwMjYuMDcuMjA8L2E+CiAgICAgIDxhIGNsYXNzPSJkYXktbGluayIgaHJlZj0iLi4vZGF5cy8yMDI2LTA3LTIyLmh0bWwiPjIwMjYuMDcuMjIg4oaSPC9hPgogICAgPC9uYXY+CgogICAgPHNlY3Rpb24gY2xhc3M9ImNvbnRlbnQiPgogICAgICA8ZGl2IGNsYXNzPSJzdGFjayI+CiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7jgZPjga7ml6Xjga7jgrXjg7Pjg5fjg6s8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPlNhbXBsZXMgZm9yIHRoaXMgZGF5PC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPGRpdiBjbGFzcz0ic2FtcGxlLWxpc3QiPgogICAgICAgICAgICAKICAgICAgICA8YXJ0aWNsZSBjbGFzcz0ic2FtcGxlLWl0ZW0iPgogICAgICAgICAgPGRpdiBjbGFzcz0ic2FtcGxlLWl0ZW0taGVhZCI+CiAgICAgICAgICAgIDxkaXY+CiAgICAgICAgICAgICAgPGgzPkFuY2hvciBEcmlmdCBSZS1oaXQgTGFiPC9oMz4KICAgICAgICAgICAgICA8cD48L3A+CiAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICA8YSBjbGFzcz0ic2Vjb25kYXJ5LWxpbmsiIGhyZWY9Ii4uL291dHB1dHMvMjAyNi0wNy0yMV9odG1sX2FuY2hvcl9kcmlmdF9yZWhpdF9sYWIuaHRtbCI+6ZaL44GPIC8gT3BlbjwvYT4KICAgICAgICAgIDwvZGl2PgogICAgICAgIDwvYXJ0aWNsZT4KICAgICAgCiAgICAgICAgICA8L2Rpdj4KICAgICAgICA8L3NlY3Rpb24+CiAgICAgICAgCiAgICAgIDxzZWN0aW9uIGNsYXNzPSJkZXRhaWwtYmxvY2siPgogICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuS7iuaXpeOBrumHjeimgeODiOODlOODg+OCrzwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+S2V5IHRvcGljcyB0b2RheTwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICA8b2wgY2xhc3M9InRvcGljLWxpc3QiPgogICAgICAgICAgCiAgICAgICAgICAgIDxsaT4KICAgICAgICAgICAgICA8c3Bhbj5XZWJYUiBBbmNob3JzIE1vZHVsZSDjga4gRWRpdG9yJ3MgRHJhZnQg44GvIDIwMjYtMDQtMjcg44Gn44CBYGFuY2hvcnNgIGZlYXR1cmUgZGVzY3JpcHRvcuOAgWBYUkFuY2hvcmDjgIFgWFJGcmFtZS50cmFja2VkQW5jaG9yc2DjgIFhbmNob3IgcG9zZSDjga7mm7TmlrDjgajliYrpmaTjgpLkuK3lv4PjgavjgIHln7rnm6Tjgrfjgrnjg4bjg6DjgavnibnlrpogcG9zZSDjga7ov73ot6HjgpLkvp3poLzjgZnjgovku5XntYTjgb/jgpLlrprnvqnjgZfjgabjgYTjgovjgII8L3NwYW4+CiAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImVuLWNvcHkiPlRoZSBXZWJYUiBBbmNob3JzIE1vZHVsZSBFZGl0b3IncyBEcmFmdCBpcyBkYXRlZCAyMDI2LTA0LTI3IGFuZCBkZWZpbmVzIHRoZSBgYW5jaG9yc2AgZmVhdHVyZSBkZXNjcmlwdG9yLCBgWFJBbmNob3JgLCBgWFJGcmFtZS50cmFja2VkQW5jaG9yc2AsIGFuZCBhbmNob3IgcG9zZSB1cGRhdGUvcmVtb3ZhbCBjb25jZXB0cyBmb3IgYXNraW5nIHRoZSB1bmRlcmx5aW5nIHN5c3RlbSB0byB0cmFjayBhIHNwZWNpZmljIHBvc2UuPC9zcGFuPgogICAgICAgICAgICA8L2xpPgogICAgICAgICAgCiAgICAgICAgICAgIDxsaT4KICAgICAgICAgICAgICA8c3Bhbj5BbmNob3JzIOOBryBoaXQtdGVzdCDjga7nnqzplpPnmoTjgarkuqTlt67ngrnjgpLplbfjgY/kvb/jgYbjgZ/jgoHjga7mqYvmuKHjgZfjgavjgarjgovjgYzjgIHjg4fjg5DjgqTjgrnlgbTjga4gd29ybGQgdW5kZXJzdGFuZGluZyDjgYzlpInjgo/jgovjgaggYW5jaG9yIHBvc2Ug44KC5pu05paw44GV44KM44KL44Gf44KB44CB6YWN572uIFVJIOOBq+OBryBkcmlmdCDjga7oprPmuKzjgajlho3lm7rlrprjga7mlrnph53jgYzlv4XopoHjgavjgarjgovjgII8L3NwYW4+CiAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImVuLWNvcHkiPkFuY2hvcnMgYnJpZGdlIGEgbW9tZW50YXJ5IGhpdC10ZXN0IGludGVyc2VjdGlvbiBpbnRvIGxvbmdlci1saXZlZCBwbGFjZW1lbnQsIGJ1dCB0aGUgYW5jaG9yIHBvc2UgY2FuIHVwZGF0ZSBhcyB0aGUgZGV2aWNlJ3Mgd29ybGQgdW5kZXJzdGFuZGluZyBjaGFuZ2VzLCBzbyBwbGFjZW1lbnQgVUkgbmVlZHMgYSBwb2xpY3kgZm9yIG9ic2VydmluZyBkcmlmdCBhbmQgcmUtbG9ja2luZy48L3NwYW4+CiAgICAgICAgICAgIDwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPgogICAgICAgICAgICAgIDxzcGFuPldlYlhSIEhpdCBUZXN0IE1vZHVsZSDjga8gcGxhbmUgLyBwb2ludCAvIG1lc2gg44Gq44Gp44GuIHRyYWNrYWJsZSB0eXBlIOOBqCBgWFJIaXRUZXN0U291cmNlYCDjgpLmibHjgYbjgZ/jgoHjgIFhbmNob3Ig5L2c5oiQ5YmN44Gu5paw6a6u44GqIHN1cmZhY2UgZXN0aW1hdGUg44GoIGFuY2hvciDkvZzmiJDlvozjga4gdHJhY2tlZCBwb3NlIOOCkuWIhuOBkeOBpuiAg+OBiOOChOOBmeOBhOOAgjwvc3Bhbj4KICAgICAgICAgICAgICA8c3BhbiBjbGFzcz0iZW4tY29weSI+VGhlIFdlYlhSIEhpdCBUZXN0IE1vZHVsZSBjb3ZlcnMgdHJhY2thYmxlIHR5cGVzIHN1Y2ggYXMgcGxhbmUsIHBvaW50LCBhbmQgbWVzaCBwbHVzIGBYUkhpdFRlc3RTb3VyY2VgLCB3aGljaCBtYWtlcyBpdCB1c2VmdWwgdG8gc2VwYXJhdGUgZnJlc2ggc3VyZmFjZSBlc3RpbWF0ZXMgYmVmb3JlIGFuY2hvciBjcmVhdGlvbiBmcm9tIHRyYWNrZWQgcG9zZXMgYWZ0ZXIgYW5jaG9yIGNyZWF0aW9uLjwvc3Bhbj4KICAgICAgICAgICAgPC9saT4KICAgICAgICAgIAogICAgICAgICAgICA8bGk+CiAgICAgICAgICAgICAgPHNwYW4+V2ViWFIgRGV2aWNlIEFQSSDjga4gMjAyNi0wMy0xNiBDYW5kaWRhdGUgUmVjb21tZW5kYXRpb24gRHJhZnQg44GvIGZyYW1lIGxvb3DjgIFyZWZlcmVuY2Ugc3BhY2XjgIFwb3Nl44CBZmVhdHVyZSBkZXNjcmlwdG9yIOOBruWcn+WPsOOBp+OAgWFuY2hvciAvIGhpdC10ZXN0IC8gRE9NIG92ZXJsYXkg44Gq44Gp44GuIG1vZHVsZSDjga/jgZPjga7jgrvjg4Pjgrfjg6fjg7Pjg6Ljg4fjg6vjgavkuZfjgovjgII8L3NwYW4+CiAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImVuLWNvcHkiPlRoZSAyMDI2LTAzLTE2IFdlYlhSIERldmljZSBBUEkgQ2FuZGlkYXRlIFJlY29tbWVuZGF0aW9uIERyYWZ0IHByb3ZpZGVzIHRoZSBmcmFtZSBsb29wLCByZWZlcmVuY2Ugc3BhY2UsIHBvc2UsIGFuZCBmZWF0dXJlIGRlc2NyaXB0b3IgZm91bmRhdGlvbiB0aGF0IG1vZHVsZXMgc3VjaCBhcyBhbmNob3JzLCBoaXQgdGVzdCwgYW5kIERPTSBvdmVybGF5IGJ1aWxkIG9uLjwvc3Bhbj4KICAgICAgICAgICAgPC9saT4KICAgICAgICAgIAogICAgICAgICAgICA8bGk+CiAgICAgICAgICAgICAgPHNwYW4+SW1tZXJzaXZlIFdlYiDjga7lhazlvI8gc2FtcGxlcyDjgavjga8gQW5jaG9yc+OAgUhpdCBUZXN044CBSGl0IFRlc3Qgd2l0aCBBbmNob3JzIOOBjOWIhuOBi+OCjOOBpuOBiuOCiuOAgeS7iuaXpeOBruippuS9nOOBp+OBr+WFrOmWi+OCq+ODvOODieOBruS4reW/g+OCkuWklumDqOODh+ODouOBp+OBr+OBquOBj+OAgeiHquS9nOOBriBkcmlmdCAvIHJlLWhpdCDliKTmlq3jg6Ljg4fjg6vjgavjgZfjgZ/jgII8L3NwYW4+CiAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImVuLWNvcHkiPkltbWVyc2l2ZSBXZWIncyBvZmZpY2lhbCBzYW1wbGVzIHNwbGl0IEFuY2hvcnMsIEhpdCBUZXN0LCBhbmQgSGl0IFRlc3Qgd2l0aCBBbmNob3JzOyB0b2RheSdzIHByb3RvdHlwZSBrZWVwcyB0aGUgcHVibGljIGNhcmQgY2VudGVyZWQgb24gYW4gb3JpZ2luYWwgZHJpZnQgLyByZS1oaXQgZGVjaXNpb24gbW9kZWwgcmF0aGVyIHRoYW4gZXh0ZXJuYWwgZGVtb3MuPC9zcGFuPgogICAgICAgICAgICA8L2xpPgogICAgICAgICAgCiAgICAgICAgPC9vbD4KICAgICAgPC9zZWN0aW9uPgogIAogICAgICAgIDxzZWN0aW9uIGNsYXNzPSJkZXRhaWwtYmxvY2siPgogICAgICAgICAgPGgyPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXIiPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItcHJpbWFyeSI+5rOo55uu5LqL5L6L44Go5L2V44GM6Z2i55m944GE44GLPC9zcGFuPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItc2Vjb25kYXJ5Ij5Ob3RhYmxlIGV4YW1wbGUgYW5kIHdoeSBpdCBtYXR0ZXJzPC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPHA+5LuK5pel44Gu5rOo55uu44GvIEltbWVyc2l2ZSBXZWIg44GuIEhpdCBUZXN0IHdpdGggQW5jaG9ycyBzYW1wbGUg44GoIFdlYlhSIEFuY2hvcnMgTW9kdWxlIOOBrue1hOOBv+WQiOOCj+OBm+OBp+OBmeOAgkhpdCBUZXN0IOOBr+OAjOS7iuimi+OBiOOBpuOBhOOCi+mdouOAjeOBuOOBruS6pOW3ruOCkui/lOOBl+OAgUFuY2hvcnMg44Gv44CM44GT44GuIHBvc2Ug44KS6L+96Leh44GX57aa44GR44Gf44GE44CN44Go44GE44GG5L6d6aC844Gr5aSJ44KP44KK44G+44GZ44CC6Z2i5o6o5a6a44GM5pu05paw44GV44KM44KL44G744GpIGFuY2hvciDjga4gcG9zZSDjgoLlvq7lppnjgavli5XjgY/jgZ/jgoHjgIHnva7jgYTjgZ/lvozjgasgZHJpZnQg44KS44Gp44GGIFVJIOWMluOBmeOCi+OBi+OBjOWun+OCouODl+ODquOBruizquOBq+ebtOe1kOOBl+OBvuOBmeOAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5Ub2RheSdzIG5vdGFibGUgY29tYmluYXRpb24gaXMgdGhlIEltbWVyc2l2ZSBXZWIgSGl0IFRlc3Qgd2l0aCBBbmNob3JzIHNhbXBsZSBhbmQgdGhlIFdlYlhSIEFuY2hvcnMgTW9kdWxlLiBIaXQgVGVzdCByZXR1cm5zIGFuIGludGVyc2VjdGlvbiB3aXRoIHRoZSBjdXJyZW50bHkgdW5kZXJzdG9vZCBzdXJmYWNlLCB3aGlsZSBBbmNob3JzIHR1cm4gdGhhdCBpbnRvIGEgcmVxdWVzdCB0byBrZWVwIHRyYWNraW5nIGEgcG9zZS4gQXMgc3VyZmFjZSBlc3RpbWF0aW9uIHVwZGF0ZXMsIGFuY2hvciBwb3NlcyBjYW4gbW92ZSBzdWJ0bHksIHNvIHRoZSB3YXkgYW4gYXBwIHN1cmZhY2VzIGRyaWZ0IGFmdGVyIHBsYWNlbWVudCBkaXJlY3RseSBhZmZlY3RzIHF1YWxpdHkuPC9wPgogICAgICAgICAgCiAgICA8dWwgY2xhc3M9ImxpbmstbGlzdCI+CiAgICAgIAogICAgICAgICAgICA8bGk+PGEgaHJlZj0iaHR0cHM6Ly9pbW1lcnNpdmUtd2ViLmdpdGh1Yi5pby93ZWJ4ci1zYW1wbGVzL2hpdC10ZXN0LWFuY2hvcnMuaHRtbCIgdGFyZ2V0PSJfYmxhbmsiIHJlbD0ibm9yZWZlcnJlciI+SW1tZXJzaXZlIFdlYjogSGl0IFRlc3Qgd2l0aCBBbmNob3JzPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vYW5jaG9ycy8iIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPkltbWVyc2l2ZSBXZWI6IFdlYlhSIEFuY2hvcnMgTW9kdWxlPC9hPjwvbGk+CiAgICAgICAgICAKICAgIDwvdWw+CiAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7ooajnj77jg7vjgqTjg7Pjgr/jg6njgq/jgrfjg6fjg7Pjga7jgqLjgqTjg4fjgqI8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPkV4cHJlc3Npb24gYW5kIGludGVyYWN0aW9uIGlkZWE8L3NwYW4+PC9zcGFuPjwvaDI+CiAgICAgICAgICA8cD5mcmVzaCBoaXQtdGVzdCDjga4gcmV0aWNsZeOAgeS/neWtmOOBl+OBnyBhbmNob3IgcG9zZeOAgeePvuWcqOi/vei3oeOBleOCjOOBpuOBhOOCiyBsaXZlIHBvc2Ug44KSIDEg55S76Z2i44Gr5YiG44GR44Gm5o+P44GN44G+44GZ44CCYW5jaG9yIOOBi+OCiSBsaXZlIHBvc2Ug44G454K557ea44KS5Ly444Gw44GX44CBZHJpZnQg44GM44GX44GN44GE5YCk44KS6LaF44GI44KL44Go6buE6Imy44Gu6K2m5ZGK6KGo56S644Gr5aSJ44GI44G+44GZ44CCYFNhdmUgYW5jaG9yYOOAgWBSZS1oaXQgd29yc3Rg44CBYEF1dG8gcmUtaGl0YCDjgpLnlKjmhI/jgZfjgIHnva7jgYTjgZ8gb2JqZWN0IOOCkueEoeadoeS7tuOBq+S/oeeUqOOBmeOCi+OBruOBp+OBr+OBquOBj+OAgeW/heimgeOBquaZguOBoOOBkSBzdXJmYWNlIOOCkuWPluOCiuebtOOBmea1geOCjOOCkuimi+OBm+OBvuOBmeOAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5UaGUgc2FtcGxlIGRyYXdzIHRoZSBmcmVzaCBoaXQtdGVzdCByZXRpY2xlLCBzYXZlZCBhbmNob3IgcG9zZSwgYW5kIGN1cnJlbnRseSB0cmFja2VkIGxpdmUgcG9zZSBzZXBhcmF0ZWx5LiBBIGRhc2hlZCBsaW5lIGNvbm5lY3RzIHRoZSBhbmNob3IgdG8gaXRzIGxpdmUgcG9zZSwgYW5kIGFuY2hvcnMgdHVybiBpbnRvIGEgeWVsbG93IHdhcm5pbmcgc3RhdGUgd2hlbiBkcmlmdCBwYXNzZXMgdGhlIHRocmVzaG9sZC4gV2l0aCBgU2F2ZSBhbmNob3JgLCBgUmUtaGl0IHdvcnN0YCwgYW5kIGBBdXRvIHJlLWhpdGAsIHRoZSBpbnRlcmFjdGlvbiBzaG93cyBhIGZsb3cgdGhhdCByZWZyZXNoZXMgdGhlIHN1cmZhY2Ugb25seSB3aGVuIG5lZWRlZCBpbnN0ZWFkIG9mIGJsaW5kbHkgdHJ1c3RpbmcgcGxhY2VkIG9iamVjdHMuPC9wPgogICAgICAgICAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7liLbkvZzjgavkvb/jgYjjgZ3jgYbjgarmioDooZPjg6Hjg6I8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPlByb2R1Y3Rpb24gbm90ZTwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgIDxwPuWun+apn+OBp+OBryBgcmVxdWVzdEhpdFRlc3RTb3VyY2UoKWAg44Gu57WQ5p6c44GL44KJIGFuY2hvciDjgpLkvZzmiJDjgZfjgIFmcmFtZSDjgZTjgajjgasgYFhSRnJhbWUudHJhY2tlZEFuY2hvcnNgIOOBqCBgWFJGcmFtZS5nZXRQb3NlKGFuY2hvci5hbmNob3JTcGFjZSwgcmVmZXJlbmNlU3BhY2UpYCDjgpLoqq3jgoDmp4vmiJDjgYzln7rmnKzjgavjgarjgorjgb7jgZnjgIJkcmlmdCDjga/pgY7ljrsgcG9zZSDjgajnj77lnKggcG9zZSDjga7ot53pm6LjgaDjgZHjgafjgarjgY/jgIFzdXJmYWNlIGNvbmZpZGVuY2XjgIF0cmFja2luZyBsb3Nz44CBdXNlciBtb3Rpb27jgIFvYmplY3Qg44Gu6YeN6KaB5bqm44Gn6YeN44G/5LuY44GR44GZ44KL44Go5omx44GE44KE44GZ44GE44Gn44GZ44CC5YaNIGhpdC10ZXN0IOOBr+avjiBmcmFtZSDjgafjga/jgarjgY/jgIHkuIDlrprot53pm6LjgIHkuIDlrprmmYLplpPjgIHjgb7jgZ/jga/jg6bjg7zjgrbjg7zms6joppbmmYLjgavpmZDlrprjgZnjgovjgaggVVgg44Go6LKg6I2344Gu44OQ44Op44Oz44K544GM5Y+W44KK44KE44GZ44GP44Gq44KK44G+44GZ44CCPC9wPgogICAgICAgICAgPHAgY2xhc3M9ImVuLWNvcHkiPk9uIGEgcmVhbCBkZXZpY2UsIHRoZSBiYXNpYyBwYXRoIGlzIHRvIGNyZWF0ZSBhbmNob3JzIGZyb20gYHJlcXVlc3RIaXRUZXN0U291cmNlKClgIHJlc3VsdHMsIHRoZW4gcmVhZCBgWFJGcmFtZS50cmFja2VkQW5jaG9yc2AgYW5kIGBYUkZyYW1lLmdldFBvc2UoYW5jaG9yLmFuY2hvclNwYWNlLCByZWZlcmVuY2VTcGFjZSlgIGVhY2ggZnJhbWUuIERyaWZ0IHdvcmtzIGJldHRlciB3aGVuIHdlaWdodGVkIGJ5IHN1cmZhY2UgY29uZmlkZW5jZSwgdHJhY2tpbmcgbG9zcywgdXNlciBtb3Rpb24sIGFuZCBvYmplY3QgaW1wb3J0YW5jZSByYXRoZXIgdGhhbiBqdXN0IHByZXZpb3VzLXZlcnN1cy1jdXJyZW50IHBvc2UgZGlzdGFuY2UuIFJlLWhpdCB0ZXN0aW5nIHNob3VsZCBiZSBsaW1pdGVkIGJ5IGRpc3RhbmNlLCB0aW1lLCBvciB1c2VyIGZvY3VzIGluc3RlYWQgb2YgcnVubmluZyBldmVyeSBmcmFtZS48L3A+CiAgICAgICAgICAKICAgICAgICA8L3NlY3Rpb24+CiAgICAgIAoKICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuaYjuaXpeS7pemZjeOCpuOCqeODg+ODgeOBmeOCi+WvvuixoTwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+V2F0Y2ggbmV4dDwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgIDxwPkFuY2hvcnMg44GuIGZlYXR1cmUgZGVzY3JpcHRvciDjgajlrp/oo4Xlt67jgIFoaXQtdGVzdCDjga4gZW50aXR5VHlwZXPjgIFET00gT3ZlcmxheSDkuIrjga4gYmVmb3JleHJzZWxlY3TjgIFwbGFjZWQgb2JqZWN0IOOBruWvv+WRveOAgURlcHRoIFNlbnNpbmcg44GoIGFuY2hvciBkZXB0aCDjga4gY29uZmxpY3Qg44KS57aa44GR44Gm6KaL44G+44GZ44CC5qyh44GvIGFuY2hvciDjgpLopIfmlbDnva7jgYTjgZ/lvozjgIHov5HjgYQgb2JqZWN0IOOBoOOBkSBkZXB0aCAvIG9jY2x1c2lvbiDmpJzmn7vjgpLlvLfjgoHjgovmlrnlkJHjgYzjgojjgZXjgZ3jgYbjgafjgZnjgII8L3A+CiAgICAgICAgICA8cCBjbGFzcz0iZW4tY29weSI+S2VlcCB3YXRjaGluZyB0aGUgQW5jaG9ycyBmZWF0dXJlIGRlc2NyaXB0b3IgYW5kIGltcGxlbWVudGF0aW9uIGRpZmZlcmVuY2VzLCBoaXQtdGVzdCBgZW50aXR5VHlwZXNgLCBgYmVmb3JleHJzZWxlY3RgIGluIERPTSBPdmVybGF5LCBwbGFjZWQtb2JqZWN0IGxpZmV0aW1lLCBhbmQgY29uZmxpY3RzIGJldHdlZW4gRGVwdGggU2Vuc2luZyBhbmQgYW5jaG9yIGRlcHRoLiBBIGdvb2QgbmV4dCBzdGVwIGlzIHBsYWNpbmcgbXVsdGlwbGUgYW5jaG9ycyBhbmQgaW5jcmVhc2luZyBkZXB0aCAvIG9jY2x1c2lvbiBjaGVja3Mgb25seSBmb3IgbmVhcmJ5IG9iamVjdHMuPC9wPgogICAgICAgICAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7oqabjgZnjgarjgonjgZPjgow8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPklmIHlvdSB0cnkgb25lIHRoaW5nPC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPHA+YFN0YWJsZSB0YWJsZWAg44GnIGFuY2hvciDjgpLkv53lrZjjgZfjgIFgV2FsayBhcm91bmRgIOOBq+WIh+OCiuabv+OBiOOBpiBkcmlmdCDjgYzlopfjgYjjgovmp5jlrZDjgpLopovjgabjgY/jgaDjgZXjgYTjgIJgQXV0byByZS1oaXQgb25gIOOBruOBvuOBvuOBoOOBqCBzdGFsZSBhbmNob3Ig44GM5ZGo5pyf55qE44Gr5YaN5Zu65a6a44GV44KM44CBb2ZmIOOBq+OBmeOCi+OBqOm7hOiJsuOBhCBxdWV1ZSDjgYzmupzjgb7jgorjgb7jgZnjgIJgUmUtaGl0IHRocmVzaG9sZGAg44KS5LiL44GS44KL44Go5a6J5YWo5a+E44KK44CB5LiK44GS44KL44GoIGFuY2hvciDjgpLkv6HnlKjjgZnjgovlr4Tjgorjga7mjJnli5Xjgavjgarjgorjgb7jgZnjgII8L3A+CiAgICAgICAgICA8cCBjbGFzcz0iZW4tY29weSI+U2F2ZSBhbiBhbmNob3IgaW4gYFN0YWJsZSB0YWJsZWAsIHRoZW4gc3dpdGNoIHRvIGBXYWxrIGFyb3VuZGAgYW5kIHdhdGNoIGRyaWZ0IHJpc2UuIFdpdGggYEF1dG8gcmUtaGl0IG9uYCwgc3RhbGUgYW5jaG9ycyBhcmUgcGVyaW9kaWNhbGx5IHJlLWxvY2tlZDsgd2l0aCBpdCBvZmYsIHRoZSB5ZWxsb3cgcXVldWUgYWNjdW11bGF0ZXMuIExvd2VyaW5nIGBSZS1oaXQgdGhyZXNob2xkYCBtYWtlcyB0aGUgcG9saWN5IG1vcmUgY29uc2VydmF0aXZlLCB3aGlsZSByYWlzaW5nIGl0IHRydXN0cyBhbmNob3JzIGxvbmdlci48L3A+CiAgICAgICAgICAKICAgIDx1bCBjbGFzcz0ibGluay1saXN0Ij4KICAgICAgCiAgICAgICAgICAgIDxsaT48YSBocmVmPSIuLi9vdXRwdXRzLzIwMjYtMDctMjFfaHRtbF9hbmNob3JfZHJpZnRfcmVoaXRfbGFiLmh0bWwiIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPk9wZW4gQW5jaG9yIERyaWZ0IFJlLWhpdCBMYWI8L2E+PC9saT4KICAgICAgICAgIAogICAgPC91bD4KICAKICAgICAgICA8L3NlY3Rpb24+CiAgICAgIAoKICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPumAsuihjOODnuODg+ODlzwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+UHJvZ3Jlc3MgbWFwPC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPHA+6Kq/5p+7OiBBbmNob3Jz44CBSGl0IFRlc3TjgIFEZXZpY2UgQVBJ44CBRE9NIE92ZXJsYXlz44CBSW1tZXJzaXZlIFdlYiBzYW1wbGVzIOOCkueiuuiqjeOAguOCouOCpOODh+OCojogcmV0aWNsZSBsb2NrIOOBruasoeauteOBqOOBl+OBpiBhbmNob3Ig5YCZ6KOc44CBbGl2ZSBwb3Nl44CBZHJpZnTjgIHlho0gaGl0LXRlc3QgcXVldWUg44KS5L2c44KL44CC5a6f6KOFOiBjYW52YXMg44Gr5bqK6Z2i44Kw44Oq44OD44OJ44CBcmV0aWNsZeOAgWFuY2hvciBjYXJk44CBbGl2ZSBwb3NlIG1hcmtlcuOAgWRyaWZ0IGxpbmXjgIFwcmVzZXQgLyBzbGlkZXIgLyBhY3Rpb24gYnV0dG9uIOOCkuWun+ijheOAguaknOiovDogSlNPTiBwYXJzZeOAgUhUTUwgc2NyaXB0IOani+aWh+OAgWdhbGxlcnkg5YaN55Sf5oiQ44CBR2l0SHViIFBhZ2VzIOWFrOmWiyBVUkwg44KS56K66KqN44GZ44KL44CCPC9wPgogICAgICAgICAgPHAgY2xhc3M9ImVuLWNvcHkiPlJlc2VhcmNoOiByZXZpZXdlZCBBbmNob3JzLCBIaXQgVGVzdCwgRGV2aWNlIEFQSSwgRE9NIE92ZXJsYXlzLCBhbmQgSW1tZXJzaXZlIFdlYiBzYW1wbGVzLiBJZGVhOiBleHRlbmQgcmV0aWNsZSBsb2NrIGludG8gYW5jaG9yIGNhbmRpZGF0ZXMsIGxpdmUgcG9zZXMsIGRyaWZ0LCBhbmQgYSByZS1oaXQgcXVldWUuIEltcGxlbWVudGF0aW9uOiBidWlsdCBhIGNhbnZhcyB3aXRoIGZsb29yIGdyaWQsIHJldGljbGUsIGFuY2hvciBjYXJkcywgbGl2ZSBwb3NlIG1hcmtlcnMsIGRyaWZ0IGxpbmVzLCBwcmVzZXRzLCBzbGlkZXJzLCBhbmQgYWN0aW9uIGJ1dHRvbnMuIFZhbGlkYXRpb246IEpTT04gcGFyc2luZywgSFRNTCBzY3JpcHQgc3ludGF4LCBnYWxsZXJ5IHJlZ2VuZXJhdGlvbiwgYW5kIEdpdEh1YiBQYWdlcyBwdWJsaWMgVVJMcyBhcmUgY2hlY2tlZC48L3A+CiAgICAgICAgICAKICAgICAgICA8L3NlY3Rpb24+CiAgICAgIAoKICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuS/r+eesOODoeODojwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+QmlyZCdzLWV5ZSBtZW1vPC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPHA+44GT44KM44G+44Gn5YWl5YqbIGNvbmZpZGVuY2XjgIFoaXQtdGVzdCByZXRpY2xl44CBaGFuZCBzdGFiaWxpdHkg44G+44Gn6KaL44Gm44GN44G+44GX44Gf44CC5LuK5pel44Gu44K144Oz44OX44Or44Gv44CM572u44GP556s6ZaT44CN44GL44KJ44CM572u44GE44Gf5b6M44CN44G454Sm54K544KS56e744GX44CBQVIgb2JqZWN0IOOBjOePvuWun+mdouOBqOS4gOe3kuOBq+abtOaWsOOBleOCjOOCi+S4jeWuieWumuOBleOCkuaJseOBhOOBvuOBmeOAglhSIOOBrumFjee9riBVWCDjga/jgIHphY3nva7miJDlip/jga7mvJTlh7rjgaDjgZHjgafjgarjgY/jgIHlvozjgYvjgonpnZnjgYvjgavjgZrjgozjgabjgYTjgY8gb2JqZWN0IOOCkuOBhOOBpOebtOOBmeOBi+OBvuOBp+ioreioiOWvvuixoeOBq+OBquOCiuOBvuOBmeOAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5UaGUgcHJpb3Igc2FtcGxlcyBjb3ZlcmVkIGlucHV0IGNvbmZpZGVuY2UsIGhpdC10ZXN0IHJldGljbGVzLCBhbmQgaGFuZCBzdGFiaWxpdHkuIFRvZGF5J3Mgc2FtcGxlIG1vdmVzIGZyb20gdGhlIG1vbWVudCBvZiBwbGFjZW1lbnQgdG8gd2hhdCBoYXBwZW5zIGFmdGVyIHBsYWNlbWVudCwgYWRkcmVzc2luZyB0aGUgaW5zdGFiaWxpdHkgb2YgQVIgb2JqZWN0cyB1cGRhdGluZyBhbG9uZyB3aXRoIHJlYWwtd29ybGQgc3VyZmFjZSB1bmRlcnN0YW5kaW5nLiBYUiBwbGFjZW1lbnQgVVggbXVzdCBkZXNpZ24gbm90IG9ubHkgdGhlIHN1Y2Nlc3MgbW9tZW50IGJ1dCBhbHNvIHdoZW4gdG8gcmVwYWlyIG9iamVjdHMgdGhhdCBzbG93bHkgZHJpZnQgYWZ0ZXJ3YXJkLjwvcD4KICAgICAgICAgIAogICAgICAgIDwvc2VjdGlvbj4KICAgICAgCgogICAgICAgIDxzZWN0aW9uIGNsYXNzPSJkZXRhaWwtYmxvY2siPgogICAgICAgICAgPGgyPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXIiPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItcHJpbWFyeSI+5LuK5pel44Gu44Of44OL6Kmm5L2c5YCZ6KOcPC9zcGFuPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItc2Vjb25kYXJ5Ij5Ub2RheSdzIG1pbmkgcHJvdG90eXBlIGNhbmRpZGF0ZTwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgIDxwPuaOoeeUqOOBl+OBn+WAmeijnOOBryBgQW5jaG9yIERyaWZ0IFJlLWhpdCBMYWJgIOOBp+OBmeOAguikh+aVsCBhbmNob3Ig44KS5L+d5a2Y44GX44CBc3VyZmFjZSBjb25maWRlbmNl44CBdHJhY2tpbmcgbm9pc2XjgIF3b3JsZCBkcmlmdOOAgWFuY2hvciBtZW1vcnnjgIFyZS1oaXQgdGhyZXNob2xkIOOCkuWkieOBiOOBquOBjOOCieOAgXN0YWxlIGFuY2hvciDjgaDjgZHjgpIgcXVldWUg44Gr5YWl44KM44G+44GZ44CC5qyh44Gr6Laz44GZ44Gq44KJ44CBYW5jaG9yIOOBrui/keOBleOBqCBvYmplY3Qg44K144Kk44K644Gr5b+c44GY44GmIGRlcHRoIG9jY2x1c2lvbiDjga7mpJzmn7vpoLvluqbjgpLlpInjgYjjgosgc2NoZWR1bGVyIOOBp+OBmeOAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5UaGUgc2VsZWN0ZWQgcHJvdG90eXBlIGlzIGBBbmNob3IgRHJpZnQgUmUtaGl0IExhYmAuIEl0IHNhdmVzIG11bHRpcGxlIGFuY2hvcnMgYW5kIHF1ZXVlcyBvbmx5IHN0YWxlIGFuY2hvcnMgd2hpbGUgdmFyeWluZyBzdXJmYWNlIGNvbmZpZGVuY2UsIHRyYWNraW5nIG5vaXNlLCB3b3JsZCBkcmlmdCwgYW5jaG9yIG1lbW9yeSwgYW5kIHJlLWhpdCB0aHJlc2hvbGQuIEEgdXNlZnVsIGV4dGVuc2lvbiB3b3VsZCBiZSBhIHNjaGVkdWxlciB0aGF0IGNoYW5nZXMgZGVwdGgtb2NjbHVzaW9uIGNoZWNrIGZyZXF1ZW5jeSBiYXNlZCBvbiBhbmNob3IgcHJveGltaXR5IGFuZCBvYmplY3Qgc2l6ZS48L3A+CiAgICAgICAgICAKICAgICAgICA8L3NlY3Rpb24+CiAgICAgIAogICAgICAgIAogICAgICAgICAgICAgIDxzZWN0aW9uIGNsYXNzPSJkZXRhaWwtYmxvY2siPgogICAgICAgICAgICAgICAgPGgyPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXIiPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItcHJpbWFyeSI+5Y+C6ICD44Oq44Oz44KvPC9zcGFuPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItc2Vjb25kYXJ5Ij5SZWZlcmVuY2UgbGlua3M8L3NwYW4+PC9zcGFuPjwvaDI+CiAgICAgICAgICAgICAgICAKICAgIDx1bCBjbGFzcz0ibGluay1saXN0Ij4KICAgICAgCiAgICAgICAgICAgIDxsaT48YSBocmVmPSIuLi9vdXRwdXRzLzIwMjYtMDctMjFfaHRtbF9hbmNob3JfZHJpZnRfcmVoaXRfbGFiLmh0bWwiIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPlRvZGF5J3Mgc2FtcGxlOiBBbmNob3IgRHJpZnQgUmUtaGl0IExhYjwvYT48L2xpPgogICAgICAgICAgCiAgICAgICAgICAgIDxsaT48YSBocmVmPSJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL2FuY2hvcnMvIiB0YXJnZXQ9Il9ibGFuayIgcmVsPSJub3JlZmVycmVyIj5JbW1lcnNpdmUgV2ViOiBXZWJYUiBBbmNob3JzIE1vZHVsZTwvYT48L2xpPgogICAgICAgICAgCiAgICAgICAgICAgIDxsaT48YSBocmVmPSJodHRwczovL3d3dy53My5vcmcvVFIvd2VieHItaGl0LXRlc3QtMS8iIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPlczQzogV2ViWFIgSGl0IFRlc3QgTW9kdWxlPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vd3d3LnczLm9yZy9UUi93ZWJ4ci8iIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPlczQzogV2ViWFIgRGV2aWNlIEFQSTwvYT48L2xpPgogICAgICAgICAgCiAgICAgICAgICAgIDxsaT48YSBocmVmPSJodHRwczovL3d3dy53My5vcmcvVFIvd2VieHItZG9tLW92ZXJsYXlzLTEvIiB0YXJnZXQ9Il9ibGFuayIgcmVsPSJub3JlZmVycmVyIj5XM0M6IFdlYlhSIERPTSBPdmVybGF5cyBNb2R1bGU8L2E+PC9saT4KICAgICAgICAgIAogICAgICAgICAgICA8bGk+PGEgaHJlZj0iaHR0cHM6Ly9pbW1lcnNpdmUtd2ViLmdpdGh1Yi5pby93ZWJ4ci1zYW1wbGVzLyIgdGFyZ2V0PSJfYmxhbmsiIHJlbD0ibm9yZWZlcnJlciI+SW1tZXJzaXZlIFdlYjogV2ViWFIgU2FtcGxlczwvYT48L2xpPgogICAgICAgICAgCiAgICA8L3VsPgogIAogICAgICAgICAgICAgIDwvc2VjdGlvbj4KICAgICAgICAgICAgCiAgICAgIDwvZGl2PgoKICAgICAgPGFzaWRlIGNsYXNzPSJwcmV2aWV3Ij4KICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7jgrXjg7Pjg5fjg6vjg5fjg6zjg5Pjg6Xjg7w8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPlNhbXBsZSBwcmV2aWV3PC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgIDxpZnJhbWUgc3JjPSIuLi9vdXRwdXRzLzIwMjYtMDctMjFfaHRtbF9hbmNob3JfZHJpZnRfcmVoaXRfbGFiLmh0bWwiIGxvYWRpbmc9ImxhenkiIHRpdGxlPSJBbmNob3IgRHJpZnQgUmUtaGl0IExhYiI+PC9pZnJhbWU+CiAgICAgIDwvYXNpZGU+CiAgICA8L3NlY3Rpb24+CiAgPC9tYWluPgo8L2JvZHk+CjwvaHRtbD4=
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>anchor の drift を見て必要な時だけ再 hit-test する | 2026-07-21</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.21</p>
+      <h1>anchor の drift を見て必要な時だけ再 hit-test する</h1>
+      <p class="hero-subtitle">Re-hit-testing only when anchor drift calls for it</p>
+      <p>WebXR Anchors Module、WebXR Hit Test Module、WebXR Device API、DOM Overlays、Immersive Web 公式 samples を確認し、今日は hit-test で保存した anchor 候補の drift を可視化し、しきい値を超えた anchor だけ再 hit-test する自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the WebXR Anchors Module, WebXR Hit Test Module, WebXR Device API, DOM Overlays, and Immersive Web official samples, today's original HTML sample visualizes drift on hit-test-created anchor candidates and re-runs hit tests only for anchors that exceed a threshold.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-21_html_anchor_drift_rehit_lab.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../pages/4.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-20.html">← 2026.07.20</a>
+      <a class="day-link" href="../days/2026-07-22.html">2026.07.22 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Anchor Drift Re-hit Lab</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-21_html_anchor_drift_rehit_lab.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Anchors Module の Editor's Draft は 2026-04-27 で、`anchors` feature descriptor、`XRAnchor`、`XRFrame.trackedAnchors`、anchor pose の更新と削除を中心に、基盤システムに特定 pose の追跡を依頼する仕組みを定義している。</span>
+              <span class="en-copy">The WebXR Anchors Module Editor's Draft is dated 2026-04-27 and defines the `anchors` feature descriptor, `XRAnchor`, `XRFrame.trackedAnchors`, and anchor pose update/removal concepts for asking the underlying system to track a specific pose.</span>
+            </li>
+          
+            <li>
+              <span>Anchors は hit-test の瞬間的な交差点を長く使うための橋渡しになるが、デバイス側の world understanding が変わると anchor pose も更新されるため、配置 UI には drift の観測と再固定の方針が必要になる。</span>
+              <span class="en-copy">Anchors bridge a momentary hit-test intersection into longer-lived placement, but the anchor pose can update as the device's world understanding changes, so placement UI needs a policy for observing drift and re-locking.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Hit Test Module は plane / point / mesh などの trackable type と `XRHitTestSource` を扱うため、anchor 作成前の新鮮な surface estimate と anchor 作成後の tracked pose を分けて考えやすい。</span>
+              <span class="en-copy">The WebXR Hit Test Module covers trackable types such as plane, point, and mesh plus `XRHitTestSource`, which makes it useful to separate fresh surface estimates before anchor creation from tracked poses after anchor creation.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Device API の 2026-03-16 Candidate Recommendation Draft は frame loop、reference space、pose、feature descriptor の土台で、anchor / hit-test / DOM overlay などの module はこのセッションモデルに乗る。</span>
+              <span class="en-copy">The 2026-03-16 WebXR Device API Candidate Recommendation Draft provides the frame loop, reference space, pose, and feature descriptor foundation that modules such as anchors, hit test, and DOM overlay build on.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の公式 samples には Anchors、Hit Test、Hit Test with Anchors が分かれており、今日の試作では公開カードの中心を外部デモではなく、自作の drift / re-hit 判断モデルにした。</span>
+              <span class="en-copy">Immersive Web's official samples split Anchors, Hit Test, and Hit Test with Anchors; today's prototype keeps the public card centered on an original drift / re-hit decision model rather than external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は Immersive Web の Hit Test with Anchors sample と WebXR Anchors Module の組み合わせです。Hit Test は「今見えている面」への交差を返し、Anchors は「この pose を追跡し続けたい」という依頼に変わります。面推定が更新されるほど anchor の pose も微妙に動くため、置いた後に drift をどう UI 化するかが実アプリの質に直結します。</p>
+          <p class="en-copy">Today's notable combination is the Immersive Web Hit Test with Anchors sample and the WebXR Anchors Module. Hit Test returns an intersection with the currently understood surface, while Anchors turn that into a request to keep tracking a pose. As surface estimation updates, anchor poses can move subtly, so the way an app surfaces drift after placement directly affects quality.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-samples/hit-test-anchors.html" target="_blank" rel="noreferrer">Immersive Web: Hit Test with Anchors</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>fresh hit-test の reticle、保存した anchor pose、現在追跡されている live pose を 1 画面に分けて描きます。anchor から live pose へ点線を伸ばし、drift がしきい値を超えると黄色の警告表示に変えます。`Save anchor`、`Re-hit worst`、`Auto re-hit` を用意し、置いた object を無条件に信用するのではなく、必要な時だけ surface を取り直す流れを見せます。</p>
+          <p class="en-copy">The sample draws the fresh hit-test reticle, saved anchor pose, and currently tracked live pose separately. A dashed line connects the anchor to its live pose, and anchors turn into a yellow warning state when drift passes the threshold. With `Save anchor`, `Re-hit worst`, and `Auto re-hit`, the interaction shows a flow that refreshes the surface only when needed instead of blindly trusting placed objects.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実機では `requestHitTestSource()` の結果から anchor を作成し、frame ごとに `XRFrame.trackedAnchors` と `XRFrame.getPose(anchor.anchorSpace, referenceSpace)` を読む構成が基本になります。drift は過去 pose と現在 pose の距離だけでなく、surface confidence、tracking loss、user motion、object の重要度で重み付けすると扱いやすいです。再 hit-test は毎 frame ではなく、一定距離、一定時間、またはユーザー注視時に限定すると UX と負荷のバランスが取りやすくなります。</p>
+          <p class="en-copy">On a real device, the basic path is to create anchors from `requestHitTestSource()` results, then read `XRFrame.trackedAnchors` and `XRFrame.getPose(anchor.anchorSpace, referenceSpace)` each frame. Drift works better when weighted by surface confidence, tracking loss, user motion, and object importance rather than just previous-versus-current pose distance. Re-hit testing should be limited by distance, time, or user focus instead of running every frame.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>Anchors の feature descriptor と実装差、hit-test の entityTypes、DOM Overlay 上の beforexrselect、placed object の寿命、Depth Sensing と anchor depth の conflict を続けて見ます。次は anchor を複数置いた後、近い object だけ depth / occlusion 検査を強める方向がよさそうです。</p>
+          <p class="en-copy">Keep watching the Anchors feature descriptor and implementation differences, hit-test `entityTypes`, `beforexrselect` in DOM Overlay, placed-object lifetime, and conflicts between Depth Sensing and anchor depth. A good next step is placing multiple anchors and increasing depth / occlusion checks only for nearby objects.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Stable table` で anchor を保存し、`Walk around` に切り替えて drift が増える様子を見てください。`Auto re-hit on` のままだと stale anchor が周期的に再固定され、off にすると黄色い queue が溜まります。`Re-hit threshold` を下げると安全寄り、上げると anchor を信用する寄りの挙動になります。</p>
+          <p class="en-copy">Save an anchor in `Stable table`, then switch to `Walk around` and watch drift rise. With `Auto re-hit on`, stale anchors are periodically re-locked; with it off, the yellow queue accumulates. Lowering `Re-hit threshold` makes the policy more conservative, while raising it trusts anchors longer.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-21_html_anchor_drift_rehit_lab.html" target="_blank" rel="noreferrer">Open Anchor Drift Re-hit Lab</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Anchors、Hit Test、Device API、DOM Overlays、Immersive Web samples を確認。アイデア: reticle lock の次段として anchor 候補、live pose、drift、再 hit-test queue を作る。実装: canvas に床面グリッド、reticle、anchor card、live pose marker、drift line、preset / slider / action button を実装。検証: JSON parse、HTML script 構文、gallery 再生成、GitHub Pages 公開 URL を確認する。</p>
+          <p class="en-copy">Research: reviewed Anchors, Hit Test, Device API, DOM Overlays, and Immersive Web samples. Idea: extend reticle lock into anchor candidates, live poses, drift, and a re-hit queue. Implementation: built a canvas with floor grid, reticle, anchor cards, live pose markers, drift lines, presets, sliders, and action buttons. Validation: JSON parsing, HTML script syntax, gallery regeneration, and GitHub Pages public URLs are checked.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>これまで入力 confidence、hit-test reticle、hand stability まで見てきました。今日のサンプルは「置く瞬間」から「置いた後」へ焦点を移し、AR object が現実面と一緒に更新される不安定さを扱います。XR の配置 UX は、配置成功の演出だけでなく、後から静かにずれていく object をいつ直すかまで設計対象になります。</p>
+          <p class="en-copy">The prior samples covered input confidence, hit-test reticles, and hand stability. Today's sample moves from the moment of placement to what happens after placement, addressing the instability of AR objects updating along with real-world surface understanding. XR placement UX must design not only the success moment but also when to repair objects that slowly drift afterward.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Anchor Drift Re-hit Lab` です。複数 anchor を保存し、surface confidence、tracking noise、world drift、anchor memory、re-hit threshold を変えながら、stale anchor だけを queue に入れます。次に足すなら、anchor の近さと object サイズに応じて depth occlusion の検査頻度を変える scheduler です。</p>
+          <p class="en-copy">The selected prototype is `Anchor Drift Re-hit Lab`. It saves multiple anchors and queues only stale anchors while varying surface confidence, tracking noise, world drift, anchor memory, and re-hit threshold. A useful extension would be a scheduler that changes depth-occlusion check frequency based on anchor proximity and object size.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-21_html_anchor_drift_rehit_lab.html" target="_blank" rel="noreferrer">Today's sample: Anchor Drift Re-hit Lab</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hit-test-1/" target="_blank" rel="noreferrer">W3C: WebXR Hit Test Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">W3C: WebXR DOM Overlays Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-21_html_anchor_drift_rehit_lab.html" loading="lazy" title="Anchor Drift Re-hit Lab"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

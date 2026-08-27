@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 51</span>
+        <span>days: 52</span>
         <span>page: 1 / 5</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -305,6 +305,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-08-27">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.27</p>
+              <h2>WebXR Input Profiles の layout router と inputsourceschange lifecycle を自作サンプル化</h2>
+              <p class="card-subtitle">Original samples for WebXR input profile layout routing and inputsourceschange lifecycle</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-27" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Device API、WebXR Gamepads Module、Immersive Web の WebXR Input Profiles Registry / motion-controllers、MDN の `inputsourceschange`、Immersive Web Samples の Input Profiles / Controller State を確認し、`XRInputSource.profiles` の fallback と component layout を action に変換する本命サンプル、`inputsourceschange` の追加・削除・解放漏れを検査する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the W3C WebXR Device API, WebXR Gamepads Module, Immersive Web's WebXR Input Profiles Registry and motion-controllers package, MDN's `inputsourceschange` event, and Immersive Web's Input Profiles and Controller State samples, today's original work adds a main sample that maps `XRInputSource.profiles` fallback and component layouts into app actions plus a derivative lifecycle probe for input-source addition, removal, and cleanup leaks.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-08-27.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-08-27_html_input_profile_layout_router.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-08-26">
           <div class="card-top">
             <div>
@@ -554,29 +577,6 @@
           <div class="actions">
             <a class="primary" href="days/2026-08-16.html">その日のページ / Day</a>
             <a class="secondary-link" href="outputs/2026-08-16_html_hit_test_anchor_commit_gate.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-15">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.15</p>
-              <h2>XR 入力から触覚 cue までを左右別 queue で制御する</h2>
-              <p class="card-subtitle">Control XR input-to-haptic cues with separate left/right queues</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-15" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">Gamepad API の haptic actuator、MDN の `pulse()`、WebXR Gamepads Module、Immersive Web Samples、WebXR Input Profiles を確認し、XR controller の連続入力を semantic action に変換して左右別 haptic queue に流す自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing Gamepad API haptic actuators, MDN `pulse()`, the WebXR Gamepads Module, Immersive Web Samples, and WebXR Input Profiles, today's original HTML sample converts XR controller continuous input into semantic actions and routes them through separate left/right haptic queues.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-08-15.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-08-15_html_xr_haptic_queue_sequencer.html">代表サンプル / Sample</a>
           </div>
         </article>
       

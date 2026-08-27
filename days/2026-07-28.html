@@ -1,1 +1,419 @@
-PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImphIj4KPGhlYWQ+CiAgPG1ldGEgY2hhcnNldD0iVVRGLTgiIC8+CiAgPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCwgaW5pdGlhbC1zY2FsZT0xLjAiIC8+CiAgPHRpdGxlPmNhcGFiaWxpdHkgcHJvYmUg44GL44KJIHNlY29uZGFyeSB2aWV3IOS6iOeul+OCkue1hOOCgCB8IDIwMjYtMDctMjg8L3RpdGxlPgogIDxzdHlsZT4KICAgIDpyb290IHsKICAgICAgLS1iZzA6ICMwNzExMWE7CiAgICAgIC0tYmcxOiAjMTAyMzM4OwogICAgICAtLXBhbmVsOiByZ2JhKDksIDIwLCAzMSwgMC44NCk7CiAgICAgIC0tcGFuZWwtMjogcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjA0KTsKICAgICAgLS1saW5lOiByZ2JhKDEyNiwgMjI4LCAyNTUsIDAuMTIpOwogICAgICAtLXRleHQ6ICNlYmY4ZmY7CiAgICAgIC0tbXV0ZWQ6ICM5YWI2Yzg7CiAgICAgIC0tYWNjZW50OiAjN2NlNGZmOwogICAgICAtLWFjY2VudDI6ICNmZmQ4Njg7CiAgICAgIC0tc2hhZG93OiByZ2JhKDAsIDAsIDAsIDAuMzIpOwogICAgfQoKICAgICogeyBib3gtc2l6aW5nOiBib3JkZXItYm94OyB9CgogICAgYm9keSB7CiAgICAgIG1hcmdpbjogMDsKICAgICAgbWluLWhlaWdodDogMTAwdmg7CiAgICAgIGZvbnQtZmFtaWx5OiAiQXZlbmlyIE5leHQiLCAiSGlyYWdpbm8gU2FucyIsIHNhbnMtc2VyaWY7CiAgICAgIGNvbG9yOiB2YXIoLS10ZXh0KTsKICAgICAgYmFja2dyb3VuZDoKICAgICAgICByYWRpYWwtZ3JhZGllbnQoY2lyY2xlIGF0IDE2JSAxOCUsIHJnYmEoMTI0LCAyMjgsIDI1NSwgMC4xNiksIHRyYW5zcGFyZW50IDI0JSksCiAgICAgICAgcmFkaWFsLWdyYWRpZW50KGNpcmNsZSBhdCA4NCUgMTAlLCByZ2JhKDI1NSwgMjE2LCAxMDQsIDAuMTIpLCB0cmFuc3BhcmVudCAyMCUpLAogICAgICAgIGxpbmVhci1ncmFkaWVudCgxODBkZWcsIHZhcigtLWJnMSksIHZhcigtLWJnMCkpOwogICAgfQoKICAgIC5zaGVsbCB7CiAgICAgIG1heC13aWR0aDogMTE4MHB4OwogICAgICBtYXJnaW46IDAgYXV0bzsKICAgICAgcGFkZGluZzogMjhweCAyMHB4IDQ4cHg7CiAgICB9CgogICAgLmhlcm8sCiAgICAuZGV0YWlsLWJsb2NrLAogICAgLnByZXZpZXcsCiAgICAuZGF5LW5hdiB7CiAgICAgIGJvcmRlci1yYWRpdXM6IDI0cHg7CiAgICAgIGJhY2tncm91bmQ6IHZhcigtLXBhbmVsKTsKICAgICAgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tbGluZSk7CiAgICAgIGJveC1zaGFkb3c6IDAgMThweCA0MnB4IHZhcigtLXNoYWRvdyk7CiAgICAgIGJhY2tkcm9wLWZpbHRlcjogYmx1cigxNHB4KTsKICAgIH0KCiAgICAuaGVybyB7CiAgICAgIHBhZGRpbmc6IDI4cHg7CiAgICB9CgogICAgLmhlcm8gaDEgewogICAgICBtYXJnaW46IDAgMCAxMHB4OwogICAgICBmb250LXNpemU6IGNsYW1wKDEuOHJlbSwgNHZ3LCAzcmVtKTsKICAgICAgbGluZS1oZWlnaHQ6IDEuMTU7CiAgICB9CgogICAgLmhlcm8gcCwKICAgIC5kZXRhaWwtYmxvY2sgcCwKICAgIC5kZXRhaWwtYmxvY2sgbGkgewogICAgICBjb2xvcjogdmFyKC0tbXV0ZWQpOwogICAgICBsaW5lLWhlaWdodDogMS43OwogICAgfQoKICAgIC5lbi1jb3B5LAogICAgLmhlYWRpbmctcGFpci1zZWNvbmRhcnksCiAgICAuaGVyby1zdWJ0aXRsZSB7CiAgICAgIGNvbG9yOiB2YXIoLS1tdXRlZCk7CiAgICAgIGxpbmUtaGVpZ2h0OiAxLjc7CiAgICB9CgogICAgLmhlYWRpbmctcGFpciB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdhcDogNHB4OwogICAgfQoKICAgIC5oZXJvLXN1YnRpdGxlIHsKICAgICAgbWFyZ2luOiAwIDAgMTJweDsKICAgICAgZm9udC1zaXplOiAxcmVtOwogICAgfQoKICAgIC5kYXRlIHsKICAgICAgbWFyZ2luOiAwIDAgMTBweDsKICAgICAgY29sb3I6IHZhcigtLWFjY2VudDIpOwogICAgICBmb250LXNpemU6IDAuOXJlbTsKICAgICAgbGV0dGVyLXNwYWNpbmc6IDAuMDRlbTsKICAgICAgdGV4dC10cmFuc2Zvcm06IHVwcGVyY2FzZTsKICAgIH0KCiAgICAuYWN0aW9ucywKICAgIC5kYXktbmF2IHsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAgZ2FwOiAxMnB4OwogICAgICBmbGV4LXdyYXA6IHdyYXA7CiAgICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICB9CgogICAgLmFjdGlvbnMgewogICAgICBtYXJnaW4tdG9wOiAxOHB4OwogICAgfQoKICAgIC5wcmltYXJ5LAogICAgLnNlY29uZGFyeS1saW5rLAogICAgLmRheS1saW5rIHsKICAgICAgZGlzcGxheTogaW5saW5lLWZsZXg7CiAgICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICAgIGp1c3RpZnktY29udGVudDogY2VudGVyOwogICAgICBtaW4taGVpZ2h0OiA0MnB4OwogICAgICBwYWRkaW5nOiAwIDE0cHg7CiAgICAgIGJvcmRlci1yYWRpdXM6IDEycHg7CiAgICAgIHRleHQtZGVjb3JhdGlvbjogbm9uZTsKICAgICAgZm9udC13ZWlnaHQ6IDcwMDsKICAgIH0KCiAgICAucHJpbWFyeSB7CiAgICAgIGJhY2tncm91bmQ6IGxpbmVhci1ncmFkaWVudCgxMzVkZWcsIHZhcigtLWFjY2VudCksICM4ZWZmYzgpOwogICAgICBjb2xvcjogIzA2MjMzNDsKICAgIH0KCiAgICAuc2Vjb25kYXJ5LWxpbmssCiAgICAuZGF5LWxpbmsgewogICAgICBiYWNrZ3JvdW5kOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDYpOwogICAgICBjb2xvcjogdmFyKC0tdGV4dCk7CiAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wOCk7CiAgICB9CgogICAgLmRheS1uYXYgewogICAgICBqdXN0aWZ5LWNvbnRlbnQ6IHNwYWNlLWJldHdlZW47CiAgICAgIG1hcmdpbi10b3A6IDE4cHg7CiAgICAgIHBhZGRpbmc6IDE4cHg7CiAgICB9CgogICAgLmNvbnRlbnQgewogICAgICBkaXNwbGF5OiBncmlkOwogICAgICBncmlkLXRlbXBsYXRlLWNvbHVtbnM6IG1pbm1heCgwLCAxLjJmcikgbWlubWF4KDMyMHB4LCAwLjhmcik7CiAgICAgIGdhcDogMThweDsKICAgICAgbWFyZ2luLXRvcDogMjJweDsKICAgIH0KCiAgICAuc3RhY2sgewogICAgICBkaXNwbGF5OiBncmlkOwogICAgICBnYXA6IDE4cHg7CiAgICB9CgogICAgLmRldGFpbC1ibG9jayB7CiAgICAgIHBhZGRpbmc6IDIycHg7CiAgICB9CgogICAgLmRldGFpbC1ibG9jayBoMiB7CiAgICAgIG1hcmdpbjogMCAwIDEycHg7CiAgICAgIGZvbnQtc2l6ZTogMS4wNXJlbTsKICAgIH0KCiAgICAubGluay1saXN0IHsKICAgICAgZGlzcGxheTogZ3JpZDsKICAgICAgZ2FwOiA4cHg7CiAgICAgIHBhZGRpbmctbGVmdDogMThweDsKICAgICAgbWFyZ2luOiAxMnB4IDAgMDsKICAgIH0KCiAgICAubGluay1saXN0IGEgewogICAgICBjb2xvcjogdmFyKC0tYWNjZW50KTsKICAgIH0KCiAgICAudG9waWMtbGlzdCB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdhcDogMTJweDsKICAgICAgcGFkZGluZy1sZWZ0OiAyMnB4OwogICAgICBtYXJnaW46IDEycHggMCAwOwogICAgfQoKICAgIC50b3BpYy1saXN0IGxpIHNwYW4gewogICAgICBkaXNwbGF5OiBibG9jazsKICAgIH0KCiAgICAuc2FtcGxlLWxpc3QgewogICAgICBkaXNwbGF5OiBncmlkOwogICAgICBnYXA6IDEycHg7CiAgICB9CgogICAgLnNhbXBsZS1pdGVtIHsKICAgICAgcGFkZGluZzogMTZweDsKICAgICAgYm9yZGVyLXJhZGl1czogMThweDsKICAgICAgYmFja2dyb3VuZDogdmFyKC0tcGFuZWwtMik7CiAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wNik7CiAgICB9CgogICAgLnNhbXBsZS1pdGVtLWhlYWQgewogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBhbGlnbi1pdGVtczogc3RhcnQ7CiAgICAgIGp1c3RpZnktY29udGVudDogc3BhY2UtYmV0d2VlbjsKICAgICAgZ2FwOiAxMnB4OwogICAgICBmbGV4LXdyYXA6IHdyYXA7CiAgICB9CgogICAgLnNhbXBsZS1pdGVtIGgzIHsKICAgICAgbWFyZ2luOiAwIDAgOHB4OwogICAgICBmb250LXNpemU6IDFyZW07CiAgICB9CgogICAgLnNhbXBsZS1pdGVtIHAgewogICAgICBtYXJnaW46IDA7CiAgICB9CgogICAgLnByZXZpZXcgewogICAgICBwYWRkaW5nOiAxOHB4OwogICAgICBwb3NpdGlvbjogc3RpY2t5OwogICAgICB0b3A6IDIwcHg7CiAgICAgIGhlaWdodDogZml0LWNvbnRlbnQ7CiAgICB9CgogICAgLnByZXZpZXcgaDIgewogICAgICBtYXJnaW46IDAgMCAxMnB4OwogICAgICBmb250LXNpemU6IDEuMDVyZW07CiAgICB9CgogICAgaWZyYW1lIHsKICAgICAgd2lkdGg6IDEwMCU7CiAgICAgIGhlaWdodDogNTIwcHg7CiAgICAgIGJvcmRlcjogMDsKICAgICAgYm9yZGVyLXJhZGl1czogMTZweDsKICAgICAgYmFja2dyb3VuZDogcmdiYSgwLCAwLCAwLCAwLjI1KTsKICAgIH0KCiAgICBAbWVkaWEgKG1heC13aWR0aDogOTYwcHgpIHsKICAgICAgLmNvbnRlbnQgewogICAgICAgIGdyaWQtdGVtcGxhdGUtY29sdW1uczogMWZyOwogICAgICB9CgogICAgICAucHJldmlldyB7CiAgICAgICAgcG9zaXRpb246IHN0YXRpYzsKICAgICAgfQoKICAgICAgaWZyYW1lIHsKICAgICAgICBoZWlnaHQ6IDQyMHB4OwogICAgICB9CiAgICB9CiAgPC9zdHlsZT4KPC9oZWFkPgo8Ym9keT4KICA8bWFpbiBjbGFzcz0ic2hlbGwiPgogICAgPHNlY3Rpb24gY2xhc3M9Imhlcm8iPgogICAgICA8cCBjbGFzcz0iZGF0ZSI+MjAyNi4wNy4yODwvcD4KICAgICAgPGgxPmNhcGFiaWxpdHkgcHJvYmUg44GL44KJIHNlY29uZGFyeSB2aWV3IOS6iOeul+OCkue1hOOCgDwvaDE+CiAgICAgIDxwIGNsYXNzPSJoZXJvLXN1YnRpdGxlIj5QbGFubmluZyBzZWNvbmRhcnktdmlldyBidWRnZXRzIGZyb20gY2FwYWJpbGl0eSBwcm9iZXM8L3A+CiAgICAgIDxwPldlYlhSIERldmljZSBBUEnjgIFXZWJYUiBBUiBNb2R1bGXjgIFSYXcgQ2FtZXJhIEFjY2Vzc+OAgUltbWVyc2l2ZSBXZWIgV2ViR1BVIHNhbXBsZXMg44KS56K66KqN44GX44CB5LuK5pel44Gv5qip6ZmQ44Oq44Kv44Ko44K544OI5YmN44GuIGBuYXZpZ2F0b3IueHJgIC8gYG5hdmlnYXRvci5ncHVgIOWtmOWcqOeiuuiqjeOBqOOAgUFSIOOBriBzZWNvbmRhcnkgdmlld3MgLyBmaXJzdC1wZXJzb24gb2JzZXJ2ZXIgdmlldyDov73liqDmmYLjga7mj4/nlLvkuojnrpfjgpLlj6/oppbljJbjgZnjgovoh6rkvZwgSFRNTCDjgrXjg7Pjg5fjg6vjgpLov73liqDjgZfjgb7jgZfjgZ/jgII8L3A+CiAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5BZnRlciByZXZpZXdpbmcgdGhlIFdlYlhSIERldmljZSBBUEksIFdlYlhSIEFSIE1vZHVsZSwgUmF3IENhbWVyYSBBY2Nlc3MsIGFuZCBJbW1lcnNpdmUgV2ViIFdlYkdQVSBzYW1wbGVzLCB0b2RheSdzIG9yaWdpbmFsIEhUTUwgc2FtcGxlIHZpc3VhbGl6ZXMgcHJlLXBlcm1pc3Npb24gYG5hdmlnYXRvci54cmAgLyBgbmF2aWdhdG9yLmdwdWAgY2hlY2tzIGFuZCByZW5kZXItYnVkZ2V0IGNoYW5nZXMgd2hlbiBBUiBzZWNvbmRhcnkgdmlld3MgLyBmaXJzdC1wZXJzb24gb2JzZXJ2ZXIgdmlld3MgYXJlIGVuYWJsZWQuPC9wPgogICAgICA8ZGl2IGNsYXNzPSJhY3Rpb25zIj4KICAgICAgICA8YSBjbGFzcz0icHJpbWFyeSIgaHJlZj0iLi4vb3V0cHV0cy8yMDI2LTA3LTI4X2h0bWxfY2FwYWJpbGl0eV9wcm9iZV9zZWNvbmRhcnlfdmlld19wbGFubmVyLmh0bWwiPuS7o+ihqOOCteODs+ODl+ODq+OCkumWi+OBjyAvIE9wZW4gc2FtcGxlPC9hPgogICAgICAgIDxhIGNsYXNzPSJzZWNvbmRhcnktbGluayIgaHJlZj0iLi4vcGFnZXMvMy5odG1sIj7kuIDopqfjgbjmiLvjgosgLyBCYWNrIHRvIGFyY2hpdmU8L2E+CiAgICAgIDwvZGl2PgogICAgPC9zZWN0aW9uPgoKICAgIDxuYXYgY2xhc3M9ImRheS1uYXYiIGFyaWEtbGFiZWw9IuaXpeS7mOenu+WLlSI+CiAgICAgIDxhIGNsYXNzPSJkYXktbGluayIgaHJlZj0iLi4vZGF5cy8yMDI2LTA3LTI3Lmh0bWwiPuKGkCAyMDI2LjA3LjI3PC9hPgogICAgICA8YSBjbGFzcz0iZGF5LWxpbmsiIGhyZWY9Ii4uL2RheXMvMjAyNi0wNy0yOS5odG1sIj4yMDI2LjA3LjI5IOKGkjwvYT4KICAgIDwvbmF2PgoKICAgIDxzZWN0aW9uIGNsYXNzPSJjb250ZW50Ij4KICAgICAgPGRpdiBjbGFzcz0ic3RhY2siPgogICAgICAgIDxzZWN0aW9uIGNsYXNzPSJkZXRhaWwtYmxvY2siPgogICAgICAgICAgPGgyPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXIiPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItcHJpbWFyeSI+44GT44Gu5pel44Gu44K144Oz44OX44OrPC9zcGFuPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItc2Vjb25kYXJ5Ij5TYW1wbGVzIGZvciB0aGlzIGRheTwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgIDxkaXYgY2xhc3M9InNhbXBsZS1saXN0Ij4KICAgICAgICAgICAgCiAgICAgICAgPGFydGljbGUgY2xhc3M9InNhbXBsZS1pdGVtIj4KICAgICAgICAgIDxkaXYgY2xhc3M9InNhbXBsZS1pdGVtLWhlYWQiPgogICAgICAgICAgICA8ZGl2PgogICAgICAgICAgICAgIDxoMz5DYXBhYmlsaXR5IFByb2JlIFNlY29uZGFyeSBWaWV3IFBsYW5uZXI8L2gzPgogICAgICAgICAgICAgIDxwPjwvcD4KICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgIDxhIGNsYXNzPSJzZWNvbmRhcnktbGluayIgaHJlZj0iLi4vb3V0cHV0cy8yMDI2LTA3LTI4X2h0bWxfY2FwYWJpbGl0eV9wcm9iZV9zZWNvbmRhcnlfdmlld19wbGFubmVyLmh0bWwiPumWi+OBjyAvIE9wZW48L2E+CiAgICAgICAgICA8L2Rpdj4KICAgICAgICA8L2FydGljbGU+CiAgICAgIAogICAgICAgICAgPC9kaXY+CiAgICAgICAgPC9zZWN0aW9uPgogICAgICAgIAogICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7ku4rml6Xjga7ph43opoHjg4jjg5Tjg4Pjgq88L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPktleSB0b3BpY3MgdG9kYXk8L3NwYW4+PC9zcGFuPjwvaDI+CiAgICAgICAgPG9sIGNsYXNzPSJ0b3BpYy1saXN0Ij4KICAgICAgICAgIAogICAgICAgICAgICA8bGk+CiAgICAgICAgICAgICAgPHNwYW4+V2ViWFIgRGV2aWNlIEFQSSDjga8gYG5hdmlnYXRvci54ci5pc1Nlc3Npb25TdXBwb3J0ZWQoKWAg44KS44CBWFIg5L2T6aiT44KS5o+Q56S644GX44Gm44KI44GE44GL44KS5pep5pyf44Gr5Yik5pat44GZ44KL6Z2e5L616KWy55qE44Gq44OB44Kn44OD44Kv44Go44GX44Gm5L2N572u5LuY44GR44Gm44GE44KL44CCPC9zcGFuPgogICAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJlbi1jb3B5Ij5UaGUgV2ViWFIgRGV2aWNlIEFQSSBmcmFtZXMgYG5hdmlnYXRvci54ci5pc1Nlc3Npb25TdXBwb3J0ZWQoKWAgYXMgYW4gZWFybHksIG5vbi1pbnRydXNpdmUgY2hlY2sgZm9yIHdoZXRoZXIgYSBwYWdlIHNob3VsZCBhZHZlcnRpc2UgYW4gWFIgZXhwZXJpZW5jZS48L3NwYW4+CiAgICAgICAgICAgIDwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPgogICAgICAgICAgICAgIDxzcGFuPldlYlhSIEFSIE1vZHVsZSDjga8gYGltbWVyc2l2ZS1hcmDjgIFgZW52aXJvbm1lbnRCbGVuZE1vZGVg44CBYGludGVyYWN0aW9uTW9kZWAg44Gr5Yqg44GI44CBZmlyc3QtcGVyc29uIG9ic2VydmVyIHZpZXcg44KS5Y+X44GR5Y+W44KL44Gr44GvIGBzZWNvbmRhcnktdmlld3NgIGZlYXR1cmUgZGVzY3JpcHRvciDjgbjjga7mmI7npLrnmoQgb3B0LWluIOOBjOW/heimgeOBoOOBqOWumue+qeOBl+OBpuOBhOOCi+OAgjwvc3Bhbj4KICAgICAgICAgICAgICA8c3BhbiBjbGFzcz0iZW4tY29weSI+VGhlIFdlYlhSIEFSIE1vZHVsZSBkZWZpbmVzIGBpbW1lcnNpdmUtYXJgLCBgZW52aXJvbm1lbnRCbGVuZE1vZGVgLCBgaW50ZXJhY3Rpb25Nb2RlYCwgYW5kIHJlcXVpcmVzIGV4cGxpY2l0IG9wdC1pbiB0byB0aGUgYHNlY29uZGFyeS12aWV3c2AgZmVhdHVyZSBkZXNjcmlwdG9yIHRvIHJlY2VpdmUgZmlyc3QtcGVyc29uIG9ic2VydmVyIHZpZXdzLjwvc3Bhbj4KICAgICAgICAgICAgPC9saT4KICAgICAgICAgIAogICAgICAgICAgICA8bGk+CiAgICAgICAgICAgICAgPHNwYW4+c2Vjb25kYXJ5IHZpZXcg44Gv5bi45pmC5Ye644KL5YmN5o+Q44Gn44Gv44Gq44GP44CBY2FwdHVyZSDjgarjganlv4XopoHjgaogZnJhbWUg44Gr44Gg44GRIGB2aWV3c2Ag6YWN5YiX44G454++44KM44KL5Y+v6IO95oCn44GM44GC44KL44Gf44KB44CB5pyA5Yid44GuIDIgdmlldyDlm7rlrprjgafjga/jgarjgY/lhaggdmlldyDjgpLotbDmn7vjgZnjgovlrp/oo4XjgYzph43opoHjgavjgarjgovjgII8L3NwYW4+CiAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImVuLWNvcHkiPlNlY29uZGFyeSB2aWV3cyBzaG91bGQgbm90IGJlIGFzc3VtZWQgdG8gYXBwZWFyIGV2ZXJ5IGZyYW1lOyB0aGV5IG1heSBhcHBlYXIgb25seSBkdXJpbmcgY2FwdHVyZSwgc28gcmVuZGVyIGNvZGUgc2hvdWxkIGl0ZXJhdGUgZXZlcnkgdmlldyBpbnN0ZWFkIG9mIGhhcmQtY29kaW5nIHRoZSBmaXJzdCB0d28uPC9zcGFuPgogICAgICAgICAgICA8L2xpPgogICAgICAgICAgCiAgICAgICAgICAgIDxsaT4KICAgICAgICAgICAgICA8c3Bhbj5SYXcgQ2FtZXJhIEFjY2VzcyDjga8gYGNhbWVyYS1hY2Nlc3Ng44CBYFhSVmlldy5jYW1lcmFg44CBYFhSV2ViR0xCaW5kaW5nLmdldENhbWVyYUltYWdlKClgIOOCkuWumue+qeOBmeOCi+OBjOOAgWNhbWVyYSBpbWFnZSDjga7nm7TmjqXoprPmuKzjga/pq5jjgYQgcHJpdmFjeSBpbXBhY3Qg44KS5oyB44Gk44Gf44KB44CBcHJvYmUg44GoIGZhbGxiYWNrIOOBruW+jOauteOBq+e9ruOBj+OBueOBjeapn+iDveOBqOOBl+OBpuaJseOBhuOAgjwvc3Bhbj4KICAgICAgICAgICAgICA8c3BhbiBjbGFzcz0iZW4tY29weSI+UmF3IENhbWVyYSBBY2Nlc3MgZGVmaW5lcyBgY2FtZXJhLWFjY2Vzc2AsIGBYUlZpZXcuY2FtZXJhYCwgYW5kIGBYUldlYkdMQmluZGluZy5nZXRDYW1lcmFJbWFnZSgpYCwgYnV0IGRpcmVjdCBjYW1lcmEgb2JzZXJ2YXRpb24gY2FycmllcyBoaWdoIHByaXZhY3kgaW1wYWN0IGFuZCBzaG91bGQgc2l0IGJlaGluZCBwcm9iZXMgYW5kIGZhbGxiYWNrcy48L3NwYW4+CiAgICAgICAgICAgIDwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPgogICAgICAgICAgICAgIDxzcGFuPkltbWVyc2l2ZSBXZWIg44GuIFdlYkdQVSBzYW1wbGVzIOOBr+OAgVdlYlhSIOOBqCBXZWJHUFUg44Gu5Lih5pa544GM44GC44Gj44Gm44KCIFhSR1BVQmluZGluZyAvIHByb2plY3Rpb24gbGF5ZXIg5a++5b+c44GM5Yil5p2h5Lu244Gr44Gq44KL44GT44Go44KS56S644GZ44Gf44KB44CBYG5hdmlnYXRvci5ncHVgIOOBoOOBkeOBpyBYUiDmj4/nlLvntYzot6/jgpLnorrlrprjgZfjgarjgYToqK3oqIjjgYzlv4XopoHjgavjgarjgovjgII8L3NwYW4+CiAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImVuLWNvcHkiPkltbWVyc2l2ZSBXZWIncyBXZWJHUFUgc2FtcGxlcyBzaG93IHRoYXQgV2ViWFIgYW5kIFdlYkdQVSBwcmVzZW5jZSBkb2VzIG5vdCBieSBpdHNlbGYgZ3VhcmFudGVlIFhSR1BVQmluZGluZyAvIHByb2plY3Rpb24gbGF5ZXIgc3VwcG9ydCwgc28gYG5hdmlnYXRvci5ncHVgIHNob3VsZCBub3QgZmluYWxpemUgdGhlIFhSIHJlbmRlcmluZyBwYXRoIGFsb25lLjwvc3Bhbj4KICAgICAgICAgICAgPC9saT4KICAgICAgICAgIAogICAgICAgIDwvb2w+CiAgICAgIDwvc2VjdGlvbj4KICAKICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuazqOebruS6i+S+i+OBqOS9leOBjOmdoueZveOBhOOBizwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+Tm90YWJsZSBleGFtcGxlIGFuZCB3aHkgaXQgbWF0dGVyczwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgIDxwPuS7iuaXpeOBruazqOebruOBryBBUiBNb2R1bGUg44GuIGZpcnN0LXBlcnNvbiBvYnNlcnZlciB2aWV3IOOBp+OBmeOAgumMsueUu+OChOmFjeS/oeeUqOOBruimlueCueOBr+ODpuODvOOCtuODvOOBruW3puWPs+ecvCB2aWV3IOOBqOWujOWFqOOBq+OBr+S4gOiHtOOBl+OBquOBhOOBn+OCgeOAgWBzZWNvbmRhcnktdmlld3NgIOOCkiBvcHRpb25hbCBmZWF0dXJlIOOBqOOBl+OBpuacieWKueOBq+OBl+OAgWB2aWV3LmlzRmlyc3RQZXJzb25PYnNlcnZlcmAg44KS6KaL44Gm5Yil5omx44GE44GZ44KL6Kit6KiI44GM5rGC44KB44KJ44KM44G+44GZ44CC44GT44KM44GvIGNhbWVyYS1hY2Nlc3Mg44KI44KK6Lu944GE5oOF5aCx44Gn44KC44CBY2FwdHVyZSDnlKjjga7ov73liqAgdmlldyDjgYwgZnJhbWUgYnVkZ2V0IOOCkumjn+OBhuOBqOOBhOOBhuWun+ijheS4iuOBruirlueCueOCkuS9nOOCiuOBvuOBmeOAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5Ub2RheSdzIG5vdGFibGUgZXhhbXBsZSBpcyB0aGUgQVIgTW9kdWxlJ3MgZmlyc3QtcGVyc29uIG9ic2VydmVyIHZpZXcuIEEgY2FwdHVyZSBvciBzdHJlYW1pbmcgdmlld3BvaW50IG1heSBub3QgbWF0Y2ggdGhlIHVzZXIncyBleWUgdmlld3MsIHNvIGFwcGxpY2F0aW9ucyBvcHQgaW50byBgc2Vjb25kYXJ5LXZpZXdzYCBhbmQgdHJlYXQgYHZpZXcuaXNGaXJzdFBlcnNvbk9ic2VydmVyYCBzZXBhcmF0ZWx5LiBFdmVuIHdpdGhvdXQgcmF3IGNhbWVyYSBhY2Nlc3MsIHRoaXMgY3JlYXRlcyBhIGNvbmNyZXRlIHJlbmRlci1idWRnZXQgY29uY2VybiBiZWNhdXNlIGNhcHR1cmUgdmlld3MgYWRkIHdvcmsuPC9wPgogICAgICAgICAgCiAgICA8dWwgY2xhc3M9ImxpbmstbGlzdCI+CiAgICAgIAogICAgICAgICAgICA8bGk+PGEgaHJlZj0iaHR0cHM6Ly93d3cudzMub3JnL1RSL3dlYnhyLWFyLW1vZHVsZS0xLyNmaXJzdC1wZXJzb24tb2JzZXJ2ZXItdmlld3MiIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPlczQzogV2ViWFIgQVIgTW9kdWxlIC0gRmlyc3QgUGVyc29uIE9ic2VydmVyIFZpZXdzPC9hPjwvbGk+CiAgICAgICAgICAKICAgIDwvdWw+CiAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7ooajnj77jg7vjgqTjg7Pjgr/jg6njgq/jgrfjg6fjg7Pjga7jgqLjgqTjg4fjgqI8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPkV4cHJlc3Npb24gYW5kIGludGVyYWN0aW9uIGlkZWE8L3NwYW4+PC9zcGFuPjwvaDI+CiAgICAgICAgICA8cD7nlLvpnaLkuIrpg6jjgasgY2FwYWJpbGl0eSBncmFwaOOAgeS4reWkruOBqyBwcmltYXJ5IHZpZXcg44GoIG9ic2VydmVyIHZpZXfjgIHkuIvpg6jjgasgdmlldyDjgZTjgajjga4gbXMg5LqI566X44OQ44O844KS572u44GN44G+44GX44Gf44CCYFJ1biBwcm9iZWAg44Gv5a6f44OW44Op44Km44K244GuIGBuYXZpZ2F0b3IueHJgIC8gYG5hdmlnYXRvci5ncHVgIOOBruacieeEoeOBoOOBkeOCkueiuuiqjeOBl+OAgWBTaW11bGF0ZSByZXF1ZXN0YCDjga8gYHNlY29uZGFyeS12aWV3c2Ag44KSIG9wdGlvbmFsIGZlYXR1cmUg44Gr5YWl44KM44Gf5aC05ZCI44Gu44Ot44Kw44KS6KGo56S644GX44G+44GZ44CC44K544OG44O844K444KS44OJ44Op44OD44Kw44GZ44KL44GoIGNhcHR1cmUg44Gu5rOo6KaW6aCY5Z+f44GM5YuV44GN44CBc2Vjb25kYXJ5IHZpZXcgbG9hZCDjgoQgcHJpdmFjeSDjga7lgKTjgafntYzot6/jgYzliIfjgormm7/jgo/jgorjgb7jgZnjgII8L3A+CiAgICAgICAgICA8cCBjbGFzcz0iZW4tY29weSI+VGhlIHNjcmVlbiBjb21iaW5lcyBhIGNhcGFiaWxpdHkgZ3JhcGgsIHByaW1hcnkgYW5kIG9ic2VydmVyIHZpZXdzLCBhbmQgcGVyLXZpZXcgbWlsbGlzZWNvbmQgYnVkZ2V0IGJhcnMuIGBSdW4gcHJvYmVgIG9ubHkgY2hlY2tzIHRoZSBwcmVzZW5jZSBvZiBgbmF2aWdhdG9yLnhyYCBhbmQgYG5hdmlnYXRvci5ncHVgOyBgU2ltdWxhdGUgcmVxdWVzdGAgZGlzcGxheXMgYSBwbGFubmVkIG9wdGlvbmFsLWZlYXR1cmUgbG9nIHdpdGggYHNlY29uZGFyeS12aWV3c2AuIERyYWdnaW5nIHRoZSBzdGFnZSBtb3ZlcyBjYXB0dXJlIGVtcGhhc2lzLCBhbmQgcm91dGUgc2VsZWN0aW9uIGNoYW5nZXMgd2l0aCBzZWNvbmRhcnktdmlldyBsb2FkIGFuZCBwcml2YWN5IHZhbHVlcy48L3A+CiAgICAgICAgICAKICAgICAgICA8L3NlY3Rpb24+CiAgICAgIAoKICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuWItuS9nOOBq+S9v+OBiOOBneOBhuOBquaKgOihk+ODoeODojwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+UHJvZHVjdGlvbiBub3RlPC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPHA+5a6f6KOF44Gn44GvIGBuYXZpZ2F0b3IueHJgIOOBruWtmOWcqOeiuuiqjeOAgWBpc1Nlc3Npb25TdXBwb3J0ZWQoJnF1b3Q7aW1tZXJzaXZlLWFyJnF1b3Q7KWDjgIF1c2VyIGFjdGl2YXRpb24g5YaF44GuIGByZXF1ZXN0U2Vzc2lvbigpYCDjgpLmrrXpmo7ljJbjgZfjgIFgb3B0aW9uYWxGZWF0dXJlc2Ag44GrIGBzZWNvbmRhcnktdmlld3NgIOOCkuWFpeOCjOOBpuOCgiB2aWV3IOaVsOOCkuWbuuWumuOBl+OBquOBhOOBk+OBqOOBjOmHjeimgeOBp+OBmeOAgldlYkdQVSDntYzot6/jga8gYG5hdmlnYXRvci5ncHVgIOOBruacieeEoeOBoOOBkeOBp+OBquOBj+OAgVhSR1BVQmluZGluZyDjgaggWFJQcm9qZWN0aW9uTGF5ZXIg44Gu5a++5b+c44KS5Yil44Gr5Yik5a6a44GX44G+44GZ44CCY2FtZXJhLWFjY2VzcyDjga/lv4XopoHmgKfjgYzoqqzmmI7jgafjgY3jgovmnIDlvozjga7ntYzot6/jgajjgZfjgabmibHjgYTjgIFvYnNlcnZlciB2aWV3IOOBruaPj+eUu+OBryBvdmVybGF5IOOChOWuieWumuWMluWHpueQhuOBqOWQjOOBmOS6iOeul+ihqOOBq+i8ieOBm+OBpueuoeeQhuOBl+OBvuOBmeOAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5JbXBsZW1lbnRhdGlvbiBzaG91bGQgc3RhZ2UgYG5hdmlnYXRvci54cmAgcHJlc2VuY2UgY2hlY2tzLCBgaXNTZXNzaW9uU3VwcG9ydGVkKCZxdW90O2ltbWVyc2l2ZS1hciZxdW90OylgLCBhbmQgYHJlcXVlc3RTZXNzaW9uKClgIGluc2lkZSB1c2VyIGFjdGl2YXRpb24sIHdoaWxlIG5ldmVyIGFzc3VtaW5nIGEgZml4ZWQgdmlldyBjb3VudCB3aGVuIGBzZWNvbmRhcnktdmlld3NgIGlzIG9wdGlvbmFsLiBXZWJHUFUgcm91dGluZyBuZWVkcyBzZXBhcmF0ZSBjaGVja3MgZm9yIFhSR1BVQmluZGluZyBhbmQgWFJQcm9qZWN0aW9uTGF5ZXIgcmF0aGVyIHRoYW4gYG5hdmlnYXRvci5ncHVgIGFsb25lLiBUcmVhdCBjYW1lcmEtYWNjZXNzIGFzIHRoZSBmaW5hbCBwYXRoIHRoYXQgbXVzdCBqdXN0aWZ5IGl0cyBuZWVkLCBhbmQgdHJhY2sgb2JzZXJ2ZXItdmlldyByZW5kZXJpbmcgaW4gdGhlIHNhbWUgYnVkZ2V0IHRhYmxlIGFzIG92ZXJsYXlzIGFuZCBzdGFiaWxpemF0aW9uLjwvcD4KICAgICAgICAgIAogICAgICAgIDwvc2VjdGlvbj4KICAgICAgCgogICAgICAgIDxzZWN0aW9uIGNsYXNzPSJkZXRhaWwtYmxvY2siPgogICAgICAgICAgPGgyPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXIiPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItcHJpbWFyeSI+5piO5pel5Lul6ZmN44Km44Kp44OD44OB44GZ44KL5a++6LGhPC9zcGFuPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItc2Vjb25kYXJ5Ij5XYXRjaCBuZXh0PC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPHA+V2ViWFIgRGV2aWNlIEFQSSDjga4gc2Vjb25kYXJ5IHZpZXcg44G+44KP44KK44CBQVIgTW9kdWxlIOOBriBmaXJzdC1wZXJzb24gb2JzZXJ2ZXIgdmlld+OAgVJhdyBDYW1lcmEgQWNjZXNzIOOBriBwcml2YWN5IGluZGljYXRvcuOAgVdlYkdQVSBCaW5kaW5nIOOBriBYUkdQVUJpbmRpbmcg5a++5b+c44CBSW1tZXJzaXZlIFdlYiBzYW1wbGVzIOOBriBjYXBhYmlsaXR5IG1lc3NhZ2luZyDjgpLntpnntprjgZfjgabopovjgb7jgZnjgILmrKHjga/ku4rml6Xjga4gcGxhbm5lciDjgavjgIHlkIQgdmlldyDjga7op6Plg4/luqblgI3njofjgoQgZm92ZWF0aW9u44CBb2JzZXJ2ZXIgdmlldyDjgaDjgZEgVUkg44KS55yB44GP5Yik5a6a44KS6L+95Yqg44GX44G+44GZ44CCPC9wPgogICAgICAgICAgPHAgY2xhc3M9ImVuLWNvcHkiPkNvbnRpbnVlIHdhdGNoaW5nIHNlY29uZGFyeSB2aWV3cyBpbiB0aGUgV2ViWFIgRGV2aWNlIEFQSSwgZmlyc3QtcGVyc29uIG9ic2VydmVyIHZpZXdzIGluIHRoZSBBUiBNb2R1bGUsIFJhdyBDYW1lcmEgQWNjZXNzIHByaXZhY3kgaW5kaWNhdG9ycywgWFJHUFVCaW5kaW5nIHN1cHBvcnQgaW4gV2ViR1BVIEJpbmRpbmcsIGFuZCBjYXBhYmlsaXR5IG1lc3NhZ2luZyBpbiBJbW1lcnNpdmUgV2ViIHNhbXBsZXMuIE5leHQsIGFkZCBwZXItdmlldyByZXNvbHV0aW9uIHNjYWxlLCBmb3ZlYXRpb24sIGFuZCBydWxlcyBmb3Igb21pdHRpbmcgVUkgb25seSBpbiBvYnNlcnZlciB2aWV3cy48L3A+CiAgICAgICAgICAKICAgICAgICA8L3NlY3Rpb24+CiAgICAgIAoKICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuippuOBmeOBquOCieOBk+OCjDwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+SWYgeW91IHRyeSBvbmUgdGhpbmc8L3NwYW4+PC9zcGFuPjwvaDI+CiAgICAgICAgICA8cD7jgrXjg7Pjg5fjg6vjgpLplovjgYTjgaYgYFJ1biBwcm9iZWAg44KS5oq844GX44CB54++5Zyo44Gu44OW44Op44Km44K244GMIGBuYXZpZ2F0b3IueHJgIOOBqCBgbmF2aWdhdG9yLmdwdWAg44KS6Zyy5Ye644GX44Gm44GE44KL44GL44KS6KaL44Gm44GP44Gg44GV44GE44CC44Gd44Gu5b6MIGBDYXB0dXJlYCBtb2RlIOOBq+WIh+OCiuabv+OBiOOAgXNlY29uZGFyeSB2aWV3IGxvYWQg44KS5LiK44GS44GmIGBTaW11bGF0ZSByZXF1ZXN0YCDjgpLmirzjgZnjgajjgIFgc2Vjb25kYXJ5LXZpZXdzYCDjgpIgb3B0aW9uYWwgZmVhdHVyZSDjgavlhaXjgozjgZ/loLTlkIjjga4gdmlldyBjb3VudCDjgajkuojnrpfphY3liIbjgYzlpInjgo/jgorjgb7jgZnjgII8L3A+CiAgICAgICAgICA8cCBjbGFzcz0iZW4tY29weSI+T3BlbiB0aGUgc2FtcGxlIGFuZCBwcmVzcyBgUnVuIHByb2JlYCB0byBzZWUgd2hldGhlciB0aGUgY3VycmVudCBicm93c2VyIGV4cG9zZXMgYG5hdmlnYXRvci54cmAgYW5kIGBuYXZpZ2F0b3IuZ3B1YC4gVGhlbiBzd2l0Y2ggdG8gYENhcHR1cmVgLCByYWlzZSBzZWNvbmRhcnktdmlldyBsb2FkLCBhbmQgcHJlc3MgYFNpbXVsYXRlIHJlcXVlc3RgIHRvIHNlZSBob3cgb3B0aW9uYWwgYHNlY29uZGFyeS12aWV3c2AgY2hhbmdlcyB0aGUgdmlldyBjb3VudCBhbmQgYnVkZ2V0IGRpc3RyaWJ1dGlvbi48L3A+CiAgICAgICAgICAKICAgIDx1bCBjbGFzcz0ibGluay1saXN0Ij4KICAgICAgCiAgICAgICAgICAgIDxsaT48YSBocmVmPSIuLi9vdXRwdXRzLzIwMjYtMDctMjhfaHRtbF9jYXBhYmlsaXR5X3Byb2JlX3NlY29uZGFyeV92aWV3X3BsYW5uZXIuaHRtbCIgdGFyZ2V0PSJfYmxhbmsiIHJlbD0ibm9yZWZlcnJlciI+T3BlbiBDYXBhYmlsaXR5IFByb2JlIFNlY29uZGFyeSBWaWV3IFBsYW5uZXI8L2E+PC9saT4KICAgICAgICAgIAogICAgPC91bD4KICAKICAgICAgICA8L3NlY3Rpb24+CiAgICAgIAoKICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPumAsuihjOODnuODg+ODlzwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+UHJvZ3Jlc3MgbWFwPC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPHA+6Kq/5p+7OiBXZWJYUiBEZXZpY2UgQVBJ44CBQVIgTW9kdWxl44CBUmF3IENhbWVyYSBBY2Nlc3PjgIFXZWJHUFUgc2FtcGxlc+OAgURldmljZSBBUEkgZWRpdG9yJ3MgZHJhZnQg44KS56K66KqN44CC44Ki44Kk44OH44KiOiDliY3ml6Xjga4gY2FtZXJhLWFjY2VzcyBmYWxsYmFjayByb3V0ZXIg44Gr44CB5a6f44OW44Op44Km44K2IGNhcGFiaWxpdHkgcHJvYmUg44GoIHNlY29uZGFyeSB2aWV3IOS6iOeul+OCkui2s+OBmeOAguWun+ijhTogY2FudmFzIOOBriB2aWV3IHBsYW5uZXLjgIHlrp/lnKggQVBJIOOBriBwcmVzZW5jZSBjaGVja+OAgeeWkeS8vCByZXF1ZXN0U2Vzc2lvbiBsb2fjgIFvYnNlcnZlciB2aWV3IOi/veWKoOOAgXBlci12aWV3IGJ1ZGdldCBiYXLjgIFkcmFnIGZvY3VzIOOCkui/veWKoOOAguaknOiovDogSlNPTiBwYXJzZeOAgUhUTUwgc2NyaXB0IOani+aWh+OAgWdhbGxlcnkg5YaN55Sf5oiQ44CB5YWs6ZaLIFVSTCDjga4gSFRUUCAyMDAg44KS56K66KqN44GZ44KL44CCPC9wPgogICAgICAgICAgPHAgY2xhc3M9ImVuLWNvcHkiPlJlc2VhcmNoOiByZXZpZXdlZCB0aGUgV2ViWFIgRGV2aWNlIEFQSSwgQVIgTW9kdWxlLCBSYXcgQ2FtZXJhIEFjY2VzcywgV2ViR1BVIHNhbXBsZXMsIGFuZCBEZXZpY2UgQVBJIGVkaXRvcidzIGRyYWZ0LiBJZGVhOiBhZGQgcmVhbCBicm93c2VyIGNhcGFiaWxpdHkgcHJvYmluZyBhbmQgc2Vjb25kYXJ5LXZpZXcgYnVkZ2V0aW5nIHRvIHllc3RlcmRheSdzIGNhbWVyYS1hY2Nlc3MgZmFsbGJhY2sgcm91dGVyLiBJbXBsZW1lbnRhdGlvbjogYWRkZWQgYSBjYW52YXMgdmlldyBwbGFubmVyLCByZWFsIEFQSSBwcmVzZW5jZSBjaGVja3MsIHNpbXVsYXRlZCByZXF1ZXN0U2Vzc2lvbiBsb2dzLCBvYnNlcnZlci12aWV3IGluc2VydGlvbiwgcGVyLXZpZXcgYnVkZ2V0IGJhcnMsIGFuZCBkcmFnIGZvY3VzLiBWYWxpZGF0aW9uOiBjaGVjayBKU09OIHBhcnNpbmcsIEhUTUwgc2NyaXB0IHN5bnRheCwgZ2FsbGVyeSByZWdlbmVyYXRpb24sIGFuZCBIVFRQIDIwMCBmb3IgcHVibGlzaGVkIFVSTHMuPC9wPgogICAgICAgICAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7kv6/nnrDjg6Hjg6I8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPkJpcmQncy1leWUgbWVtbzwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgIDxwPuOBk+OBk+aVsOaXpeOBrua1geOCjOOBryBjYW1lcmEgcGl4ZWwg44Gd44Gu44KC44Gu44GL44KJ44CB5ZCM5oSP44CBZmFsbGJhY2vjgIFjYXBhYmlsaXR5IHByb2Jl44CBY2FwdHVyZSB2aWV3IOOBuOenu+OBo+OBpuOBhOOBvuOBmeOAglhSIOOBruWFrOmWi+OCteODs+ODl+ODq+OBp+OBr+a0vuaJi+OBquaPj+eUu+OCiOOCiuOAgei1t+WLleWJjeOBq+S9leOCkueiuuiqjeOBl+OAgeOBqeOBriBmZWF0dXJlIOOCkiBvcHRpb25hbCDjgavjgZfjgIF2aWV3IOaVsOOBjOWkieOCj+OBo+OBpuOCguWjiuOCjOOBquOBhOOBi+OCkuWPr+imluWMluOBmeOCi+Wwj+OBleOBqumBk+WFt+OBjOW9ueOBq+eri+OBoeOBvuOBmeOAguS7iuaXpeOBruOCteODs+ODl+ODq+OBr+OBneOBruiouuaWreWxpOOCkueLrOeri+OBl+OBn+S9k+mok+OBqOOBl+OBpuWIh+OCiuWHuuOBl+OBvuOBl+OBn+OAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5UaGUgcmVjZW50IHByb2dyZXNzaW9uIGhhcyBtb3ZlZCBmcm9tIGNhbWVyYSBwaXhlbHMgdGhlbXNlbHZlcyB0byBjb25zZW50LCBmYWxsYmFja3MsIGNhcGFiaWxpdHkgcHJvYmVzLCBhbmQgY2FwdHVyZSB2aWV3cy4gRm9yIFhSIHNhbXBsZXMsIGEgc21hbGwgdG9vbCB0aGF0IHZpc3VhbGl6ZXMgd2hhdCB0byBjaGVjayBiZWZvcmUgbGF1bmNoLCB3aGljaCBmZWF0dXJlcyBzdGF5IG9wdGlvbmFsLCBhbmQgd2hldGhlciBjaGFuZ2luZyB2aWV3IGNvdW50cyBicmVha3MgcmVuZGVyaW5nIGNhbiBiZSBtb3JlIHVzZWZ1bCB0aGFuIGZsYXNoeSByZW5kZXJpbmcuIFRvZGF5J3Mgc2FtcGxlIGlzb2xhdGVzIHRoYXQgZGlhZ25vc3RpYyBsYXllciBhcyBpdHMgb3duIGV4cGVyaWVuY2UuPC9wPgogICAgICAgICAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7ku4rml6Xjga7jg5/jg4voqabkvZzlgJnoo5w8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPlRvZGF5J3MgbWluaSBwcm90b3R5cGUgY2FuZGlkYXRlPC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPHA+5o6h55So44GX44Gf5YCZ6KOc44GvIGBDYXBhYmlsaXR5IFByb2JlIFNlY29uZGFyeSBWaWV3IFBsYW5uZXJgIOOBp+OBmeOAguaoqemZkOOCkuimgeaxguOBm+OBmuOBqyBgbmF2aWdhdG9yLnhyYCAvIGBuYXZpZ2F0b3IuZ3B1YCDjga7lrZjlnKjjgpLnorroqo3jgZfjgIFwaG9uZSAvIGhlYWRzZXQgLyBjYXB0dXJlIOOBruaDs+WumuOBpyBwcmltYXJ5IHZpZXcg44GoIGZpcnN0LXBlcnNvbiBvYnNlcnZlciB2aWV3IOOBruani+aIkOOAgW9wdGlvbmFsIGZlYXR1cmVz44CB5o+P55S75LqI566X44CBZmFsbGJhY2sgcm91dGUg44KS5Y+v6KaW5YyW44GX44G+44GZ44CC5qyh44Gr6Laz44GZ44Gq44KJ44CB5a6f6Zqb44GuIGBpc1Nlc3Npb25TdXBwb3J0ZWQoKWAg57WQ5p6c44CBWFJHUFVCaW5kaW5nIOOBruautemajueahCBwcm9iZeOAgW9ic2VydmVyIHZpZXcg44Gg44GR44GrIHdhdGVybWFyayAvIHByaXZhY3kgaW5kaWNhdG9yIOOCkui8ieOBm+OCi+WIhuWykOOCkui/veWKoOOBl+OBvuOBmeOAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5UaGUgc2VsZWN0ZWQgcHJvdG90eXBlIGlzIGBDYXBhYmlsaXR5IFByb2JlIFNlY29uZGFyeSBWaWV3IFBsYW5uZXJgLiBXaXRob3V0IHJlcXVlc3RpbmcgcGVybWlzc2lvbnMsIGl0IGNoZWNrcyBgbmF2aWdhdG9yLnhyYCAvIGBuYXZpZ2F0b3IuZ3B1YCBwcmVzZW5jZSBhbmQgdmlzdWFsaXplcyBwcmltYXJ5IHZpZXdzLCBmaXJzdC1wZXJzb24gb2JzZXJ2ZXIgdmlld3MsIG9wdGlvbmFsIGZlYXR1cmVzLCByZW5kZXIgYnVkZ2V0cywgYW5kIGZhbGxiYWNrIHJvdXRlcyBmb3IgcGhvbmUsIGhlYWRzZXQsIGFuZCBjYXB0dXJlIHNjZW5hcmlvcy4gVXNlZnVsIG5leHQgYWRkaXRpb25zIGFyZSByZWFsIGBpc1Nlc3Npb25TdXBwb3J0ZWQoKWAgcmVzdWx0cywgc3RhZ2VkIFhSR1BVQmluZGluZyBwcm9iZXMsIGFuZCBicmFuY2hlcyB0aGF0IGFkZCB3YXRlcm1hcmsgb3IgcHJpdmFjeSBpbmRpY2F0b3JzIG9ubHkgdG8gb2JzZXJ2ZXIgdmlld3MuPC9wPgogICAgICAgICAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKICAgICAgICAKICAgICAgICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuWPguiAg+ODquODs+OCrzwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+UmVmZXJlbmNlIGxpbmtzPC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgICAgICAgCiAgICA8dWwgY2xhc3M9ImxpbmstbGlzdCI+CiAgICAgIAogICAgICAgICAgICA8bGk+PGEgaHJlZj0iLi4vb3V0cHV0cy8yMDI2LTA3LTI4X2h0bWxfY2FwYWJpbGl0eV9wcm9iZV9zZWNvbmRhcnlfdmlld19wbGFubmVyLmh0bWwiIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPlRvZGF5J3Mgc2FtcGxlOiBDYXBhYmlsaXR5IFByb2JlIFNlY29uZGFyeSBWaWV3IFBsYW5uZXI8L2E+PC9saT4KICAgICAgICAgIAogICAgICAgICAgICA8bGk+PGEgaHJlZj0iaHR0cHM6Ly93d3cudzMub3JnL1RSL3dlYnhyLyIgdGFyZ2V0PSJfYmxhbmsiIHJlbD0ibm9yZWZlcnJlciI+VzNDOiBXZWJYUiBEZXZpY2UgQVBJPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vd3d3LnczLm9yZy9UUi93ZWJ4ci1hci1tb2R1bGUtMS8iIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPlczQzogV2ViWFIgQXVnbWVudGVkIFJlYWxpdHkgTW9kdWxlPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vcmF3LWNhbWVyYS1hY2Nlc3MvIiB0YXJnZXQ9Il9ibGFuayIgcmVsPSJub3JlZmVycmVyIj5JbW1lcnNpdmUgV2ViOiBXZWJYUiBSYXcgQ2FtZXJhIEFjY2VzcyBNb2R1bGU8L2E+PC9saT4KICAgICAgICAgIAogICAgICAgICAgICA8bGk+PGEgaHJlZj0iaHR0cHM6Ly9pbW1lcnNpdmUtd2ViLmdpdGh1Yi5pby93ZWJ4ci1zYW1wbGVzL3dlYmdwdS8iIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPkltbWVyc2l2ZSBXZWI6IFdlYlhSIFdlYkdQVSBTYW1wbGVzPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vd2VieHIvIiB0YXJnZXQ9Il9ibGFuayIgcmVsPSJub3JlZmVycmVyIj5JbW1lcnNpdmUgV2ViOiBXZWJYUiBEZXZpY2UgQVBJIEVkaXRvcidzIERyYWZ0PC9hPjwvbGk+CiAgICAgICAgICAKICAgIDwvdWw+CiAgCiAgICAgICAgICAgICAgPC9zZWN0aW9uPgogICAgICAgICAgICAKICAgICAgPC9kaXY+CgogICAgICA8YXNpZGUgY2xhc3M9InByZXZpZXciPgogICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuOCteODs+ODl+ODq+ODl+ODrOODk+ODpeODvDwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+U2FtcGxlIHByZXZpZXc8L3NwYW4+PC9zcGFuPjwvaDI+CiAgICAgICAgPGlmcmFtZSBzcmM9Ii4uL291dHB1dHMvMjAyNi0wNy0yOF9odG1sX2NhcGFiaWxpdHlfcHJvYmVfc2Vjb25kYXJ5X3ZpZXdfcGxhbm5lci5odG1sIiBsb2FkaW5nPSJsYXp5IiB0aXRsZT0iQ2FwYWJpbGl0eSBQcm9iZSBTZWNvbmRhcnkgVmlldyBQbGFubmVyIj48L2lmcmFtZT4KICAgICAgPC9hc2lkZT4KICAgIDwvc2VjdGlvbj4KICA8L21haW4+CjwvYm9keT4KPC9odG1sPg==
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>capability probe から secondary view 予算を組む | 2026-07-28</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.28</p>
+      <h1>capability probe から secondary view 予算を組む</h1>
+      <p class="hero-subtitle">Planning secondary-view budgets from capability probes</p>
+      <p>WebXR Device API、WebXR AR Module、Raw Camera Access、Immersive Web WebGPU samples を確認し、今日は権限リクエスト前の `navigator.xr` / `navigator.gpu` 存在確認と、AR の secondary views / first-person observer view 追加時の描画予算を可視化する自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the WebXR Device API, WebXR AR Module, Raw Camera Access, and Immersive Web WebGPU samples, today's original HTML sample visualizes pre-permission `navigator.xr` / `navigator.gpu` checks and render-budget changes when AR secondary views / first-person observer views are enabled.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-28_html_capability_probe_secondary_view_planner.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../pages/3.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-27.html">← 2026.07.27</a>
+      <a class="day-link" href="../days/2026-07-29.html">2026.07.29 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Capability Probe Secondary View Planner</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-28_html_capability_probe_secondary_view_planner.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Device API は `navigator.xr.isSessionSupported()` を、XR 体験を提示してよいかを早期に判断する非侵襲的なチェックとして位置付けている。</span>
+              <span class="en-copy">The WebXR Device API frames `navigator.xr.isSessionSupported()` as an early, non-intrusive check for whether a page should advertise an XR experience.</span>
+            </li>
+          
+            <li>
+              <span>WebXR AR Module は `immersive-ar`、`environmentBlendMode`、`interactionMode` に加え、first-person observer view を受け取るには `secondary-views` feature descriptor への明示的 opt-in が必要だと定義している。</span>
+              <span class="en-copy">The WebXR AR Module defines `immersive-ar`, `environmentBlendMode`, `interactionMode`, and requires explicit opt-in to the `secondary-views` feature descriptor to receive first-person observer views.</span>
+            </li>
+          
+            <li>
+              <span>secondary view は常時出る前提ではなく、capture など必要な frame にだけ `views` 配列へ現れる可能性があるため、最初の 2 view 固定ではなく全 view を走査する実装が重要になる。</span>
+              <span class="en-copy">Secondary views should not be assumed to appear every frame; they may appear only during capture, so render code should iterate every view instead of hard-coding the first two.</span>
+            </li>
+          
+            <li>
+              <span>Raw Camera Access は `camera-access`、`XRView.camera`、`XRWebGLBinding.getCameraImage()` を定義するが、camera image の直接観測は高い privacy impact を持つため、probe と fallback の後段に置くべき機能として扱う。</span>
+              <span class="en-copy">Raw Camera Access defines `camera-access`, `XRView.camera`, and `XRWebGLBinding.getCameraImage()`, but direct camera observation carries high privacy impact and should sit behind probes and fallbacks.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の WebGPU samples は、WebXR と WebGPU の両方があっても XRGPUBinding / projection layer 対応が別条件になることを示すため、`navigator.gpu` だけで XR 描画経路を確定しない設計が必要になる。</span>
+              <span class="en-copy">Immersive Web's WebGPU samples show that WebXR and WebGPU presence does not by itself guarantee XRGPUBinding / projection layer support, so `navigator.gpu` should not finalize the XR rendering path alone.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は AR Module の first-person observer view です。録画や配信用の視点はユーザーの左右眼 view と完全には一致しないため、`secondary-views` を optional feature として有効にし、`view.isFirstPersonObserver` を見て別扱いする設計が求められます。これは camera-access より軽い情報でも、capture 用の追加 view が frame budget を食うという実装上の論点を作ります。</p>
+          <p class="en-copy">Today's notable example is the AR Module's first-person observer view. A capture or streaming viewpoint may not match the user's eye views, so applications opt into `secondary-views` and treat `view.isFirstPersonObserver` separately. Even without raw camera access, this creates a concrete render-budget concern because capture views add work.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr-ar-module-1/#first-person-observer-views" target="_blank" rel="noreferrer">W3C: WebXR AR Module - First Person Observer Views</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>画面上部に capability graph、中央に primary view と observer view、下部に view ごとの ms 予算バーを置きました。`Run probe` は実ブラウザの `navigator.xr` / `navigator.gpu` の有無だけを確認し、`Simulate request` は `secondary-views` を optional feature に入れた場合のログを表示します。ステージをドラッグすると capture の注視領域が動き、secondary view load や privacy の値で経路が切り替わります。</p>
+          <p class="en-copy">The screen combines a capability graph, primary and observer views, and per-view millisecond budget bars. `Run probe` only checks the presence of `navigator.xr` and `navigator.gpu`; `Simulate request` displays a planned optional-feature log with `secondary-views`. Dragging the stage moves capture emphasis, and route selection changes with secondary-view load and privacy values.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では `navigator.xr` の存在確認、`isSessionSupported(&quot;immersive-ar&quot;)`、user activation 内の `requestSession()` を段階化し、`optionalFeatures` に `secondary-views` を入れても view 数を固定しないことが重要です。WebGPU 経路は `navigator.gpu` の有無だけでなく、XRGPUBinding と XRProjectionLayer の対応を別に判定します。camera-access は必要性が説明できる最後の経路として扱い、observer view の描画は overlay や安定化処理と同じ予算表に載せて管理します。</p>
+          <p class="en-copy">Implementation should stage `navigator.xr` presence checks, `isSessionSupported(&quot;immersive-ar&quot;)`, and `requestSession()` inside user activation, while never assuming a fixed view count when `secondary-views` is optional. WebGPU routing needs separate checks for XRGPUBinding and XRProjectionLayer rather than `navigator.gpu` alone. Treat camera-access as the final path that must justify its need, and track observer-view rendering in the same budget table as overlays and stabilization.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Device API の secondary view まわり、AR Module の first-person observer view、Raw Camera Access の privacy indicator、WebGPU Binding の XRGPUBinding 対応、Immersive Web samples の capability messaging を継続して見ます。次は今日の planner に、各 view の解像度倍率や foveation、observer view だけ UI を省く判定を追加します。</p>
+          <p class="en-copy">Continue watching secondary views in the WebXR Device API, first-person observer views in the AR Module, Raw Camera Access privacy indicators, XRGPUBinding support in WebGPU Binding, and capability messaging in Immersive Web samples. Next, add per-view resolution scale, foveation, and rules for omitting UI only in observer views.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルを開いて `Run probe` を押し、現在のブラウザが `navigator.xr` と `navigator.gpu` を露出しているかを見てください。その後 `Capture` mode に切り替え、secondary view load を上げて `Simulate request` を押すと、`secondary-views` を optional feature に入れた場合の view count と予算配分が変わります。</p>
+          <p class="en-copy">Open the sample and press `Run probe` to see whether the current browser exposes `navigator.xr` and `navigator.gpu`. Then switch to `Capture`, raise secondary-view load, and press `Simulate request` to see how optional `secondary-views` changes the view count and budget distribution.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-28_html_capability_probe_secondary_view_planner.html" target="_blank" rel="noreferrer">Open Capability Probe Secondary View Planner</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Device API、AR Module、Raw Camera Access、WebGPU samples、Device API editor's draft を確認。アイデア: 前日の camera-access fallback router に、実ブラウザ capability probe と secondary view 予算を足す。実装: canvas の view planner、実在 API の presence check、疑似 requestSession log、observer view 追加、per-view budget bar、drag focus を追加。検証: JSON parse、HTML script 構文、gallery 再生成、公開 URL の HTTP 200 を確認する。</p>
+          <p class="en-copy">Research: reviewed the WebXR Device API, AR Module, Raw Camera Access, WebGPU samples, and Device API editor's draft. Idea: add real browser capability probing and secondary-view budgeting to yesterday's camera-access fallback router. Implementation: added a canvas view planner, real API presence checks, simulated requestSession logs, observer-view insertion, per-view budget bars, and drag focus. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and HTTP 200 for published URLs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>ここ数日の流れは camera pixel そのものから、同意、fallback、capability probe、capture view へ移っています。XR の公開サンプルでは派手な描画より、起動前に何を確認し、どの feature を optional にし、view 数が変わっても壊れないかを可視化する小さな道具が役に立ちます。今日のサンプルはその診断層を独立した体験として切り出しました。</p>
+          <p class="en-copy">The recent progression has moved from camera pixels themselves to consent, fallbacks, capability probes, and capture views. For XR samples, a small tool that visualizes what to check before launch, which features stay optional, and whether changing view counts breaks rendering can be more useful than flashy rendering. Today's sample isolates that diagnostic layer as its own experience.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `Capability Probe Secondary View Planner` です。権限を要求せずに `navigator.xr` / `navigator.gpu` の存在を確認し、phone / headset / capture の想定で primary view と first-person observer view の構成、optional features、描画予算、fallback route を可視化します。次に足すなら、実際の `isSessionSupported()` 結果、XRGPUBinding の段階的 probe、observer view だけに watermark / privacy indicator を載せる分岐を追加します。</p>
+          <p class="en-copy">The selected prototype is `Capability Probe Secondary View Planner`. Without requesting permissions, it checks `navigator.xr` / `navigator.gpu` presence and visualizes primary views, first-person observer views, optional features, render budgets, and fallback routes for phone, headset, and capture scenarios. Useful next additions are real `isSessionSupported()` results, staged XRGPUBinding probes, and branches that add watermark or privacy indicators only to observer views.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-28_html_capability_probe_secondary_view_planner.html" target="_blank" rel="noreferrer">Today's sample: Capability Probe Secondary View Planner</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-ar-module-1/" target="_blank" rel="noreferrer">W3C: WebXR Augmented Reality Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/raw-camera-access/" target="_blank" rel="noreferrer">Immersive Web: WebXR Raw Camera Access Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/webgpu/" target="_blank" rel="noreferrer">Immersive Web: WebXR WebGPU Samples</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr/" target="_blank" rel="noreferrer">Immersive Web: WebXR Device API Editor's Draft</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-28_html_capability_probe_secondary_view_planner.html" loading="lazy" title="Capability Probe Secondary View Planner"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

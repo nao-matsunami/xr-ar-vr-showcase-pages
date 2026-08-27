@@ -1,1 +1,423 @@
-PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImphIj4KPGhlYWQ+CiAgPG1ldGEgY2hhcnNldD0iVVRGLTgiIC8+CiAgPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCwgaW5pdGlhbC1zY2FsZT0xLjAiIC8+CiAgPHRpdGxlPkRPTSBPdmVybGF5IOOBqCB0cmFuc2llbnQgaGl0IHRlc3Qg44Gu6YG45oqe6KGd56qB44KS5YiG44GR44KLIHwgMjAyNi0wNy0yNDwvdGl0bGU+CiAgPHN0eWxlPgogICAgOnJvb3QgewogICAgICAtLWJnMDogIzA3MTExYTsKICAgICAgLS1iZzE6ICMxMDIzMzg7CiAgICAgIC0tcGFuZWw6IHJnYmEoOSwgMjAsIDMxLCAwLjg0KTsKICAgICAgLS1wYW5lbC0yOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMDQpOwogICAgICAtLWxpbmU6IHJnYmEoMTI2LCAyMjgsIDI1NSwgMC4xMik7CiAgICAgIC0tdGV4dDogI2ViZjhmZjsKICAgICAgLS1tdXRlZDogIzlhYjZjODsKICAgICAgLS1hY2NlbnQ6ICM3Y2U0ZmY7CiAgICAgIC0tYWNjZW50MjogI2ZmZDg2ODsKICAgICAgLS1zaGFkb3c6IHJnYmEoMCwgMCwgMCwgMC4zMik7CiAgICB9CgogICAgKiB7IGJveC1zaXppbmc6IGJvcmRlci1ib3g7IH0KCiAgICBib2R5IHsKICAgICAgbWFyZ2luOiAwOwogICAgICBtaW4taGVpZ2h0OiAxMDB2aDsKICAgICAgZm9udC1mYW1pbHk6ICJBdmVuaXIgTmV4dCIsICJIaXJhZ2lubyBTYW5zIiwgc2Fucy1zZXJpZjsKICAgICAgY29sb3I6IHZhcigtLXRleHQpOwogICAgICBiYWNrZ3JvdW5kOgogICAgICAgIHJhZGlhbC1ncmFkaWVudChjaXJjbGUgYXQgMTYlIDE4JSwgcmdiYSgxMjQsIDIyOCwgMjU1LCAwLjE2KSwgdHJhbnNwYXJlbnQgMjQlKSwKICAgICAgICByYWRpYWwtZ3JhZGllbnQoY2lyY2xlIGF0IDg0JSAxMCUsIHJnYmEoMjU1LCAyMTYsIDEwNCwgMC4xMiksIHRyYW5zcGFyZW50IDIwJSksCiAgICAgICAgbGluZWFyLWdyYWRpZW50KDE4MGRlZywgdmFyKC0tYmcxKSwgdmFyKC0tYmcwKSk7CiAgICB9CgogICAgLnNoZWxsIHsKICAgICAgbWF4LXdpZHRoOiAxMTgwcHg7CiAgICAgIG1hcmdpbjogMCBhdXRvOwogICAgICBwYWRkaW5nOiAyOHB4IDIwcHggNDhweDsKICAgIH0KCiAgICAuaGVybywKICAgIC5kZXRhaWwtYmxvY2ssCiAgICAucHJldmlldywKICAgIC5kYXktbmF2IHsKICAgICAgYm9yZGVyLXJhZGl1czogMjRweDsKICAgICAgYmFja2dyb3VuZDogdmFyKC0tcGFuZWwpOwogICAgICBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1saW5lKTsKICAgICAgYm94LXNoYWRvdzogMCAxOHB4IDQycHggdmFyKC0tc2hhZG93KTsKICAgICAgYmFja2Ryb3AtZmlsdGVyOiBibHVyKDE0cHgpOwogICAgfQoKICAgIC5oZXJvIHsKICAgICAgcGFkZGluZzogMjhweDsKICAgIH0KCiAgICAuaGVybyBoMSB7CiAgICAgIG1hcmdpbjogMCAwIDEwcHg7CiAgICAgIGZvbnQtc2l6ZTogY2xhbXAoMS44cmVtLCA0dncsIDNyZW0pOwogICAgICBsaW5lLWhlaWdodDogMS4xNTsKICAgIH0KCiAgICAuaGVybyBwLAogICAgLmRldGFpbC1ibG9jayBwLAogICAgLmRldGFpbC1ibG9jayBsaSB7CiAgICAgIGNvbG9yOiB2YXIoLS1tdXRlZCk7CiAgICAgIGxpbmUtaGVpZ2h0OiAxLjc7CiAgICB9CgogICAgLmVuLWNvcHksCiAgICAuaGVhZGluZy1wYWlyLXNlY29uZGFyeSwKICAgIC5oZXJvLXN1YnRpdGxlIHsKICAgICAgY29sb3I6IHZhcigtLW11dGVkKTsKICAgICAgbGluZS1oZWlnaHQ6IDEuNzsKICAgIH0KCiAgICAuaGVhZGluZy1wYWlyIHsKICAgICAgZGlzcGxheTogZ3JpZDsKICAgICAgZ2FwOiA0cHg7CiAgICB9CgogICAgLmhlcm8tc3VidGl0bGUgewogICAgICBtYXJnaW46IDAgMCAxMnB4OwogICAgICBmb250LXNpemU6IDFyZW07CiAgICB9CgogICAgLmRhdGUgewogICAgICBtYXJnaW46IDAgMCAxMHB4OwogICAgICBjb2xvcjogdmFyKC0tYWNjZW50Mik7CiAgICAgIGZvbnQtc2l6ZTogMC45cmVtOwogICAgICBsZXR0ZXItc3BhY2luZzogMC4wNGVtOwogICAgICB0ZXh0LXRyYW5zZm9ybTogdXBwZXJjYXNlOwogICAgfQoKICAgIC5hY3Rpb25zLAogICAgLmRheS1uYXYgewogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBnYXA6IDEycHg7CiAgICAgIGZsZXgtd3JhcDogd3JhcDsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgIH0KCiAgICAuYWN0aW9ucyB7CiAgICAgIG1hcmdpbi10b3A6IDE4cHg7CiAgICB9CgogICAgLnByaW1hcnksCiAgICAuc2Vjb25kYXJ5LWxpbmssCiAgICAuZGF5LWxpbmsgewogICAgICBkaXNwbGF5OiBpbmxpbmUtZmxleDsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgICAgIG1pbi1oZWlnaHQ6IDQycHg7CiAgICAgIHBhZGRpbmc6IDAgMTRweDsKICAgICAgYm9yZGVyLXJhZGl1czogMTJweDsKICAgICAgdGV4dC1kZWNvcmF0aW9uOiBub25lOwogICAgICBmb250LXdlaWdodDogNzAwOwogICAgfQoKICAgIC5wcmltYXJ5IHsKICAgICAgYmFja2dyb3VuZDogbGluZWFyLWdyYWRpZW50KDEzNWRlZywgdmFyKC0tYWNjZW50KSwgIzhlZmZjOCk7CiAgICAgIGNvbG9yOiAjMDYyMzM0OwogICAgfQoKICAgIC5zZWNvbmRhcnktbGluaywKICAgIC5kYXktbGluayB7CiAgICAgIGJhY2tncm91bmQ6IHJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wNik7CiAgICAgIGNvbG9yOiB2YXIoLS10ZXh0KTsKICAgICAgYm9yZGVyOiAxcHggc29saWQgcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjA4KTsKICAgIH0KCiAgICAuZGF5LW5hdiB7CiAgICAgIGp1c3RpZnktY29udGVudDogc3BhY2UtYmV0d2VlbjsKICAgICAgbWFyZ2luLXRvcDogMThweDsKICAgICAgcGFkZGluZzogMThweDsKICAgIH0KCiAgICAuY29udGVudCB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdyaWQtdGVtcGxhdGUtY29sdW1uczogbWlubWF4KDAsIDEuMmZyKSBtaW5tYXgoMzIwcHgsIDAuOGZyKTsKICAgICAgZ2FwOiAxOHB4OwogICAgICBtYXJnaW4tdG9wOiAyMnB4OwogICAgfQoKICAgIC5zdGFjayB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdhcDogMThweDsKICAgIH0KCiAgICAuZGV0YWlsLWJsb2NrIHsKICAgICAgcGFkZGluZzogMjJweDsKICAgIH0KCiAgICAuZGV0YWlsLWJsb2NrIGgyIHsKICAgICAgbWFyZ2luOiAwIDAgMTJweDsKICAgICAgZm9udC1zaXplOiAxLjA1cmVtOwogICAgfQoKICAgIC5saW5rLWxpc3QgewogICAgICBkaXNwbGF5OiBncmlkOwogICAgICBnYXA6IDhweDsKICAgICAgcGFkZGluZy1sZWZ0OiAxOHB4OwogICAgICBtYXJnaW46IDEycHggMCAwOwogICAgfQoKICAgIC5saW5rLWxpc3QgYSB7CiAgICAgIGNvbG9yOiB2YXIoLS1hY2NlbnQpOwogICAgfQoKICAgIC50b3BpYy1saXN0IHsKICAgICAgZGlzcGxheTogZ3JpZDsKICAgICAgZ2FwOiAxMnB4OwogICAgICBwYWRkaW5nLWxlZnQ6IDIycHg7CiAgICAgIG1hcmdpbjogMTJweCAwIDA7CiAgICB9CgogICAgLnRvcGljLWxpc3QgbGkgc3BhbiB7CiAgICAgIGRpc3BsYXk6IGJsb2NrOwogICAgfQoKICAgIC5zYW1wbGUtbGlzdCB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdhcDogMTJweDsKICAgIH0KCiAgICAuc2FtcGxlLWl0ZW0gewogICAgICBwYWRkaW5nOiAxNnB4OwogICAgICBib3JkZXItcmFkaXVzOiAxOHB4OwogICAgICBiYWNrZ3JvdW5kOiB2YXIoLS1wYW5lbC0yKTsKICAgICAgYm9yZGVyOiAxcHggc29saWQgcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjA2KTsKICAgIH0KCiAgICAuc2FtcGxlLWl0ZW0taGVhZCB7CiAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgIGFsaWduLWl0ZW1zOiBzdGFydDsKICAgICAganVzdGlmeS1jb250ZW50OiBzcGFjZS1iZXR3ZWVuOwogICAgICBnYXA6IDEycHg7CiAgICAgIGZsZXgtd3JhcDogd3JhcDsKICAgIH0KCiAgICAuc2FtcGxlLWl0ZW0gaDMgewogICAgICBtYXJnaW46IDAgMCA4cHg7CiAgICAgIGZvbnQtc2l6ZTogMXJlbTsKICAgIH0KCiAgICAuc2FtcGxlLWl0ZW0gcCB7CiAgICAgIG1hcmdpbjogMDsKICAgIH0KCiAgICAucHJldmlldyB7CiAgICAgIHBhZGRpbmc6IDE4cHg7CiAgICAgIHBvc2l0aW9uOiBzdGlja3k7CiAgICAgIHRvcDogMjBweDsKICAgICAgaGVpZ2h0OiBmaXQtY29udGVudDsKICAgIH0KCiAgICAucHJldmlldyBoMiB7CiAgICAgIG1hcmdpbjogMCAwIDEycHg7CiAgICAgIGZvbnQtc2l6ZTogMS4wNXJlbTsKICAgIH0KCiAgICBpZnJhbWUgewogICAgICB3aWR0aDogMTAwJTsKICAgICAgaGVpZ2h0OiA1MjBweDsKICAgICAgYm9yZGVyOiAwOwogICAgICBib3JkZXItcmFkaXVzOiAxNnB4OwogICAgICBiYWNrZ3JvdW5kOiByZ2JhKDAsIDAsIDAsIDAuMjUpOwogICAgfQoKICAgIEBtZWRpYSAobWF4LXdpZHRoOiA5NjBweCkgewogICAgICAuY29udGVudCB7CiAgICAgICAgZ3JpZC10ZW1wbGF0ZS1jb2x1bW5zOiAxZnI7CiAgICAgIH0KCiAgICAgIC5wcmV2aWV3IHsKICAgICAgICBwb3NpdGlvbjogc3RhdGljOwogICAgICB9CgogICAgICBpZnJhbWUgewogICAgICAgIGhlaWdodDogNDIwcHg7CiAgICAgIH0KICAgIH0KICA8L3N0eWxlPgo8L2hlYWQ+Cjxib2R5PgogIDxtYWluIGNsYXNzPSJzaGVsbCI+CiAgICA8c2VjdGlvbiBjbGFzcz0iaGVybyI+CiAgICAgIDxwIGNsYXNzPSJkYXRlIj4yMDI2LjA3LjI0PC9wPgogICAgICA8aDE+RE9NIE92ZXJsYXkg44GoIHRyYW5zaWVudCBoaXQgdGVzdCDjga7pgbjmip7ooZ3nqoHjgpLliIbjgZHjgos8L2gxPgogICAgICA8cCBjbGFzcz0iaGVyby1zdWJ0aXRsZSI+U2VwYXJhdGluZyBET00gT3ZlcmxheSBhbmQgdHJhbnNpZW50IGhpdC10ZXN0IHNlbGVjdGlvbiBjb25mbGljdHM8L3A+CiAgICAgIDxwPldlYlhSIEhpdCBUZXN044CBRE9NIE92ZXJsYXlz44CBSGFuZCBJbnB1dOOAgUlucHV0IFByb2ZpbGVz44CBSW1tZXJzaXZlIFdlYiDlhazlvI8gc2FtcGxlcyDjgpLnorroqo3jgZfjgIHku4rml6Xjga8gRE9NIFVJIOaTjeS9nOOBqCBYUiDjg6/jg7zjg6vjg4npgbjmip7jgYzph43jgarjgovloLTpnaLjgafjgIFgYmVmb3JleHJzZWxlY3RgIOOBqCB0cmFuc2llbnQgaW5wdXQgaGl0IHRlc3Qg44Gu5Yik5pat44KS5Y+v6KaW5YyW44GZ44KL6Ieq5L2cIEhUTUwg44K144Oz44OX44Or44KS6L+95Yqg44GX44G+44GX44Gf44CCPC9wPgogICAgICA8cCBjbGFzcz0iZW4tY29weSI+QWZ0ZXIgcmV2aWV3aW5nIFdlYlhSIEhpdCBUZXN0LCBET00gT3ZlcmxheXMsIEhhbmQgSW5wdXQsIElucHV0IFByb2ZpbGVzLCBhbmQgdGhlIEltbWVyc2l2ZSBXZWIgb2ZmaWNpYWwgc2FtcGxlcywgdG9kYXkncyBvcmlnaW5hbCBIVE1MIHNhbXBsZSB2aXN1YWxpemVzIGhvdyBgYmVmb3JleHJzZWxlY3RgIGFuZCB0cmFuc2llbnQgaW5wdXQgaGl0IHRlc3RzIGFyYml0cmF0ZSBiZXR3ZWVuIERPTSBVSSBpbnRlcmFjdGlvbiBhbmQgWFIgd29ybGQgc2VsZWN0aW9uLjwvcD4KICAgICAgPGRpdiBjbGFzcz0iYWN0aW9ucyI+CiAgICAgICAgPGEgY2xhc3M9InByaW1hcnkiIGhyZWY9Ii4uL291dHB1dHMvMjAyNi0wNy0yNF9odG1sX2RvbV9vdmVybGF5X3RyYW5zaWVudF9zZWxlY3RfZ2F0ZS5odG1sIj7ku6PooajjgrXjg7Pjg5fjg6vjgpLplovjgY8gLyBPcGVuIHNhbXBsZTwvYT4KICAgICAgICA8YSBjbGFzcz0ic2Vjb25kYXJ5LWxpbmsiIGhyZWY9Ii4uL3BhZ2VzLzMuaHRtbCI+5LiA6Kan44G45oi744KLIC8gQmFjayB0byBhcmNoaXZlPC9hPgogICAgICA8L2Rpdj4KICAgIDwvc2VjdGlvbj4KCiAgICA8bmF2IGNsYXNzPSJkYXktbmF2IiBhcmlhLWxhYmVsPSLml6Xku5jnp7vli5UiPgogICAgICA8YSBjbGFzcz0iZGF5LWxpbmsiIGhyZWY9Ii4uL2RheXMvMjAyNi0wNy0yMy5odG1sIj7ihpAgMjAyNi4wNy4yMzwvYT4KICAgICAgPGEgY2xhc3M9ImRheS1saW5rIiBocmVmPSIuLi9kYXlzLzIwMjYtMDctMjUuaHRtbCI+MjAyNi4wNy4yNSDihpI8L2E+CiAgICA8L25hdj4KCiAgICA8c2VjdGlvbiBjbGFzcz0iY29udGVudCI+CiAgICAgIDxkaXYgY2xhc3M9InN0YWNrIj4KICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuOBk+OBruaXpeOBruOCteODs+ODl+ODqzwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+U2FtcGxlcyBmb3IgdGhpcyBkYXk8L3NwYW4+PC9zcGFuPjwvaDI+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJzYW1wbGUtbGlzdCI+CiAgICAgICAgICAgIAogICAgICAgIDxhcnRpY2xlIGNsYXNzPSJzYW1wbGUtaXRlbSI+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJzYW1wbGUtaXRlbS1oZWFkIj4KICAgICAgICAgICAgPGRpdj4KICAgICAgICAgICAgICA8aDM+RE9NIE92ZXJsYXkgU2VsZWN0IEdhdGUgTGFiPC9oMz4KICAgICAgICAgICAgICA8cD48L3A+CiAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICA8YSBjbGFzcz0ic2Vjb25kYXJ5LWxpbmsiIGhyZWY9Ii4uL291dHB1dHMvMjAyNi0wNy0yNF9odG1sX2RvbV9vdmVybGF5X3RyYW5zaWVudF9zZWxlY3RfZ2F0ZS5odG1sIj7plovjgY8gLyBPcGVuPC9hPgogICAgICAgICAgPC9kaXY+CiAgICAgICAgPC9hcnRpY2xlPgogICAgICAKICAgICAgICAgIDwvZGl2PgogICAgICAgIDwvc2VjdGlvbj4KICAgICAgICAKICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgPGgyPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXIiPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItcHJpbWFyeSI+5LuK5pel44Gu6YeN6KaB44OI44OU44OD44KvPC9zcGFuPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItc2Vjb25kYXJ5Ij5LZXkgdG9waWNzIHRvZGF5PC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgIDxvbCBjbGFzcz0idG9waWMtbGlzdCI+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPgogICAgICAgICAgICAgIDxzcGFuPldlYlhSIERPTSBPdmVybGF5cyBNb2R1bGUg44Gv44CB5rKh5YWl44K744OD44K344On44Oz5Lit44Gr5Y2Y5LiAIERPTSDopoHntKDjgpLpgI/mmI7og4zmma/jga4gMkQgb3ZlcmxheSDjgajjgZfjgabooajnpLrjgZfjgIFET00gcG9pbnRlci9jbGljayDjgaggWFIgaW5wdXQg44KS5ZCM44GY55S76Z2i5LiK44Gn5omx44GG5YmN5o+Q44KS5pW055CG44GX44Gm44GE44KL44CCPC9zcGFuPgogICAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJlbi1jb3B5Ij5UaGUgV2ViWFIgRE9NIE92ZXJsYXlzIE1vZHVsZSBkZXNjcmliZXMgc2hvd2luZyBhIHNpbmdsZSBET00gZWxlbWVudCBhcyBhIHRyYW5zcGFyZW50IDJEIG92ZXJsYXkgZHVyaW5nIGFuIGltbWVyc2l2ZSBzZXNzaW9uLCB3aGVyZSBET00gcG9pbnRlci9jbGljayBoYW5kbGluZyBhbmQgWFIgaW5wdXQgc2hhcmUgdGhlIHNhbWUgc2NyZWVuLjwvc3Bhbj4KICAgICAgICAgICAgPC9saT4KICAgICAgICAgIAogICAgICAgICAgICA8bGk+CiAgICAgICAgICAgICAgPHNwYW4+YGJlZm9yZXhyc2VsZWN0YCDjga8gRE9NIG92ZXJsYXkg5LiK44GnIHByaW1hcnkgYWN0aW9uIOOBjOeZuueUn+OBl+OBn+OBqOOBjeOAgeW/heimgeOBquOCiSBgcHJldmVudERlZmF1bHQoKWAg44GnIGBzZWxlY3RzdGFydGAgLyBgc2VsZWN0ZW5kYCAvIGBzZWxlY3RgIOOCkuaKkeatouOBp+OBjeOCi+OBn+OCgeOAgVVJIOaTjeS9nOOBqOODr+ODvOODq+ODiemFjee9ruOBruS6jOmHjeeZuueBq+OCkumYsuOBkOimgeOBq+OBquOCi+OAgjwvc3Bhbj4KICAgICAgICAgICAgICA8c3BhbiBjbGFzcz0iZW4tY29weSI+YGJlZm9yZXhyc2VsZWN0YCBjYW4gY2FsbCBgcHJldmVudERlZmF1bHQoKWAgd2hlbiBhIHByaW1hcnkgYWN0aW9uIGludGVyc2VjdHMgdGhlIERPTSBvdmVybGF5LCBzdXBwcmVzc2luZyBgc2VsZWN0c3RhcnRgLCBgc2VsZWN0ZW5kYCwgYW5kIGBzZWxlY3RgIHRvIGF2b2lkIGR1cGxpY2F0ZSBVSSBhbmQgd29ybGQgYWN0aW9ucy48L3NwYW4+CiAgICAgICAgICAgIDwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPgogICAgICAgICAgICAgIDxzcGFuPldlYlhSIEhpdCBUZXN0IE1vZHVsZSDjga4gdHJhbnNpZW50IGlucHV0IGhpdCB0ZXN0IOOBryBgcmVxdWVzdEhpdFRlc3RTb3VyY2VGb3JUcmFuc2llbnRJbnB1dCgpYCDjgaggYGdldEhpdFRlc3RSZXN1bHRzRm9yVHJhbnNpZW50SW5wdXQoKWAg44Gn44CB55S76Z2i44K/44OD44OX44KE5LiA5pmC5YWl5Yqb5rqQ44GU44Go44GuIGhpdCDntZDmnpzjgpLmibHjgYjjgovjgII8L3NwYW4+CiAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImVuLWNvcHkiPlRoZSBXZWJYUiBIaXQgVGVzdCBNb2R1bGUncyB0cmFuc2llbnQgaW5wdXQgaGl0IHRlc3RpbmcgdXNlcyBgcmVxdWVzdEhpdFRlc3RTb3VyY2VGb3JUcmFuc2llbnRJbnB1dCgpYCBhbmQgYGdldEhpdFRlc3RSZXN1bHRzRm9yVHJhbnNpZW50SW5wdXQoKWAgZm9yIHBlci10cmFuc2llbnQtaW5wdXQgaGl0IHJlc3VsdHMuPC9zcGFuPgogICAgICAgICAgICA8L2xpPgogICAgICAgICAgCiAgICAgICAgICAgIDxsaT4KICAgICAgICAgICAgICA8c3Bhbj5XZWJYUiBEZXZpY2UgQVBJIOOBriBpbnB1dCBleHBsYWluZXIg44Gv44CB55S76Z2i5LiK44GuIGludGVyYWN0aW9uIHBvaW50IOOBi+OCiSB0YXJnZXQgcmF5IOOCkueUn+aIkOOBl+OAgXNlbGVjdCBpbnRlbnQg44KSIGlucHV0IHNvdXJjZSDjgZTjgajjgavntbHkuIDjgZfjgabmibHjgYbogIPjgYjmlrnjgpLoqqzmmI7jgZfjgabjgYTjgovjgII8L3NwYW4+CiAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImVuLWNvcHkiPlRoZSBXZWJYUiBEZXZpY2UgQVBJIGlucHV0IGV4cGxhaW5lciBkZXNjcmliZXMgdGFyZ2V0IHJheXMgZ2VuZXJhdGVkIGZyb20gc2NyZWVuIGludGVyYWN0aW9uIHBvaW50cyBhbmQgYSB1bmlmaWVkIHNlbGVjdCBpbnRlbnQgYWNyb3NzIGlucHV0IHNvdXJjZXMuPC9zcGFuPgogICAgICAgICAgICA8L2xpPgogICAgICAgICAgCiAgICAgICAgICAgIDxsaT4KICAgICAgICAgICAgICA8c3Bhbj5XZWJYUiBJbnB1dCBQcm9maWxlcyDjga8gYFhSSW5wdXRTb3VyY2UucHJvZmlsZXNgIOOBruaVtOWQiOaAp+OBqCBmYWxsYmFjayDjgpLmibHjgYbkuIDmrKHmg4XloLHjgafjgIFoYW5k44CBY29udHJvbGxlcuOAgXRvdWNoc2NyZWVuIOOCkuWQjOOBmOmBuOaKnuOCsuODvOODiOOBq+mAmuOBmeioreioiOOBruWJjeaPkOOBq+OBquOCi+OAgjwvc3Bhbj4KICAgICAgICAgICAgICA8c3BhbiBjbGFzcz0iZW4tY29weSI+V2ViWFIgSW5wdXQgUHJvZmlsZXMgcHJvdmlkZSB0aGUgY29uZm9ybWFuY2UgYW5kIGZhbGxiYWNrIGJhc2lzIGJlaGluZCBgWFJJbnB1dFNvdXJjZS5wcm9maWxlc2AsIHVzZWZ1bCB3aGVuIHJvdXRpbmcgaGFuZCwgY29udHJvbGxlciwgYW5kIHRvdWNoc2NyZWVuIGlucHV0IHRocm91Z2ggb25lIHNlbGVjdGlvbiBnYXRlLjwvc3Bhbj4KICAgICAgICAgICAgPC9saT4KICAgICAgICAgIAogICAgICAgIDwvb2w+CiAgICAgIDwvc2VjdGlvbj4KICAKICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuazqOebruS6i+S+i+OBqOS9leOBjOmdoueZveOBhOOBizwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+Tm90YWJsZSBleGFtcGxlIGFuZCB3aHkgaXQgbWF0dGVyczwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgIDxwPuS7iuaXpeOBruazqOebruOBryBXZWJYUiBET00gT3ZlcmxheXMgTW9kdWxlIOOBriBgYmVmb3JleHJzZWxlY3RgIOOBqOOAgUhpdCBUZXN0IE1vZHVsZSDjga4gdHJhbnNpZW50IGlucHV0IGhpdCB0ZXN0IOOBp+OBmeOAgkFSIOOBp+eUu+mdouS4iuOBqyBET00gVUkg44KS6LyJ44Gb44KL44Go44CB5ZCM44GY44K/44OD44OX44GMIFVJIOOBriBwb2ludGVyL2NsaWNrIOOBqOODr+ODvOODq+ODieWBtOOBriBgc2VsZWN0YCAvIGhpdCB0ZXN0IOOBruS4oeaWueOBqOOBl+OBpuino+mHiOOBleOCjOOCi+WPr+iDveaAp+OBjOOBguOCiuOBvuOBmeOAguWFrOW8j+S7leanmOOBr+OAgW92ZXJsYXkg44Gu5Lqk5beu6aCY5Z+f44GnIFhSIHNlbGVjdCDjgpLmipHmraLjgZnjgovmiYvmrrXjgajjgIHkuIDmmYLlhaXlipvmupDjgZTjgajjga4gaGl0IHRlc3Qg57WQ5p6c44KS5YiG44GR44KL5omL5q6144KS55So5oSP44GX44Gm44GK44KK44CB6YWN572uIFVJIOOChOioreWumuODkeODjeODq+OCkuWuieWFqOOBq+WQjOWxheOBleOBm+OCi+S4iuOBp+mdoueZveOBhOaOpeeCueOBp+OBmeOAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5Ub2RheSdzIG5vdGFibGUgaW50ZXJzZWN0aW9uIGlzIGBiZWZvcmV4cnNlbGVjdGAgZnJvbSB0aGUgV2ViWFIgRE9NIE92ZXJsYXlzIE1vZHVsZSBhbmQgdHJhbnNpZW50IGlucHV0IGhpdCB0ZXN0aW5nIGZyb20gdGhlIEhpdCBUZXN0IE1vZHVsZS4gV2hlbiBhIERPTSBVSSBzaXRzIG92ZXIgQVIgY29udGVudCwgdGhlIHNhbWUgdGFwIGNhbiBiZSBpbnRlcnByZXRlZCBib3RoIGFzIGEgRE9NIHBvaW50ZXIvY2xpY2sgYW5kIGFzIGEgd29ybGQgYHNlbGVjdGAgcGx1cyBoaXQgdGVzdC4gVGhlIHNwZWNzIHByb3ZpZGUgb25lIG1lY2hhbmlzbSB0byBzdXBwcmVzcyBYUiBzZWxlY3Qgb24gb3ZlcmxheSByZWdpb25zIGFuZCBhbm90aGVyIHRvIGdyb3VwIGhpdCB0ZXN0IHJlc3VsdHMgYnkgdHJhbnNpZW50IGlucHV0IHNvdXJjZSwgd2hpY2ggaXMgYSB1c2VmdWwgZGVzaWduIHBvaW50IGZvciBwbGFjZW1lbnQgVUlzIGFuZCBzZXR0aW5ncyBwYW5lbHMuPC9wPgogICAgICAgICAgCiAgICA8dWwgY2xhc3M9ImxpbmstbGlzdCI+CiAgICAgIAogICAgICAgICAgICA8bGk+PGEgaHJlZj0iaHR0cHM6Ly93d3cudzMub3JnL1RSL3dlYnhyLWRvbS1vdmVybGF5cy0xLyIgdGFyZ2V0PSJfYmxhbmsiIHJlbD0ibm9yZWZlcnJlciI+VzNDOiBXZWJYUiBET00gT3ZlcmxheXMgTW9kdWxlPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vd3d3LnczLm9yZy9UUi93ZWJ4ci1oaXQtdGVzdC0xLyIgdGFyZ2V0PSJfYmxhbmsiIHJlbD0ibm9yZWZlcnJlciI+VzNDOiBXZWJYUiBIaXQgVGVzdCBNb2R1bGU8L2E+PC9saT4KICAgICAgICAgIAogICAgPC91bD4KICAKICAgICAgICA8L3NlY3Rpb24+CiAgICAgIAoKICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuihqOePvuODu+OCpOODs+OCv+ODqeOCr+OCt+ODp+ODs+OBruOCouOCpOODh+OCojwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+RXhwcmVzc2lvbiBhbmQgaW50ZXJhY3Rpb24gaWRlYTwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgIDxwPkRPTSBvdmVybGF5IOOBriBwYW5lbCDjgpLjgIHjg6/jg7zjg6vjg4nkuIrjga7pgI/mmI7jgarlronlhajpoJjln5/jgajjgZfjgabopovjgZvjgovooajnj77jgpLoqabjgZfjgb7jgZfjgZ/jgILjgrnjg4bjg7zjgrjkuIrjgafjg4njg6njg4PjgrAv44K/44OD44OX44GZ44KL44Go44CBaGVhZCDlgbTjgYvjgonkvLjjgbPjgosgdHJhbnNpZW50IHRvdWNoIHJheeOAgWhpdCDjgZfjgZ8gcGxhbmUvb2JqZWN044CBVUkg44Gr44KI44Gj44Gm5oqR5q2i44GV44KM44GfIHNlbGVjdOOAgeS6jOmHjeeZuueBq+ODquOCueOCr+OBjOiJsuOBp+WIh+OCiuabv+OCj+OCiuOBvuOBmeOAgmBVSSBzdHJpY3Rg44CBYFdvcmxkIGZpcnN0YOOAgWBBdWRpdCB0cmFpbGAg44GuIG1vZGUg44Gr44KI44KK44CB5ZCM44GY5YWl5Yqb44Gn44KCIFVJIOWEquWFiOOAgemFjee9ruWEquWFiOOAgeebo+afu+WEquWFiOOBruioreioiOW3ruOBjOimi+OBiOOBvuOBmeOAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5UaGUgc2FtcGxlIHRyZWF0cyB0aGUgRE9NIG92ZXJsYXkgcGFuZWwgYXMgYSB0cmFuc3BhcmVudCBzYWZldHkgcmVnaW9uIG92ZXIgdGhlIHdvcmxkLiBEcmFnZ2luZyBvciB0YXBwaW5nIHRoZSBzdGFnZSBzaG93cyBhIHRyYW5zaWVudCB0b3VjaCByYXkgZnJvbSB0aGUgdmlld2VyLCB0aGUgaGl0IHBsYW5lIG9yIG9iamVjdCwgc3VwcHJlc3NlZCBzZWxlY3RzLCBhbmQgZHVwbGljYXRlLWFjdGlvbiByaXNrIHdpdGggY29sb3IgY2hhbmdlcy4gYFVJIHN0cmljdGAsIGBXb3JsZCBmaXJzdGAsIGFuZCBgQXVkaXQgdHJhaWxgIHJldmVhbCBob3cgdGhlIHNhbWUgaW5wdXQgY2hhbmdlcyB1bmRlciBVSS1maXJzdCwgcGxhY2VtZW50LWZpcnN0LCBhbmQgbG9nZ2luZy1maXJzdCBwb2xpY2llcy48L3A+CiAgICAgICAgICAKICAgICAgICA8L3NlY3Rpb24+CiAgICAgIAoKICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuWItuS9nOOBq+S9v+OBiOOBneOBhuOBquaKgOihk+ODoeODojwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+UHJvZHVjdGlvbiBub3RlPC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPHA+5a6f6KOF44Gn44Gv44CBRE9NIG92ZXJsYXkg44GuIGludGVyYWN0aXZlIHJlZ2lvbiDjgpIgaGl0IG1hcCDjgajjgZfjgabmjIHjgaHjgIFgYmVmb3JleHJzZWxlY3RgIOOBp+aKkeatouOBl+OBnyBpbnRlcmFjdGlvbiDjgaggYFhSRnJhbWUuZ2V0SGl0VGVzdFJlc3VsdHNGb3JUcmFuc2llbnRJbnB1dCgpYCDjga7ntZDmnpzjgpLlkIzjgZggZXZlbnQgcXVldWUg44Gr6KiY6Yyy44GZ44KL44Go6Kq/5p+744GX44KE44GZ44Gd44GG44Gn44GZ44CC6YCP5piO44Gq6Kqs5piO5paH44GvIHBhc3MtdGhyb3VnaOOAgWJ1dHRvbiDjgoQgc2xpZGVyIOOBryBibG9ja+OAgeeiuuiqjea4iOOBv+OBriBwbGFjZW1lbnQgYXJlYSDjga8gd29ybGQgc2VsZWN0IOOBuOmAmuOBmeOAgeOBqOOBhOOBhueykuW6puOBp+aJseOBhuOBqOiqpOmFjee9ruOCkua4m+OCieOBm+OBvuOBmeOAgmhhbmQgLyBjb250cm9sbGVyIC8gdG91Y2hzY3JlZW4g44GvIGBYUklucHV0U291cmNlLnByb2ZpbGVzYCDjgpLopovjgaYgdGhyZXNob2xkIOOCkuWkieOBiOOBpOOBpOOAgeacgOW+jOOBr+WQjOOBmCBnYXRlIGZ1bmN0aW9uIOOBq+mAmuOBmeioreioiOOBjOS/neWuiOOBl+OChOOBmeOBhOOBp+OBmeOAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5BIHByYWN0aWNhbCBpbXBsZW1lbnRhdGlvbiBjYW4ga2VlcCBhbiBpbnRlcmFjdGl2ZS1yZWdpb24gaGl0IG1hcCBmb3IgdGhlIERPTSBvdmVybGF5LCB0aGVuIGxvZyBpbnRlcmFjdGlvbnMgc3VwcHJlc3NlZCBieSBgYmVmb3JleHJzZWxlY3RgIGJlc2lkZSByZXN1bHRzIGZyb20gYFhSRnJhbWUuZ2V0SGl0VGVzdFJlc3VsdHNGb3JUcmFuc2llbnRJbnB1dCgpYC4gVHJhbnNwYXJlbnQgZXhwbGFuYXRvcnkgdGV4dCBjYW4gcGFzcyB0aHJvdWdoLCBidXR0b25zIGFuZCBzbGlkZXJzIGNhbiBibG9jaywgYW5kIGNvbmZpcm1lZCBwbGFjZW1lbnQgcmVnaW9ucyBjYW4gcm91dGUgdG8gd29ybGQgc2VsZWN0LiBIYW5kLCBjb250cm9sbGVyLCBhbmQgdG91Y2hzY3JlZW4gaW5wdXRzIGNhbiB0dW5lIHRocmVzaG9sZHMgZnJvbSBgWFJJbnB1dFNvdXJjZS5wcm9maWxlc2Agd2hpbGUgc3RpbGwgc2hhcmluZyBvbmUgZ2F0ZSBmdW5jdGlvbi48L3A+CiAgICAgICAgICAKICAgICAgICA8L3NlY3Rpb24+CiAgICAgIAoKICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuaYjuaXpeS7pemZjeOCpuOCqeODg+ODgeOBmeOCi+WvvuixoTwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+V2F0Y2ggbmV4dDwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgIDxwPkRPTSBPdmVybGF5IOOBriBjcm9zcy1vcmlnaW4gZXZlbnQgaGFuZGxpbmfjgIF0cmFuc2llbnQgaW5wdXQgaGl0IHRlc3Qg44GuIGFjdGl2ZSBzb3VyY2Ug5pWw5Yi26ZmQ44CBSGFuZCBJbnB1dCDjga4gcGluY2ggLyBncmFzcCBwcm9maWxl44CBSW5wdXQgUHJvZmlsZXMgcmVnaXN0cnkg44GuIGZhbGxiYWNr44CBTGF5ZXJzIHNhbXBsZSDjga4gaW5wdXQgc2VsZWN0aW9uIHNwYWNlIHdhcnAg44KS57aa44GR44Gm6KaL44G+44GZ44CC5qyh44Gv5LuK5Zue44GuIGdhdGUg44GrIGFuY2hvciBkcmlmdCDjgaggZGVwdGggc3RhbGUg44KS5oi744GX44CBVUkg5pON5L2c5Lit44GvIHBsYWNlbWVudCDjgpIgaG9sZCDjgZfjgaTjgaTjgIHoppbnt5rlpJbjga4gYW5jaG9yIHJlZnJlc2gg44Gv57aZ57aa44GZ44KL5oyZ5YuV44KS6Kmm44GX44Gf44GE44Gn44GZ44CCPC9wPgogICAgICAgICAgPHAgY2xhc3M9ImVuLWNvcHkiPkNvbnRpbnVlIHdhdGNoaW5nIERPTSBPdmVybGF5IGNyb3NzLW9yaWdpbiBldmVudCBoYW5kbGluZywgYWN0aXZlLXNvdXJjZSBsaW1pdHMgZm9yIHRyYW5zaWVudCBpbnB1dCBoaXQgdGVzdGluZywgSGFuZCBJbnB1dCBwaW5jaCBhbmQgZ3Jhc3AgcHJvZmlsZXMsIElucHV0IFByb2ZpbGVzIHJlZ2lzdHJ5IGZhbGxiYWNrIGJlaGF2aW9yLCBhbmQgdGhlIExheWVycyBpbnB1dCBzZWxlY3Rpb24gc3BhY2Ugd2FycCBzYW1wbGUuIE5leHQsIGJyaW5nIGFuY2hvciBkcmlmdCBhbmQgc3RhbGUgZGVwdGggYmFjayBpbnRvIHRoaXMgZ2F0ZSBzbyBwbGFjZW1lbnQgaXMgaGVsZCBkdXJpbmcgVUkgdXNlIHdoaWxlIG9mZi1nYXplIGFuY2hvciByZWZyZXNoIGNvbnRpbnVlcy48L3A+CiAgICAgICAgICAKICAgICAgICA8L3NlY3Rpb24+CiAgICAgIAoKICAgICAgICA8c2VjdGlvbiBjbGFzcz0iZGV0YWlsLWJsb2NrIj4KICAgICAgICAgIDxoMj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyIj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXByaW1hcnkiPuippuOBmeOBquOCieOBk+OCjDwvc3Bhbj48c3BhbiBjbGFzcz0iaGVhZGluZy1wYWlyLXNlY29uZGFyeSI+SWYgeW91IHRyeSBvbmUgdGhpbmc8L3NwYW4+PC9zcGFuPjwvaDI+CiAgICAgICAgICA8cD7jgrXjg7Pjg5fjg6vjgacgYEJsb2NrIFVJYCDjgpLmnInlirnjgavjgZfjgZ/jgb7jgb4gb3ZlcmxheSBwYW5lbCDjga7kuIrjgpLjgr/jg4Pjg5fjgZfjgIHmrKHjgasgYFBhc3MgVUlgIOOBq+WIh+OCiuabv+OBiOOBpuWQjOOBmOWgtOaJgOOCkuOCv+ODg+ODl+OBl+OBpuOBj+OBoOOBleOBhOOAguWJjeiAheOBryBET00g5YG044Gu5pON5L2c44Go44GX44GmIFhSIHNlbGVjdCDjgpLmipHmraLjgZfjgIHlvozogIXjga8gd29ybGQgc2VsZWN0IOOBqOOBl+OBpiBoaXQgdGVzdCDjgYzpgJrjgorjgb7jgZnjgIJgV29ybGQgZmlyc3RgIOOBpyBgRHVwbGljYXRlIHRvbGVyYW5jZWAg44KS5LiL44GS44KL44Go44CBVUkg5LiK44Gu44K/44OD44OX44Gn44KC5LqM6YeN55m654Gr44Oq44K544Kv44GM5aKX44GI44KL5qeY5a2Q44GM6KaL44GI44G+44GZ44CCPC9wPgogICAgICAgICAgPHAgY2xhc3M9ImVuLWNvcHkiPlRhcCBvdmVyIHRoZSBvdmVybGF5IHBhbmVsIHdpdGggYEJsb2NrIFVJYCBlbmFibGVkLCB0aGVuIHN3aXRjaCB0byBgUGFzcyBVSWAgYW5kIHRhcCB0aGUgc2FtZSBzcG90LiBUaGUgZmlyc3QgcGF0aCBzdXBwcmVzc2VzIFhSIHNlbGVjdCBhcyBhIERPTSBpbnRlcmFjdGlvbjsgdGhlIHNlY29uZCBsZXRzIHdvcmxkIGhpdCB0ZXN0aW5nIHBhc3MgdGhyb3VnaC4gSW4gYFdvcmxkIGZpcnN0YCwgbG93ZXJpbmcgYER1cGxpY2F0ZSB0b2xlcmFuY2VgIHNob3dzIGR1cGxpY2F0ZS1hY3Rpb24gcmlzayByaXNpbmcgZXZlbiBvbiBVSSB0YXBzLjwvcD4KICAgICAgICAgIAogICAgPHVsIGNsYXNzPSJsaW5rLWxpc3QiPgogICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Ii4uL291dHB1dHMvMjAyNi0wNy0yNF9odG1sX2RvbV9vdmVybGF5X3RyYW5zaWVudF9zZWxlY3RfZ2F0ZS5odG1sIiB0YXJnZXQ9Il9ibGFuayIgcmVsPSJub3JlZmVycmVyIj5PcGVuIERPTSBPdmVybGF5IFNlbGVjdCBHYXRlIExhYjwvYT48L2xpPgogICAgICAgICAgCiAgICA8L3VsPgogIAogICAgICAgIDwvc2VjdGlvbj4KICAgICAgCgogICAgICAgIDxzZWN0aW9uIGNsYXNzPSJkZXRhaWwtYmxvY2siPgogICAgICAgICAgPGgyPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXIiPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItcHJpbWFyeSI+6YCy6KGM44Oe44OD44OXPC9zcGFuPjxzcGFuIGNsYXNzPSJoZWFkaW5nLXBhaXItc2Vjb25kYXJ5Ij5Qcm9ncmVzcyBtYXA8L3NwYW4+PC9zcGFuPjwvaDI+CiAgICAgICAgICA8cD7oqr/mn7s6IFdlYlhSIERPTSBPdmVybGF5c+OAgUhpdCBUZXN044CBRGV2aWNlIEFQSSBpbnB1dCBleHBsYWluZXLjgIFJbnB1dCBQcm9maWxlc+OAgUltbWVyc2l2ZSBXZWIgU2FtcGxlc+OAgU1ETiB0cmFuc2llbnQgaW5wdXQgcmVmZXJlbmNlIOOCkueiuuiqjeOAguOCouOCpOODh+OCojogZm92ZWF0ZWQgLyBkZXB0aCBidWRnZXQg44Gu5qyh5q6144Go44GX44Gm44CB5YWl5Yqb5bGk44Gu6Kqk6YG45oqe44KS6Ziy44GQIGdhdGUg44Gr54Sm54K544KS56e744GZ44CC5a6f6KOFOiBjYW52YXMgc3RhZ2XjgIFvdmVybGF5IHBhbmVs44CBdHJhbnNpZW50IHJheeOAgXdvcmxkIGFuY2hvciBoaXTjgIFzZWxlY3Qg5oqR5q2i44CBZHVwbGljYXRlIHJpc2vjgIFldmVudCBxdWV1ZSDjgpLov73liqDjgILmpJzoqLw6IEpTT04gcGFyc2XjgIFIVE1MIHNjcmlwdCDmp4vmlofjgIFnYWxsZXJ5IOWGjeeUn+aIkOOAgeWFrOmWiyBVUkwg44GuIEhUVFAgMjAwIOOCkueiuuiqjeOBmeOCi+OAgjwvcD4KICAgICAgICAgIDxwIGNsYXNzPSJlbi1jb3B5Ij5SZXNlYXJjaDogcmV2aWV3ZWQgV2ViWFIgRE9NIE92ZXJsYXlzLCBIaXQgVGVzdCwgdGhlIERldmljZSBBUEkgaW5wdXQgZXhwbGFpbmVyLCBJbnB1dCBQcm9maWxlcywgSW1tZXJzaXZlIFdlYiBTYW1wbGVzLCBhbmQgTUROJ3MgdHJhbnNpZW50IGlucHV0IHJlZmVyZW5jZS4gSWRlYTogYWZ0ZXIgZm92ZWF0ZWQgYW5kIGRlcHRoIGJ1ZGdldCBzY2hlZHVsaW5nLCBzaGlmdCBmb2N1cyB0byB0aGUgZ2F0ZSB0aGF0IHByZXZlbnRzIGluY29ycmVjdCBpbnB1dC1sYXllciBzZWxlY3Rpb24uIEltcGxlbWVudGF0aW9uOiBhZGRlZCBhIGNhbnZhcyBzdGFnZSwgb3ZlcmxheSBwYW5lbCwgdHJhbnNpZW50IHJheSwgd29ybGQgYW5jaG9yIGhpdCwgc2VsZWN0IHN1cHByZXNzaW9uLCBkdXBsaWNhdGUgcmlzaywgYW5kIGV2ZW50IHF1ZXVlLiBWYWxpZGF0aW9uOiBjaGVjayBKU09OIHBhcnNpbmcsIEhUTUwgc2NyaXB0IHN5bnRheCwgZ2FsbGVyeSByZWdlbmVyYXRpb24sIGFuZCBIVFRQIDIwMCBmb3IgcHVibGlzaGVkIFVSTHMuPC9wPgogICAgICAgICAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7kv6/nnrDjg6Hjg6I8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPkJpcmQncy1leWUgbWVtbzwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgIDxwPuOBk+OCjOOBvuOBp+OBruOCteODs+ODl+ODq+OBryBkZXB0aOOAgWxpZ2h0aW5n44CBaGFuZOOAgWxheWVyc+OAgXNwYWNlIHdhcnDjgIFhbmNob3LjgIFidWRnZXQg44G46YCy44KT44Gn44GN44G+44GX44Gf44CC5LuK5pel44Gu5Zue44Gv44CB6KGo56S65ZOB6LOq44Gn44Gv44Gq44GP5YWl5Yqb44Gu5aKD55WM44Gr5rOo55uu44GX44Gm44GE44G+44GZ44CCWFIg44Gn44Gv6KaL44GI44Gm44GE44KL44KC44Gu44CB6Kem44Gj44Gf44Gk44KC44KK44Gu44KC44Gu44CBQVBJIOOBjCBzZWxlY3Qg44Go44GX44Gm5omx44GG44KC44Gu44GM44Ga44KM44KE44GZ44GE44Gf44KB44CBVUkg44GoIHdvcmxkIOOBriBhcmJpdHJhdGlvbiDjgpLml6njgYTmrrXpmo7jgafjgrXjg7Pjg5fjg6vljJbjgZfjgabjgYrjgY/kvqHlgKTjgYzjgYLjgorjgb7jgZnjgII8L3A+CiAgICAgICAgICA8cCBjbGFzcz0iZW4tY29weSI+VGhlIHNlcmllcyBoYXMgbW92ZWQgdGhyb3VnaCBkZXB0aCwgbGlnaHRpbmcsIGhhbmRzLCBsYXllcnMsIHNwYWNlIHdhcnAsIGFuY2hvcnMsIGFuZCBidWRnZXQgc2NoZWR1bGluZy4gVG9kYXkncyBzYW1wbGUgZm9jdXNlcyBvbiB0aGUgYm91bmRhcnkgb2YgaW5wdXQgcmF0aGVyIHRoYW4gdmlzdWFsIHF1YWxpdHkuIEluIFhSLCB3aGF0IGlzIHZpc2libGUsIHdoYXQgdGhlIHVzZXIgaW50ZW5kZWQgdG8gdG91Y2gsIGFuZCB3aGF0IHRoZSBBUEkgdHJlYXRzIGFzIHNlbGVjdCBjYW4gZGl2ZXJnZSwgc28gaXQgaXMgd29ydGggcHJvdG90eXBpbmcgVUkvd29ybGQgYXJiaXRyYXRpb24gZWFybHkuPC9wPgogICAgICAgICAgCiAgICAgICAgPC9zZWN0aW9uPgogICAgICAKCiAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7ku4rml6Xjga7jg5/jg4voqabkvZzlgJnoo5w8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPlRvZGF5J3MgbWluaSBwcm90b3R5cGUgY2FuZGlkYXRlPC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgICAgPHA+5o6h55So44GX44Gf5YCZ6KOc44GvIGBET00gT3ZlcmxheSBTZWxlY3QgR2F0ZSBMYWJgIOOBp+OBmeOAgkRPTSBvdmVybGF5IOS4iuOBriBibG9ja2luZyAvIHBhc3MtdGhyb3VnaOOAgXRyYW5zaWVudCBoaXQgdGVzdCDjga4gd29ybGQgaGl044CB5LqM6YeN55m654Gr44Oq44K544Kv44CB5oqR5q2i5pWw44KSIDEg55S76Z2i44Gn6Kaz5a+f44Gn44GN44G+44GZ44CC5qyh44Gr6Laz44GZ44Gq44KJ44CB5a6f6Zqb44GuIGBiZWZvcmV4cnNlbGVjdGAgaGFuZGxlciDjga7nlpHkvLzjgrPjg7zjg4nooajnpLrjgIFoYW5kIHBpbmNoIOOBqCB0b3VjaHNjcmVlbiB0YXAg44GuIHByb2ZpbGUg5YilIHRocmVzaG9sZOOAgWFuY2hvciByZWZyZXNoIHNjaGVkdWxlciDjgajjga7pgKPli5XjgpLov73liqDjgZfjgb7jgZnjgII8L3A+CiAgICAgICAgICA8cCBjbGFzcz0iZW4tY29weSI+VGhlIHNlbGVjdGVkIHByb3RvdHlwZSBpcyBgRE9NIE92ZXJsYXkgU2VsZWN0IEdhdGUgTGFiYC4gSXQgc2hvd3MgYmxvY2tpbmcgdmVyc3VzIHBhc3MtdGhyb3VnaCBET00gb3ZlcmxheSByZWdpb25zLCB3b3JsZCBoaXRzIGZyb20gdHJhbnNpZW50IGhpdCB0ZXN0aW5nLCBkdXBsaWNhdGUtYWN0aW9uIHJpc2ssIGFuZCBzdXBwcmVzc2lvbiBjb3VudHMgaW4gb25lIHNjcmVlbi4gVXNlZnVsIGV4dGVuc2lvbnMgaW5jbHVkZSBkaXNwbGF5aW5nIHRoZSBhY3R1YWwgYGJlZm9yZXhyc2VsZWN0YCBoYW5kbGVyIHBzZXVkb2NvZGUsIHByb2ZpbGUtc3BlY2lmaWMgdGhyZXNob2xkcyBmb3IgaGFuZCBwaW5jaCB2ZXJzdXMgdG91Y2hzY3JlZW4gdGFwLCBhbmQgaW50ZWdyYXRpb24gd2l0aCB0aGUgYW5jaG9yIHJlZnJlc2ggc2NoZWR1bGVyLjwvcD4KICAgICAgICAgIAogICAgICAgIDwvc2VjdGlvbj4KICAgICAgCiAgICAgICAgCiAgICAgICAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImRldGFpbC1ibG9jayI+CiAgICAgICAgICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7lj4LogIPjg6rjg7Pjgq88L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPlJlZmVyZW5jZSBsaW5rczwvc3Bhbj48L3NwYW4+PC9oMj4KICAgICAgICAgICAgICAgIAogICAgPHVsIGNsYXNzPSJsaW5rLWxpc3QiPgogICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Ii4uL291dHB1dHMvMjAyNi0wNy0yNF9odG1sX2RvbV9vdmVybGF5X3RyYW5zaWVudF9zZWxlY3RfZ2F0ZS5odG1sIiB0YXJnZXQ9Il9ibGFuayIgcmVsPSJub3JlZmVycmVyIj5Ub2RheSdzIHNhbXBsZTogRE9NIE92ZXJsYXkgU2VsZWN0IEdhdGUgTGFiPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vd3d3LnczLm9yZy9UUi93ZWJ4ci1kb20tb3ZlcmxheXMtMS8iIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPlczQzogV2ViWFIgRE9NIE92ZXJsYXlzIE1vZHVsZTwvYT48L2xpPgogICAgICAgICAgCiAgICAgICAgICAgIDxsaT48YSBocmVmPSJodHRwczovL3d3dy53My5vcmcvVFIvd2VieHItaGl0LXRlc3QtMS8iIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPlczQzogV2ViWFIgSGl0IFRlc3QgTW9kdWxlPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vd2VieHIvaW5wdXQtZXhwbGFpbmVyLmh0bWwiIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vcmVmZXJyZXIiPkltbWVyc2l2ZSBXZWI6IFdlYlhSIERldmljZSBBUEkgaW5wdXQgZXhwbGFpbmVyPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vaW1tZXJzaXZlLXdlYi5naXRodWIuaW8vd2VieHItaW5wdXQtcHJvZmlsZXMvIiB0YXJnZXQ9Il9ibGFuayIgcmVsPSJub3JlZmVycmVyIj5JbW1lcnNpdmUgV2ViOiBXZWJYUiBJbnB1dCBQcm9maWxlczwvYT48L2xpPgogICAgICAgICAgCiAgICAgICAgICAgIDxsaT48YSBocmVmPSJodHRwczovL2ltbWVyc2l2ZS13ZWIuZ2l0aHViLmlvL3dlYnhyLXNhbXBsZXMvIiB0YXJnZXQ9Il9ibGFuayIgcmVsPSJub3JlZmVycmVyIj5JbW1lcnNpdmUgV2ViOiBXZWJYUiBTYW1wbGVzPC9hPjwvbGk+CiAgICAgICAgICAKICAgICAgICAgICAgPGxpPjxhIGhyZWY9Imh0dHBzOi8vZGV2ZWxvcGVyLm1vemlsbGEub3JnL2VuLVVTL2RvY3MvV2ViL0FQSS9YUlRyYW5zaWVudElucHV0SGl0VGVzdFNvdXJjZSIgdGFyZ2V0PSJfYmxhbmsiIHJlbD0ibm9yZWZlcnJlciI+TUROOiBYUlRyYW5zaWVudElucHV0SGl0VGVzdFNvdXJjZTwvYT48L2xpPgogICAgICAgICAgCiAgICA8L3VsPgogIAogICAgICAgICAgICAgIDwvc2VjdGlvbj4KICAgICAgICAgICAgCiAgICAgIDwvZGl2PgoKICAgICAgPGFzaWRlIGNsYXNzPSJwcmV2aWV3Ij4KICAgICAgICA8aDI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpciI+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1wcmltYXJ5Ij7jgrXjg7Pjg5fjg6vjg5fjg6zjg5Pjg6Xjg7w8L3NwYW4+PHNwYW4gY2xhc3M9ImhlYWRpbmctcGFpci1zZWNvbmRhcnkiPlNhbXBsZSBwcmV2aWV3PC9zcGFuPjwvc3Bhbj48L2gyPgogICAgICAgIDxpZnJhbWUgc3JjPSIuLi9vdXRwdXRzLzIwMjYtMDctMjRfaHRtbF9kb21fb3ZlcmxheV90cmFuc2llbnRfc2VsZWN0X2dhdGUuaHRtbCIgbG9hZGluZz0ibGF6eSIgdGl0bGU9IkRPTSBPdmVybGF5IFNlbGVjdCBHYXRlIExhYiI+PC9pZnJhbWU+CiAgICAgIDwvYXNpZGU+CiAgICA8L3NlY3Rpb24+CiAgPC9tYWluPgo8L2JvZHk+CjwvaHRtbD4=
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DOM Overlay と transient hit test の選択衝突を分ける | 2026-07-24</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.07.24</p>
+      <h1>DOM Overlay と transient hit test の選択衝突を分ける</h1>
+      <p class="hero-subtitle">Separating DOM Overlay and transient hit-test selection conflicts</p>
+      <p>WebXR Hit Test、DOM Overlays、Hand Input、Input Profiles、Immersive Web 公式 samples を確認し、今日は DOM UI 操作と XR ワールド選択が重なる場面で、`beforexrselect` と transient input hit test の判断を可視化する自作 HTML サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing WebXR Hit Test, DOM Overlays, Hand Input, Input Profiles, and the Immersive Web official samples, today's original HTML sample visualizes how `beforexrselect` and transient input hit tests arbitrate between DOM UI interaction and XR world selection.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-07-24_html_dom_overlay_transient_select_gate.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../pages/3.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-07-23.html">← 2026.07.23</a>
+      <a class="day-link" href="../days/2026-07-25.html">2026.07.25 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>DOM Overlay Select Gate Lab</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-07-24_html_dom_overlay_transient_select_gate.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR DOM Overlays Module は、没入セッション中に単一 DOM 要素を透明背景の 2D overlay として表示し、DOM pointer/click と XR input を同じ画面上で扱う前提を整理している。</span>
+              <span class="en-copy">The WebXR DOM Overlays Module describes showing a single DOM element as a transparent 2D overlay during an immersive session, where DOM pointer/click handling and XR input share the same screen.</span>
+            </li>
+          
+            <li>
+              <span>`beforexrselect` は DOM overlay 上で primary action が発生したとき、必要なら `preventDefault()` で `selectstart` / `selectend` / `select` を抑止できるため、UI 操作とワールド配置の二重発火を防ぐ要になる。</span>
+              <span class="en-copy">`beforexrselect` can call `preventDefault()` when a primary action intersects the DOM overlay, suppressing `selectstart`, `selectend`, and `select` to avoid duplicate UI and world actions.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Hit Test Module の transient input hit test は `requestHitTestSourceForTransientInput()` と `getHitTestResultsForTransientInput()` で、画面タップや一時入力源ごとの hit 結果を扱える。</span>
+              <span class="en-copy">The WebXR Hit Test Module's transient input hit testing uses `requestHitTestSourceForTransientInput()` and `getHitTestResultsForTransientInput()` for per-transient-input hit results.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Device API の input explainer は、画面上の interaction point から target ray を生成し、select intent を input source ごとに統一して扱う考え方を説明している。</span>
+              <span class="en-copy">The WebXR Device API input explainer describes target rays generated from screen interaction points and a unified select intent across input sources.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Input Profiles は `XRInputSource.profiles` の整合性と fallback を扱う一次情報で、hand、controller、touchscreen を同じ選択ゲートに通す設計の前提になる。</span>
+              <span class="en-copy">WebXR Input Profiles provide the conformance and fallback basis behind `XRInputSource.profiles`, useful when routing hand, controller, and touchscreen input through one selection gate.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は WebXR DOM Overlays Module の `beforexrselect` と、Hit Test Module の transient input hit test です。AR で画面上に DOM UI を載せると、同じタップが UI の pointer/click とワールド側の `select` / hit test の両方として解釈される可能性があります。公式仕様は、overlay の交差領域で XR select を抑止する手段と、一時入力源ごとの hit test 結果を分ける手段を用意しており、配置 UI や設定パネルを安全に同居させる上で面白い接点です。</p>
+          <p class="en-copy">Today's notable intersection is `beforexrselect` from the WebXR DOM Overlays Module and transient input hit testing from the Hit Test Module. When a DOM UI sits over AR content, the same tap can be interpreted both as a DOM pointer/click and as a world `select` plus hit test. The specs provide one mechanism to suppress XR select on overlay regions and another to group hit test results by transient input source, which is a useful design point for placement UIs and settings panels.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">W3C: WebXR DOM Overlays Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hit-test-1/" target="_blank" rel="noreferrer">W3C: WebXR Hit Test Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>DOM overlay の panel を、ワールド上の透明な安全領域として見せる表現を試しました。ステージ上でドラッグ/タップすると、head 側から伸びる transient touch ray、hit した plane/object、UI によって抑止された select、二重発火リスクが色で切り替わります。`UI strict`、`World first`、`Audit trail` の mode により、同じ入力でも UI 優先、配置優先、監査優先の設計差が見えます。</p>
+          <p class="en-copy">The sample treats the DOM overlay panel as a transparent safety region over the world. Dragging or tapping the stage shows a transient touch ray from the viewer, the hit plane or object, suppressed selects, and duplicate-action risk with color changes. `UI strict`, `World first`, and `Audit trail` reveal how the same input changes under UI-first, placement-first, and logging-first policies.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では、DOM overlay の interactive region を hit map として持ち、`beforexrselect` で抑止した interaction と `XRFrame.getHitTestResultsForTransientInput()` の結果を同じ event queue に記録すると調査しやすそうです。透明な説明文は pass-through、button や slider は block、確認済みの placement area は world select へ通す、という粒度で扱うと誤配置を減らせます。hand / controller / touchscreen は `XRInputSource.profiles` を見て threshold を変えつつ、最後は同じ gate function に通す設計が保守しやすいです。</p>
+          <p class="en-copy">A practical implementation can keep an interactive-region hit map for the DOM overlay, then log interactions suppressed by `beforexrselect` beside results from `XRFrame.getHitTestResultsForTransientInput()`. Transparent explanatory text can pass through, buttons and sliders can block, and confirmed placement regions can route to world select. Hand, controller, and touchscreen inputs can tune thresholds from `XRInputSource.profiles` while still sharing one gate function.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>DOM Overlay の cross-origin event handling、transient input hit test の active source 数制限、Hand Input の pinch / grasp profile、Input Profiles registry の fallback、Layers sample の input selection space warp を続けて見ます。次は今回の gate に anchor drift と depth stale を戻し、UI 操作中は placement を hold しつつ、視線外の anchor refresh は継続する挙動を試したいです。</p>
+          <p class="en-copy">Continue watching DOM Overlay cross-origin event handling, active-source limits for transient input hit testing, Hand Input pinch and grasp profiles, Input Profiles registry fallback behavior, and the Layers input selection space warp sample. Next, bring anchor drift and stale depth back into this gate so placement is held during UI use while off-gaze anchor refresh continues.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>サンプルで `Block UI` を有効にしたまま overlay panel の上をタップし、次に `Pass UI` に切り替えて同じ場所をタップしてください。前者は DOM 側の操作として XR select を抑止し、後者は world select として hit test が通ります。`World first` で `Duplicate tolerance` を下げると、UI 上のタップでも二重発火リスクが増える様子が見えます。</p>
+          <p class="en-copy">Tap over the overlay panel with `Block UI` enabled, then switch to `Pass UI` and tap the same spot. The first path suppresses XR select as a DOM interaction; the second lets world hit testing pass through. In `World first`, lowering `Duplicate tolerance` shows duplicate-action risk rising even on UI taps.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-24_html_dom_overlay_transient_select_gate.html" target="_blank" rel="noreferrer">Open DOM Overlay Select Gate Lab</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR DOM Overlays、Hit Test、Device API input explainer、Input Profiles、Immersive Web Samples、MDN transient input reference を確認。アイデア: foveated / depth budget の次段として、入力層の誤選択を防ぐ gate に焦点を移す。実装: canvas stage、overlay panel、transient ray、world anchor hit、select 抑止、duplicate risk、event queue を追加。検証: JSON parse、HTML script 構文、gallery 再生成、公開 URL の HTTP 200 を確認する。</p>
+          <p class="en-copy">Research: reviewed WebXR DOM Overlays, Hit Test, the Device API input explainer, Input Profiles, Immersive Web Samples, and MDN's transient input reference. Idea: after foveated and depth budget scheduling, shift focus to the gate that prevents incorrect input-layer selection. Implementation: added a canvas stage, overlay panel, transient ray, world anchor hit, select suppression, duplicate risk, and event queue. Validation: check JSON parsing, HTML script syntax, gallery regeneration, and HTTP 200 for published URLs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>これまでのサンプルは depth、lighting、hand、layers、space warp、anchor、budget へ進んできました。今日の回は、表示品質ではなく入力の境界に注目しています。XR では見えているもの、触ったつもりのもの、API が select として扱うものがずれやすいため、UI と world の arbitration を早い段階でサンプル化しておく価値があります。</p>
+          <p class="en-copy">The series has moved through depth, lighting, hands, layers, space warp, anchors, and budget scheduling. Today's sample focuses on the boundary of input rather than visual quality. In XR, what is visible, what the user intended to touch, and what the API treats as select can diverge, so it is worth prototyping UI/world arbitration early.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>採用した候補は `DOM Overlay Select Gate Lab` です。DOM overlay 上の blocking / pass-through、transient hit test の world hit、二重発火リスク、抑止数を 1 画面で観察できます。次に足すなら、実際の `beforexrselect` handler の疑似コード表示、hand pinch と touchscreen tap の profile 別 threshold、anchor refresh scheduler との連動を追加します。</p>
+          <p class="en-copy">The selected prototype is `DOM Overlay Select Gate Lab`. It shows blocking versus pass-through DOM overlay regions, world hits from transient hit testing, duplicate-action risk, and suppression counts in one screen. Useful extensions include displaying the actual `beforexrselect` handler pseudocode, profile-specific thresholds for hand pinch versus touchscreen tap, and integration with the anchor refresh scheduler.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-07-24_html_dom_overlay_transient_select_gate.html" target="_blank" rel="noreferrer">Today's sample: DOM Overlay Select Gate Lab</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">W3C: WebXR DOM Overlays Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hit-test-1/" target="_blank" rel="noreferrer">W3C: WebXR Hit Test Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr/input-explainer.html" target="_blank" rel="noreferrer">Immersive Web: WebXR Device API input explainer</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-input-profiles/" target="_blank" rel="noreferrer">Immersive Web: WebXR Input Profiles</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRTransientInputHitTestSource" target="_blank" rel="noreferrer">MDN: XRTransientInputHitTestSource</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-07-24_html_dom_overlay_transient_select_gate.html" loading="lazy" title="DOM Overlay Select Gate Lab"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

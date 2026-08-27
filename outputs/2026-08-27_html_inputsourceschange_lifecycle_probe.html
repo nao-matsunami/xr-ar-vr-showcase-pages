@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XRInputSourcesChange Lifecycle Probe</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111116;
+      --panel: rgba(20, 19, 28, 0.94);
+      --line: rgba(149, 197, 255, 0.25);
+      --text: #f5f8ff;
+      --muted: #b7c3d6;
+      --blue: #95c5ff;
+      --green: #9ff0c1;
+      --amber: #ffd07d;
+      --red: #ff8392;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(145deg, rgba(149, 197, 255, 0.16), transparent 30%),
+        linear-gradient(235deg, rgba(159, 240, 193, 0.13), transparent 34%),
+        linear-gradient(180deg, #111116, #181827 56%, #0d1016);
+    }
+
+    main {
+      width: min(1160px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.8vw, 2.35rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 820px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+
+    .badge, .panel, .stage, .source, .event {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.3);
+    }
+
+    .badge {
+      min-width: 250px;
+      padding: 12px 14px;
+    }
+
+    .badge small, label span, .source small, .event small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.73rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .badge strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--blue);
+      font-size: 1.1rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 350px;
+      gap: 14px;
+    }
+
+    .stage {
+      min-height: 640px;
+      padding: 16px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 14px;
+    }
+
+    .timeline {
+      position: relative;
+      min-height: 340px;
+      border: 1px solid rgba(245, 248, 255, 0.12);
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(245, 248, 255, 0.06) 1px, transparent 1px) 0 0 / 80px 100%,
+        rgba(8, 9, 14, 0.5);
+      overflow: hidden;
+    }
+
+    .lane {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 25%;
+      border-bottom: 1px solid rgba(245, 248, 255, 0.08);
+    }
+
+    .lane:nth-child(1) { top: 0; }
+    .lane:nth-child(2) { top: 25%; }
+    .lane:nth-child(3) { top: 50%; }
+    .lane:nth-child(4) { top: 75%; border-bottom: 0; }
+
+    .source {
+      position: absolute;
+      width: 140px;
+      min-height: 54px;
+      padding: 9px;
+      background: rgba(8, 9, 14, 0.82);
+      transition: left 240ms ease, opacity 160ms ease, border-color 160ms ease;
+    }
+
+    .source b {
+      display: block;
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .source.added { border-color: rgba(159, 240, 193, 0.75); }
+    .source.stale { border-color: rgba(255, 208, 125, 0.78); }
+    .source.removed { border-color: rgba(255, 131, 146, 0.78); opacity: 0.48; }
+
+    .event-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .event {
+      padding: 10px;
+      background: rgba(8, 9, 14, 0.52);
+      min-width: 0;
+    }
+
+    .event strong {
+      display: block;
+      margin-top: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .event.ok strong { color: var(--green); }
+    .event.warn strong { color: var(--amber); }
+    .event.bad strong { color: var(--red); }
+
+    .panel {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+    }
+
+    select, input[type="range"], button {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+
+    select, button {
+      min-height: 38px;
+      color: var(--text);
+      background: rgba(8, 9, 14, 0.78);
+      border: 1px solid rgba(245, 248, 255, 0.15);
+      border-radius: 8px;
+      padding: 0 10px;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 760;
+    }
+
+    .metric {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .metric b { color: var(--text); }
+
+    .route {
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(149, 197, 255, 0.12);
+      border: 1px solid rgba(149, 197, 255, 0.28);
+      line-height: 1.45;
+    }
+
+    .route strong {
+      display: block;
+      color: var(--blue);
+      font-size: 1.05rem;
+    }
+
+    .log {
+      min-height: 140px;
+      max-height: 190px;
+      overflow: auto;
+      padding: 10px;
+      border: 1px solid rgba(245, 248, 255, 0.12);
+      border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      color: #e7edfb;
+      background: rgba(8, 9, 14, 0.64);
+    }
+
+    @media (max-width: 860px) {
+      header, .layout { grid-template-columns: 1fr; }
+      .event-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .badge { min-width: 0; }
+    }
+
+    @media (max-width: 540px) {
+      main { width: min(100vw - 20px, 1160px); }
+      .event-grid { grid-template-columns: 1fr; }
+      .source { width: 118px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>XRInputSourcesChange Lifecycle Probe</h1>
+        <p class="subtitle">`inputsourceschange` で追加された input source に motion controller を結び、削除時に解放するまでの寿命をイベント列として点検する派生サンプルです。</p>
+      </div>
+      <div class="badge">
+        <small>lifecycle verdict</small>
+        <strong id="verdictBadge">watching</strong>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <div class="event-grid" id="eventGrid"></div>
+        <div class="timeline" id="timeline">
+          <div class="lane"></div>
+          <div class="lane"></div>
+          <div class="lane"></div>
+          <div class="lane"></div>
+        </div>
+        <div class="log" id="log"></div>
+      </div>
+
+      <aside class="panel">
+        <label>
+          <span>scenario</span>
+          <select id="scenario">
+            <option value="pair">paired controllers</option>
+            <option value="swap">controller swap</option>
+            <option value="transient">screen transient burst</option>
+            <option value="loss">tracking loss and stale release</option>
+          </select>
+        </label>
+        <label>
+          <span>remove delay <b id="delayValue">420ms</b></span>
+          <input id="removeDelay" type="range" min="80" max="1200" step="20" value="420">
+        </label>
+        <label>
+          <span>cleanup strictness <b id="strictValue">74%</b></span>
+          <input id="strictness" type="range" min="0" max="100" value="74">
+        </label>
+        <label>
+          <span>pose null rate <b id="poseValue">16%</b></span>
+          <input id="poseNull" type="range" min="0" max="80" value="16">
+        </label>
+        <button id="stepButton">Step event</button>
+        <button id="resetButton">Reset scenario</button>
+        <div class="metric"><span>active sources</span><b id="activeCount">0</b></div>
+        <div class="metric"><span>controller objects</span><b id="controllerCount">0</b></div>
+        <div class="metric"><span>stale risk</span><b id="staleRisk">0%</b></div>
+        <div class="route">
+          <strong id="routeTitle">release route</strong>
+          <span id="routeText">Step event で追加・削除を進めます。</span>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const scenarioSteps = {
+      pair: [
+        { type: "added", id: "left-touch", mode: "tracked-pointer", hand: "left" },
+        { type: "added", id: "right-touch", mode: "tracked-pointer", hand: "right" },
+        { type: "removed", id: "left-touch" },
+        { type: "removed", id: "right-touch" }
+      ],
+      swap: [
+        { type: "added", id: "right-old", mode: "tracked-pointer", hand: "right" },
+        { type: "removed", id: "right-old" },
+        { type: "added", id: "right-new", mode: "tracked-pointer", hand: "right" },
+        { type: "added", id: "left-new", mode: "tracked-pointer", hand: "left" }
+      ],
+      transient: [
+        { type: "added", id: "tap-1", mode: "screen", hand: "none" },
+        { type: "removed", id: "tap-1" },
+        { type: "added", id: "tap-2", mode: "transient-pointer", hand: "none" },
+        { type: "removed", id: "tap-2" }
+      ],
+      loss: [
+        { type: "added", id: "right-touch", mode: "tracked-pointer", hand: "right" },
+        { type: "stale", id: "right-touch" },
+        { type: "removed", id: "right-touch" },
+        { type: "added", id: "right-touch", mode: "tracked-pointer", hand: "right" }
+      ]
+    };
+
+    const state = {
+      step: 0,
+      sources: new Map(),
+      controllers: new Map(),
+      log: []
+    };
+
+    const els = {
+      scenario: document.querySelector("#scenario"),
+      removeDelay: document.querySelector("#removeDelay"),
+      strictness: document.querySelector("#strictness"),
+      poseNull: document.querySelector("#poseNull"),
+      delayValue: document.querySelector("#delayValue"),
+      strictValue: document.querySelector("#strictValue"),
+      poseValue: document.querySelector("#poseValue"),
+      stepButton: document.querySelector("#stepButton"),
+      resetButton: document.querySelector("#resetButton"),
+      eventGrid: document.querySelector("#eventGrid"),
+      timeline: document.querySelector("#timeline"),
+      log: document.querySelector("#log"),
+      activeCount: document.querySelector("#activeCount"),
+      controllerCount: document.querySelector("#controllerCount"),
+      staleRisk: document.querySelector("#staleRisk"),
+      verdictBadge: document.querySelector("#verdictBadge"),
+      routeTitle: document.querySelector("#routeTitle"),
+      routeText: document.querySelector("#routeText")
+    };
+
+    function addLog(message) {
+      const time = new Date().toLocaleTimeString("ja-JP", { hour12: false });
+      state.log.unshift(`${time} ${message}`);
+      state.log = state.log.slice(0, 10);
+      els.log.textContent = state.log.join("\n");
+    }
+
+    function resetScenario() {
+      state.step = 0;
+      state.sources.clear();
+      state.controllers.clear();
+      state.log = [];
+      addLog(`scenario reset: ${els.scenario.value}`);
+      render();
+    }
+
+    function applyStep() {
+      const steps = scenarioSteps[els.scenario.value];
+      const event = steps[state.step % steps.length];
+      const now = performance.now();
+      if (event.type === "added") {
+        state.sources.set(event.id, { ...event, age: now, status: "added", x: 8 + (state.step * 21) % 70 });
+        state.controllers.set(event.id, { profileLoaded: event.mode !== "screen", released: false });
+        addLog(`inputsourceschange added=${event.id} mode=${event.mode}`);
+      } else if (event.type === "removed") {
+        const source = state.sources.get(event.id);
+        if (source) {
+          source.status = "removed";
+          source.x = Math.min(76, source.x + 16);
+        }
+        const controller = state.controllers.get(event.id);
+        if (controller) {
+          const strict = Number(els.strictness.value);
+          if (strict >= 52) state.controllers.delete(event.id);
+          else controller.released = false;
+        }
+        addLog(`inputsourceschange removed=${event.id}`);
+      } else if (event.type === "stale") {
+        const source = state.sources.get(event.id);
+        if (source) {
+          source.status = "stale";
+          source.x = Math.min(74, source.x + 12);
+        }
+        addLog(`frame.getPose null spike for ${event.id}`);
+      }
+      state.step += 1;
+      render();
+    }
+
+    function computeVerdict() {
+      const active = [...state.sources.values()].filter((source) => source.status !== "removed").length;
+      const stale = [...state.sources.values()].filter((source) => source.status === "stale").length;
+      const leaked = Math.max(0, state.controllers.size - active);
+      const risk = Math.min(100, Math.round(Number(els.poseNull.value) * 0.55 + leaked * 26 + stale * 18 + (1200 - Number(els.removeDelay.value)) / 40 - Number(els.strictness.value) * 0.22));
+      if (risk >= 64) return { risk, status: "cleanup blocked", tone: "bad", text: "removed source の MotionController が残っています。削除イベントで asset と gamepad poll を即時解放します。" };
+      if (risk >= 34) return { risk, status: "watch stale pose", tone: "warn", text: "pose null と遅延削除が重なっています。select 候補を保持する時間を短くします。" };
+      return { risk, status: "release clean", tone: "ok", text: "added / removed の差分と controller object が揃っています。frame poll を継続できます。" };
+    }
+
+    function render() {
+      els.delayValue.textContent = `${els.removeDelay.value}ms`;
+      els.strictValue.textContent = `${els.strictness.value}%`;
+      els.poseValue.textContent = `${els.poseNull.value}%`;
+
+      const steps = scenarioSteps[els.scenario.value];
+      els.eventGrid.innerHTML = steps.map((event, index) => {
+        const cls = event.type === "removed" ? "warn" : event.type === "stale" ? "bad" : "ok";
+        return `
+          <div class="event ${cls}">
+            <small>step ${index + 1} / ${event.type}</small>
+            <strong>${event.id}</strong>
+          </div>
+        `;
+      }).join("");
+
+      document.querySelectorAll(".source").forEach((node) => node.remove());
+      [...state.sources.values()].forEach((source, index) => {
+        const node = document.createElement("div");
+        node.className = `source ${source.status}`;
+        node.style.left = `${source.x}%`;
+        node.style.top = `${12 + (index % 4) * 24}%`;
+        node.innerHTML = `<small>${source.status} / ${source.hand}</small><b>${source.id}</b>`;
+        els.timeline.appendChild(node);
+      });
+
+      const active = [...state.sources.values()].filter((source) => source.status !== "removed").length;
+      const verdict = computeVerdict();
+      els.activeCount.textContent = active;
+      els.controllerCount.textContent = state.controllers.size;
+      els.staleRisk.textContent = `${verdict.risk}%`;
+      els.verdictBadge.textContent = verdict.status;
+      els.routeTitle.textContent = verdict.status;
+      els.routeText.textContent = verdict.text;
+    }
+
+    els.stepButton.addEventListener("click", applyStep);
+    els.resetButton.addEventListener("click", resetScenario);
+    [els.scenario, els.removeDelay, els.strictness, els.poseNull].forEach((control) => {
+      control.addEventListener("input", render);
+    });
+    els.scenario.addEventListener("change", resetScenario);
+
+    resetScenario();
+  </script>
+</body>
+</html>
