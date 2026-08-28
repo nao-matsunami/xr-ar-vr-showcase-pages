@@ -1,0 +1,159 @@
+{
+  "date": "2026-08-28",
+  "headline": "WebXR Input Profiles Registry fetch と inline input log を自作サンプル化",
+  "headlineEn": "Original samples for WebXR Input Profiles Registry fetching and inline input logging",
+  "summary": "Immersive Web の WebXR Input Profiles Registry / motion-controllers、MDN の `XRInputSource.profiles` と WebXR input guide、W3C WebXR Device API、Immersive Web Samples の Controller State を確認し、実 Registry fetch の失敗や fallback を可視化する本命サンプルと、inline session で `profiles` が空になる制約を実ログ / synthetic log で切り分ける派生サンプルを追加しました。",
+  "summaryEn": "After reviewing Immersive Web's WebXR Input Profiles Registry and motion-controllers package, MDN's `XRInputSource.profiles` and WebXR input guide, the W3C WebXR Device API, and Immersive Web's Controller State sample, today's original work adds a main sample that visualizes real Registry fetch failures and fallback plus a derivative logger that separates real and synthetic inline-session events where `profiles` is empty.",
+  "keyTopics": [
+    "WebXR Input Profiles Registry は profile id、fallbackProfileIds、handedness layout、components、selectComponentId、gamepad button / axes mapping を定義し、User Agent とアプリの入力解釈をそろえる基準になります。",
+    "motion-controllers package の `fetchProfile()` は `profilesList.json` を起点に `XRInputSource.profiles` の先頭から一致 profile を探すため、network / CDN / local bundle の失敗時 fallback 設計が必要です。",
+    "MDN の `XRInputSource.profiles` は、profile 配列が具体度順であることと、inline mode では常に空配列になることを明記しており、inline と immersive の route を分ける根拠になります。",
+    "WebXR Device API の inline session は通常ページ内表示と入力検証に使える一方、XR controller の Registry 解決までは期待しすぎないほうが安定します。",
+    "Immersive Web Samples の Controller State は gamepad attribute の可視化例として有用ですが、今日の公開カードは外部デモではなく、ワークスペース内の Registry fetch probe と inline event logger を中心にしました。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Input Profiles Registry defines profile ids, fallbackProfileIds, handedness layouts, components, selectComponentId, and gamepad button/axes mappings, aligning input interpretation between user agents and applications.",
+    "The motion-controllers package `fetchProfile()` starts from `profilesList.json` and scans `XRInputSource.profiles` from the front, so network, CDN, and local-bundle failure routes need to be designed explicitly.",
+    "MDN's `XRInputSource.profiles` notes that the array is ordered by specificity and is always empty in inline mode, which justifies separating inline and immersive routing.",
+    "The WebXR Device API inline session is useful for page-embedded display and input checks, but it should not be expected to resolve XR controller Registry data.",
+    "Immersive Web's Controller State sample is useful as a gamepad-attribute visualization reference, while today's public cards remain centered on the original Registry fetch probe and inline event logger in this workspace."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: WebXR Input Profile Registry Fetch Probe",
+      "url": "../outputs/2026-08-28_html_input_profile_registry_fetch_probe.html"
+    },
+    {
+      "label": "Today's derivative sample: WebXR Inline Session Input Event Logger",
+      "url": "../outputs/2026-08-28_html_inline_session_input_event_logger.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Input Profiles Registry",
+      "url": "https://immersive-web.github.io/webxr-input-profiles/packages/registry/"
+    },
+    {
+      "label": "Immersive Web: webxr-input-profiles GitHub repository",
+      "url": "https://github.com/immersive-web/webxr-input-profiles"
+    },
+    {
+      "label": "Immersive Web: Motion Controllers README",
+      "url": "https://github.com/immersive-web/webxr-input-profiles/blob/main/packages/motion-controllers/README.md"
+    },
+    {
+      "label": "MDN: XRInputSource profiles property",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRInputSource/profiles"
+    },
+    {
+      "label": "MDN: Inputs and input sources",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Inputs"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Web Samples: Controller State",
+      "url": "https://immersive-web.github.io/webxr-samples/controller-state.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、Immersive Web の WebXR Input Profiles Registry と motion-controllers package です。Registry は profile 名の一覧ではなく、handedness ごとの layout、component、selectComponentId、gamepad mapping を持つため、controller を device 固有分岐ではなく semantic action に変換する土台になります。面白い点は、実 profile fetch が失敗しても、reported profiles の順序、generic fallback、inline mode の空 profiles を分ければ、ユーザー操作の route を説明可能な状態で縮退できることです。",
+      "bodyEn": "Today's notable references are Immersive Web's WebXR Input Profiles Registry and motion-controllers package. The Registry is more than a list of profile names: it carries handedness-specific layouts, components, selectComponentId, and gamepad mappings, making it a foundation for converting controllers into semantic actions without device-specific branching. The interesting part is that even when real profile fetching fails, the app can degrade explainably by separating reported-profile order, generic fallback, and empty profiles in inline mode.",
+      "links": [
+        {
+          "label": "WebXR Input Profiles Registry",
+          "url": "https://immersive-web.github.io/webxr-input-profiles/packages/registry/"
+        },
+        {
+          "label": "Motion Controllers README",
+          "url": "https://github.com/immersive-web/webxr-input-profiles/blob/main/packages/motion-controllers/README.md"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `WebXR Input Profile Registry Fetch Probe` は、reported profiles、handedness、remote Registry 優先、network quality、strict select component を切り替え、`profilesList.json` の取得成功 / 失敗とローカル seed fallback の差を ladder で表示します。派生サンプル `WebXR Inline Session Input Event Logger` は、`requestSession(\"inline\")` の実開始ボタンと synthetic event の step 実行を同じ timeline に流し、inline mode の空 profiles を Registry lookup へ渡さず screen / pointer fallback に分岐する判断を見せます。",
+      "bodyEn": "The main sample, `WebXR Input Profile Registry Fetch Probe`, toggles reported profiles, handedness, remote-Registry preference, network quality, and strict select-component handling, then shows `profilesList.json` fetch success or failure and local-seed fallback as a ladder. The derivative sample, `WebXR Inline Session Input Event Logger`, streams both a real `requestSession(\"inline\")` button and stepped synthetic events into one timeline, showing why empty profiles in inline mode should route to screen/pointer fallback instead of Registry lookup.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-08-28_html_input_profile_registry_fetch_probe.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-08-28_html_inline_session_input_event_logger.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "`XRInputSource.profiles` は具体度順の候補列として扱い、アプリ側は先頭から対応 profile を探します。`profilesList.json` が取れない場合に備え、よく使う generic profile だけはローカル seed として持つと入力が完全停止しません。inline mode では profiles が空になるため、Registry route ではなく DOM pointer / screen select の route を明示します。実装時は remote fetch、local bundle、inline fallback、unknown profile fallback を別 metric にして、どこで縮退したのかをログ化すると検証しやすくなります。",
+      "bodyEn": "Treat `XRInputSource.profiles` as an ordered candidate list and search from the front. Keeping a small local seed of common generic profiles prevents input from fully stopping when `profilesList.json` cannot be fetched. Because profiles are empty in inline mode, route to DOM pointer or screen select rather than the Registry route. In production, track remote fetch, local bundle, inline fallback, and unknown-profile fallback as separate metrics so the degradation point is visible in logs.",
+      "links": [
+        {
+          "label": "MDN XRInputSource profiles",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRInputSource/profiles"
+        },
+        {
+          "label": "MDN Inputs and input sources",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Inputs"
+        }
+      ]
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは Registry fetch status、matched profile、fallback depth、selectComponentId、component type、profile array length、inline empty profile rate、targetRayMode、real / synthetic event source、fallback route を取れます。2026-08-27 の layout router と接続すれば、実 Registry から取得した component layout を疑似データと差し替えられます。2026-08-26 の gamepad action mapper と接続すれば、取得 profile の button / axes mapping から semantic action までを一続きで検証できます。",
+      "bodyEn": "The two samples expose Registry fetch status, matched profile, fallback depth, selectComponentId, component type, profile-array length, inline empty-profile rate, targetRayMode, real/synthetic event source, and fallback route. Connected to the 2026-08-27 layout router, real Registry component layouts can replace simulated data. Connected to the 2026-08-26 gamepad action mapper, profile button/axes mappings can be tested end to end into semantic actions."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Input Profiles Registry の profile JSON schema、assets package の CDN 配布パス、motion-controllers の `fetchProfile()` と `MotionController`、WebXR Device API の input source lifecycle、WebXR Gamepads Module の live gamepad update、Immersive Web Samples の input-profiles / controller-state source を継続して追います。次は実 fetch した profile JSON の component mapping を保存し、オフライン時に local bundle として再利用する小さな cache viewer を試すとよさそうです。",
+      "bodyEn": "Continue watching the Input Profiles Registry profile JSON schema, CDN paths for the assets package, motion-controllers `fetchProfile()` and `MotionController`, input-source lifecycle in the WebXR Device API, live gamepad updates in the WebXR Gamepads Module, and the input-profiles/controller-state sources in Immersive Web Samples. A good next test is a small cache viewer that stores fetched profile JSON and reuses it as a local bundle offline."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命サンプルで `Fetch registry` を押し、reported profiles を `unknown-vendor-pro, generic-trigger` にして network quality を下げてください。remote miss、local seed、generic fallback の違いが ladder に出ます。派生サンプルでは `Start inline session` を押したあと、synthetic scenario を `inline empty profiles` にして Step を進めると、profiles が空のイベントを Registry route に入れない判断が確認できます。",
+      "bodyEn": "In the main sample, press `Fetch registry`, switch reported profiles to `unknown-vendor-pro, generic-trigger`, and lower network quality. The ladder shows the difference between remote miss, local seed, and generic fallback. In the derivative sample, press `Start inline session`, choose `inline empty profiles`, and step forward to confirm that empty-profile events do not enter the Registry route.",
+      "links": [
+        {
+          "label": "Open WebXR Input Profile Registry Fetch Probe",
+          "url": "../outputs/2026-08-28_html_input_profile_registry_fetch_probe.html"
+        },
+        {
+          "label": "Open WebXR Inline Session Input Event Logger",
+          "url": "../outputs/2026-08-28_html_inline_session_input_event_logger.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Input Profiles Registry、webxr-input-profiles repository、motion-controllers README、MDN `XRInputSource.profiles`、MDN input guide、W3C WebXR Device API、Immersive Web Samples を確認。設計: 1本目は実 Registry fetch と fallback ladder、2本目は inline event log と empty profiles route に分ける。実装: `outputs/2026-08-28_html_input_profile_registry_fetch_probe.html` と `outputs/2026-08-28_html_inline_session_input_event_logger.html` を追加。検証: JSON parse、2本の HTML 内 script 構文、gallery 再生成、publish 実行、公開先反映を確認する。",
+      "bodyEn": "Research: reviewed the WebXR Input Profiles Registry, webxr-input-profiles repository, motion-controllers README, MDN `XRInputSource.profiles`, MDN input guide, W3C WebXR Device API, and Immersive Web Samples. Design: split the work into a real Registry fetch and fallback ladder for the main sample, and inline event logging with empty-profile routing for the derivative. Implementation: add `outputs/2026-08-28_html_input_profile_registry_fetch_probe.html` and `outputs/2026-08-28_html_inline_session_input_event_logger.html`. Validation: parse JSON, check both embedded scripts, rebuild the gallery, run publish, and confirm publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日は target ray、gamepad、Input Profiles layout、inputsourceschange lifecycle と入力系の抽象度を上げてきました。今日は、Registry を実ネットワーク資産として扱うときの失敗点と、inline session では profile 解決を期待しないという境界を足しました。これで、controller 入力の route は profile lookup、gamepad mapping、event lifecycle、inline fallback の4層で説明できます。",
+      "bodyEn": "Recent samples moved upward through target rays, gamepads, Input Profiles layouts, and inputsourceschange lifecycle. Today adds the failure points of treating the Registry as a real network asset and the boundary that inline sessions should not be expected to resolve profiles. Controller input routing can now be explained across four layers: profile lookup, gamepad mapping, event lifecycle, and inline fallback."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `WebXR Input Profile Registry Fetch Probe` です。何が動くか: `profilesList.json` の取得ボタン、reported profiles / handedness / network quality / remote 優先を切り替え、matched profile、fallback depth、selectComponentId、component type を表示します。次に足すなら、取得した profile JSON の button / axes mapping を保存し、2026-08-26 の gamepad action mapper へ接続します。派生として `WebXR Inline Session Input Event Logger` も実装しました。何が動くか: `requestSession(\"inline\")` の実開始と synthetic event step を同じ timeline に流し、空 profiles の比率と fallback route を表示します。次に足すなら、immersive-vr session の実 `inputsourceschange` も同じ logger に入れ、1本目の Registry fetch probe に source を渡します。",
+      "bodyEn": "The selected main prototype is `WebXR Input Profile Registry Fetch Probe`. What it does: a `profilesList.json` fetch button plus controls for reported profiles, handedness, network quality, and remote preference show matched profile, fallback depth, selectComponentId, and component type. Next addition: store fetched profile JSON button/axes mappings and connect them to the 2026-08-26 gamepad action mapper. The derivative `WebXR Inline Session Input Event Logger` was also implemented. What it does: stream real `requestSession(\"inline\")` startup and synthetic stepped events into one timeline, then show empty-profile rate and fallback route. Next addition: add real immersive-vr `inputsourceschange` events to the same logger and pass sources into the Registry fetch probe."
+    }
+  ]
+}

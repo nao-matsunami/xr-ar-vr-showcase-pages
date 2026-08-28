@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebXR Input Profile Registry Fetch Probe</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111314;
+      --panel: rgba(18, 24, 25, 0.94);
+      --line: rgba(135, 210, 205, 0.26);
+      --text: #f1fbfb;
+      --muted: #a8bbbb;
+      --cyan: #87d2cd;
+      --green: #addf8d;
+      --amber: #ffd275;
+      --red: #ff8f9b;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, rgba(135, 210, 205, 0.14), transparent 32%),
+        linear-gradient(240deg, rgba(255, 210, 117, 0.13), transparent 34%),
+        linear-gradient(180deg, #111314, #172021 58%, #0c0f10);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.7vw, 2.25rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 830px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+
+    .badge, .panel, .stage, .profile-card, .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.27);
+    }
+
+    .badge {
+      min-width: 250px;
+      padding: 12px 14px;
+    }
+
+    .badge small, label span, .metric small, .profile-card small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.73rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .badge strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--cyan);
+      font-size: 1.08rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 14px;
+    }
+
+    .stage {
+      min-height: 650px;
+      padding: 16px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 14px;
+    }
+
+    .fetch-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(241, 251, 251, 0.12);
+      border-radius: 8px;
+      background: rgba(7, 10, 10, 0.46);
+    }
+
+    .url {
+      overflow-wrap: anywhere;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    button, select, input {
+      min-height: 38px;
+      border: 1px solid rgba(241, 251, 251, 0.18);
+      border-radius: 8px;
+      background: rgba(241, 251, 251, 0.08);
+      color: var(--text);
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      padding: 0 14px;
+      font-weight: 760;
+    }
+
+    button:hover { border-color: rgba(135, 210, 205, 0.75); }
+    select, input { width: 100%; padding: 0 10px; }
+
+    .profile-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .profile-card {
+      padding: 12px;
+      background: rgba(7, 10, 10, 0.48);
+    }
+
+    .profile-card b {
+      display: block;
+      margin-top: 5px;
+      color: var(--cyan);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .profile-card p {
+      margin: 6px 0 0;
+      min-height: 40px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 12px;
+      min-height: 400px;
+    }
+
+    .ladder {
+      position: relative;
+      border: 1px solid rgba(241, 251, 251, 0.12);
+      border-radius: 8px;
+      background: rgba(7, 10, 10, 0.34);
+      padding: 14px;
+      overflow: hidden;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 94px minmax(0, 1fr) 88px;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 11px;
+      border: 1px solid rgba(241, 251, 251, 0.12);
+      border-radius: 8px;
+      background: rgba(241, 251, 251, 0.06);
+    }
+
+    .step.hit {
+      border-color: rgba(173, 223, 141, 0.78);
+      background: rgba(173, 223, 141, 0.16);
+    }
+
+    .step.miss {
+      opacity: 0.74;
+    }
+
+    .step code, .log code {
+      color: var(--cyan);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.8rem;
+    }
+
+    .pill {
+      display: inline-grid;
+      place-items: center;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: rgba(135, 210, 205, 0.14);
+      color: var(--cyan);
+      font-size: 0.78rem;
+      font-weight: 760;
+      text-align: center;
+    }
+
+    .components {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .component {
+      padding: 10px;
+      border: 1px solid rgba(241, 251, 251, 0.12);
+      border-radius: 8px;
+      background: rgba(241, 251, 251, 0.06);
+    }
+
+    .component b {
+      display: block;
+      margin-top: 4px;
+    }
+
+    .component em {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-style: normal;
+      font-size: 0.82rem;
+      line-height: 1.38;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      padding: 10px;
+      background: rgba(7, 10, 10, 0.52);
+      min-width: 0;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .panel {
+      padding: 14px;
+      display: grid;
+      gap: 13px;
+      align-content: start;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+    }
+
+    .check {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 9px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .check input { width: 18px; min-height: 18px; }
+
+    .log {
+      min-height: 138px;
+      padding: 10px;
+      border: 1px solid rgba(241, 251, 251, 0.12);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.28);
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.48;
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 900px) {
+      header, .layout, .board, .profile-strip, .metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .stage { min-height: auto; }
+      .badge { min-width: 0; }
+      .step { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>WebXR Input Profile Registry Fetch Probe</h1>
+        <p class="subtitle">Input Profiles Registry の `profilesList.json` を読む前提を、XR 端末なしで検査する自作サンプル。reported profiles、実 fetch、ローカル fallback、component layout、select component の採用理由を分けて表示します。</p>
+      </div>
+      <div class="badge">
+        <small>route verdict</small>
+        <strong id="verdict">waiting</strong>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="stage">
+        <div class="fetch-row">
+          <div>
+            <small>registry base</small>
+            <div class="url" id="baseUrl">https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@latest/dist/profiles</div>
+          </div>
+          <button id="fetchBtn">Fetch registry</button>
+        </div>
+
+        <div class="profile-strip" id="profileStrip"></div>
+
+        <div class="board">
+          <div class="ladder" id="ladder"></div>
+          <div class="components" id="components"></div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric"><small>matched profile</small><strong id="matched">none</strong></div>
+          <div class="metric"><small>source</small><strong id="source">local seed</strong></div>
+          <div class="metric"><small>fallback depth</small><strong id="depth">0</strong></div>
+          <div class="metric"><small>select component</small><strong id="selectComponent">none</strong></div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <label>
+          <span>reported profiles</span>
+          <select id="profilePreset">
+            <option value="oculus">oculus-touch, generic-trigger-squeeze-thumbstick</option>
+            <option value="generic">generic-trigger-squeeze-thumbstick, generic-trigger</option>
+            <option value="hand">generic-hand-select-grasp, generic-hand-select</option>
+            <option value="unknown">unknown-vendor-pro, generic-trigger</option>
+          </select>
+        </label>
+        <label>
+          <span>handedness</span>
+          <select id="handedness">
+            <option value="right">right</option>
+            <option value="left">left</option>
+            <option value="none">none</option>
+          </select>
+        </label>
+        <label>
+          <span>network quality</span>
+          <input id="network" type="range" min="0" max="100" value="72">
+        </label>
+        <label class="check">
+          <input id="preferRemote" type="checkbox" checked>
+          <span>remote Registry が取れたら優先する</span>
+        </label>
+        <label class="check">
+          <input id="strictSelect" type="checkbox" checked>
+          <span>`selectComponentId` がない profile を警告する</span>
+        </label>
+        <div class="log" id="log">Registry fetch は任意です。失敗時も内蔵 seed で fallback route を表示します。</div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const basePath = "https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@latest/dist/profiles";
+    const presets = {
+      oculus: ["oculus-touch", "generic-trigger-squeeze-thumbstick"],
+      generic: ["generic-trigger-squeeze-thumbstick", "generic-trigger"],
+      hand: ["generic-hand-select-grasp", "generic-hand-select"],
+      unknown: ["unknown-vendor-pro", "generic-trigger"]
+    };
+
+    const localProfiles = {
+      "oculus-touch": {
+        selectComponentId: "xr-standard-trigger",
+        layouts: {
+          left: { components: ["xr-standard-trigger", "xr-standard-squeeze", "xr-standard-thumbstick", "a-button"] },
+          right: { components: ["xr-standard-trigger", "xr-standard-squeeze", "xr-standard-thumbstick", "a-button"] }
+        }
+      },
+      "generic-trigger-squeeze-thumbstick": {
+        selectComponentId: "xr-standard-trigger",
+        layouts: {
+          left: { components: ["xr-standard-trigger", "xr-standard-squeeze", "xr-standard-thumbstick"] },
+          right: { components: ["xr-standard-trigger", "xr-standard-squeeze", "xr-standard-thumbstick"] },
+          none: { components: ["xr-standard-trigger", "xr-standard-squeeze", "xr-standard-thumbstick"] }
+        }
+      },
+      "generic-trigger": {
+        selectComponentId: "xr-standard-trigger",
+        layouts: {
+          left: { components: ["xr-standard-trigger"] },
+          right: { components: ["xr-standard-trigger"] },
+          none: { components: ["xr-standard-trigger"] }
+        }
+      },
+      "generic-hand-select-grasp": {
+        selectComponentId: "select",
+        layouts: {
+          left: { components: ["select", "grasp", "pinch"] },
+          right: { components: ["select", "grasp", "pinch"] }
+        }
+      },
+      "generic-hand-select": {
+        selectComponentId: "select",
+        layouts: {
+          left: { components: ["select", "pinch"] },
+          right: { components: ["select", "pinch"] }
+        }
+      }
+    };
+
+    let remoteList = null;
+    let fetchedProfiles = {};
+
+    const el = (id) => document.getElementById(id);
+
+    function componentType(id) {
+      if (id.includes("trigger") || id === "select") return "primary select";
+      if (id.includes("squeeze") || id === "grasp") return "grab / hold";
+      if (id.includes("thumbstick")) return "move / turn";
+      if (id.includes("touchpad") || id === "pinch") return "cursor nudge";
+      return "auxiliary";
+    }
+
+    async function fetchRemoteProfile(profileId) {
+      if (!remoteList || !remoteList[profileId]) return null;
+      if (fetchedProfiles[profileId]) return fetchedProfiles[profileId];
+      const response = await fetch(`${basePath}/${remoteList[profileId]}/profile.json`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`profile ${profileId}: ${response.status}`);
+      const profile = await response.json();
+      fetchedProfiles[profileId] = profile;
+      return profile;
+    }
+
+    function normalizeProfile(profileId, remoteProfile) {
+      if (remoteProfile && remoteProfile.layouts) return remoteProfile;
+      return localProfiles[profileId] || null;
+    }
+
+    async function chooseProfile() {
+      const reported = presets[el("profilePreset").value];
+      const handedness = el("handedness").value;
+      const preferRemote = el("preferRemote").checked;
+      const networkQuality = Number(el("network").value);
+      const rows = [];
+      let chosen = null;
+      let source = "local seed";
+
+      for (let i = 0; i < reported.length; i += 1) {
+        const id = reported[i];
+        let remote = null;
+        let remoteStatus = "not requested";
+        if (preferRemote && remoteList && networkQuality > 18) {
+          try {
+            remote = await fetchRemoteProfile(id);
+            remoteStatus = remote ? "remote hit" : "remote miss";
+          } catch (error) {
+            remoteStatus = error.message;
+          }
+        }
+        const profile = normalizeProfile(id, remote);
+        const layout = profile?.layouts?.[handedness] || profile?.layouts?.none || profile?.layouts?.["left-right"];
+        const hit = Boolean(profile && layout);
+        rows.push({ id, remoteStatus, hit, depth: i });
+        if (!chosen && hit) {
+          chosen = { id, profile, layout, depth: i };
+          source = remote ? "remote profile" : "local seed";
+        }
+      }
+
+      render(reported, rows, chosen, source);
+    }
+
+    function render(reported, rows, chosen, source) {
+      el("profileStrip").innerHTML = reported.map((id, index) => `
+        <div class="profile-card">
+          <small>reported ${index + 1}</small>
+          <b>${id}</b>
+          <p>${index === 0 ? "最も具体的な候補。対応がなければ次へ落ちます。" : "fallback 候補。表現の精度は下がります。"}</p>
+        </div>
+      `).join("");
+
+      el("ladder").innerHTML = rows.map((row) => `
+        <div class="step ${row.hit ? "hit" : "miss"}">
+          <span class="pill">${row.hit ? "match" : "skip"}</span>
+          <code>${row.id}</code>
+          <span class="pill">${row.remoteStatus}</span>
+        </div>
+      `).join("");
+
+      const components = chosen?.layout?.components || Object.keys(chosen?.layout?.components || {});
+      el("components").innerHTML = chosen ? components.map((id) => `
+        <div class="component">
+          <small>${id === chosen.profile.selectComponentId ? "select component" : "component"}</small>
+          <b>${id}</b>
+          <em>${componentType(id)}</em>
+        </div>
+      `).join("") : `<div class="component"><small>fallback</small><b>screen select</b><em>profile が解決できないため pointer event 相当に縮退。</em></div>`;
+
+      const missingSelect = chosen && el("strictSelect").checked && !chosen.profile.selectComponentId;
+      const verdict = !chosen ? "screen fallback" : missingSelect ? "matched with warning" : chosen.depth > 0 ? "generic fallback" : "profile ready";
+      el("verdict").textContent = verdict;
+      el("matched").textContent = chosen?.id || "none";
+      el("source").textContent = source;
+      el("depth").textContent = chosen?.depth ?? "n/a";
+      el("selectComponent").textContent = chosen?.profile?.selectComponentId || "none";
+      el("log").innerHTML = `候補 ${reported.length} 件を上から評価。<code>${verdict}</code>。次に足すなら、取得した profile JSON の button / axes mapping を 2026-08-26 の action mapper に流します。`;
+    }
+
+    async function fetchRegistry() {
+      el("log").textContent = "profilesList.json を取得中...";
+      try {
+        const response = await fetch(`${basePath}/profilesList.json`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`profilesList: ${response.status}`);
+        remoteList = await response.json();
+        el("log").innerHTML = `remote Registry ready: <code>${Object.keys(remoteList).length}</code> profiles indexed.`;
+      } catch (error) {
+        remoteList = null;
+        el("log").textContent = `remote Registry unavailable: ${error.message}. ローカル seed に縮退します。`;
+      }
+      await chooseProfile();
+    }
+
+    ["profilePreset", "handedness", "network", "preferRemote", "strictSelect"].forEach((id) => {
+      el(id).addEventListener("input", chooseProfile);
+      el(id).addEventListener("change", chooseProfile);
+    });
+    el("fetchBtn").addEventListener("click", fetchRegistry);
+    chooseProfile();
+  </script>
+</body>
+</html>
