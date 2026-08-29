@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebXR Profile Component Mapping Cache</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101214;
+      --panel: rgba(18, 21, 23, 0.94);
+      --line: rgba(132, 205, 190, 0.28);
+      --text: #f2fbf7;
+      --muted: #a9bbb5;
+      --mint: #84cdbe;
+      --blue: #8eb8ff;
+      --amber: #f1c66f;
+      --red: #ff8d91;
+      --green: #a8df91;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, rgba(132, 205, 190, 0.16), transparent 30%),
+        linear-gradient(235deg, rgba(142, 184, 255, 0.12), transparent 32%),
+        linear-gradient(180deg, #101214, #171f20 60%, #0c0f10);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.42rem, 2.7vw, 2.2rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 840px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+
+    .badge, .stage, .panel, .metric, .row, .cache-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+    }
+
+    .badge {
+      min-width: 248px;
+      padding: 12px 14px;
+    }
+
+    small, label span, .metric small, .row small, .cache-card small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.73rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .badge strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--mint);
+      font-size: 1.08rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 350px;
+      gap: 14px;
+    }
+
+    .stage {
+      min-height: 650px;
+      padding: 16px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(242, 251, 247, 0.12);
+      border-radius: 8px;
+      background: rgba(6, 8, 9, 0.46);
+    }
+
+    button, select, input {
+      min-height: 38px;
+      border: 1px solid rgba(242, 251, 247, 0.18);
+      border-radius: 8px;
+      background: rgba(242, 251, 247, 0.08);
+      color: var(--text);
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      padding: 0 14px;
+      font-weight: 760;
+    }
+
+    button:hover { border-color: rgba(132, 205, 190, 0.75); }
+    select, input { width: 100%; padding: 0 10px; }
+
+    .cache-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .cache-card {
+      padding: 12px;
+      background: rgba(7, 10, 10, 0.48);
+      box-shadow: none;
+    }
+
+    .cache-card b {
+      display: block;
+      margin-top: 5px;
+      overflow-wrap: anywhere;
+      color: var(--mint);
+    }
+
+    .cache-card p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.92fr);
+      gap: 12px;
+      min-height: 400px;
+    }
+
+    .rows {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr) 120px;
+      gap: 10px;
+      align-items: center;
+      padding: 11px;
+      background: rgba(7, 10, 10, 0.46);
+      box-shadow: none;
+    }
+
+    .row.hit {
+      border-color: rgba(168, 223, 145, 0.78);
+      background: rgba(168, 223, 145, 0.14);
+    }
+
+    .row.warn {
+      border-color: rgba(241, 198, 111, 0.72);
+      background: rgba(241, 198, 111, 0.12);
+    }
+
+    .row b {
+      display: block;
+      margin-top: 4px;
+      overflow-wrap: anywhere;
+    }
+
+    .row p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.42;
+    }
+
+    .pill {
+      display: inline-grid;
+      place-items: center;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: rgba(132, 205, 190, 0.14);
+      color: var(--mint);
+      font-size: 0.78rem;
+      font-weight: 760;
+      text-align: center;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      padding: 10px;
+      min-width: 0;
+      background: rgba(7, 10, 10, 0.52);
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .panel {
+      padding: 14px;
+      display: grid;
+      gap: 13px;
+      align-content: start;
+    }
+
+    label { display: grid; gap: 6px; }
+
+    .check {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 9px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .check input { width: 18px; min-height: 18px; }
+
+    .log {
+      min-height: 134px;
+      padding: 10px;
+      border: 1px solid rgba(242, 251, 247, 0.12);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.28);
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.48;
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 920px) {
+      header, .layout, .board, .cache-grid, .metrics {
+        grid-template-columns: 1fr;
+      }
+      .stage { min-height: auto; }
+      .badge { min-width: 0; }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>WebXR Profile Component Mapping Cache</h1>
+        <p class="subtitle">WebXR Input Profiles の profile / layout / component をキャッシュし、`xr-standard` の button / axes slot へ割り当てる自作サンプル。オンライン取得、local seed、stale cache、unknown profile の差を XR 端末なしで検証します。</p>
+      </div>
+      <div class="badge">
+        <small>mapping verdict</small>
+        <strong id="verdict">waiting</strong>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="stage">
+        <div class="toolbar">
+          <button id="resolveBtn">Resolve mapping</button>
+          <button id="cacheBtn">Write cache snapshot</button>
+          <button id="ageBtn">Age cache</button>
+          <button id="clearBtn">Clear cache</button>
+        </div>
+
+        <div class="cache-grid" id="cacheGrid"></div>
+
+        <div class="board">
+          <div class="rows" id="buttonRows"></div>
+          <div class="rows" id="axisRows"></div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric"><small>matched profile</small><strong id="matched">none</strong></div>
+          <div class="metric"><small>mapping source</small><strong id="source">none</strong></div>
+          <div class="metric"><small>button coverage</small><strong id="buttonCoverage">0/0</strong></div>
+          <div class="metric"><small>cache age</small><strong id="cacheAge">empty</strong></div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <label>
+          <span>reported profiles</span>
+          <select id="profilePreset">
+            <option value="touch">oculus-touch, generic-trigger-squeeze-thumbstick</option>
+            <option value="generic">generic-trigger-squeeze-thumbstick, generic-trigger</option>
+            <option value="trigger">generic-trigger</option>
+            <option value="unknown">unknown-vendor-pro, generic-trigger</option>
+          </select>
+        </label>
+        <label>
+          <span>handedness</span>
+          <select id="handedness">
+            <option value="right">right</option>
+            <option value="left">left</option>
+            <option value="none">none</option>
+          </select>
+        </label>
+        <label>
+          <span>network quality</span>
+          <input id="network" type="range" min="0" max="100" value="64">
+        </label>
+        <label>
+          <span>stale limit minutes</span>
+          <input id="staleLimit" type="range" min="1" max="90" value="20">
+        </label>
+        <label class="check">
+          <input id="preferCache" type="checkbox" checked>
+          <span>fresh cache があれば remote より優先する</span>
+        </label>
+        <label class="check">
+          <input id="strictSlots" type="checkbox" checked>
+          <span>`xr-standard` の placeholder slot を警告する</span>
+        </label>
+        <div class="log" id="log">Resolve mapping を押すと、reported profiles から対応 profile を選び、button / axes slot の coverage を表示します。</div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const presets = {
+      touch: ["oculus-touch", "generic-trigger-squeeze-thumbstick"],
+      generic: ["generic-trigger-squeeze-thumbstick", "generic-trigger"],
+      trigger: ["generic-trigger"],
+      unknown: ["unknown-vendor-pro", "generic-trigger"]
+    };
+
+    const seedProfiles = {
+      "oculus-touch": {
+        source: "local seed",
+        layouts: {
+          left: { components: ["xr-standard-trigger", "xr-standard-squeeze", "xr-standard-thumbstick", "x-button", "y-button"] },
+          right: { components: ["xr-standard-trigger", "xr-standard-squeeze", "xr-standard-thumbstick", "a-button", "b-button"] }
+        }
+      },
+      "generic-trigger-squeeze-thumbstick": {
+        source: "local seed",
+        layouts: {
+          left: { components: ["xr-standard-trigger", "xr-standard-squeeze", "xr-standard-thumbstick"] },
+          right: { components: ["xr-standard-trigger", "xr-standard-squeeze", "xr-standard-thumbstick"] },
+          none: { components: ["xr-standard-trigger", "xr-standard-squeeze", "xr-standard-thumbstick"] }
+        }
+      },
+      "generic-trigger": {
+        source: "local seed",
+        layouts: {
+          left: { components: ["xr-standard-trigger"] },
+          right: { components: ["xr-standard-trigger"] },
+          none: { components: ["xr-standard-trigger"] }
+        }
+      }
+    };
+
+    const buttonSlots = [
+      { index: 0, id: "xr-standard-trigger", label: "Primary trigger", action: "select" },
+      { index: 1, id: "xr-standard-squeeze", label: "Primary squeeze", action: "grab" },
+      { index: 2, id: "xr-standard-touchpad", label: "Primary touchpad", action: "cursor nudge" },
+      { index: 3, id: "xr-standard-thumbstick", label: "Primary thumbstick press", action: "locomotion mode" }
+    ];
+
+    const axisSlots = [
+      { index: 0, id: "xr-standard-touchpad", label: "Touchpad X", action: "cursor x" },
+      { index: 1, id: "xr-standard-touchpad", label: "Touchpad Y", action: "cursor y" },
+      { index: 2, id: "xr-standard-thumbstick", label: "Thumbstick X", action: "strafe / turn" },
+      { index: 3, id: "xr-standard-thumbstick", label: "Thumbstick Y", action: "move" }
+    ];
+
+    let cache = JSON.parse(localStorage.getItem("xr-profile-component-cache") || "{}");
+    let lastResolved = null;
+    const el = (id) => document.getElementById(id);
+
+    function minutesAgo(iso) {
+      if (!iso) return Infinity;
+      return Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
+    }
+
+    function getLayout(profile, handedness) {
+      return profile?.layouts?.[handedness] || profile?.layouts?.none || null;
+    }
+
+    function resolveProfile() {
+      const reported = presets[el("profilePreset").value];
+      const handedness = el("handedness").value;
+      const staleLimit = Number(el("staleLimit").value);
+      const network = Number(el("network").value);
+      const preferCache = el("preferCache").checked;
+      let chosen = null;
+
+      for (const profileId of reported) {
+        const cached = cache[profileId];
+        const cachedFresh = cached && minutesAgo(cached.savedAt) <= staleLimit;
+        const seed = seedProfiles[profileId];
+        const remoteAvailable = network > 30 && seed;
+        const profile = preferCache && cachedFresh ? cached.profile : remoteAvailable ? { ...seed, source: "remote profile" } : seed;
+        const source = preferCache && cachedFresh ? "fresh cache" : remoteAvailable ? "remote profile" : seed ? "local seed" : "miss";
+        const layout = getLayout(profile, handedness);
+        if (profile && layout) {
+          chosen = { profileId, profile, source, layout };
+          break;
+        }
+      }
+
+      lastResolved = chosen;
+      render(reported, chosen);
+    }
+
+    function render(reported, chosen) {
+      const cacheKeys = Object.keys(cache);
+      el("cacheGrid").innerHTML = reported.map((profileId) => {
+        const item = cache[profileId];
+        const age = item ? `${minutesAgo(item.savedAt)} min` : "empty";
+        const status = item ? item.source : seedProfiles[profileId] ? "seed only" : "unknown";
+        return `<div class="cache-card"><small>${status}</small><b>${profileId}</b><p>cache age: ${age}<br>reported order: ${reported.indexOf(profileId) + 1}</p></div>`;
+      }).join("");
+
+      const components = chosen?.layout?.components || [];
+      const strictSlots = el("strictSlots").checked;
+      const buttonRows = buttonSlots.map((slot) => {
+        const exists = components.includes(slot.id);
+        const cls = exists ? "hit" : strictSlots ? "warn" : "";
+        return `<div class="row ${cls}"><span class="pill">buttons[${slot.index}]</span><div><small>${slot.label}</small><b>${exists ? slot.id : "placeholder"}</b><p>${exists ? slot.action : "0 / false を返す placeholder として扱う"}</p></div><span class="pill">${exists ? "mapped" : "empty"}</span></div>`;
+      }).join("");
+
+      const axisRows = axisSlots.map((slot) => {
+        const exists = components.includes(slot.id);
+        const cls = exists ? "hit" : strictSlots ? "warn" : "";
+        return `<div class="row ${cls}"><span class="pill">axes[${slot.index}]</span><div><small>${slot.label}</small><b>${exists ? slot.id : "placeholder"}</b><p>${exists ? slot.action : "0 を返す placeholder axis として扱う"}</p></div><span class="pill">${exists ? "mapped" : "empty"}</span></div>`;
+      }).join("");
+
+      el("buttonRows").innerHTML = buttonRows;
+      el("axisRows").innerHTML = axisRows;
+      const covered = buttonSlots.filter((slot) => components.includes(slot.id)).length;
+      const axisCovered = axisSlots.filter((slot) => components.includes(slot.id)).length;
+      el("matched").textContent = chosen?.profileId || "none";
+      el("source").textContent = chosen?.source || "none";
+      el("buttonCoverage").textContent = `${covered}/${buttonSlots.length}`;
+      el("cacheAge").textContent = cacheKeys.length ? `${cacheKeys.length} profile(s)` : "empty";
+      el("verdict").textContent = !chosen ? "route blocked" : covered >= 2 && axisCovered >= 2 ? "full action route" : covered >= 1 ? "select-only route" : "visual fallback";
+      el("log").textContent = chosen
+        ? `${chosen.profileId} を ${chosen.source} から解決。components: ${components.join(", ")}`
+        : "対応 profile がありません。screen select / gaze fallback を使います。";
+    }
+
+    function writeCache() {
+      if (!lastResolved) resolveProfile();
+      if (!lastResolved) return;
+      cache[lastResolved.profileId] = {
+        savedAt: new Date().toISOString(),
+        source: lastResolved.source,
+        profile: lastResolved.profile
+      };
+      localStorage.setItem("xr-profile-component-cache", JSON.stringify(cache));
+      render(presets[el("profilePreset").value], lastResolved);
+    }
+
+    function ageCache() {
+      for (const key of Object.keys(cache)) {
+        cache[key].savedAt = new Date(Date.now() - 45 * 60000).toISOString();
+      }
+      localStorage.setItem("xr-profile-component-cache", JSON.stringify(cache));
+      render(presets[el("profilePreset").value], lastResolved);
+    }
+
+    el("resolveBtn").addEventListener("click", resolveProfile);
+    el("cacheBtn").addEventListener("click", writeCache);
+    el("ageBtn").addEventListener("click", ageCache);
+    el("clearBtn").addEventListener("click", () => {
+      cache = {};
+      localStorage.removeItem("xr-profile-component-cache");
+      render(presets[el("profilePreset").value], lastResolved);
+    });
+    ["profilePreset", "handedness", "network", "staleLimit", "preferCache", "strictSlots"].forEach((id) => {
+      el(id).addEventListener("input", resolveProfile);
+    });
+
+    resolveProfile();
+  </script>
+</body>
+</html>

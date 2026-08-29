@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR Input Profile component mapping cache と xr-standard slot replay を自作サンプル化 | 2026-08-29</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.08.29</p>
+      <h1>WebXR Input Profile component mapping cache と xr-standard slot replay を自作サンプル化</h1>
+      <p class="hero-subtitle">Original samples for WebXR Input Profile component mapping cache and xr-standard slot replay</p>
+      <p>W3C WebXR Gamepads Module、WebXR Device API、Immersive Web の Input Profiles / motion-controllers、Immersive Web Samples の Controller State / Input Selection を確認し、profile component を `xr-standard` の button / axes slot へ割り当てる本命サンプルと、slot 値から semantic action をリプレイする派生サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the W3C WebXR Gamepads Module, WebXR Device API, Immersive Web Input Profiles and motion-controllers, and the Immersive Web Controller State and Input Selection samples, today's original work adds a main sample that maps profile components onto `xr-standard` button/axes slots plus a derivative replay pad that turns slot values into semantic actions.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-08-29_html_profile_component_mapping_cache.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-08-28.html">← 2026.08.28</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>WebXR Profile Component Mapping Cache</h3>
+              <p>cache age: ${age}reported order: ${reported.indexOf(profileId) + 1}</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-29_html_profile_component_mapping_cache.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>XR Standard Slot Replay Pad</h3>
+              <p>${state.placeholder ? &quot;reserved slot preserved&quot; : slot.action}</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-29_html_xr_standard_slot_replay_pad.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Gamepads Module は `XRInputSource.gamepad` の制約と `xr-standard` mapping を定義し、buttons[0] trigger、buttons[1] squeeze、buttons[2] touchpad、buttons[3] thumbstick、axes[0-3] touchpad / thumbstick の予約位置を示します。</span>
+              <span class="en-copy">The WebXR Gamepads Module defines constraints on `XRInputSource.gamepad` and the `xr-standard` mapping, including reserved positions for buttons[0] trigger, buttons[1] squeeze, buttons[2] touchpad, buttons[3] thumbstick, and axes[0-3] touchpad/thumbstick.</span>
+            </li>
+          
+            <li>
+              <span>同仕様では任意入力がない場合でも placeholder button / axis の位置を保つため、アプリ側は配列長だけで機能有無を判断せず、0 / false の slot を fallback として扱う必要があります。</span>
+              <span class="en-copy">Because the spec preserves placeholder button/axis positions when optional inputs are missing, apps should not infer capability from array length alone; zero/false slots need explicit fallback handling.</span>
+            </li>
+          
+            <li>
+              <span>Input Profiles Registry と motion-controllers の `fetchProfile()` は profile id から layout / components / selectComponentId を解決する入口で、前日の fetch probe から今日の mapping cache へ自然につながります。</span>
+              <span class="en-copy">The Input Profiles Registry and motion-controllers `fetchProfile()` resolve layout, components, and selectComponentId from profile ids, making a natural continuation from yesterday's fetch probe into today's mapping cache.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web Samples の Controller State は gamepad attribute の可視化例、Input Selection は select / squeeze events の応答例として、slot mapping と event semantics をつなぐ参考になります。</span>
+              <span class="en-copy">Immersive Web's Controller State sample is useful for gamepad-attribute visualization, while Input Selection shows select/squeeze event response, linking slot mapping with event semantics.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開対象は外部サンプルではなく、このワークスペース内で作った component mapping cache と xr-standard slot replay の2本です。</span>
+              <span class="en-copy">Today's public focus remains on the two original workspace samples: component mapping cache and xr-standard slot replay.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は W3C WebXR Gamepads Module の `xr-standard` mapping と、Immersive Web の Input Profiles / motion-controllers です。面白い点は、Registry が教える component layout と、Gamepads Module が定める button / axes slot を合わせると、controller 固有名ではなく `select`、`grab`、`move`、`cursor nudge` のような semantic action に変換できることです。さらに placeholder slot を失敗ではなく仕様上の状態として扱えば、未知 controller や簡易 controller でも説明可能に縮退できます。</p>
+          <p class="en-copy">Today's notable references are the `xr-standard` mapping in the W3C WebXR Gamepads Module and Immersive Web's Input Profiles/motion-controllers work. The interesting part is that combining Registry component layouts with Gamepads Module button/axes slots lets apps translate device-specific controllers into semantic actions such as `select`, `grab`, `move`, and `cursor nudge`. Treating placeholder slots as a specified state rather than a failure also makes unknown or simple controllers degrade explainably.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr-gamepads-module-1/" target="_blank" rel="noreferrer">WebXR Gamepads Module</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-input-profiles/blob/main/packages/motion-controllers/README.md" target="_blank" rel="noreferrer">Motion Controllers README</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `WebXR Profile Component Mapping Cache` は、reported profiles、handedness、network quality、cache freshness を切り替え、profile component を `xr-standard` の reserved slot へ割り当てます。派生サンプル `XR Standard Slot Replay Pad` は、trigger / squeeze / touchpad / thumbstick の slot 値をフレームごとにリプレイし、deadzone、placeholder、non `xr-standard` fallback が semantic action にどう効くかを見せます。</p>
+          <p class="en-copy">The main sample, `WebXR Profile Component Mapping Cache`, toggles reported profiles, handedness, network quality, and cache freshness, then maps profile components to `xr-standard` reserved slots. The derivative sample, `XR Standard Slot Replay Pad`, replays trigger/squeeze/touchpad/thumbstick slot values frame by frame and shows how deadzone, placeholders, and non-`xr-standard` fallback affect semantic actions.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-29_html_profile_component_mapping_cache.html" target="_blank" rel="noreferrer">Open main sample</a></li>
+          
+            <li><a href="../outputs/2026-08-29_html_xr_standard_slot_replay_pad.html" target="_blank" rel="noreferrer">Open derivative sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>`XRInputSource.gamepad.mapping === &quot;xr-standard&quot;` の場合でも、optional な squeeze / touchpad / thumbstick が欠けることがあります。buttons / axes の予約 index と placeholder を明示的に扱い、profile component と slot の対応を cache しておくと、ネットワークが落ちた日でも最低限の action route を維持できます。実装では、profile 解決、slot coverage、placeholder hit、deadzone 後の action を別々の metric に分けると、入力不具合の原因を追いやすくなります。</p>
+          <p class="en-copy">Even when `XRInputSource.gamepad.mapping === &quot;xr-standard&quot;`, optional squeeze, touchpad, or thumbstick inputs can be absent. Explicitly handling reserved button/axes indexes and placeholders, then caching the profile-component-to-slot mapping, preserves a minimum action route when the network is unavailable. In production, separate metrics for profile resolution, slot coverage, placeholder hits, and post-deadzone actions make input bugs easier to diagnose.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://github.com/immersive-web/webxr-gamepads-module/blob/main/gamepads-module-explainer.md" target="_blank" rel="noreferrer">WebXR Gamepads Module explainer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の2本からは matched profile、mapping source、cache age、button coverage、axis coverage、placeholder hits、deadzone、primary action、action route、replay frame history を取れます。2026-08-28 の Registry fetch probe とつなげると実 profile JSON の保存先になります。2026-08-26 の gamepad action mapper とつなげると、profile 解決から action dispatch までの入力パイプラインを1画面で検証できます。展示 UI では、来場者ごとの controller 差を explainable fallback として表示する診断パネルにも使えます。</p>
+          <p class="en-copy">The two samples expose matched profile, mapping source, cache age, button coverage, axis coverage, placeholder hits, deadzone, primary action, action route, and replay frame history. Connected to the 2026-08-28 Registry fetch probe, this becomes a storage target for real profile JSON. Connected to the 2026-08-26 gamepad action mapper, it can validate the input pipeline from profile resolution through action dispatch on one screen. For installations, it can also become a diagnostic panel explaining controller differences as explicit fallbacks.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>Input Profiles Registry の profile JSON schema、motion-controllers の component state 更新、WebXR Gamepads Module の frame update、WebXR Device API の input source lifecycle、Immersive Web Samples の Controller State / Input Selection を継続して見ます。次は実 `XRInputSource.gamepad` の frame poller と今日の slot replay を接続し、実測値と simulation の差分を同じ UI で比べるのが有効です。</p>
+          <p class="en-copy">Continue watching the Input Profiles Registry profile JSON schema, motion-controllers component-state updates, WebXR Gamepads Module frame updates, input-source lifecycle in the WebXR Device API, and Immersive Web's Controller State/Input Selection samples. A useful next step is connecting a real `XRInputSource.gamepad` frame poller to today's slot replay so measured values and simulation can be compared in the same UI.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命サンプルで `Resolve mapping` を押し、controller shape を `generic-trigger` や `unknown-vendor-pro, generic-trigger` に切り替えてください。buttons[1] 以降や axes の placeholder が増え、select-only route へ落ちる様子が確認できます。派生サンプルでは `controller shape` を `trigger only` にし、`scenario` を `select then move` にして Step を進めると、trigger は select になるが thumbstick の move は placeholder で落ちることが見えます。</p>
+          <p class="en-copy">In the main sample, press `Resolve mapping` and switch the controller shape to `generic-trigger` or `unknown-vendor-pro, generic-trigger`. The placeholders after buttons[1] and in axes increase, and the route drops to select-only. In the derivative sample, choose `trigger only`, set the scenario to `select then move`, and step forward: trigger still becomes select, while thumbstick movement falls away as placeholders.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-29_html_profile_component_mapping_cache.html" target="_blank" rel="noreferrer">Open WebXR Profile Component Mapping Cache</a></li>
+          
+            <li><a href="../outputs/2026-08-29_html_xr_standard_slot_replay_pad.html" target="_blank" rel="noreferrer">Open XR Standard Slot Replay Pad</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR Gamepads Module、W3C WebXR Device API、Immersive Web Input Profiles repository、motion-controllers README、Immersive Web Samples の Controller State / Input Selection を確認。設計: 1本目は profile component mapping cache、2本目は `xr-standard` slot replay。実装: `outputs/2026-08-29_html_profile_component_mapping_cache.html` と `outputs/2026-08-29_html_xr_standard_slot_replay_pad.html` を追加。検証: report JSON parse、2本の HTML 内 script 構文、gallery 再生成、publish 実行、公開先反映を確認する。</p>
+          <p class="en-copy">Research: reviewed the W3C WebXR Gamepads Module, W3C WebXR Device API, Immersive Web Input Profiles repository, motion-controllers README, and the Immersive Web Controller State/Input Selection samples. Design: make the main sample a profile component mapping cache and the derivative a `xr-standard` slot replay pad. Implementation: add `outputs/2026-08-29_html_profile_component_mapping_cache.html` and `outputs/2026-08-29_html_xr_standard_slot_replay_pad.html`. Validation: parse the report JSON, check both embedded scripts, rebuild the gallery, run publish, and confirm publication.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>ここ数日は target ray、gamepad action、Input Profiles layout、inputsourceschange、Registry fetch を順に積んできました。今日は Registry の component 情報を action slot に固定し、placeholder と cache freshness を可視化したため、入力系は discovery、lifecycle、mapping、action replay の4層で見通せるようになりました。次は実 XR session からの live poll と、この simulation の差分を取る段階です。</p>
+          <p class="en-copy">Recent work has built through target rays, gamepad actions, Input Profiles layouts, inputsourceschange, and Registry fetching. Today fixes Registry component information into action slots and visualizes placeholders plus cache freshness, so the input stack can now be viewed across discovery, lifecycle, mapping, and action replay. The next stage is comparing live polling from a real XR session with this simulation.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `WebXR Profile Component Mapping Cache` です。何が動くか: reported profiles、handedness、network quality、cache freshness を切り替え、profile component を buttons[0-3] / axes[0-3] へ割り当て、coverage と placeholder を表示します。次に足すなら、2026-08-28 の実 Registry fetch 結果をこの cache に保存し、local seed ではなく実 JSON から component mapping を作ります。派生として `XR Standard Slot Replay Pad` も実装しました。何が動くか: trigger / squeeze / touchpad / thumbstick の frame 値を step / auto replay し、deadzone と placeholder を通した semantic action を表示します。次に足すなら、実 `XRInputSource.gamepad` の frame poller を接続し、simulation と live input を同じ timeline に並べます。</p>
+          <p class="en-copy">The selected main prototype is `WebXR Profile Component Mapping Cache`. What it does: toggles reported profiles, handedness, network quality, and cache freshness, maps profile components to buttons[0-3]/axes[0-3], and shows coverage plus placeholders. Next addition: store the real Registry fetch result from 2026-08-28 into this cache and build component mappings from real JSON instead of the local seed. The derivative `XR Standard Slot Replay Pad` was also implemented. What it does: step or auto-replay trigger/squeeze/touchpad/thumbstick frame values and show semantic actions after deadzone and placeholder handling. Next addition: connect a real `XRInputSource.gamepad` frame poller and place simulation and live input on the same timeline.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-29_html_profile_component_mapping_cache.html" target="_blank" rel="noreferrer">Today's main sample: WebXR Profile Component Mapping Cache</a></li>
+          
+            <li><a href="../outputs/2026-08-29_html_xr_standard_slot_replay_pad.html" target="_blank" rel="noreferrer">Today's derivative sample: XR Standard Slot Replay Pad</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-gamepads-module-1/" target="_blank" rel="noreferrer">W3C: WebXR Gamepads Module - Level 1</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-input-profiles" target="_blank" rel="noreferrer">Immersive Web: WebXR Input Profiles repository</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-input-profiles/blob/main/packages/motion-controllers/README.md" target="_blank" rel="noreferrer">Immersive Web: Motion Controllers README</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web Samples</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/controller-state.html" target="_blank" rel="noreferrer">Immersive Web Samples: Controller State</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples/blob/main/input-selection.html" target="_blank" rel="noreferrer">Immersive Web Samples: Input Selection source</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-gamepads-module/blob/main/gamepads-module-explainer.md" target="_blank" rel="noreferrer">Immersive Web: WebXR Gamepads Module explainer</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-08-29_html_profile_component_mapping_cache.html" loading="lazy" title="WebXR Profile Component Mapping Cache"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
