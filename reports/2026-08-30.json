@@ -1,0 +1,159 @@
+{
+  "date": "2026-08-30",
+  "headline": "XRInputSource.gamepad の frame poll 安定化と input event 差分検査を自作サンプル化",
+  "headlineEn": "Original samples for XRInputSource.gamepad frame-poll stability and input-event diff inspection",
+  "summary": "W3C WebXR Device API、W3C WebXR Gamepads Module、MDN の XRInputSource.gamepad / input guide、Immersive Web Samples の Controller State / Input Selection を確認し、実 inline probe と合成フレームで gamepad poll を安定化する本命サンプルと、select event と frame poll の時刻差を検査する派生サンプルを追加しました。",
+  "summaryEn": "After reviewing the W3C WebXR Device API, W3C WebXR Gamepads Module, MDN XRInputSource.gamepad/input guidance, and Immersive Web Controller State/Input Selection samples, today's original work adds a main sample for stabilizing gamepad frame polling with an inline probe plus synthetic frames, and a derivative sample for inspecting timing differences between select events and frame polling.",
+  "keyTopics": [
+    "WebXR Device API は XRSession の animation frame を通じて XRFrame を受け取り、input source の pose や状態を frame 粒度で扱う設計になっています。",
+    "WebXR Gamepads Module は `XRInputSource.gamepad` と `xr-standard` mapping を定義し、前日までの profile component mapping を実 frame poll に接続する次の段階になります。",
+    "MDN の XRInputSource.gamepad と WebXR input guide は、select event と gamepad attribute を併用する実装上の入口として確認価値があります。",
+    "Immersive Web Samples の Controller State は gamepad attribute の可視化、Input Selection は select / squeeze event の流れを確認する公式デモとして参考になります。",
+    "今日の公開対象は外部デモではなく、このワークスペース内の frame poller stability lab と event/frame diff inspector の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Device API delivers XRFrame through XRSession animation frames, making pose and input-source state naturally frame-scoped.",
+    "The WebXR Gamepads Module defines `XRInputSource.gamepad` and the `xr-standard` mapping, making live frame polling the next step after recent profile-component mapping work.",
+    "MDN's XRInputSource.gamepad and WebXR input guide are useful entry points for implementations that combine select events with the gamepad attribute.",
+    "Immersive Web's Controller State sample visualizes gamepad attributes, while Input Selection shows select/squeeze event flow as official reference demos.",
+    "Today's public focus is not external demos, but the two original workspace samples: a frame-poller stability lab and an event/frame diff inspector."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: XR Gamepad Frame Poller Stability Lab",
+      "url": "../outputs/2026-08-30_html_xr_gamepad_frame_poller_stability_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Input Event Frame Diff Inspector",
+      "url": "../outputs/2026-08-30_html_input_event_frame_diff_inspector.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: WebXR Gamepads Module - Level 1",
+      "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+    },
+    {
+      "label": "MDN: XRInputSource.gamepad",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRInputSource/gamepad"
+    },
+    {
+      "label": "MDN: Inputs and input sources",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Inputs"
+    },
+    {
+      "label": "Immersive Web Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Web Samples: Controller State",
+      "url": "https://immersive-web.github.io/webxr-samples/controller-state.html"
+    },
+    {
+      "label": "Immersive Web Samples: Input Selection source",
+      "url": "https://github.com/immersive-web/webxr-samples/blob/main/input-selection.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Input Profiles repository",
+      "url": "https://github.com/immersive-web/webxr-input-profiles"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、Immersive Web Samples の Controller State と Input Selection を、前日までの `xr-standard` slot replay に重ねて読むことです。面白い点は、select / squeeze event は操作意図の入口として扱いやすい一方、実際の pose や gamepad value は XR frame のリズムで観測されるため、event と frame poll のズレを明示的に扱うだけで入力の説明力が上がることです。",
+      "bodyEn": "Today's notable angle is reading Immersive Web's Controller State and Input Selection samples alongside the recent `xr-standard` slot replay work. The interesting part is that select/squeeze events are convenient intent entry points, while pose and gamepad values are observed on the XR frame rhythm; explicitly handling the difference between events and frame polls makes input behavior easier to explain.",
+      "links": [
+        {
+          "label": "Controller State sample",
+          "url": "https://immersive-web.github.io/webxr-samples/controller-state.html"
+        },
+        {
+          "label": "Input Selection source",
+          "url": "https://github.com/immersive-web/webxr-samples/blob/main/input-selection.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `XR Gamepad Frame Poller Stability Lab` は、scenario、deadzone、step / auto poll、inline XR probe を切り替え、buttons[0-3] と axes[0-3] の値から select、grab、move、cursor nudge を判定します。派生サンプル `Input Event Frame Diff Inspector` は、event stream と frame poll の発火時刻を同じ timeline に置き、hold、dispatch、visual-only retry、duplicate suppression の route を比較します。",
+      "bodyEn": "The main sample, `XR Gamepad Frame Poller Stability Lab`, toggles scenario, deadzone, step/auto polling, and an inline XR probe, then derives select, grab, move, and cursor-nudge actions from buttons[0-3] and axes[0-3]. The derivative sample, `Input Event Frame Diff Inspector`, places event stream and frame-poll timings on one timeline and compares hold, dispatch, visual-only retry, and duplicate-suppression routes.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-08-30_html_xr_gamepad_frame_poller_stability_lab.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-08-30_html_input_event_frame_diff_inspector.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "`XRInputSource.gamepad` は通常の Gamepad API と似た形に見えますが、XR の action 判定では `XRSession.requestAnimationFrame()` の周期、input source lifecycle、pose availability とセットで扱うのが安全です。event を即 dispatch する前に短い hold window を置き、近い XR frame の button / axis 値で confirmation を取ると、stale frame、source removal、late confirmation、二重発火をログに分けられます。",
+      "bodyEn": "`XRInputSource.gamepad` resembles the regular Gamepad API, but XR action decisions are safer when treated together with the `XRSession.requestAnimationFrame()` cadence, input-source lifecycle, and pose availability. Holding briefly before dispatching an event and confirming with nearby XR-frame button/axis values separates stale frames, source removal, late confirmation, and duplicate firing in logs.",
+      "links": [
+        {
+          "label": "WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        },
+        {
+          "label": "WebXR Gamepads Module",
+          "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+        }
+      ]
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは frame number、poll source、button / axis value、deadzone、input age、jitter score、semantic action、event timestamp、frame timestamp、delta、confidence、reconcile route を取れます。2026-08-29 の slot replay と合わせると simulation から実 poll への橋渡しになります。2026-08-27 の inputsourceschange lifecycle と合わせると、source removed mid gesture を event/frame のどちらで先に検出したかを可視化できます。",
+      "bodyEn": "The two samples expose frame number, poll source, button/axis values, deadzone, input age, jitter score, semantic action, event timestamp, frame timestamp, delta, confidence, and reconcile route. Combined with the 2026-08-29 slot replay sample, this bridges simulation into live polling. Combined with the 2026-08-27 inputsourceschange lifecycle sample, it can show whether a source removed mid-gesture was detected first by event or by frame polling."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Device API の input source lifecycle、WebXR Gamepads Module の frame update、MDN の XRInputSource.gamepad、Immersive Web Samples の Controller State / Input Selection、Input Profiles Registry の component metadata を継続して見ます。次は live inline / immersive session の実 event timestamp と gamepad poll 値をローカル履歴に保存し、今日の diff inspector に流す実測版を作ると重複が少ないです。",
+      "bodyEn": "Continue watching the WebXR Device API input-source lifecycle, WebXR Gamepads Module frame updates, MDN XRInputSource.gamepad, Immersive Web Controller State/Input Selection samples, and Input Profiles Registry component metadata. A useful next step is storing real event timestamps and gamepad poll values from live inline/immersive sessions, then feeding them into today's diff inspector."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命サンプルで `Auto Poll` を押し、scenario を `thumbstick jitter` から `stale frame gap` に切り替えてください。jitter score と stale guard が別々の metric として変わることが見えます。派生サンプルでは pattern を `event before poll`、frame budget を 34ms 前後にして Step を進めると、event を即 dispatch せず frame confirmation を待つ route が確認できます。",
+      "bodyEn": "In the main sample, press `Auto Poll` and switch the scenario from `thumbstick jitter` to `stale frame gap`; jitter score and stale guard change as separate metrics. In the derivative sample, set the pattern to `event before poll`, keep frame budget around 34 ms, and step forward to see the route that waits for frame confirmation instead of dispatching the event immediately.",
+      "links": [
+        {
+          "label": "Open XR Gamepad Frame Poller Stability Lab",
+          "url": "../outputs/2026-08-30_html_xr_gamepad_frame_poller_stability_lab.html"
+        },
+        {
+          "label": "Open Input Event Frame Diff Inspector",
+          "url": "../outputs/2026-08-30_html_input_event_frame_diff_inspector.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、W3C WebXR Gamepads Module、MDN XRInputSource.gamepad / input guide、Immersive Web Samples の Controller State / Input Selection、Input Profiles repository を確認。設計: 1本目は frame poll の安定化、2本目は event と frame poll の差分検査。実装: `outputs/2026-08-30_html_xr_gamepad_frame_poller_stability_lab.html` と `outputs/2026-08-30_html_input_event_frame_diff_inspector.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開先反映を確認する。",
+      "bodyEn": "Research: reviewed the W3C WebXR Device API, W3C WebXR Gamepads Module, MDN XRInputSource.gamepad/input guide, Immersive Web Controller State/Input Selection samples, and the Input Profiles repository. Design: make the first sample about frame-poll stability and the second about event/frame-poll diff inspection. Implementation: add `outputs/2026-08-30_html_xr_gamepad_frame_poller_stability_lab.html` and `outputs/2026-08-30_html_input_event_frame_diff_inspector.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日は target ray、gamepad action、Input Profiles layout、inputsourceschange、Registry fetch、component mapping cache、slot replay を積みました。今日はそれを frame poll と event reconciliation に接続したため、入力系は discovery、lifecycle、mapping、replay、live poll、event diff の6層になりました。次は実測ログ保存と、pose confidence / haptic verdict への再接続が自然です。",
+      "bodyEn": "Recent work has built through target rays, gamepad actions, Input Profiles layouts, inputsourceschange, Registry fetching, component mapping cache, and slot replay. Today connects that into frame polling and event reconciliation, making the input stack six layers: discovery, lifecycle, mapping, replay, live polling, and event diffing. The next natural steps are real log persistence and reconnecting this to pose confidence or haptic verdicts."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `XR Gamepad Frame Poller Stability Lab` です。何が動くか: step / auto poll、scenario、deadzone、inline XR probe を操作し、buttons[0-3] / axes[0-3] から semantic action、jitter、input age、stale guard を表示します。次に足すなら、実 immersive session の `XRInputSource.gamepad` poll history を IndexedDB に保存し、前日の slot replay に読み戻します。派生として `Input Event Frame Diff Inspector` も実装しました。何が動くか: select / squeeze event と frame poll の時刻差を timeline に出し、dispatch / hold / visual-only retry / duplicate suppression を切り替えます。次に足すなら、実 `selectstart` / `select` event timestamp と `requestAnimationFrame` 内 poll 値を同じ timeline に流します。",
+      "bodyEn": "The selected main prototype is `XR Gamepad Frame Poller Stability Lab`. What it does: step/auto poll, scenario, deadzone, and inline XR probe controls show semantic action, jitter, input age, and stale guard from buttons[0-3]/axes[0-3]. Next addition: save real immersive-session `XRInputSource.gamepad` poll history to IndexedDB and replay it through yesterday's slot replay. The derivative `Input Event Frame Diff Inspector` was also implemented. What it does: places select/squeeze events and frame-poll timing deltas on a timeline, switching between dispatch, hold, visual-only retry, and duplicate suppression. Next addition: stream real `selectstart`/`select` event timestamps and `requestAnimationFrame` poll values into the same timeline."
+    }
+  ]
+}

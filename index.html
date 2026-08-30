@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 54</span>
+        <span>days: 55</span>
         <span>page: 1 / 5</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -305,6 +305,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-08-30">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.30</p>
+              <h2>XRInputSource.gamepad の frame poll 安定化と input event 差分検査を自作サンプル化</h2>
+              <p class="card-subtitle">Original samples for XRInputSource.gamepad frame-poll stability and input-event diff inspection</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-30" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Device API、W3C WebXR Gamepads Module、MDN の XRInputSource.gamepad / input guide、Immersive Web Samples の Controller State / Input Selection を確認し、実 inline probe と合成フレームで gamepad poll を安定化する本命サンプルと、select event と frame poll の時刻差を検査する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the W3C WebXR Device API, W3C WebXR Gamepads Module, MDN XRInputSource.gamepad/input guidance, and Immersive Web Controller State/Input Selection samples, today's original work adds a main sample for stabilizing gamepad frame polling with an inline probe plus synthetic frames, and a derivative sample for inspecting timing differences between select events and frame polling.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-08-30.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-08-30_html_xr_gamepad_frame_poller_stability_lab.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-08-29">
           <div class="card-top">
             <div>
@@ -554,29 +577,6 @@
           <div class="actions">
             <a class="primary" href="days/2026-08-19.html">その日のページ / Day</a>
             <a class="secondary-link" href="outputs/2026-08-19_html_anchor_undo_overlay_queue.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-18">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.18</p>
-              <h2>DOM Overlay と world anchor の select 衝突を入力ゲートで分ける</h2>
-              <p class="card-subtitle">Separate DOM Overlay and world-anchor select collisions with an input gate</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-18" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR DOM Overlays Module、WebXR Device API、WebXR Anchors Module、MDN の `XRHitTestResult.createAnchor()`、Immersive Web の anchors / hit-test samples を確認し、overlay 操作が `beforexrselect` で XR select を抑止するか、world anchor 操作へ通すかを可視化する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR DOM Overlays Module, WebXR Device API, WebXR Anchors Module, MDN `XRHitTestResult.createAnchor()`, and Immersive Web anchors / hit-test samples, today's original HTML sample visualizes whether overlay interaction suppresses XR select through `beforexrselect` or passes input through to a world anchor.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-08-18.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-08-18_html_dom_overlay_anchor_select_gate.html">代表サンプル / Sample</a>
           </div>
         </article>
       

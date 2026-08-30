@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Input Event Frame Diff Inspector</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #121312;
+      --panel: rgba(23, 24, 22, 0.94);
+      --line: rgba(232, 199, 112, 0.28);
+      --text: #fffcef;
+      --muted: #c8bea4;
+      --gold: #e8c770;
+      --cyan: #8bd7df;
+      --green: #a7df91;
+      --red: #ff8d91;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(130deg, rgba(232, 199, 112, 0.16), transparent 30%),
+        linear-gradient(235deg, rgba(139, 215, 223, 0.13), transparent 33%),
+        linear-gradient(180deg, #121312, #202019 60%, #0d0f0d);
+    }
+
+    main {
+      width: min(1160px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.42rem, 2.6vw, 2.14rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 840px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+
+    .badge, .stage, .panel, .metric, .lane, .row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+    }
+
+    .badge {
+      min-width: 245px;
+      padding: 12px 14px;
+    }
+
+    small, label span, .metric small, .lane small, .row small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.73rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .badge strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--gold);
+      font-size: 1.08rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 14px;
+    }
+
+    .stage {
+      min-height: 630px;
+      padding: 16px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(255, 252, 239, 0.12);
+      border-radius: 8px;
+      background: rgba(8, 9, 7, 0.48);
+    }
+
+    button, select, input {
+      min-height: 38px;
+      border: 1px solid rgba(255, 252, 239, 0.18);
+      border-radius: 8px;
+      background: rgba(255, 252, 239, 0.08);
+      color: var(--text);
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      padding: 0 14px;
+      font-weight: 760;
+    }
+
+    button:hover { border-color: rgba(232, 199, 112, 0.75); }
+    select, input { width: 100%; padding: 0 10px; }
+    label { display: grid; gap: 4px; min-width: 150px; }
+
+    .lanes {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .lane {
+      padding: 12px;
+      background: rgba(8, 9, 7, 0.52);
+      box-shadow: none;
+      min-height: 112px;
+    }
+
+    .lane b {
+      display: block;
+      margin-top: 5px;
+      overflow-wrap: anywhere;
+    }
+
+    .track {
+      position: relative;
+      min-height: 280px;
+      border: 1px solid rgba(255, 252, 239, 0.12);
+      border-radius: 8px;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 9.09%),
+        rgba(8, 9, 7, 0.42);
+      overflow: hidden;
+    }
+
+    .tick {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      transform: translateX(-1px);
+      border-radius: 999px;
+    }
+
+    .tick.event { background: var(--gold); }
+    .tick.frame { background: var(--cyan); }
+    .tick.miss { background: var(--red); }
+    .caption {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      padding: 10px;
+      background: rgba(15, 15, 12, 0.72);
+      box-shadow: none;
+    }
+
+    .row b { display: block; margin-top: 4px; }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      padding: 10px;
+      min-width: 0;
+      background: rgba(8, 9, 7, 0.54);
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .panel {
+      padding: 14px;
+      align-self: start;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .panel p, .panel li {
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.9rem;
+    }
+
+    .panel ul { margin: 8px 0 0; padding-left: 19px; }
+
+    @media (max-width: 900px) {
+      header, .layout, .lanes { grid-template-columns: 1fr; }
+      .badge { min-width: 0; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 560px) {
+      .toolbar { display: grid; }
+      label { min-width: 0; }
+      .metrics { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Input Event Frame Diff Inspector</h1>
+        <p class="subtitle">select / squeeze event と gamepad frame poll の発火時刻を並べ、早すぎる event、遅れた frame、欠落した poll を reconciliation route に落とす派生試作。</p>
+      </div>
+      <div class="badge">
+        <small>Derivative sample</small>
+        <strong id="verdict">event aligned</strong>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <div class="toolbar">
+          <button id="run">Replay Burst</button>
+          <button id="step">Step</button>
+          <label>
+            <span>Pattern</span>
+            <select id="pattern">
+              <option value="aligned">aligned select</option>
+              <option value="early">event before poll</option>
+              <option value="late">late frame confirmation</option>
+              <option value="missing">missing poll frame</option>
+            </select>
+          </label>
+          <label>
+            <span>Frame budget ms</span>
+            <input id="budget" type="range" min="10" max="80" step="1" value="34">
+          </label>
+        </div>
+
+        <div class="lanes">
+          <div class="lane"><small>Event stream</small><b id="eventLabel">selectstart -> select</b></div>
+          <div class="lane"><small>Frame poll</small><b id="frameLabel">buttons[0] confirmed</b></div>
+          <div class="lane"><small>Reconcile route</small><b id="routeLabel">dispatch on frame</b></div>
+        </div>
+
+        <div class="track" id="track">
+          <div class="caption" id="caption"></div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric"><small>Step</small><strong id="count">0</strong></div>
+          <div class="metric"><small>Delta</small><strong id="delta">0 ms</strong></div>
+          <div class="metric"><small>Confidence</small><strong id="confidence">1.00</strong></div>
+          <div class="metric"><small>Hold window</small><strong id="hold">34 ms</strong></div>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <h2>Why This Exists</h2>
+        <p>WebXR の入力は DOM 風の select events と XR frame 上の pose/gamepad poll が同居する。アプリの action は、event 受信だけで即決せず、近い frame の gamepad 状態で裏取りできると復旧しやすい。</p>
+        <ul>
+          <li>event が早い時は短い hold window で frame confirmation を待つ。</li>
+          <li>poll が欠けた時は visual-only に落とし、次 frame で再判定する。</li>
+          <li>late confirmation は二重発火を避けるため event id で束ねる。</li>
+        </ul>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let stepIndex = 0;
+    let timer = null;
+
+    const patterns = {
+      aligned: [
+        { event: 120, frame: 132, label: "selectstart", poll: "trigger 0.82" },
+        { event: 245, frame: 252, label: "select", poll: "trigger released" },
+        { event: 360, frame: 366, label: "squeeze", poll: "buttons[1] 0.76" }
+      ],
+      early: [
+        { event: 100, frame: 151, label: "selectstart", poll: "trigger 0.71" },
+        { event: 222, frame: 266, label: "select", poll: "trigger released" },
+        { event: 330, frame: 388, label: "selectstart", poll: "trigger 0.65" }
+      ],
+      late: [
+        { event: 120, frame: 186, label: "selectstart", poll: "trigger 0.88" },
+        { event: 240, frame: 319, label: "select", poll: "trigger released" },
+        { event: 390, frame: 461, label: "squeeze", poll: "buttons[1] 0.7" }
+      ],
+      missing: [
+        { event: 100, frame: null, label: "selectstart", poll: "no frame" },
+        { event: 238, frame: 294, label: "select", poll: "trigger released" },
+        { event: 370, frame: null, label: "squeeze", poll: "no frame" }
+      ]
+    };
+
+    function routeFor(delta, hasFrame, budget) {
+      if (!hasFrame) return { route: "visual-only retry", confidence: 0.38, verdict: "poll missing" };
+      if (delta <= budget) return { route: "dispatch on frame", confidence: 0.94, verdict: "event aligned" };
+      if (delta <= budget * 2) return { route: "hold then dispatch", confidence: 0.72, verdict: "held for frame" };
+      return { route: "suppress duplicate / resync", confidence: 0.49, verdict: "late confirmation" };
+    }
+
+    function render() {
+      const list = patterns[$("pattern").value];
+      const budget = Number($("budget").value);
+      const item = list[stepIndex % list.length];
+      const hasFrame = item.frame !== null;
+      const delta = hasFrame ? Math.abs(item.frame - item.event) : 999;
+      const decision = routeFor(delta, hasFrame, budget);
+      const track = $("track");
+      const maxTime = 520;
+      const eventLeft = `${(item.event / maxTime) * 100}%`;
+      const frameLeft = hasFrame ? `${(item.frame / maxTime) * 100}%` : "92%";
+
+      track.querySelectorAll(".tick").forEach((node) => node.remove());
+      const eventTick = document.createElement("i");
+      eventTick.className = "tick event";
+      eventTick.style.left = eventLeft;
+      track.append(eventTick);
+      const frameTick = document.createElement("i");
+      frameTick.className = `tick ${hasFrame ? "frame" : "miss"}`;
+      frameTick.style.left = frameLeft;
+      track.append(frameTick);
+
+      $("caption").innerHTML = `
+        <div class="row"><small>event</small><b>${item.label} at ${item.event} ms</b></div>
+        <div class="row"><small>frame poll</small><b>${hasFrame ? `${item.poll} at ${item.frame} ms` : "missing inside current XR frame window"}</b></div>
+        <div class="row"><small>next addition</small><b>実 XRSession の select event timestamp と rAF poll 値をこの lane に流す</b></div>
+      `;
+      $("eventLabel").textContent = item.label;
+      $("frameLabel").textContent = hasFrame ? item.poll : "poll missing";
+      $("routeLabel").textContent = decision.route;
+      $("count").textContent = String(stepIndex + 1);
+      $("delta").textContent = hasFrame ? `${delta} ms` : "missing";
+      $("confidence").textContent = decision.confidence.toFixed(2);
+      $("hold").textContent = `${budget} ms`;
+      $("verdict").textContent = decision.verdict;
+      stepIndex += 1;
+    }
+
+    $("step").addEventListener("click", render);
+    $("run").addEventListener("click", () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+        $("run").textContent = "Replay Burst";
+      } else {
+        timer = setInterval(render, 520);
+        $("run").textContent = "Stop Replay";
+      }
+    });
+    $("pattern").addEventListener("change", () => {
+      stepIndex = 0;
+      render();
+    });
+    $("budget").addEventListener("input", render);
+    render();
+  </script>
+</body>
+</html>

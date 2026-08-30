@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XR Gamepad Frame Poller Stability Lab</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111417;
+      --panel: rgba(18, 23, 26, 0.94);
+      --line: rgba(135, 211, 188, 0.28);
+      --text: #f3fff9;
+      --muted: #a9bbb6;
+      --mint: #87d3bc;
+      --blue: #90b8ff;
+      --amber: #f3c86d;
+      --red: #ff8d91;
+      --green: #a8df91;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(130deg, rgba(135, 211, 188, 0.16), transparent 31%),
+        linear-gradient(235deg, rgba(144, 184, 255, 0.13), transparent 34%),
+        linear-gradient(180deg, #111417, #162023 60%, #0b0f11);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.42rem, 2.7vw, 2.18rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 850px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+
+    .badge, .stage, .panel, .metric, .slot, .event {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+    }
+
+    .badge {
+      min-width: 250px;
+      padding: 12px 14px;
+    }
+
+    small, label span, .metric small, .slot small, .event small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.73rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .badge strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--mint);
+      font-size: 1.08rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 350px;
+      gap: 14px;
+    }
+
+    .stage {
+      min-height: 650px;
+      padding: 16px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(243, 255, 249, 0.12);
+      border-radius: 8px;
+      background: rgba(6, 9, 10, 0.48);
+    }
+
+    button, select, input {
+      min-height: 38px;
+      border: 1px solid rgba(243, 255, 249, 0.18);
+      border-radius: 8px;
+      background: rgba(243, 255, 249, 0.08);
+      color: var(--text);
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      padding: 0 14px;
+      font-weight: 760;
+    }
+
+    button:hover { border-color: rgba(135, 211, 188, 0.75); }
+    select, input { width: 100%; padding: 0 10px; }
+    label { display: grid; gap: 4px; min-width: 150px; }
+
+    .board {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(310px, 0.9fr);
+      gap: 12px;
+      min-height: 430px;
+    }
+
+    .slots, .events { display: grid; gap: 9px; align-content: start; }
+    .slot, .event {
+      padding: 11px;
+      background: rgba(7, 10, 11, 0.5);
+      box-shadow: none;
+    }
+
+    .slot {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr) 82px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .slot.hot {
+      border-color: rgba(168, 223, 145, 0.82);
+      background: rgba(168, 223, 145, 0.14);
+    }
+
+    .slot.stale {
+      border-color: rgba(255, 141, 145, 0.66);
+      background: rgba(255, 141, 145, 0.12);
+    }
+
+    .slot b, .event b {
+      display: block;
+      margin-top: 4px;
+      overflow-wrap: anywhere;
+    }
+
+    .slot p, .event p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.42;
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(243, 255, 249, 0.1);
+      margin-top: 7px;
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--mint), var(--blue));
+    }
+
+    .pill {
+      display: inline-grid;
+      place-items: center;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: rgba(135, 211, 188, 0.14);
+      color: var(--mint);
+      font-size: 0.78rem;
+      font-weight: 760;
+      text-align: center;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      padding: 10px;
+      min-width: 0;
+      background: rgba(7, 10, 11, 0.54);
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .panel {
+      padding: 14px;
+      align-self: start;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .panel p, .panel li {
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.9rem;
+    }
+
+    .panel ul { margin: 8px 0 0; padding-left: 19px; }
+    .status { color: var(--amber); font-weight: 760; }
+
+    @media (max-width: 900px) {
+      header, .layout, .board { grid-template-columns: 1fr; }
+      .badge { min-width: 0; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 560px) {
+      .toolbar { display: grid; }
+      label { min-width: 0; }
+      .slot { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>XR Gamepad Frame Poller Stability Lab</h1>
+        <p class="subtitle">`XRInputSource.gamepad` をフレーム単位で読む前提を、実 inline probe と合成フレームで検証する自作ミニ試作。slot 値、stale 判定、deadzone 後の semantic action を同じ画面で見る。</p>
+      </div>
+      <div class="badge">
+        <small>Today's sample</small>
+        <strong id="verdict">synthetic poll ready</strong>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="stage">
+        <div class="toolbar">
+          <button id="step">Step Frame</button>
+          <button id="auto">Auto Poll</button>
+          <button id="inline">Start Inline XR Probe</button>
+          <label>
+            <span>Scenario</span>
+            <select id="scenario">
+              <option value="steady">steady select hold</option>
+              <option value="jitter">thumbstick jitter</option>
+              <option value="stale">stale frame gap</option>
+              <option value="lost">source removed mid gesture</option>
+            </select>
+          </label>
+          <label>
+            <span>Deadzone</span>
+            <input id="deadzone" type="range" min="0.05" max="0.45" step="0.01" value="0.18">
+          </label>
+        </div>
+
+        <div class="board">
+          <div class="slots" id="slots"></div>
+          <div class="events" id="events"></div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric"><small>Frame</small><strong id="frame">0</strong></div>
+          <div class="metric"><small>Input age</small><strong id="age">0 ms</strong></div>
+          <div class="metric"><small>Jitter score</small><strong id="jitter">0.00</strong></div>
+          <div class="metric"><small>Action route</small><strong id="route">idle</strong></div>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <h2>Production Note</h2>
+        <p>WebXR の入力値は event だけに寄せず、XR frame のタイミングで gamepad を poll して、その frame に紐づく pose と同じ粒度で action を決めると検証しやすい。</p>
+        <ul>
+          <li>buttons[0] は select/trigger、buttons[1] は squeeze/grab として扱う。</li>
+          <li>axes は deadzone と前 frame 差分を分けて見る。</li>
+          <li>stale frame は入力 source の消失や描画停止と区別して記録する。</li>
+        </ul>
+        <p class="status" id="xrStatus">inline XR probe は未開始です。</p>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const slotRoot = $("slots");
+    const eventRoot = $("events");
+    const slotNames = [
+      ["buttons[0]", "trigger / select"],
+      ["buttons[1]", "squeeze / grab"],
+      ["buttons[2]", "touchpad press"],
+      ["buttons[3]", "thumbstick press"],
+      ["axes[0]", "touchpad x"],
+      ["axes[1]", "touchpad y"],
+      ["axes[2]", "thumbstick x"],
+      ["axes[3]", "thumbstick y"]
+    ];
+
+    let frame = 0;
+    let autoTimer = null;
+    let lastAxes = [0, 0, 0, 0];
+    let lastInputTime = performance.now();
+    let inlineSession = null;
+    let inlineSnapshot = null;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function syntheticFrame() {
+      const scenario = $("scenario").value;
+      const t = frame / 8;
+      const buttons = [0, 0, 0, 0];
+      const axes = [0, 0, 0, 0];
+      let source = "synthetic";
+
+      if (scenario === "steady") {
+        buttons[0] = frame % 16 < 11 ? 0.86 : 0.12;
+        buttons[1] = frame % 28 > 18 ? 0.72 : 0;
+      }
+      if (scenario === "jitter") {
+        buttons[0] = 0.28;
+        axes[2] = Math.sin(t) * 0.28 + (frame % 2 ? 0.08 : -0.08);
+        axes[3] = Math.cos(t * 0.8) * 0.24;
+      }
+      if (scenario === "stale") {
+        buttons[0] = frame % 10 < 4 ? 0.78 : 0;
+        axes[2] = frame % 18 < 9 ? 0.62 : 0;
+        if (frame % 12 === 0) lastInputTime -= 190;
+      }
+      if (scenario === "lost") {
+        if (frame % 22 < 12) {
+          buttons[0] = 0.92;
+          buttons[1] = frame % 22 > 7 ? 0.6 : 0;
+        } else {
+          source = "synthetic removed";
+        }
+      }
+
+      if (inlineSnapshot) {
+        source = inlineSnapshot.source;
+        return { source, buttons: inlineSnapshot.buttons, axes: inlineSnapshot.axes };
+      }
+
+      if (scenario !== "stale") lastInputTime = performance.now();
+      return { source, buttons, axes };
+    }
+
+    function classify(values) {
+      const dz = Number($("deadzone").value);
+      const actions = [];
+      if (values.buttons[0] > 0.5) actions.push("select");
+      if (values.buttons[1] > 0.5) actions.push("grab");
+      const stick = Math.hypot(values.axes[2], values.axes[3]);
+      if (stick > dz) actions.push("move");
+      const pad = Math.hypot(values.axes[0], values.axes[1]);
+      if (pad > dz) actions.push("cursor nudge");
+      return actions.length ? actions.join(" + ") : "idle";
+    }
+
+    function render() {
+      frame += 1;
+      const values = syntheticFrame();
+      const now = performance.now();
+      const age = Math.max(0, now - lastInputTime);
+      const jitter = values.axes.reduce((sum, value, index) => sum + Math.abs(value - lastAxes[index]), 0) / 4;
+      lastAxes = values.axes.slice();
+      const action = classify(values);
+      const stale = age > 150 || values.source.includes("removed");
+
+      slotRoot.innerHTML = slotNames.map(([slot, label], index) => {
+        const isButton = index < 4;
+        const raw = isButton ? values.buttons[index] : values.axes[index - 4];
+        const hot = Math.abs(raw) > (isButton ? 0.5 : Number($("deadzone").value));
+        return `
+          <div class="slot ${hot ? "hot" : ""} ${stale ? "stale" : ""}">
+            <div><small>${slot}</small><b>${raw.toFixed(2)}</b></div>
+            <div>
+              <small>${label}</small>
+              <div class="bar"><i style="width:${clamp(Math.abs(raw) * 100, 0, 100)}%"></i></div>
+            </div>
+            <span class="pill">${hot ? "active" : stale ? "stale" : "rest"}</span>
+          </div>
+        `;
+      }).join("");
+
+      const lines = [
+        ["poll source", values.source],
+        ["semantic action", action],
+        ["frame guard", stale ? "hold last safe action / show fallback" : "dispatch current frame"],
+        ["next addition", "compare with select event timestamps"]
+      ];
+      eventRoot.innerHTML = lines.map(([label, text], index) => `
+        <div class="event ${index === 1 && action !== "idle" ? "active" : ""}">
+          <small>${label}</small>
+          <b>${text}</b>
+          <p>${index === 2 ? "stale 判定は pose と gamepad の同期ずれを早めに発見するための保守的な gate。" : ""}</p>
+        </div>
+      `).join("");
+
+      $("frame").textContent = String(frame);
+      $("age").textContent = `${Math.round(age)} ms`;
+      $("jitter").textContent = jitter.toFixed(2);
+      $("route").textContent = action;
+      $("verdict").textContent = stale ? "stale guard active" : action === "idle" ? "polling stable" : "action dispatch";
+    }
+
+    async function startInlineProbe() {
+      if (!("xr" in navigator)) {
+        $("xrStatus").textContent = "navigator.xr がないため、合成フレームで検証しています。";
+        return;
+      }
+      try {
+        inlineSession = await navigator.xr.requestSession("inline");
+        $("xrStatus").textContent = "inline XR session を開始しました。実 gamepad が見つかれば poll に反映します。";
+        inlineSession.requestAnimationFrame(function onXRFrame(time, xrFrame) {
+          const sources = Array.from(inlineSession.inputSources || []);
+          const withPad = sources.find((source) => source.gamepad);
+          if (withPad) {
+            inlineSnapshot = {
+              source: `${withPad.handedness || "none"} ${withPad.targetRayMode || "unknown"} gamepad`,
+              buttons: Array.from({ length: 4 }, (_, index) => withPad.gamepad.buttons[index]?.value || 0),
+              axes: Array.from({ length: 4 }, (_, index) => withPad.gamepad.axes[index] || 0)
+            };
+            lastInputTime = performance.now();
+          }
+          inlineSession.requestAnimationFrame(onXRFrame);
+        });
+      } catch (error) {
+        $("xrStatus").textContent = `inline XR probe failed: ${error.message}`;
+      }
+    }
+
+    $("step").addEventListener("click", render);
+    $("auto").addEventListener("click", () => {
+      if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+        $("auto").textContent = "Auto Poll";
+      } else {
+        autoTimer = setInterval(render, 360);
+        $("auto").textContent = "Stop Poll";
+      }
+    });
+    $("inline").addEventListener("click", startInlineProbe);
+    $("scenario").addEventListener("change", () => {
+      inlineSnapshot = null;
+      lastInputTime = performance.now();
+      render();
+    });
+    $("deadzone").addEventListener("input", render);
+    render();
+  </script>
+</body>
+</html>
