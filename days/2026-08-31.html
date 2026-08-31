@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XR input event の pose 台帳と action commit window を自作サンプル化 | 2026-08-31</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.08.31</p>
+      <h1>XR input event の pose 台帳と action commit window を自作サンプル化</h1>
+      <p class="hero-subtitle">Original samples for XR input-event pose ledgers and action commit windows</p>
+      <p>W3C WebXR Device API、W3C WebXR Gamepads Module、MDN の XRInputSourceEvent / input guide、Immersive Web Samples の Input Selection / Controller State を確認し、イベント側の `XRFrame.getPose()` と frame poll 側の gamepad 状態を同じ操作ログへ束ねる本命サンプルと、短い hold window で commit 判定を再生する派生サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the W3C WebXR Device API, W3C WebXR Gamepads Module, MDN XRInputSourceEvent/input guidance, and Immersive Web Input Selection/Controller State samples, today's original work adds a main sample that records event-frame poses and frame-polled gamepad state into one action ledger, plus a derivative sample that replays commit decisions through a short hold window.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-08-31_html_xr_event_pose_ledger.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-08-30.html">← 2026.08.30</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>XR Event Pose Ledger</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-31_html_xr_event_pose_ledger.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Action Commit Window Replayer</h3>
+              <p></p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-08-31_html_action_commit_window_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Device API の `XRInputSourceEvent` は `inputSource` と event-time の `XRFrame` を持ち、target ray pose を `getPose()` で読む入口になります。</span>
+              <span class="en-copy">The WebXR Device API's `XRInputSourceEvent` carries an `inputSource` and an event-time `XRFrame`, which is the entry point for reading target-ray pose via `getPose()`.</span>
+            </li>
+          
+            <li>
+              <span>MDN は event frame では `getViewerPose()` ではなく `getPose()` を使う点を明記しており、入力イベントを pose 台帳化する際の重要な制約です。</span>
+              <span class="en-copy">MDN explicitly notes that event frames use `getPose()` rather than `getViewerPose()`, an important constraint for turning input events into a pose ledger.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Gamepads Module は `gamepad` 状態が XRSession の animation frame / event callback のまとまりで安定する前提を示しており、event と poll の照合に向いています。</span>
+              <span class="en-copy">The WebXR Gamepads Module describes gamepad state as stable across XRSession animation-frame or event-callback batches, making it useful for reconciling events with polling.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web Samples の Input Selection と Controller State は、select event と gamepad poll を分けて見る公式デモとして、今日の自作サンプルの比較対象になります。</span>
+              <span class="en-copy">Immersive Web's Input Selection and Controller State samples are official references that show select events and gamepad polling separately.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、このワークスペース内の `XR Event Pose Ledger` と `Action Commit Window Replayer` の2本です。</span>
+              <span class="en-copy">Today's public cards focus on the original workspace samples, `XR Event Pose Ledger` and `Action Commit Window Replayer`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は、Input Selection が扱う select event と Controller State が扱う gamepad poll を、別々の機能として終わらせず、ひとつの操作台帳へ結合することです。面白い点は、event は意図の節目、frame poll は連続状態、event frame の pose はその中間にあるため、3つを同時に見ると `commit`、`hold`、`retry`、`drop` の説明が作りやすいことです。</p>
+          <p class="en-copy">Today's notable angle is joining the select events shown by Input Selection and the gamepad polling shown by Controller State into one action ledger rather than treating them as separate features. Events mark intent boundaries, frame polling captures continuous state, and event-frame pose sits between them, so viewing all three together makes `commit`, `hold`, `retry`, and `drop` decisions easier to explain.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-samples/input-selection.html" target="_blank" rel="noreferrer">Input Selection sample</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/controller-state.html" target="_blank" rel="noreferrer">Controller State sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `XR Event Pose Ledger` は、event pattern、frame budget、pose noise を変えながら、select / squeeze 系イベントを frame 番号、event age、pose confidence、target ray 表示、reconcile route として積みます。派生サンプル `Action Commit Window Replayer` は、その台帳を短い hold window で再生し、pose age、gamepad age、duplicate guard から action を commit するか保留するかを切り替えます。</p>
+          <p class="en-copy">The main sample, `XR Event Pose Ledger`, changes event pattern, frame budget, and pose noise while recording select/squeeze events as frame number, event age, pose confidence, target-ray display, and reconcile route. The derivative sample, `Action Commit Window Replayer`, replays that ledger through a short hold window and switches between committing or holding actions based on pose age, gamepad age, and duplicate guard.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-31_html_xr_event_pose_ledger.html" target="_blank" rel="noreferrer">Open main sample</a></li>
+          
+            <li><a href="../outputs/2026-08-31_html_action_commit_window_replayer.html" target="_blank" rel="noreferrer">Open derivative sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>`XRInputSourceEvent.frame` は event が起きた時点の `XRFrame` で、event frame からは target ray や grip の pose を `getPose()` で取る設計に寄せるのがよいです。一方、button / axis は `XRInputSource.gamepad` を animation frame 側で読むため、実装では event timestamp、近傍 frame timestamp、pose availability、button snapshot を同じ row に保存してから dispatch 判定を行うと、二重発火や stale pose を後から検証できます。</p>
+          <p class="en-copy">`XRInputSourceEvent.frame` is the `XRFrame` for the time when the event occurred, so event handling should read target-ray or grip pose through `getPose()`. Button and axis values are usually read from `XRInputSource.gamepad` on the animation-frame side, so implementations should store event timestamp, nearby frame timestamp, pose availability, and button snapshots in one row before dispatching decisions, making duplicate firing and stale pose easier to inspect later.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-gamepads-module-1/" target="_blank" rel="noreferrer">WebXR Gamepads Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の2本からは event type、frame number、event age、pose confidence、target ray の簡易座標、route、commit window、duplicate guard、pose age、gamepad age、commit tally が取れます。2026-08-30 の event/frame diff inspector と合わせると timing delta の見取り図になります。2026-08-29 の slot replay と合わせると `xr-standard` の trigger / squeeze / thumbstick 値を action ledger の confirm signal として再利用できます。</p>
+          <p class="en-copy">The two samples expose event type, frame number, event age, pose confidence, simplified target-ray coordinates, route, commit window, duplicate guard, pose age, gamepad age, and commit tally. Combined with the 2026-08-30 event/frame diff inspector, this becomes a timing-delta map. Combined with the 2026-08-29 slot replay, `xr-standard` trigger/squeeze/thumbstick values can be reused as confirmation signals for the action ledger.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Device API の event frame と transient input source、WebXR Gamepads Module の frame update、MDN の XRInputSourceEvent と input guide、Immersive Web Samples の Input Selection / Controller State、Input Profiles Registry の component metadata を継続して見ます。次は、実機で `selectstart` の event frame pose と直後の gamepad poll snapshot を IndexedDB に保存し、今日の replayer へ読み込む実測版を作ると重複が少ないです。</p>
+          <p class="en-copy">Continue watching WebXR Device API event frames and transient input sources, WebXR Gamepads Module frame updates, MDN XRInputSourceEvent/input guidance, Immersive Web Input Selection/Controller State, and Input Profiles Registry component metadata. A useful next step is saving real-device `selectstart` event-frame poses and nearby gamepad poll snapshots to IndexedDB, then loading them into today's replayer.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命サンプルで `late pose recovery` を選び、frame budget を 24ms 前後、pose noise を 40mm 前後にして Step を進めてください。event frame pose が取れない row が `visual-only retry` へ落ちる流れが見えます。派生サンプルでは `duplicate select` を選び、duplicate guard を広げると、2回目の select が `drop` へ変わることを確認できます。</p>
+          <p class="en-copy">In the main sample, choose `late pose recovery`, keep frame budget around 24 ms and pose noise around 40 mm, then step forward; rows with unavailable event-frame pose fall into `visual-only retry`. In the derivative sample, choose `duplicate select` and widen the duplicate guard to see the second select switch to `drop`.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-31_html_xr_event_pose_ledger.html" target="_blank" rel="noreferrer">Open XR Event Pose Ledger</a></li>
+          
+            <li><a href="../outputs/2026-08-31_html_action_commit_window_replayer.html" target="_blank" rel="noreferrer">Open Action Commit Window Replayer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR Device API、W3C WebXR Gamepads Module、MDN XRInputSourceEvent / input guide、Immersive Web Samples の Input Selection / Controller State を確認。設計: 1本目は event frame pose 台帳、2本目は action commit window の再生。実装: `outputs/2026-08-31_html_xr_event_pose_ledger.html` と `outputs/2026-08-31_html_action_commit_window_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開先反映を確認する。</p>
+          <p class="en-copy">Research: reviewed the W3C WebXR Device API, W3C WebXR Gamepads Module, MDN XRInputSourceEvent/input guide, and Immersive Web Input Selection/Controller State samples. Design: make the first sample an event-frame pose ledger and the second an action commit-window replay. Implementation: add `outputs/2026-08-31_html_xr_event_pose_ledger.html` and `outputs/2026-08-31_html_action_commit_window_replayer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>入力系の蓄積は、target ray、gamepad action、Input Profiles layout、inputsourceschange、Registry fetch、component mapping cache、slot replay、frame poll、event diff まで進みました。今日は event frame pose と commit window を足したため、次の関心は `ログとして保存できる XR 入力` と `保存ログを再生して設計判断に使う UI` の2方向へ分けられます。</p>
+          <p class="en-copy">The input stack has progressed through target rays, gamepad actions, Input Profiles layouts, inputsourceschange, Registry fetching, component mapping cache, slot replay, frame polling, and event diffing. Today adds event-frame pose and commit windows, splitting the next focus into two directions: XR input that can be saved as logs, and UI that replays saved logs for interaction-design decisions.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `XR Event Pose Ledger` です。何が動くか: event pattern、frame budget、pose noise、inline XR probe を操作し、select / squeeze 系イベントを event age、pose confidence、target ray、route つきで台帳化します。次に足すなら、実機の event frame pose と直後の `XRInputSource.gamepad` snapshot を IndexedDB に保存します。派生として `Action Commit Window Replayer` も実装しました。何が動くか: packet、commit window、duplicate guard を変え、commit / hold / retry / drop の分類を再生します。次に足すなら、1本目の台帳を JSON export し、派生側へ import して実ログを再判定します。</p>
+          <p class="en-copy">The selected main prototype is `XR Event Pose Ledger`. What it does: controls event pattern, frame budget, pose noise, and an inline XR probe, then records select/squeeze events with event age, pose confidence, target ray, and route. Next addition: save real-device event-frame poses and nearby `XRInputSource.gamepad` snapshots to IndexedDB. The derivative `Action Commit Window Replayer` was also implemented. What it does: changes packet, commit window, and duplicate guard to replay commit/hold/retry/drop classification. Next addition: export the main ledger as JSON and import it into the derivative replayer for real-log reclassification.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-08-31_html_xr_event_pose_ledger.html" target="_blank" rel="noreferrer">Today's main sample: XR Event Pose Ledger</a></li>
+          
+            <li><a href="../outputs/2026-08-31_html_action_commit_window_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Action Commit Window Replayer</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-gamepads-module-1/" target="_blank" rel="noreferrer">W3C: WebXR Gamepads Module - Level 1</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRInputSourceEvent" target="_blank" rel="noreferrer">MDN: XRInputSourceEvent</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Inputs" target="_blank" rel="noreferrer">MDN: Inputs and input sources</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/input-selection.html" target="_blank" rel="noreferrer">Immersive Web Samples: Input Selection</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/controller-state.html" target="_blank" rel="noreferrer">Immersive Web Samples: Controller State</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr/input-explainer.html" target="_blank" rel="noreferrer">Immersive Web: Input explainer</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-08-31_html_xr_event_pose_ledger.html" loading="lazy" title="XR Event Pose Ledger"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
