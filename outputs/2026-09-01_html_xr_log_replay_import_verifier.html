@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XR Log Replay Import Verifier</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #121213;
+      --panel: rgba(25, 27, 30, 0.94);
+      --line: rgba(239, 198, 108, 0.28);
+      --text: #fffaf0;
+      --muted: #c5b9a5;
+      --mint: #86d9b8;
+      --blue: #8ebcff;
+      --amber: #efc66c;
+      --red: #ff8f8f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(130deg, rgba(239,198,108,0.15), transparent 32%),
+        linear-gradient(240deg, rgba(134,217,184,0.12), transparent 35%),
+        linear-gradient(180deg, #121213, #1f211f 64%, #090a0a);
+    }
+    main {
+      width: min(1120px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 3vw, 2.2rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+    .subtitle {
+      margin: 8px 0 0;
+      max-width: 850px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+    .badge, .panel, .cell, .event {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0,0,0,0.24);
+    }
+    .badge { min-width: 225px; padding: 12px 14px; }
+    small, label span, .cell small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.73rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .badge strong, .cell strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 1.12rem;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 350px minmax(0, 1fr);
+      gap: 14px;
+    }
+    .panel { padding: 14px; }
+    .controls { display: grid; gap: 12px; }
+    label {
+      display: grid;
+      gap: 7px;
+      font-weight: 800;
+      font-size: 0.88rem;
+    }
+    select, input, button, textarea { width: 100%; }
+    select, textarea {
+      border: 1px solid rgba(255,250,240,0.18);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.07);
+      color: var(--text);
+      padding: 9px 10px;
+      font: inherit;
+    }
+    textarea {
+      min-height: 190px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+    button {
+      border: 1px solid rgba(239,198,108,0.46);
+      border-radius: 8px;
+      background: rgba(239,198,108,0.15);
+      color: var(--text);
+      padding: 10px 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .cell {
+      padding: 12px;
+      min-height: 74px;
+      background: rgba(255,255,255,0.05);
+    }
+    .track { display: grid; gap: 8px; }
+    .event {
+      display: grid;
+      grid-template-columns: 86px minmax(0, 1fr) 128px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      background: rgba(255,255,255,0.045);
+    }
+    .axis {
+      position: relative;
+      height: 28px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+    .window {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: rgba(134,217,184,0.18);
+      border-left: 1px solid var(--mint);
+      border-right: 1px solid var(--mint);
+    }
+    .dot {
+      position: absolute;
+      top: 50%;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--amber);
+      transform: translate(-50%, -50%);
+    }
+    .route {
+      font-weight: 900;
+      text-align: right;
+      color: var(--mint);
+    }
+    .hold { color: var(--amber); }
+    .drop { color: var(--red); }
+    @media (max-width: 860px) {
+      header, .layout { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .event { grid-template-columns: 1fr; }
+      .route { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>XR Log Replay Import Verifier</h1>
+        <p class="subtitle">1本目で書き出した JSON、または内蔵サンプルログを読み込み、commit window と duplicate guard を変えて入力ログの再判定を行う派生試作です。</p>
+      </div>
+      <div class="badge">
+        <small>Replay source</small>
+        <strong id="sourceName">seed log</strong>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel controls">
+        <label>Seed packet
+          <span>内蔵ログを選択</span>
+          <select id="packet">
+            <option value="mixed">mixed saved session</option>
+            <option value="duplicate">duplicate select run</option>
+            <option value="blurred">visible-blurred recovery</option>
+          </select>
+        </label>
+        <label>Commit window
+          <span><b id="windowValue">32</b> ms</span>
+          <input id="windowMs" type="range" min="10" max="72" value="32">
+        </label>
+        <label>Duplicate guard
+          <span><b id="guardValue">38</b> ms</span>
+          <input id="guardMs" type="range" min="10" max="96" value="38">
+        </label>
+        <button id="loadSeed">Load seed log</button>
+        <button id="parse">Parse pasted JSON</button>
+        <label>Imported JSON
+          <span>`rows` 配列を含む JSON を貼り付け</span>
+          <textarea id="importBox" spellcheck="false"></textarea>
+        </label>
+      </aside>
+
+      <section>
+        <div class="summary">
+          <div class="cell"><small>Rows</small><strong id="rowCount">0</strong></div>
+          <div class="cell"><small>Commit</small><strong id="commitCount">0</strong></div>
+          <div class="cell"><small>Hold / retry</small><strong id="holdCount">0</strong></div>
+          <div class="cell"><small>Drop</small><strong id="dropCount">0</strong></div>
+        </div>
+        <div id="track" class="track"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const seeds = {
+      mixed: [
+        row(0, "selectstart", 10, 12, 0.91, true, "visible", 0.82),
+        row(24, "select", 12, 18, 0.86, true, "visible", 0.93),
+        row(64, "selectend", 15, 34, 0.64, true, "visible", 0.22),
+        row(108, "squeeze", 13, 20, 0.78, true, "visible", 0.28)
+      ],
+      duplicate: [
+        row(0, "selectstart", 8, 12, 0.92, true, "visible", 0.84),
+        row(22, "selectstart", 9, 16, 0.9, true, "visible", 0.86),
+        row(72, "select", 11, 18, 0.88, true, "visible", 0.95),
+        row(116, "selectend", 13, 20, 0.81, true, "visible", 0.12)
+      ],
+      blurred: [
+        row(0, "selectstart", 8, 18, 0.7, false, "visible-blurred", 0.68),
+        row(40, "selectstart", 12, 28, 0.58, true, "visible-blurred", 0.72),
+        row(92, "select", 15, 24, 0.74, true, "visible", 0.9),
+        row(138, "selectend", 18, 30, 0.66, true, "visible", 0.16)
+      ]
+    };
+
+    const state = { rows: [], source: "seed log" };
+    const packetEl = document.querySelector("#packet");
+    const importBox = document.querySelector("#importBox");
+    const windowEl = document.querySelector("#windowMs");
+    const guardEl = document.querySelector("#guardMs");
+
+    function row(offsetMs, eventType, eventAgeMs, frameGapMs, poseConfidence, poseAvailable, visibility, trigger) {
+      return {
+        id: `${eventType}-${offsetMs}`,
+        createdAt: 1788134465149 + offsetMs,
+        frame: 900 + Math.round(offsetMs / 11),
+        eventType,
+        handedness: offsetMs % 2 ? "left" : "right",
+        eventAgeMs,
+        frameGapMs,
+        poseConfidence,
+        poseAvailable,
+        visibility,
+        targetRay: { x: Number((Math.sin(offsetMs + 1) * 0.26).toFixed(2)), y: 1.32, z: -1.45 },
+        gamepad: { trigger, squeeze: eventType === "squeeze" ? 0.88 : 0.12, axes: [0, 0] }
+      };
+    }
+
+    function decide(rowData, index, rows) {
+      const commitWindow = Number(windowEl.value);
+      const duplicateGuard = Number(guardEl.value);
+      const previousSame = rows.slice(0, index).reverse().find((item) => item.eventType === rowData.eventType);
+      const duplicateMs = previousSame ? rowData.createdAt - previousSame.createdAt : Infinity;
+      if (duplicateMs < duplicateGuard) return "drop duplicate";
+      if (!rowData.poseAvailable) return "retry no-pose";
+      if (rowData.visibility === "visible-blurred") return "hold visibility";
+      if (rowData.eventAgeMs + rowData.frameGapMs > commitWindow) return "hold stale";
+      if (rowData.poseConfidence < 0.62) return "retry confidence";
+      if ((rowData.gamepad?.trigger || 0) < 0.35 && rowData.eventType !== "selectend") return "hold trigger";
+      return "commit";
+    }
+
+    function render() {
+      const judged = state.rows.map((item, index, rows) => ({ ...item, verdict: decide(item, index, rows) }));
+      const commits = judged.filter((item) => item.verdict === "commit").length;
+      const drops = judged.filter((item) => item.verdict.startsWith("drop")).length;
+      const holds = judged.length - commits - drops;
+      document.querySelector("#sourceName").textContent = state.source;
+      document.querySelector("#rowCount").textContent = String(judged.length);
+      document.querySelector("#commitCount").textContent = String(commits);
+      document.querySelector("#holdCount").textContent = String(holds);
+      document.querySelector("#dropCount").textContent = String(drops);
+      document.querySelector("#track").innerHTML = judged.map(renderRow).join("");
+    }
+
+    function renderRow(item) {
+      const origin = state.rows[0]?.createdAt || item.createdAt;
+      const offset = Math.max(0, Math.min(100, ((item.createdAt - origin) / 160) * 100));
+      const width = Math.max(10, Math.min(44, Number(windowEl.value) * 0.58));
+      const routeClass = item.verdict === "commit" ? "" : item.verdict.startsWith("drop") ? "drop" : "hold";
+      return `
+        <article class="event">
+          <div><strong>${item.eventType}</strong><small>f${item.frame}</small></div>
+          <div>
+            <small>age ${item.eventAgeMs}ms + gap ${item.frameGapMs}ms / pose ${Math.round(item.poseConfidence * 100)}%</small>
+            <div class="axis">
+              <div class="window" style="left:${Math.max(0, offset - width / 2)}%; width:${width}%"></div>
+              <div class="dot" style="left:${offset}%"></div>
+            </div>
+          </div>
+          <div class="route ${routeClass}">${item.verdict}</div>
+        </article>
+      `;
+    }
+
+    function loadSeed() {
+      state.rows = seeds[packetEl.value].map((item) => ({ ...item }));
+      state.source = packetEl.value;
+      importBox.value = JSON.stringify({ source: state.source, rows: state.rows }, null, 2);
+      render();
+    }
+
+    function parseImport() {
+      try {
+        const parsed = JSON.parse(importBox.value);
+        const rows = Array.isArray(parsed) ? parsed : parsed.rows;
+        if (!Array.isArray(rows)) throw new Error("rows array missing");
+        state.rows = rows
+          .filter((item) => item && typeof item === "object")
+          .map((item, index) => ({
+            ...item,
+            id: item.id || `import-${index}`,
+            createdAt: Number(item.createdAt || Date.now() + index * 20),
+            eventAgeMs: Number(item.eventAgeMs || 0),
+            frameGapMs: Number(item.frameGapMs || 0),
+            poseConfidence: Number(item.poseConfidence ?? 0.5),
+            poseAvailable: Boolean(item.poseAvailable),
+            visibility: item.visibility || "visible",
+            gamepad: item.gamepad || { trigger: 0, squeeze: 0, axes: [0, 0] }
+          }))
+          .sort((a, b) => a.createdAt - b.createdAt);
+        state.source = parsed.source || "pasted JSON";
+      } catch (error) {
+        state.rows = [row(0, "parse-error", 0, 0, 0.1, false, "visible", 0)];
+        state.source = error.message;
+      }
+      render();
+    }
+
+    windowEl.addEventListener("input", () => {
+      document.querySelector("#windowValue").textContent = windowEl.value;
+      render();
+    });
+    guardEl.addEventListener("input", () => {
+      document.querySelector("#guardValue").textContent = guardEl.value;
+      render();
+    });
+    document.querySelector("#loadSeed").addEventListener("click", loadSeed);
+    document.querySelector("#parse").addEventListener("click", parseImport);
+    packetEl.addEventListener("change", loadSeed);
+
+    loadSeed();
+  </script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+{
+  "date": "2026-09-01",
+  "headline": "XR input event の実測ログ保存と再判定を自作サンプル化",
+  "headlineEn": "Original samples for storing and replaying XR input-event logs",
+  "summary": "W3C WebXR Device API、W3C WebXR Gamepads Module、MDN の XRInputSourceEvent / IndexedDB、Immersive Web Samples の Input Selection / Controller State を確認し、event-frame pose と frame-polled gamepad snapshot を IndexedDB に保存する本命サンプルと、保存ログ JSON を読み込んで commit 判定を再計算する派生サンプルを追加しました。",
+  "summaryEn": "After reviewing the W3C WebXR Device API, W3C WebXR Gamepads Module, MDN XRInputSourceEvent/IndexedDB documentation, and Immersive Web Input Selection/Controller State samples, today's original work adds a main sample that stores event-frame poses and frame-polled gamepad snapshots in IndexedDB, plus a derivative sample that imports saved-log JSON and recalculates commit decisions.",
+  "keyTopics": [
+    "WebXR Device API は 2026-06-09 の Candidate Recommendation Draft が最新公開版で、`XRFrame.getPose(space, baseSpace)` は frame 時点の space 間 pose を返す入口です。",
+    "MDN の `XRInputSourceEvent.frame` は、event frame が通常の animation frame ではなく、入力が起きた時点の `getPose()` 用 frame である点を確認材料にできます。",
+    "WebXR Gamepads Module は `XRInputSource.gamepad` が frame ごとに同じ object 上で更新されるため、比較には button / axes 値を行データとして cache する必要があります。",
+    "IndexedDB は structured data を非同期 transaction で保存できるため、XR 入力ログ、pose confidence、gamepad snapshot、commit route の蓄積に向いています。",
+    "今日の公開カードは外部デモではなく、このワークスペース内の `XR Input Log Store Lab` と `XR Log Replay Import Verifier` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The latest published WebXR Device API is the 2026-06-09 Candidate Recommendation Draft, and `XRFrame.getPose(space, baseSpace)` is the entry point for a pose between spaces at a frame time.",
+    "MDN's `XRInputSourceEvent.frame` notes that the event frame is not a normal animation frame, but a frame for reading pose at the input time via `getPose()`.",
+    "The WebXR Gamepads Module says `XRInputSource.gamepad` is updated in place every frame, so button and axes values must be cached as row data for comparisons.",
+    "IndexedDB stores structured data through asynchronous transactions, making it useful for XR input logs, pose confidence, gamepad snapshots, and commit routes.",
+    "Today's public cards focus on the original workspace samples, `XR Input Log Store Lab` and `XR Log Replay Import Verifier`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: XR Input Log Store Lab",
+      "url": "../outputs/2026-09-01_html_xr_input_log_store_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: XR Log Replay Import Verifier",
+      "url": "../outputs/2026-09-01_html_xr_log_replay_import_verifier.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: WebXR Gamepads Module - Level 1",
+      "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+    },
+    {
+      "label": "MDN: XRInputSourceEvent.frame",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRInputSourceEvent/frame"
+    },
+    {
+      "label": "MDN: Inputs and input sources",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Inputs"
+    },
+    {
+      "label": "MDN: IndexedDB API",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API"
+    },
+    {
+      "label": "Immersive Web Samples: Input Selection",
+      "url": "https://immersive-web.github.io/webxr-samples/input-selection.html"
+    },
+    {
+      "label": "Immersive Web Samples: Controller State",
+      "url": "https://immersive-web.github.io/webxr-samples/controller-state.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、公式サンプルで分かれて見える select event、target ray pose、controller gamepad state を、あとから検証できる保存ログとして束ねることです。面白い点は、操作が失敗した瞬間に「pose がなかった」「gamepad 値が古かった」「visible-blurred だった」「duplicate guard に入った」という理由を UI 上で再判定できることです。",
+      "bodyEn": "Today's notable angle is turning select events, target-ray pose, and controller gamepad state, which are often shown separately in official samples, into saved logs that can be inspected later. The interesting part is being able to reclassify failed interactions in the UI as missing pose, stale gamepad state, visible-blurred visibility, or duplicate-guard suppression.",
+      "links": [
+        {
+          "label": "Input Selection sample",
+          "url": "https://immersive-web.github.io/webxr-samples/input-selection.html"
+        },
+        {
+          "label": "Controller State sample",
+          "url": "https://immersive-web.github.io/webxr-samples/controller-state.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `XR Input Log Store Lab` は、scenario、pose noise、frame gap を変えながら、XR 風の event row を IndexedDB に追記し、最新行の ray、pose availability、confidence、route を表示します。派生サンプル `XR Log Replay Import Verifier` は、1本目の exported JSON を貼り付けるか内蔵 seed log を読み込み、commit window と duplicate guard を変えて `commit`、`hold`、`retry`、`drop` を再計算します。",
+      "bodyEn": "The main sample, `XR Input Log Store Lab`, changes scenario, pose noise, and frame gap while appending XR-like event rows to IndexedDB and showing the latest ray, pose availability, confidence, and route. The derivative sample, `XR Log Replay Import Verifier`, imports exported JSON from the first sample or a seed log, then recalculates `commit`, `hold`, `retry`, and `drop` as the commit window and duplicate guard change.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-09-01_html_xr_input_log_store_lab.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-09-01_html_xr_log_replay_import_verifier.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "`XRInputSourceEvent.frame` は event 時点の pose を読むための frame として扱い、実機版では `event.frame.getPose(event.inputSource.targetRaySpace, referenceSpace)` の結果、event timestamp、nearby animation frame timestamp、`XRInputSource.gamepad` の button / axes snapshot を同じ object として保存します。Gamepad object 自体は live に更新されるので参照を持ち回らず、数値だけを保存するのが安全です。保存先は IndexedDB の object store にして、あとで route 判定だけを差し替えられる行構造にします。",
+      "bodyEn": "`XRInputSourceEvent.frame` should be treated as the frame for reading pose at event time. A device-backed version would store the result of `event.frame.getPose(event.inputSource.targetRaySpace, referenceSpace)`, event timestamp, nearby animation-frame timestamp, and numeric `XRInputSource.gamepad` button/axes snapshots in one object. Because the Gamepad object is live, avoid retaining the object reference and persist only numeric values. Store rows in an IndexedDB object store so routing decisions can be recalculated later.",
+      "links": [
+        {
+          "label": "WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        },
+        {
+          "label": "WebXR Gamepads Module",
+          "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+        },
+        {
+          "label": "IndexedDB API",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API"
+        }
+      ]
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは event type、handedness、event age、frame gap、pose confidence、pose availability、visibility、target ray、trigger / squeeze 値、route、replay verdict が取れます。2026-08-29 の component mapping cache と合わせると profile ごとの button 意味をログに足せます。2026-08-30 の frame diff、2026-08-31 の pose ledger と合わせると、実機ログを保存し、同じログを別の commit policy で比較する検証 UI にできます。",
+      "bodyEn": "The two samples expose event type, handedness, event age, frame gap, pose confidence, pose availability, visibility, target ray, trigger/squeeze values, route, and replay verdict. Combined with the 2026-08-29 component mapping cache, profile-specific button meanings can be added to the log. Combined with the 2026-08-30 frame diff and 2026-08-31 pose ledger, this becomes a UI for storing real-device logs and comparing the same log under different commit policies."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Device API の `XRInputSourceEvent`、`XRFrame.getPose()`、visibility state、WebXR Gamepads Module の frame update、MDN の IndexedDB usage、Immersive Web Samples の Input Selection / Controller State を継続して見ます。次は、実機で `selectstart` / `select` / `squeeze` を受けた時に本当に IndexedDB へ保存し、今日の replayer に自動で読み込むところまで進めると重複が少ないです。",
+      "bodyEn": "Continue watching `XRInputSourceEvent`, `XRFrame.getPose()`, visibility state in the WebXR Device API, frame updates in the WebXR Gamepads Module, MDN IndexedDB usage, and Immersive Web Input Selection/Controller State samples. A low-duplication next step is to store real `selectstart`, `select`, and `squeeze` events into IndexedDB on device, then auto-load them into today's replayer."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命サンプルで `late pose recovery` を選び、Frame gap を 30ms 以上にして `Record 5-row burst` を押してください。Exported JSON に retry / hold が混ざるので、それを派生サンプルへ貼り付け、Commit window を広げると一部が commit へ戻る流れを確認できます。",
+      "bodyEn": "In the main sample, choose `late pose recovery`, set Frame gap above 30 ms, and press `Record 5-row burst`. The exported JSON will mix retry and hold routes. Paste it into the derivative sample and widen the Commit window to see some rows return to commit.",
+      "links": [
+        {
+          "label": "Open XR Input Log Store Lab",
+          "url": "../outputs/2026-09-01_html_xr_input_log_store_lab.html"
+        },
+        {
+          "label": "Open XR Log Replay Import Verifier",
+          "url": "../outputs/2026-09-01_html_xr_log_replay_import_verifier.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、W3C WebXR Gamepads Module、MDN XRInputSourceEvent.frame / IndexedDB、Immersive Web Samples の Input Selection / Controller State を確認。設計: 1本目は IndexedDB 保存ロガー、2本目は JSON import 型の再判定ビューア。実装: `outputs/2026-09-01_html_xr_input_log_store_lab.html` と `outputs/2026-09-01_html_xr_log_replay_import_verifier.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開先反映を確認する。",
+      "bodyEn": "Research: reviewed the W3C WebXR Device API, W3C WebXR Gamepads Module, MDN XRInputSourceEvent.frame/IndexedDB, and Immersive Web Input Selection/Controller State samples. Design: make the first sample an IndexedDB logger and the second a JSON-import replay verifier. Implementation: add `outputs/2026-09-01_html_xr_input_log_store_lab.html` and `outputs/2026-09-01_html_xr_log_replay_import_verifier.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "入力系の蓄積は、Input Profiles、component mapping、xr-standard slot、frame poll、event/frame diff、event pose ledger、commit window まで進みました。今日は保存と再生を足したため、単発の可視化から、実機で取ったログを後日同じ UI で検証する方向へ移れます。ここからは、ログ schema、privacy filter、session export、policy comparison を分けて育てると扱いやすいです。",
+      "bodyEn": "The input stack now covers Input Profiles, component mapping, xr-standard slots, frame polling, event/frame diffs, event pose ledgers, and commit windows. Today's addition of storage and replay moves the work from one-off visualization toward later inspection of real-device logs in the same UI. From here, log schema, privacy filters, session export, and policy comparison can grow as separate pieces."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `XR Input Log Store Lab` です。何が動くか: scenario、pose noise、frame gap、inline XR probe を操作し、XR 風 event row を IndexedDB に保存し、JSON として書き出します。次に足すなら、合成 row ではなく実機 `XRInputSourceEvent` と `XRInputSource.gamepad` から保存します。派生として `XR Log Replay Import Verifier` も実装しました。何が動くか: 1本目の JSON または seed log を読み込み、commit window と duplicate guard で verdict を再判定します。次に足すなら、同一ログに複数 policy preset を並べ、どの policy が誤 drop を減らすか比較します。",
+      "bodyEn": "The selected main prototype is `XR Input Log Store Lab`. What it does: controls scenario, pose noise, frame gap, and an inline XR probe, stores XR-like event rows in IndexedDB, and exports JSON. Next addition: store from real `XRInputSourceEvent` and `XRInputSource.gamepad` instead of synthetic rows. The derivative `XR Log Replay Import Verifier` was also implemented. What it does: imports JSON from the first sample or a seed log, then reclassifies verdicts with a commit window and duplicate guard. Next addition: compare multiple policy presets against the same log to see which reduces false drops."
+    }
+  ]
+}
