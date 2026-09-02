@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XR Pose Gap Patch Router</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111314;
+      --panel: rgba(23, 25, 26, 0.94);
+      --ink: #f8fbf2;
+      --muted: #aeb8ad;
+      --line: rgba(212, 226, 184, 0.24);
+      --ok: #86dfaa;
+      --warn: #efd474;
+      --bad: #ff928a;
+      --cyan: #7ed5e6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(140deg, rgba(126,213,230,0.13), transparent 32%),
+        linear-gradient(220deg, rgba(239,212,116,0.12), transparent 34%),
+        #111314;
+    }
+    main { width: min(1120px, calc(100vw - 28px)); margin: 0 auto; padding: 22px 0 30px; }
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+    h1 { margin: 0; font-size: clamp(1.42rem, 3vw, 2.25rem); line-height: 1.08; letter-spacing: 0; }
+    p { margin: 8px 0 0; max-width: 790px; color: var(--muted); line-height: 1.55; font-size: 0.94rem; }
+    .badge, .panel, .tile, .step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0,0,0,0.24);
+    }
+    .badge { min-width: 220px; padding: 12px 14px; }
+    small, label span, .tile small { display: block; color: var(--muted); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; }
+    .badge strong, .tile strong { display: block; margin-top: 5px; font-size: 1.1rem; }
+    .layout { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 14px; }
+    .panel { padding: 14px; }
+    .controls { display: grid; gap: 12px; align-content: start; }
+    label { display: grid; gap: 7px; font-weight: 800; font-size: 0.88rem; }
+    select, button, input { width: 100%; }
+    select {
+      border: 1px solid rgba(248,251,242,0.16);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+      color: var(--ink);
+      padding: 9px 10px;
+      font: inherit;
+    }
+    button {
+      border: 1px solid rgba(126,213,230,0.48);
+      border-radius: 8px;
+      background: rgba(126,213,230,0.14);
+      color: var(--ink);
+      padding: 10px 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .tile { padding: 12px; min-height: 74px; background: rgba(255,255,255,0.045); }
+    .stage {
+      position: relative;
+      min-height: 330px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px),
+        rgba(255,255,255,0.04);
+      background-size: 38px 38px;
+    }
+    .ray {
+      position: absolute;
+      left: 50%;
+      bottom: 26px;
+      width: 3px;
+      height: 220px;
+      transform-origin: bottom center;
+      background: linear-gradient(var(--cyan), rgba(126,213,230,0.04));
+      border-radius: 999px;
+    }
+    .reticle {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      border: 2px solid var(--ok);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 30px rgba(134,223,170,0.24);
+    }
+    .reticle.warn { border-color: var(--warn); box-shadow: 0 0 30px rgba(239,212,116,0.24); }
+    .reticle.bad { border-color: var(--bad); box-shadow: 0 0 30px rgba(255,146,138,0.24); }
+    .steps { display: grid; gap: 8px; margin-top: 12px; }
+    .step { padding: 10px; display: grid; grid-template-columns: 92px minmax(0, 1fr) 92px; gap: 10px; align-items: center; background: rgba(255,255,255,0.045); }
+    .bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
+    .bar span { display: block; height: 100%; width: 50%; background: var(--ok); }
+    .route { text-align: right; font-weight: 900; }
+    .patch { color: var(--warn); }
+    .commit { color: var(--ok); }
+    .drop { color: var(--bad); }
+    @media (max-width: 860px) {
+      header, .layout { grid-template-columns: 1fr; }
+      .tiles { grid-template-columns: 1fr; }
+      .step { grid-template-columns: 1fr; }
+      .route { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>XR Pose Gap Patch Router</h1>
+        <p>event-frame pose が欠けた時、直近 pose、gamepad snapshot、visibility を使って commit / patch / hold / drop を選ぶ派生試作です。</p>
+      </div>
+      <div class="badge">
+        <small>Current route</small>
+        <strong id="routeBadge">commit</strong>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel controls">
+        <label>Event type
+          <span>select と squeeze の重み</span>
+          <select id="eventType">
+            <option value="select">select</option>
+            <option value="selectstart">selectstart</option>
+            <option value="squeeze">squeeze</option>
+          </select>
+        </label>
+        <label>Pose gap
+          <span><b id="gapLabel">26</b> ms</span>
+          <input id="gap" type="range" min="0" max="96" value="26">
+        </label>
+        <label>Last pose confidence
+          <span><b id="confidenceLabel">72</b>%</span>
+          <input id="confidence" type="range" min="20" max="96" value="72">
+        </label>
+        <label>Gamepad age
+          <span><b id="ageLabel">24</b> ms</span>
+          <input id="age" type="range" min="0" max="120" value="24">
+        </label>
+        <label>Visibility
+          <span>XRSession.visibilityState 想定</span>
+          <select id="visibility">
+            <option value="visible">visible</option>
+            <option value="visible-blurred">visible-blurred</option>
+            <option value="hidden">hidden</option>
+          </select>
+        </label>
+        <button id="cycle">Cycle scenario</button>
+      </aside>
+
+      <section>
+        <div class="tiles">
+          <div class="tile"><small>Pose gap</small><strong id="gapMetric">26 ms</strong></div>
+          <div class="tile"><small>Patch score</small><strong id="scoreMetric">0.72</strong></div>
+          <div class="tile"><small>Next addition</small><strong id="nextMetric">policy preset</strong></div>
+        </div>
+        <div class="stage" aria-label="pose gap visualization">
+          <div id="ray" class="ray"></div>
+          <div id="reticle" class="reticle"></div>
+        </div>
+        <div id="steps" class="steps"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const controls = {
+      eventType: document.querySelector("#eventType"),
+      gap: document.querySelector("#gap"),
+      confidence: document.querySelector("#confidence"),
+      age: document.querySelector("#age"),
+      visibility: document.querySelector("#visibility")
+    };
+    const scenarios = [
+      { eventType: "select", gap: 18, confidence: 86, age: 14, visibility: "visible" },
+      { eventType: "select", gap: 48, confidence: 68, age: 34, visibility: "visible" },
+      { eventType: "squeeze", gap: 62, confidence: 58, age: 54, visibility: "visible-blurred" },
+      { eventType: "selectstart", gap: 82, confidence: 41, age: 92, visibility: "hidden" }
+    ];
+    let scenarioIndex = 0;
+
+    function scoreState() {
+      const gap = Number(controls.gap.value);
+      const confidence = Number(controls.confidence.value) / 100;
+      const age = Number(controls.age.value);
+      const visibility = controls.visibility.value;
+      const eventWeight = controls.eventType.value === "squeeze" ? 0.9 : controls.eventType.value === "selectstart" ? 0.82 : 1;
+      const gapScore = Math.max(0, 1 - gap / 88);
+      const ageScore = Math.max(0, 1 - age / 110);
+      const visibilityScore = visibility === "visible" ? 1 : visibility === "visible-blurred" ? 0.56 : 0;
+      const score = confidence * 0.44 + gapScore * 0.24 + ageScore * 0.18 + visibilityScore * 0.14;
+      let route = "commit";
+      if (visibility === "hidden") route = "drop";
+      else if (score * eventWeight >= 0.74 && gap <= 34) route = "commit";
+      else if (score * eventWeight >= 0.56 && gap <= 68) route = "patch";
+      else if (score * eventWeight >= 0.42) route = "hold";
+      else route = "drop";
+      return { gap, confidence, age, visibility, score: score * eventWeight, route };
+    }
+
+    function render() {
+      const state = scoreState();
+      document.querySelector("#gapLabel").textContent = state.gap;
+      document.querySelector("#confidenceLabel").textContent = Math.round(state.confidence * 100);
+      document.querySelector("#ageLabel").textContent = state.age;
+      document.querySelector("#gapMetric").textContent = `${state.gap} ms`;
+      document.querySelector("#scoreMetric").textContent = state.score.toFixed(2);
+      document.querySelector("#routeBadge").textContent = state.route;
+      document.querySelector("#nextMetric").textContent = state.route === "patch" ? "pose blend" : state.route === "hold" ? "retry timer" : state.route === "drop" ? "privacy gate" : "policy preset";
+
+      const angle = (state.gap - 36) * 0.42;
+      const x = 50 + Math.sin(angle / 48) * 26;
+      const y = 46 - state.confidence * 22 + state.gap * 0.18;
+      const ray = document.querySelector("#ray");
+      const reticle = document.querySelector("#reticle");
+      ray.style.transform = `rotate(${angle}deg)`;
+      reticle.style.left = `${Math.max(16, Math.min(84, x))}%`;
+      reticle.style.top = `${Math.max(18, Math.min(78, y))}%`;
+      reticle.className = `reticle ${state.route === "commit" ? "" : state.route === "patch" || state.route === "hold" ? "warn" : "bad"}`;
+
+      const checks = [
+        { label: "event frame", value: state.gap <= 34 ? 1 : Math.max(0, 1 - state.gap / 96), route: state.gap <= 34 ? "commit" : "patch" },
+        { label: "last pose", value: state.confidence, route: state.confidence > 0.7 ? "commit" : state.confidence > 0.48 ? "patch" : "drop" },
+        { label: "gamepad", value: Math.max(0, 1 - state.age / 120), route: state.age < 42 ? "commit" : state.age < 78 ? "hold" : "drop" },
+        { label: "visibility", value: state.visibility === "visible" ? 1 : state.visibility === "visible-blurred" ? 0.56 : 0.08, route: state.visibility === "visible" ? "commit" : state.visibility === "visible-blurred" ? "hold" : "drop" }
+      ];
+      const steps = document.querySelector("#steps");
+      steps.innerHTML = "";
+      checks.forEach((check) => {
+        const el = document.createElement("div");
+        el.className = "step";
+        el.innerHTML = `
+          <strong>${check.label}</strong>
+          <div class="bar"><span style="width:${Math.round(check.value * 100)}%"></span></div>
+          <span class="route ${check.route}">${check.route}</span>
+        `;
+        steps.appendChild(el);
+      });
+    }
+
+    document.querySelector("#cycle").addEventListener("click", () => {
+      scenarioIndex = (scenarioIndex + 1) % scenarios.length;
+      const next = scenarios[scenarioIndex];
+      Object.entries(next).forEach(([key, value]) => {
+        controls[key].value = value;
+      });
+      render();
+    });
+    Object.values(controls).forEach((control) => control.addEventListener("input", render));
+    Object.values(controls).forEach((control) => control.addEventListener("change", render));
+    render();
+  </script>
+</body>
+</html>

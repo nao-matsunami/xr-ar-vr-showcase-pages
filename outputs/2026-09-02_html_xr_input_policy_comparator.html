@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XR Input Policy Comparator</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101315;
+      --panel: rgba(20, 25, 28, 0.94);
+      --ink: #f6fbff;
+      --muted: #9fb0b8;
+      --line: rgba(160, 205, 210, 0.22);
+      --ok: #7fe0b1;
+      --warn: #f3ce72;
+      --bad: #ff8f88;
+      --blue: #82b7ff;
+      --violet: #bca0ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(127,224,177,0.12), transparent 28%),
+        linear-gradient(155deg, #101315 0%, #172024 52%, #090b0d 100%);
+    }
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 3vw, 2.35rem);
+      line-height: 1.06;
+      letter-spacing: 0;
+    }
+    p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+    .badge, .panel, .metric, .row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0,0,0,0.24);
+    }
+    .badge { min-width: 210px; padding: 12px 14px; }
+    small, label span, .metric small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .badge strong, .metric strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 1.08rem;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 14px;
+    }
+    .panel { padding: 14px; }
+    .controls { display: grid; gap: 12px; align-content: start; }
+    label {
+      display: grid;
+      gap: 7px;
+      font-weight: 800;
+      font-size: 0.88rem;
+    }
+    select, textarea, button, input { width: 100%; }
+    select, textarea {
+      border: 1px solid rgba(246,251,255,0.16);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+      color: var(--ink);
+      padding: 9px 10px;
+      font: inherit;
+    }
+    textarea {
+      min-height: 230px;
+      resize: vertical;
+      font: 0.78rem/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    button {
+      border: 1px solid rgba(127,224,177,0.48);
+      border-radius: 8px;
+      background: rgba(127,224,177,0.14);
+      color: var(--ink);
+      padding: 10px 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .metric { padding: 12px; min-height: 74px; background: rgba(255,255,255,0.045); }
+    .matrix { display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 110px minmax(0, 1fr) repeat(3, 92px);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      background: rgba(255,255,255,0.045);
+    }
+    .timeline {
+      position: relative;
+      height: 30px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+    .window {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: rgba(130,183,255,0.18);
+      border-left: 1px solid var(--blue);
+      border-right: 1px solid var(--blue);
+    }
+    .dot {
+      position: absolute;
+      top: 50%;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--warn);
+    }
+    .dot.good { background: var(--ok); }
+    .dot.bad { background: var(--bad); }
+    .pill {
+      border-radius: 999px;
+      padding: 6px 8px;
+      text-align: center;
+      font-weight: 900;
+      font-size: 0.76rem;
+      background: rgba(255,255,255,0.08);
+      white-space: nowrap;
+    }
+    .commit { color: var(--ok); }
+    .retry, .hold { color: var(--warn); }
+    .drop { color: var(--bad); }
+    .ghost { color: var(--violet); }
+    @media (max-width: 900px) {
+      header, .layout { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .row { grid-template-columns: 1fr; }
+      .pill { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>XR Input Policy Comparator</h1>
+        <p>保存済み XR 入力ログを、strict / balanced / forgiving の3つの commit policy で同時に再判定する本命ミニ試作です。</p>
+      </div>
+      <div class="badge">
+        <small>Policy delta</small>
+        <strong id="delta">0 flips</strong>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel controls">
+        <label>Seed log
+          <span>比較に使う入力ログ</span>
+          <select id="seed">
+            <option value="mixed">mixed event session</option>
+            <option value="blurred">visible-blurred handoff</option>
+            <option value="duplicate">duplicate select burst</option>
+          </select>
+        </label>
+        <label>Policy bias
+          <span><b id="biasLabel">balanced</b></span>
+          <input id="bias" type="range" min="-16" max="16" value="0">
+        </label>
+        <button id="loadSeed">Load seed log</button>
+        <button id="parseJson">Compare pasted JSON</button>
+        <label>Imported rows
+          <span>`rows` 配列、または配列そのものを貼り付け</span>
+          <textarea id="jsonBox" spellcheck="false"></textarea>
+        </label>
+      </aside>
+
+      <section>
+        <div class="metrics">
+          <div class="metric"><small>Rows</small><strong id="rows">0</strong></div>
+          <div class="metric"><small>Strict commit</small><strong id="strictCount">0</strong></div>
+          <div class="metric"><small>Balanced commit</small><strong id="balancedCount">0</strong></div>
+          <div class="metric"><small>Forgiving commit</small><strong id="forgivingCount">0</strong></div>
+        </div>
+        <div id="matrix" class="matrix"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const seeds = {
+      mixed: [
+        { id: "m01", eventType: "selectstart", time: 1000, lastEventTime: 0, poseAvailable: true, poseConfidence: 0.92, frameGapMs: 12, gamepadAgeMs: 10, visibility: "visible", trigger: 0.91 },
+        { id: "m02", eventType: "select", time: 1024, lastEventTime: 1000, poseAvailable: true, poseConfidence: 0.86, frameGapMs: 18, gamepadAgeMs: 18, visibility: "visible", trigger: 0.88 },
+        { id: "m03", eventType: "squeeze", time: 1070, lastEventTime: 1024, poseAvailable: false, poseConfidence: 0.39, frameGapMs: 42, gamepadAgeMs: 36, visibility: "visible", trigger: 0.62 },
+        { id: "m04", eventType: "select", time: 1112, lastEventTime: 1070, poseAvailable: true, poseConfidence: 0.71, frameGapMs: 34, gamepadAgeMs: 24, visibility: "visible-blurred", trigger: 0.79 },
+        { id: "m05", eventType: "selectend", time: 1188, lastEventTime: 1112, poseAvailable: true, poseConfidence: 0.82, frameGapMs: 16, gamepadAgeMs: 12, visibility: "visible", trigger: 0.08 }
+      ],
+      blurred: [
+        { id: "b01", eventType: "selectstart", time: 2000, lastEventTime: 0, poseAvailable: true, poseConfidence: 0.78, frameGapMs: 20, gamepadAgeMs: 18, visibility: "visible", trigger: 0.84 },
+        { id: "b02", eventType: "select", time: 2038, lastEventTime: 2000, poseAvailable: true, poseConfidence: 0.68, frameGapMs: 44, gamepadAgeMs: 41, visibility: "visible-blurred", trigger: 0.82 },
+        { id: "b03", eventType: "select", time: 2096, lastEventTime: 2038, poseAvailable: true, poseConfidence: 0.74, frameGapMs: 31, gamepadAgeMs: 34, visibility: "visible", trigger: 0.71 }
+      ],
+      duplicate: [
+        { id: "d01", eventType: "select", time: 3000, lastEventTime: 0, poseAvailable: true, poseConfidence: 0.9, frameGapMs: 14, gamepadAgeMs: 12, visibility: "visible", trigger: 0.93 },
+        { id: "d02", eventType: "select", time: 3016, lastEventTime: 3000, poseAvailable: true, poseConfidence: 0.88, frameGapMs: 16, gamepadAgeMs: 14, visibility: "visible", trigger: 0.92 },
+        { id: "d03", eventType: "squeeze", time: 3064, lastEventTime: 3016, poseAvailable: true, poseConfidence: 0.81, frameGapMs: 28, gamepadAgeMs: 21, visibility: "visible", trigger: 0.44 },
+        { id: "d04", eventType: "select", time: 3140, lastEventTime: 3064, poseAvailable: false, poseConfidence: 0.33, frameGapMs: 52, gamepadAgeMs: 47, visibility: "visible", trigger: 0.7 }
+      ]
+    };
+
+    const policies = [
+      { name: "strict", windowMs: 24, guardMs: 46, minConfidence: 0.74, maxGamepadAge: 28, allowBlurred: false },
+      { name: "balanced", windowMs: 36, guardMs: 34, minConfidence: 0.62, maxGamepadAge: 42, allowBlurred: false },
+      { name: "forgiving", windowMs: 56, guardMs: 22, minConfidence: 0.48, maxGamepadAge: 62, allowBlurred: true }
+    ];
+
+    const matrix = document.querySelector("#matrix");
+    const jsonBox = document.querySelector("#jsonBox");
+    const seedSelect = document.querySelector("#seed");
+    const bias = document.querySelector("#bias");
+    let activeRows = seeds.mixed;
+
+    function normalizedRows(payload) {
+      const rows = Array.isArray(payload) ? payload : payload.rows;
+      if (!Array.isArray(rows)) throw new Error("rows array not found");
+      return rows.map((row, index) => ({
+        id: row.id || `row-${index + 1}`,
+        eventType: row.eventType || row.type || "select",
+        time: Number(row.time || row.t || index * 40),
+        lastEventTime: Number(row.lastEventTime || row.previousTime || 0),
+        poseAvailable: row.poseAvailable !== false,
+        poseConfidence: Number(row.poseConfidence ?? row.confidence ?? 0.7),
+        frameGapMs: Number(row.frameGapMs ?? row.frameGap ?? 24),
+        gamepadAgeMs: Number(row.gamepadAgeMs ?? row.gamepadAge ?? 18),
+        visibility: row.visibility || "visible",
+        trigger: Number(row.trigger ?? row.buttons?.[0]?.value ?? 0.5)
+      }));
+    }
+
+    function verdict(row, policy) {
+      const sinceLast = row.lastEventTime ? row.time - row.lastEventTime : 999;
+      if (row.visibility === "hidden") return "drop";
+      if (row.visibility === "visible-blurred" && !policy.allowBlurred) return "hold";
+      if (sinceLast < policy.guardMs) return row.eventType === "select" ? "drop" : "hold";
+      if (!row.poseAvailable) return row.poseConfidence > policy.minConfidence - 0.16 ? "retry" : "drop";
+      if (row.poseConfidence < policy.minConfidence) return "retry";
+      if (row.frameGapMs > policy.windowMs) return "hold";
+      if (row.gamepadAgeMs > policy.maxGamepadAge) return "hold";
+      if (row.trigger < 0.15 && row.eventType !== "selectend") return "ghost";
+      return "commit";
+    }
+
+    function adjustedPolicy(policy) {
+      const offset = Number(bias.value);
+      return {
+        ...policy,
+        windowMs: Math.max(10, policy.windowMs + offset),
+        maxGamepadAge: Math.max(12, policy.maxGamepadAge + offset),
+        minConfidence: Math.min(0.95, Math.max(0.32, policy.minConfidence - offset / 120))
+      };
+    }
+
+    function render() {
+      document.querySelector("#biasLabel").textContent = Number(bias.value) === 0 ? "balanced" : Number(bias.value) > 0 ? "forgiving bias" : "strict bias";
+      const scored = activeRows.map((row) => {
+        const results = policies.map((policy) => ({ policy: policy.name, verdict: verdict(row, adjustedPolicy(policy)) }));
+        return { row, results };
+      });
+      const countFor = (name) => scored.filter((item) => item.results.find((r) => r.policy === name).verdict === "commit").length;
+      const flips = scored.filter((item) => new Set(item.results.map((r) => r.verdict)).size > 1).length;
+      document.querySelector("#rows").textContent = activeRows.length;
+      document.querySelector("#strictCount").textContent = countFor("strict");
+      document.querySelector("#balancedCount").textContent = countFor("balanced");
+      document.querySelector("#forgivingCount").textContent = countFor("forgiving");
+      document.querySelector("#delta").textContent = `${flips} flips`;
+      matrix.innerHTML = "";
+      scored.forEach(({ row, results }) => {
+        const el = document.createElement("article");
+        el.className = "row";
+        const dotClass = row.poseAvailable && row.poseConfidence > 0.7 ? "good" : row.poseAvailable ? "" : "bad";
+        const windowLeft = Math.max(0, Math.min(96, row.gamepadAgeMs));
+        const dotLeft = Math.max(2, Math.min(98, row.frameGapMs * 1.55));
+        el.innerHTML = `
+          <div><small>${row.eventType}</small><strong>${row.id}</strong></div>
+          <div>
+            <div class="timeline">
+              <span class="window" style="left:${windowLeft * 0.45}%; width:${Math.max(12, row.poseConfidence * 46)}%"></span>
+              <span class="dot ${dotClass}" style="left:${dotLeft}%"></span>
+            </div>
+            <small>gap ${row.frameGapMs}ms / gamepad ${row.gamepadAgeMs}ms / ${row.visibility}</small>
+          </div>
+          ${results.map((result) => `<div class="pill ${result.verdict}">${result.verdict}</div>`).join("")}
+        `;
+        matrix.appendChild(el);
+      });
+    }
+
+    document.querySelector("#loadSeed").addEventListener("click", () => {
+      activeRows = seeds[seedSelect.value];
+      jsonBox.value = JSON.stringify({ rows: activeRows }, null, 2);
+      render();
+    });
+    document.querySelector("#parseJson").addEventListener("click", () => {
+      try {
+        activeRows = normalizedRows(JSON.parse(jsonBox.value));
+        render();
+      } catch (error) {
+        jsonBox.value = `Parse error: ${error.message}\n\n${jsonBox.value}`;
+      }
+    });
+    seedSelect.addEventListener("change", () => document.querySelector("#loadSeed").click());
+    bias.addEventListener("input", render);
+    document.querySelector("#loadSeed").click();
+  </script>
+</body>
+</html>

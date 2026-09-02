@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 57</span>
+        <span>days: 58</span>
         <span>page: 1 / 5</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -305,6 +305,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-09-02">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.02</p>
+              <h2>XR 入力ログを複数ポリシーで再判定する比較サンプル</h2>
+              <p class="card-subtitle">Comparing XR input logs across multiple commit policies</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-02" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Device API、WebXR Gamepads Module、MDN の XRInputSourceEvent / visibilityState / IndexedDB、Immersive Web Samples の Input Selection / Controller State を参照し、保存済み XR 入力ログを strict / balanced / forgiving の3ポリシーで比較する本命サンプルと、pose gap 欠落時の patch route を検証する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the W3C WebXR Device API, WebXR Gamepads Module, MDN XRInputSourceEvent/visibilityState/IndexedDB documentation, and Immersive Web Input Selection/Controller State samples, today's original work adds a main sample that compares saved XR input logs across strict, balanced, and forgiving policies, plus a derivative sample that tests patch routing when event-frame pose is missing or stale.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-09-02.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-09-02_html_xr_input_policy_comparator.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-09-01">
           <div class="card-top">
             <div>
@@ -554,29 +577,6 @@
           <div class="actions">
             <a class="primary" href="days/2026-08-22.html">その日のページ / Day</a>
             <a class="secondary-link" href="outputs/2026-08-22_html_bounded_space_teleport_guard.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-21">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.21</p>
-              <h2>required / optional feature の交渉を起動前に見える化する</h2>
-              <p class="card-subtitle">Visualize required and optional feature negotiation before launch</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-21" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Device API、MDN の `XRSystem.requestSession()`、WebXR Hit Test Module、Immersive Web DOM Overlay explainer を確認し、`requiredFeatures` と `optionalFeatures` の違い、Permissions-Policy、ユーザー操作、実端末サポートを分けて観察する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Device API, MDN `XRSystem.requestSession()`, the WebXR Hit Test Module, and the Immersive Web DOM Overlay explainer, today's original HTML sample visualizes required versus optional features, Permissions-Policy, user activation, and device support before launch.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-08-21.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-08-21_html_xr_feature_negotiation_ladder.html">代表サンプル / Sample</a>
           </div>
         </article>
       

@@ -1,0 +1,159 @@
+{
+  "date": "2026-09-02",
+  "headline": "XR 入力ログを複数ポリシーで再判定する比較サンプル",
+  "headlineEn": "Comparing XR input logs across multiple commit policies",
+  "summary": "W3C WebXR Device API、WebXR Gamepads Module、MDN の XRInputSourceEvent / visibilityState / IndexedDB、Immersive Web Samples の Input Selection / Controller State を参照し、保存済み XR 入力ログを strict / balanced / forgiving の3ポリシーで比較する本命サンプルと、pose gap 欠落時の patch route を検証する派生サンプルを追加しました。",
+  "summaryEn": "After reviewing the W3C WebXR Device API, WebXR Gamepads Module, MDN XRInputSourceEvent/visibilityState/IndexedDB documentation, and Immersive Web Input Selection/Controller State samples, today's original work adds a main sample that compares saved XR input logs across strict, balanced, and forgiving policies, plus a derivative sample that tests patch routing when event-frame pose is missing or stale.",
+  "keyTopics": [
+    "WebXR Device API の最新公開版は 2026-06-09 の Candidate Recommendation Draft で、入力イベント、XRFrame、visibility state の基礎を確認できます。",
+    "MDN の XRInputSourceEvent は event frame では getViewerPose ではなく getPose を使う点を明示しており、入力時点の pose 保存設計に直結します。",
+    "WebXR Gamepads Module は XRInputSource.gamepad が frame ごとに同じ object 上で更新されるため、比較には数値 snapshot の保存が必要だと説明しています。",
+    "XRSession.visibilityState の visible-blurred / hidden は frame と input 処理の前提を変えるため、commit 判定 policy の主要な軸になります。",
+    "今日の公開カードは外部デモではなく、このワークスペース内の `XR Input Policy Comparator` と `XR Pose Gap Patch Router` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The latest published WebXR Device API is the 2026-06-09 Candidate Recommendation Draft, covering input events, XRFrame, and visibility-state foundations.",
+    "MDN's XRInputSourceEvent documentation clarifies that event frames use getPose rather than getViewerPose, which directly informs pose-at-input logging.",
+    "The WebXR Gamepads Module explains that XRInputSource.gamepad is updated in place each frame, so comparisons require stored numeric snapshots.",
+    "XRSession.visibilityState values such as visible-blurred and hidden change assumptions for frames and input processing, making them key axes in commit policy.",
+    "Today's public cards focus on the original workspace samples, `XR Input Policy Comparator` and `XR Pose Gap Patch Router`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: XR Input Policy Comparator",
+      "url": "../outputs/2026-09-02_html_xr_input_policy_comparator.html"
+    },
+    {
+      "label": "Today's derivative sample: XR Pose Gap Patch Router",
+      "url": "../outputs/2026-09-02_html_xr_pose_gap_patch_router.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: WebXR Gamepads Module - Level 1",
+      "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+    },
+    {
+      "label": "MDN: XRInputSourceEvent",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRInputSourceEvent"
+    },
+    {
+      "label": "MDN: XRSession.visibilityState",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/visibilityState"
+    },
+    {
+      "label": "MDN: IndexedDB API",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API"
+    },
+    {
+      "label": "Immersive Web Samples: Input Selection",
+      "url": "https://immersive-web.github.io/webxr-samples/input-selection.html"
+    },
+    {
+      "label": "Immersive Web Samples: Controller State",
+      "url": "https://immersive-web.github.io/webxr-samples/controller-state.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "注目したのは、公式サンプルが示す select event と controller gamepad state を、単なる実装例ではなく、あとから policy を差し替えられる検証ログとして扱うことです。同じ入力でも strict では drop、forgiving では commit になる行があり、誤操作を防ぐ設計と、取りこぼしを減らす設計の差分を UI で見られる点が面白いです。",
+      "bodyEn": "The notable angle is treating select events and controller gamepad state from the official samples as replayable validation logs rather than isolated implementation examples. The same input row can become drop under strict policy and commit under forgiving policy, making the tradeoff between preventing false actions and reducing missed actions visible in the UI.",
+      "links": [
+        {
+          "label": "Input Selection sample",
+          "url": "https://immersive-web.github.io/webxr-samples/input-selection.html"
+        },
+        {
+          "label": "Controller State sample",
+          "url": "https://immersive-web.github.io/webxr-samples/controller-state.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `XR Input Policy Comparator` は、保存済み風の XR 入力 row を読み込み、strict / balanced / forgiving の verdict を横並びで表示します。Policy bias を動かすと commit window、gamepad age、confidence 閾値が変わり、何件の verdict が flip したかを確認できます。派生サンプル `XR Pose Gap Patch Router` は、event-frame pose が欠けた時に last pose と gamepad snapshot で patch できるかを、reticle と段階判定で確認します。",
+      "bodyEn": "The main sample, `XR Input Policy Comparator`, loads saved-style XR input rows and displays verdicts for strict, balanced, and forgiving policies side by side. Moving Policy bias changes the commit window, gamepad age, and confidence threshold, then shows how many verdicts flip. The derivative sample, `XR Pose Gap Patch Router`, checks whether missing event-frame pose can be patched with the last pose and gamepad snapshot, visualized through a reticle and staged checks.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-09-02_html_xr_input_policy_comparator.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-09-02_html_xr_pose_gap_patch_router.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機版では `selectstart` / `select` / `squeeze` の `XRInputSourceEvent.frame` から target ray pose を読み、近傍 animation frame の `XRInputSource.gamepad` 数値を同じ row に保存します。Gamepad object は live 更新なので参照保持ではなく buttons / axes の値だけを保存します。`visibilityState` が `visible-blurred` または `hidden` の時は、pose confidence だけで commit せず、policy 側で hold / drop を明示したほうが検証しやすいです。",
+      "bodyEn": "A device-backed version should read target-ray pose from `XRInputSourceEvent.frame` during `selectstart`, `select`, and `squeeze`, then store nearby animation-frame `XRInputSource.gamepad` numbers in the same row. Because the Gamepad object is live, persist button and axis values rather than object references. When `visibilityState` is `visible-blurred` or `hidden`, avoid committing from pose confidence alone; make hold/drop explicit in policy for easier validation.",
+      "links": [
+        {
+          "label": "WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        },
+        {
+          "label": "WebXR Gamepads Module",
+          "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+        },
+        {
+          "label": "XRSession.visibilityState",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/visibilityState"
+        }
+      ]
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは event type、event time、lastEventTime、poseAvailable、poseConfidence、frameGapMs、gamepadAgeMs、visibility、trigger、policy verdict、patch score が取れます。昨日の IndexedDB export とつなぐと、実測ログを貼り付けて policy 比較に流せます。2026-08-29 の xr-standard slot mapping と合わせると、trigger / squeeze の意味づけまで含めた action policy 比較に発展できます。",
+      "bodyEn": "The two samples expose event type, event time, lastEventTime, poseAvailable, poseConfidence, frameGapMs, gamepadAgeMs, visibility, trigger, policy verdict, and patch score. Connected to yesterday's IndexedDB export, real measured logs can be pasted into the policy comparator. Combined with the 2026-08-29 xr-standard slot mapping, this can grow into action-policy comparison that includes trigger/squeeze semantics."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Device API の `XRFrame.getPose()`、`XRInputSourceEvent`、`XRSession.visibilityState`、WebXR Gamepads Module の live gamepad 更新、MDN IndexedDB の transaction model、Immersive Web Samples の input 系サンプルを継続して見ます。次は、昨日の IndexedDB logger から今日の comparator へ自動 import し、policy preset を JSON として保存する部分を扱うと重複が少ないです。",
+      "bodyEn": "Continue watching `XRFrame.getPose()`, `XRInputSourceEvent`, and `XRSession.visibilityState` in the WebXR Device API, live gamepad updates in the WebXR Gamepads Module, MDN's IndexedDB transaction model, and input-focused Immersive Web samples. A low-duplication next step is automatic import from yesterday's IndexedDB logger into today's comparator, plus saving policy presets as JSON."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`XR Input Policy Comparator` で `visible-blurred handoff` を読み込み、Policy bias を右へ動かしてください。balanced では hold だった行が forgiving 側で commit へ変わるので、visibility と pose confidence の扱いを比較できます。次に `XR Pose Gap Patch Router` で Pose gap を 60ms 前後にして、patch と drop の境目を見てください。",
+      "bodyEn": "In `XR Input Policy Comparator`, load `visible-blurred handoff` and move Policy bias to the right. Rows that were hold under balanced policy can become commit under forgiving policy, making visibility and pose-confidence tradeoffs visible. Then set Pose gap around 60 ms in `XR Pose Gap Patch Router` to inspect the boundary between patch and drop.",
+      "links": [
+        {
+          "label": "Open XR Input Policy Comparator",
+          "url": "../outputs/2026-09-02_html_xr_input_policy_comparator.html"
+        },
+        {
+          "label": "Open XR Pose Gap Patch Router",
+          "url": "../outputs/2026-09-02_html_xr_pose_gap_patch_router.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、W3C WebXR Gamepads Module、MDN XRInputSourceEvent / visibilityState / IndexedDB、Immersive Web Samples の Input Selection / Controller State を確認。設計: 1本目は同一ログの複数 policy 比較、2本目は pose gap 補完 route の単体検証。実装: `outputs/2026-09-02_html_xr_input_policy_comparator.html` と `outputs/2026-09-02_html_xr_pose_gap_patch_router.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開先反映を確認する。",
+      "bodyEn": "Research: reviewed the W3C WebXR Device API, W3C WebXR Gamepads Module, MDN XRInputSourceEvent/visibilityState/IndexedDB, and Immersive Web Input Selection/Controller State samples. Design: make the first sample compare multiple policies against the same log and the second isolate pose-gap patch routing. Implementation: add `outputs/2026-09-02_html_xr_input_policy_comparator.html` and `outputs/2026-09-02_html_xr_pose_gap_patch_router.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "入力系の蓄積は、profile 取得、component mapping、gamepad frame poll、event/frame diff、event pose ledger、IndexedDB 保存、JSON replay まで進みました。今日は policy 比較を足したため、ログを取るだけでなく「どの設計判断なら commit されるか」を検証できます。次は privacy filter、policy preset、実機 import、session ごとの比較を分けて育てると見通しがよくなります。",
+      "bodyEn": "The input stack now covers profile fetching, component mapping, gamepad frame polling, event/frame diffs, event-pose ledgers, IndexedDB storage, and JSON replay. Today's policy comparison makes it possible to test which design decisions lead to commit rather than merely collecting logs. Next, privacy filters, policy presets, real-device imports, and per-session comparisons should be grown separately."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `XR Input Policy Comparator` です。何が動くか: seed log または貼り付け JSON を読み込み、strict / balanced / forgiving の verdict と flip 数を表示します。次に足すなら、昨日の IndexedDB logger から最新 export を自動読み込みします。派生として `XR Pose Gap Patch Router` も実装しました。何が動くか: pose gap、last pose confidence、gamepad age、visibility を操作し、commit / patch / hold / drop の route を reticle と段階判定で表示します。次に足すなら、patch route の補間 pose を comparator の policy preset に戻します。",
+      "bodyEn": "The selected main prototype is `XR Input Policy Comparator`. What it does: loads a seed log or pasted JSON, then shows strict, balanced, and forgiving verdicts plus flip counts. Next addition: auto-load the latest export from yesterday's IndexedDB logger. The derivative `XR Pose Gap Patch Router` was also implemented. What it does: controls pose gap, last pose confidence, gamepad age, and visibility, then displays commit/patch/hold/drop routes with a reticle and staged checks. Next addition: feed interpolated patch-route pose back into the comparator's policy presets."
+    }
+  ]
+}
