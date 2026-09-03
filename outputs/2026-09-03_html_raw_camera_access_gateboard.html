@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Raw Camera Access Gateboard</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #121417;
+      --panel: rgba(28, 30, 34, 0.94);
+      --ink: #f4f7fb;
+      --muted: #aeb7c2;
+      --line: rgba(244, 247, 251, 0.16);
+      --green: #7ee0a5;
+      --yellow: #f0cf67;
+      --red: #ff8d7d;
+      --blue: #80c7ff;
+      --pink: #e9a1ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(145deg, rgba(128, 199, 255, 0.15), transparent 36%),
+        linear-gradient(235deg, rgba(126, 224, 165, 0.12), transparent 34%),
+        radial-gradient(circle at 70% 18%, rgba(233, 161, 255, 0.13), transparent 28%),
+        var(--bg);
+    }
+    main { width: min(1160px, calc(100vw - 28px)); margin: 0 auto; padding: 22px 0 30px; }
+    header { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 14px; align-items: end; margin-bottom: 14px; }
+    h1 { margin: 0; font-size: clamp(1.45rem, 3vw, 2.3rem); line-height: 1.08; letter-spacing: 0; }
+    p { margin: 8px 0 0; color: var(--muted); line-height: 1.55; max-width: 780px; font-size: 0.94rem; }
+    .badge, .panel, .tile, .row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.23);
+    }
+    .badge { padding: 12px 14px; min-height: 78px; }
+    small, label span, .tile small { display: block; color: var(--muted); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; }
+    .badge strong, .tile strong { display: block; margin-top: 5px; font-size: 1.08rem; }
+    .layout { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 14px; }
+    .panel { padding: 14px; }
+    .controls { display: grid; gap: 12px; align-content: start; }
+    label { display: grid; gap: 7px; font-weight: 800; font-size: 0.88rem; }
+    select, input, button { width: 100%; font: inherit; }
+    select {
+      border: 1px solid rgba(244,247,251,0.16);
+      border-radius: 8px;
+      color: var(--ink);
+      background: rgba(255,255,255,0.06);
+      padding: 9px 10px;
+    }
+    button {
+      border: 1px solid rgba(128,199,255,0.5);
+      border-radius: 8px;
+      background: rgba(128,199,255,0.14);
+      color: var(--ink);
+      padding: 10px 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .tile { padding: 12px; background: rgba(255,255,255,0.045); min-height: 74px; }
+    .stage {
+      position: relative;
+      min-height: 350px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(128,199,255,0.10), rgba(126,224,165,0.06));
+      background-size: 38px 38px, 38px 38px, auto;
+    }
+    .phone {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(260px, 68vw);
+      aspect-ratio: 9 / 16;
+      transform: translate(-50%, -50%);
+      border: 2px solid rgba(244,247,251,0.36);
+      border-radius: 26px;
+      background: rgba(10,12,14,0.72);
+      overflow: hidden;
+    }
+    .camera-feed {
+      position: absolute;
+      inset: 16px;
+      border-radius: 18px;
+      background:
+        linear-gradient(130deg, rgba(126,224,165,0.20), transparent 40%),
+        linear-gradient(20deg, rgba(128,199,255,0.18), transparent 38%),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 18px),
+        rgba(255,255,255,0.04);
+    }
+    .scan {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      top: 38%;
+      height: 3px;
+      background: var(--green);
+      box-shadow: 0 0 18px rgba(126,224,165,0.65);
+      transform: translateY(var(--scan-y, 0px));
+      transition: transform 180ms ease, background 180ms ease;
+    }
+    .privacy-chip {
+      position: absolute;
+      right: 22px;
+      top: 22px;
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: rgba(255,141,125,0.17);
+      border: 1px solid rgba(255,141,125,0.44);
+      font-size: 0.76rem;
+      font-weight: 900;
+    }
+    .rows { display: grid; gap: 8px; margin-top: 12px; }
+    .row { display: grid; grid-template-columns: 128px minmax(0, 1fr) 88px; gap: 10px; align-items: center; padding: 10px; background: rgba(255,255,255,0.045); }
+    .meter { height: 8px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.10); }
+    .meter span { display: block; height: 100%; width: 50%; background: var(--green); }
+    .verdict { text-align: right; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--yellow); }
+    .bad { color: var(--red); }
+    @media (max-width: 920px) {
+      header, .layout { grid-template-columns: 1fr; }
+      .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .row { grid-template-columns: 1fr; }
+      .verdict { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Raw Camera Access Gateboard</h1>
+        <p>WebXR Raw Camera Access の `camera-access` を、許可、frame 鮮度、view alignment、privacy indicator の4条件で通すかを確認する自作ミニ試作です。</p>
+      </div>
+      <div class="badge">
+        <small>Gate verdict</small>
+        <strong id="verdictBadge">camera texture</strong>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel controls">
+        <label>Session mode
+          <span>inline XR では camera-access を通さない</span>
+          <select id="mode">
+            <option value="immersive-ar">immersive-ar</option>
+            <option value="inline">inline</option>
+            <option value="immersive-vr">immersive-vr</option>
+          </select>
+        </label>
+        <label>Feature request
+          <span>required は失敗時に session を止める</span>
+          <select id="feature">
+            <option value="required">required camera-access</option>
+            <option value="optional">optional camera-access</option>
+            <option value="none">no camera-access</option>
+          </select>
+        </label>
+        <label>Consent level
+          <span>環境画像を見る強さ</span>
+          <input id="consent" type="range" min="0" max="100" value="78">
+        </label>
+        <label>Frame age
+          <span><b id="ageLabel">18</b> ms</span>
+          <input id="age" type="range" min="0" max="120" value="18">
+        </label>
+        <label>View alignment
+          <span><b id="alignLabel">92</b>%</span>
+          <input id="align" type="range" min="35" max="100" value="92">
+        </label>
+        <button id="cycle">Cycle scenario</button>
+      </aside>
+
+      <section>
+        <div class="tiles">
+          <div class="tile"><small>Consent</small><strong id="consentMetric">78%</strong></div>
+          <div class="tile"><small>Frame age</small><strong id="ageMetric">18 ms</strong></div>
+          <div class="tile"><small>Alignment</small><strong id="alignMetric">92%</strong></div>
+          <div class="tile"><small>Fallback</small><strong id="fallbackMetric">texture ok</strong></div>
+        </div>
+        <div class="stage" aria-label="camera access gate visualization">
+          <div class="phone">
+            <div class="camera-feed"></div>
+            <div id="scan" class="scan"></div>
+            <div class="privacy-chip">camera indicator</div>
+          </div>
+        </div>
+        <div id="rows" class="rows"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const controls = {
+      mode: document.querySelector("#mode"),
+      feature: document.querySelector("#feature"),
+      consent: document.querySelector("#consent"),
+      age: document.querySelector("#age"),
+      align: document.querySelector("#align")
+    };
+    const scenarios = [
+      { mode: "immersive-ar", feature: "required", consent: 82, age: 14, align: 94 },
+      { mode: "immersive-ar", feature: "optional", consent: 43, age: 24, align: 88 },
+      { mode: "inline", feature: "required", consent: 96, age: 8, align: 96 },
+      { mode: "immersive-ar", feature: "required", consent: 74, age: 86, align: 71 }
+    ];
+    let scenarioIndex = 0;
+
+    function evaluate() {
+      const mode = controls.mode.value;
+      const feature = controls.feature.value;
+      const consent = Number(controls.consent.value);
+      const age = Number(controls.age.value);
+      const align = Number(controls.align.value);
+      const checks = [
+        { name: "session mode", score: mode === "immersive-ar" ? 1 : 0, note: mode === "immersive-ar" ? "immersive-ar" : "camera unavailable" },
+        { name: "feature descriptor", score: feature === "none" ? 0 : feature === "required" ? 1 : 0.62, note: feature },
+        { name: "user consent", score: consent / 100, note: `${consent}%` },
+        { name: "animation frame", score: Math.max(0, 1 - age / 96), note: `${age}ms` },
+        { name: "view alignment", score: align / 100, note: `${align}%` }
+      ];
+      const hardBlock = mode !== "immersive-ar" || feature === "none" || (feature === "required" && consent < 54);
+      const score = checks.reduce((sum, check) => sum + check.score, 0) / checks.length;
+      let route = "camera texture";
+      if (hardBlock) route = feature === "optional" ? "canvas fallback" : "session block";
+      else if (score < 0.62 || age > 72 || align < 68) route = "mask + fallback";
+      else if (feature === "optional" && consent < 68) route = "defer texture";
+      return { mode, feature, consent, age, align, checks, score, route };
+    }
+
+    function render() {
+      const state = evaluate();
+      document.querySelector("#ageLabel").textContent = state.age;
+      document.querySelector("#alignLabel").textContent = state.align;
+      document.querySelector("#consentMetric").textContent = `${state.consent}%`;
+      document.querySelector("#ageMetric").textContent = `${state.age} ms`;
+      document.querySelector("#alignMetric").textContent = `${state.align}%`;
+      document.querySelector("#fallbackMetric").textContent = state.route;
+      const badge = document.querySelector("#verdictBadge");
+      badge.textContent = state.route;
+      badge.className = state.route === "camera texture" ? "ok" : state.route.includes("block") ? "bad" : "warn";
+      const scan = document.querySelector("#scan");
+      scan.style.setProperty("--scan-y", `${Math.round((state.age - 30) * 1.1)}px`);
+      scan.style.background = state.route === "camera texture" ? "var(--green)" : state.route.includes("block") ? "var(--red)" : "var(--yellow)";
+      document.querySelector("#rows").innerHTML = state.checks.map((check) => {
+        const cls = check.score > 0.74 ? "ok" : check.score > 0.45 ? "warn" : "bad";
+        const verdict = check.score > 0.74 ? "pass" : check.score > 0.45 ? "review" : "block";
+        return `<div class="row"><strong>${check.name}</strong><div class="meter"><span style="width:${Math.round(check.score * 100)}%;background:var(--${cls === "ok" ? "green" : cls === "warn" ? "yellow" : "red"})"></span></div><div class="verdict ${cls}">${verdict}</div><small>${check.note}</small></div>`;
+      }).join("");
+    }
+
+    document.querySelector("#cycle").addEventListener("click", () => {
+      scenarioIndex = (scenarioIndex + 1) % scenarios.length;
+      Object.entries(scenarios[scenarioIndex]).forEach(([key, value]) => { controls[key].value = value; });
+      render();
+    });
+    Object.values(controls).forEach((control) => control.addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+{
+  "date": "2026-09-03",
+  "headline": "Raw Camera Access の許可とフレーム鮮度を可視化する",
+  "headlineEn": "Visualizing Raw Camera Access permission and frame freshness",
+  "summary": "WebXR Raw Camera Access Module、WebXR Device API、Permissions Policy、Immersive Web Samples を参照し、`camera-access` の許可、frame 鮮度、view alignment、privacy indicator を通す本命サンプルと、カメラ texture の整合・crop fallback を見る派生サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Raw Camera Access Module, WebXR Device API, Permissions Policy, and Immersive Web Samples, today's original work adds a main sample for `camera-access` permission, frame freshness, view alignment, and privacy indicators, plus a derivative sample for camera texture alignment and crop fallback.",
+  "keyTopics": [
+    "WebXR Raw Camera Access Module は `camera-access` feature descriptor、`XRView.camera`、`XRWebGLBinding.getCameraImage()` を定義し、immersive-ar の frame 同期カメラ画像を扱います。",
+    "`camera-access` は `xr-spatial-tracking` に加えて `camera` の permissions policy とユーザー同意が重要で、仕様上も高いプライバシー影響を持つ機能として扱われます。",
+    "Raw Camera Access の explainer は、非同期の任意カメラ取得ではなく、表示 view と結びついた pose 同期画像を対象にしている点を強調しています。",
+    "WebXR Device API の requiredFeatures / optionalFeatures は、必須機能の欠落で session 作成を止めるか、段階的拡張として縮退するかを分ける設計ポイントです。",
+    "今日の公開カードは外部デモではなく、このワークスペース内の `Raw Camera Access Gateboard` と `Camera Texture Alignment Probe` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Raw Camera Access Module defines the `camera-access` feature descriptor, `XRView.camera`, and `XRWebGLBinding.getCameraImage()` for frame-synchronized immersive-ar camera images.",
+    "`camera-access` depends on camera permissions policy in addition to `xr-spatial-tracking` and user consent, and the specification treats it as a high-privacy-impact capability.",
+    "The Raw Camera Access explainer emphasizes pose-synchronized imagery tied to the displayed view rather than arbitrary asynchronous camera capture.",
+    "WebXR Device API requiredFeatures and optionalFeatures separate session-blocking requirements from progressive enhancement fallback design.",
+    "Today's public cards focus on the original workspace samples, `Raw Camera Access Gateboard` and `Camera Texture Alignment Probe`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Raw Camera Access Gateboard",
+      "url": "../outputs/2026-09-03_html_raw_camera_access_gateboard.html"
+    },
+    {
+      "label": "Today's derivative sample: Camera Texture Alignment Probe",
+      "url": "../outputs/2026-09-03_html_camera_texture_alignment_probe.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Raw Camera Access Module",
+      "url": "https://immersive-web.github.io/raw-camera-access/"
+    },
+    {
+      "label": "Raw Camera Access explainer",
+      "url": "https://github.com/immersive-web/raw-camera-access/blob/main/explainer.md"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: Permissions Policy",
+      "url": "https://www.w3.org/TR/permissions-policy/"
+    },
+    {
+      "label": "Immersive Web Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "MDN: XRHitTestResult",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRHitTestResult"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "注目したのは Raw Camera Access の仕様が、普通の `getUserMedia()` 的なカメラ取得ではなく、AR 表示に使われる view と揃った frame 同期 texture を扱う点です。環境画像に直接触れるので、機能を使えるかどうかだけでなく、なぜ必要か、どの状態なら texture を使わず fallback するかを UI の主役にできます。",
+      "bodyEn": "The notable point is that Raw Camera Access is not ordinary `getUserMedia()`-style capture; it is a frame-synchronized texture aligned to the AR display view. Because it directly exposes imagery from the user's environment, the UI should foreground not only availability but why the app needs it and when it should fall back instead of using the texture.",
+      "links": [
+        {
+          "label": "WebXR Raw Camera Access Module",
+          "url": "https://immersive-web.github.io/raw-camera-access/"
+        },
+        {
+          "label": "Raw Camera Access explainer",
+          "url": "https://github.com/immersive-web/raw-camera-access/blob/main/explainer.md"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Raw Camera Access Gateboard` は、session mode、required / optional feature、consent、frame age、view alignment を動かし、camera texture / defer texture / mask + fallback / session block の route を出します。派生サンプル `Camera Texture Alignment Probe` は、native camera が aligned、overscan、offset、missing の時に direct texture、crop texture、projection fallback、no camera のどれに回すかを視覚化します。",
+      "bodyEn": "The main sample, `Raw Camera Access Gateboard`, lets you adjust session mode, required/optional feature choice, consent, frame age, and view alignment, then routes to camera texture, defer texture, mask + fallback, or session block. The derivative `Camera Texture Alignment Probe` visualizes whether aligned, overscan, offset, or missing native camera states should use direct texture, crop texture, projection fallback, or no camera.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-09-03_html_raw_camera_access_gateboard.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-09-03_html_camera_texture_alignment_probe.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機版では `navigator.xr.requestSession(\"immersive-ar\", { requiredFeatures: [\"camera-access\"] })` の前に、用途説明と permissions policy の状態を確認する UI を置きます。`XRView.camera` は animation frame 中の view に紐づくため、古い frame や別 session の binding に渡す設計を避けます。texture は opaque として扱い、ピクセル前提の処理や保存は privacy filter と明示的な用途を先に通すべきです。",
+      "bodyEn": "A device-backed version should place purpose explanation and permissions-policy checks before `navigator.xr.requestSession(\"immersive-ar\", { requiredFeatures: [\"camera-access\"] })`. Because `XRView.camera` is tied to a view during the animation frame, avoid passing stale frames or a binding from another session. Treat the texture as opaque and gate pixel-level processing or persistence behind a privacy filter and explicit purpose.",
+      "links": [
+        {
+          "label": "W3C WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        },
+        {
+          "label": "Permissions Policy",
+          "url": "https://www.w3.org/TR/permissions-policy/"
+        }
+      ]
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは session mode、feature request、consent score、frame age、view alignment、native camera state、frustum match、crop margin、render route が取れます。昨日までの入力 policy comparator と組み合わせると、select で環境画像解析を開始する前に、入力 confidence と camera gate の両方が通った時だけ commit する設計にできます。Hit Test / Anchors と合わせる場合も、カメラ texture route と anchor route を別々にログ化すると検証しやすいです。",
+      "bodyEn": "The two samples expose session mode, feature request, consent score, frame age, view alignment, native camera state, frustum match, crop margin, and render route. Combined with the previous input policy comparator, an app can commit image analysis only when both input confidence and camera gates pass. When combined with Hit Test and Anchors, keep camera texture routing and anchor routing as separate logs for easier validation."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Raw Camera Access Module の `camera-access` と privacy indicator、Raw Camera Access explainer の aligned view 前提、WebXR Device API の requiredFeatures / optionalFeatures、Permissions Policy の `allowsFeature()`、Immersive Web Samples の AR / hit-test / anchors 系を継続して見ます。次は camera gate と hit-test result confidence を同じ commit window に入れると重複が少ないです。",
+      "bodyEn": "Continue watching `camera-access` and privacy indicators in the WebXR Raw Camera Access Module, aligned-view assumptions in the explainer, requiredFeatures/optionalFeatures in the WebXR Device API, Permissions Policy `allowsFeature()`, and AR/hit-test/anchors samples in Immersive Web Samples. A low-duplication next step is putting the camera gate and hit-test result confidence into the same commit window."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Raw Camera Access Gateboard` で feature request を optional にして Consent level を下げ、session block ではなく defer texture / fallback に逃がす動きを見てください。次に `Camera Texture Alignment Probe` で native camera を overscan crop にし、Crop margin と Frustum match の境目で direct texture から crop texture、projection fallback に変わるところを確認します。",
+      "bodyEn": "In `Raw Camera Access Gateboard`, set the feature request to optional and lower the consent level to see the route avoid session block and defer or fall back. Then in `Camera Texture Alignment Probe`, set native camera to overscan crop and adjust Crop margin and Frustum match to see the transition from direct texture to crop texture and projection fallback.",
+      "links": [
+        {
+          "label": "Open Raw Camera Access Gateboard",
+          "url": "../outputs/2026-09-03_html_raw_camera_access_gateboard.html"
+        },
+        {
+          "label": "Open Camera Texture Alignment Probe",
+          "url": "../outputs/2026-09-03_html_camera_texture_alignment_probe.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Raw Camera Access Module、Raw Camera Access explainer、W3C WebXR Device API、Permissions Policy、Immersive Web Samples、MDN XRHitTestResult を確認。設計: 1本目は camera-access の許可と鮮度 gate、2本目は view/camera texture alignment の fallback 検証。実装: `outputs/2026-09-03_html_raw_camera_access_gateboard.html` と `outputs/2026-09-03_html_camera_texture_alignment_probe.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。",
+      "bodyEn": "Research: reviewed the WebXR Raw Camera Access Module, Raw Camera Access explainer, W3C WebXR Device API, Permissions Policy, Immersive Web Samples, and MDN XRHitTestResult. Design: make the first sample a permission/freshness gate for camera-access and the second a fallback probe for view/camera texture alignment. Implementation: add `outputs/2026-09-03_html_raw_camera_access_gateboard.html` and `outputs/2026-09-03_html_camera_texture_alignment_probe.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの入力ログ系列は、ユーザーの action をいつ commit するかを扱ってきました。今日の camera-access 系は、環境画像をいつ取得・利用してよいかという別の gate です。入力 confidence、pose confidence、camera texture freshness、privacy consent を同じイベント台帳に入れると、AR 機能の commit 条件を説明可能な形で積み上げられます。",
+      "bodyEn": "The recent input-log series focused on when to commit user actions. Today's camera-access work adds a separate gate for when environmental imagery may be acquired and used. Combining input confidence, pose confidence, camera texture freshness, and privacy consent in the same event ledger can make AR commit conditions explainable."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Raw Camera Access Gateboard` です。何が動くか: session mode、camera-access の required / optional、同意、frame age、alignment を操作し、camera texture を使うか fallback するかを判定します。次に足すなら、実 `document.permissionsPolicy.allowsFeature(\"camera\")` と `allowsFeature(\"xr-spatial-tracking\")` を読んで gate に反映します。派生として `Camera Texture Alignment Probe` も実装しました。何が動くか: native camera の aligned / overscan / offset / missing を切り替え、crop texture と projection fallback の境目を表示します。次に足すなら、opaque texture を模した shader mask と hit-test anchor の commit 判定をつなぎます。",
+      "bodyEn": "The selected main prototype is `Raw Camera Access Gateboard`. What it does: adjusts session mode, camera-access required/optional status, consent, frame age, and alignment, then decides whether to use the camera texture or fall back. Next addition: read real `document.permissionsPolicy.allowsFeature(\"camera\")` and `allowsFeature(\"xr-spatial-tracking\")` into the gate. The derivative `Camera Texture Alignment Probe` was also implemented. What it does: switches native camera between aligned, overscan, offset, and missing, then shows the boundary between crop texture and projection fallback. Next addition: connect an opaque-texture-style shader mask with hit-test anchor commit decisions."
+    }
+  ]
+}

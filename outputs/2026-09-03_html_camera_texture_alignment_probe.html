@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Camera Texture Alignment Probe</title>
+  <link rel="stylesheet" href="../data/future-sample-theme.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #151311;
+      --panel: rgba(31, 29, 26, 0.94);
+      --ink: #fbf8f0;
+      --muted: #bdb4a6;
+      --line: rgba(251, 248, 240, 0.16);
+      --green: #83daa0;
+      --yellow: #f2c95d;
+      --red: #ff8b83;
+      --teal: #79d7d1;
+      --violet: #c9a8ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(130deg, rgba(121,215,209,0.13), transparent 34%),
+        linear-gradient(230deg, rgba(242,201,93,0.12), transparent 36%),
+        var(--bg);
+    }
+    main { width: min(1120px, calc(100vw - 28px)); margin: 0 auto; padding: 22px 0 30px; }
+    header { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 14px; align-items: end; margin-bottom: 14px; }
+    h1 { margin: 0; font-size: clamp(1.42rem, 3vw, 2.25rem); line-height: 1.08; letter-spacing: 0; }
+    p { margin: 8px 0 0; color: var(--muted); line-height: 1.55; max-width: 780px; font-size: 0.94rem; }
+    .badge, .panel, .tile, .step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 42px rgba(0,0,0,0.22);
+    }
+    .badge { padding: 12px 14px; min-height: 78px; }
+    small, label span, .tile small { display: block; color: var(--muted); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; }
+    .badge strong, .tile strong { display: block; margin-top: 5px; font-size: 1.08rem; }
+    .layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 14px; }
+    .panel { padding: 14px; }
+    .controls { display: grid; gap: 12px; align-content: start; }
+    label { display: grid; gap: 7px; font-weight: 800; font-size: 0.88rem; }
+    select, input, button { width: 100%; font: inherit; }
+    select {
+      border: 1px solid rgba(251,248,240,0.16);
+      border-radius: 8px;
+      color: var(--ink);
+      background: rgba(255,255,255,0.06);
+      padding: 9px 10px;
+    }
+    button {
+      border: 1px solid rgba(121,215,209,0.5);
+      border-radius: 8px;
+      background: rgba(121,215,209,0.14);
+      color: var(--ink);
+      padding: 10px 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .tile { padding: 12px; min-height: 74px; background: rgba(255,255,255,0.045); }
+    .stage {
+      position: relative;
+      min-height: 350px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+        rgba(255,255,255,0.035);
+      background-size: 42px 42px;
+    }
+    .view, .texture {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 270px;
+      height: 190px;
+      border-radius: 8px;
+      transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+      transition: transform 180ms ease, opacity 180ms ease;
+    }
+    .view { border: 2px solid var(--teal); box-shadow: 0 0 32px rgba(121,215,209,0.22); }
+    .texture {
+      border: 2px dashed var(--yellow);
+      background:
+        linear-gradient(135deg, rgba(242,201,93,0.18), transparent 42%),
+        linear-gradient(45deg, rgba(201,168,255,0.18), transparent 46%);
+      opacity: 0.8;
+    }
+    .crop {
+      position: absolute;
+      inset: var(--crop-y, 22px) var(--crop-x, 30px);
+      border: 1px solid rgba(131,218,160,0.8);
+      border-radius: 6px;
+      background: rgba(131,218,160,0.08);
+    }
+    .steps { display: grid; gap: 8px; margin-top: 12px; }
+    .step { display: grid; grid-template-columns: 132px minmax(0, 1fr) 96px; gap: 10px; align-items: center; padding: 10px; background: rgba(255,255,255,0.045); }
+    .bar { height: 8px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.1); }
+    .bar span { display: block; height: 100%; width: 50%; background: var(--green); }
+    .route { text-align: right; font-weight: 900; }
+    .ok { color: var(--green); }
+    .warn { color: var(--yellow); }
+    .bad { color: var(--red); }
+    @media (max-width: 860px) {
+      header, .layout { grid-template-columns: 1fr; }
+      .tiles { grid-template-columns: 1fr; }
+      .step { grid-template-columns: 1fr; }
+      .route { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Camera Texture Alignment Probe</h1>
+        <p>`XRView.camera` から得られるカメラ画像が view と揃っているか、crop で使えるか、opaque texture のまま視覚効果へ渡すかを試す派生サンプルです。</p>
+      </div>
+      <div class="badge">
+        <small>Render route</small>
+        <strong id="routeBadge">direct texture</strong>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel controls">
+        <label>Native camera
+          <span>frame synchronized source</span>
+          <select id="native">
+            <option value="aligned">aligned</option>
+            <option value="overscan">overscan crop</option>
+            <option value="offset">offset view</option>
+            <option value="missing">missing</option>
+          </select>
+        </label>
+        <label>Texture age
+          <span><b id="ageLabel">12</b> ms</span>
+          <input id="age" type="range" min="0" max="110" value="12">
+        </label>
+        <label>Frustum match
+          <span><b id="frustumLabel">91</b>%</span>
+          <input id="frustum" type="range" min="40" max="100" value="91">
+        </label>
+        <label>Crop margin
+          <span><b id="cropLabel">16</b>%</span>
+          <input id="crop" type="range" min="0" max="34" value="16">
+        </label>
+        <button id="cycle">Cycle scenario</button>
+      </aside>
+
+      <section>
+        <div class="tiles">
+          <div class="tile"><small>Freshness</small><strong id="freshMetric">88%</strong></div>
+          <div class="tile"><small>Crop usable</small><strong id="cropMetric">yes</strong></div>
+          <div class="tile"><small>Next addition</small><strong>shader mask</strong></div>
+        </div>
+        <div class="stage" aria-label="camera texture alignment visualization">
+          <div id="texture" class="texture"><div id="cropBox" class="crop"></div></div>
+          <div class="view"></div>
+        </div>
+        <div id="steps" class="steps"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const controls = {
+      native: document.querySelector("#native"),
+      age: document.querySelector("#age"),
+      frustum: document.querySelector("#frustum"),
+      crop: document.querySelector("#crop")
+    };
+    const scenarios = [
+      { native: "aligned", age: 10, frustum: 96, crop: 4 },
+      { native: "overscan", age: 22, frustum: 86, crop: 18 },
+      { native: "offset", age: 36, frustum: 64, crop: 28 },
+      { native: "missing", age: 78, frustum: 48, crop: 0 }
+    ];
+    let scenarioIndex = 0;
+
+    function evaluate() {
+      const native = controls.native.value;
+      const age = Number(controls.age.value);
+      const frustum = Number(controls.frustum.value);
+      const crop = Number(controls.crop.value);
+      const freshness = Math.max(0, 1 - age / 100);
+      const cropScore = native === "overscan" ? Math.min(1, crop / 18) : native === "aligned" ? 1 : 0.25;
+      const checks = [
+        { name: "camera exists", score: native === "missing" ? 0 : 1 },
+        { name: "frame active", score: freshness },
+        { name: "frustum match", score: frustum / 100 },
+        { name: "crop recovery", score: cropScore }
+      ];
+      let route = "direct texture";
+      if (native === "missing") route = "no camera";
+      else if (freshness < 0.36) route = "reuse masked frame";
+      else if (native === "overscan" && cropScore > 0.65 && frustum > 72) route = "crop texture";
+      else if (native !== "aligned" || frustum < 70) route = "projection fallback";
+      return { native, age, frustum, crop, freshness, checks, route };
+    }
+
+    function render() {
+      const state = evaluate();
+      document.querySelector("#ageLabel").textContent = state.age;
+      document.querySelector("#frustumLabel").textContent = state.frustum;
+      document.querySelector("#cropLabel").textContent = state.crop;
+      document.querySelector("#freshMetric").textContent = `${Math.round(state.freshness * 100)}%`;
+      document.querySelector("#cropMetric").textContent = state.route === "crop texture" || state.route === "direct texture" ? "yes" : "no";
+      const badge = document.querySelector("#routeBadge");
+      badge.textContent = state.route;
+      badge.className = state.route === "direct texture" || state.route === "crop texture" ? "ok" : state.route === "no camera" ? "bad" : "warn";
+      const texture = document.querySelector("#texture");
+      texture.style.setProperty("--rot", `${state.native === "offset" ? -7 : state.native === "overscan" ? 1 : 0}deg`);
+      texture.style.setProperty("--scale", `${state.native === "overscan" ? 1.14 : state.native === "missing" ? 0.9 : 1}`);
+      texture.style.opacity = state.native === "missing" ? 0.24 : 0.82;
+      document.querySelector("#cropBox").style.setProperty("--crop-x", `${state.crop}px`);
+      document.querySelector("#cropBox").style.setProperty("--crop-y", `${Math.round(state.crop * 0.7)}px`);
+      document.querySelector("#steps").innerHTML = state.checks.map((check) => {
+        const cls = check.score > 0.74 ? "ok" : check.score > 0.42 ? "warn" : "bad";
+        const word = check.score > 0.74 ? "pass" : check.score > 0.42 ? "repair" : "block";
+        return `<div class="step"><strong>${check.name}</strong><div class="bar"><span style="width:${Math.round(check.score * 100)}%;background:var(--${cls === "ok" ? "green" : cls === "warn" ? "yellow" : "red"})"></span></div><div class="route ${cls}">${word}</div></div>`;
+      }).join("");
+    }
+
+    document.querySelector("#cycle").addEventListener("click", () => {
+      scenarioIndex = (scenarioIndex + 1) % scenarios.length;
+      Object.entries(scenarios[scenarioIndex]).forEach(([key, value]) => { controls[key].value = value; });
+      render();
+    });
+    Object.values(controls).forEach((control) => control.addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>

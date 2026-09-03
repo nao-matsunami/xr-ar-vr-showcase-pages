@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 58</span>
+        <span>days: 59</span>
         <span>page: 2 / 5</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -305,6 +305,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-08-22">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.22</p>
+              <h2>bounded-floor から local-floor へ縮退するテレポート安全判定</h2>
+              <p class="card-subtitle">Teleport safety checks that degrade from bounded-floor to local-floor</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-22" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API、MDN の `requestReferenceSpace()` と bounded reference spaces、Immersive Web の teleportation sample、WebXR Layers API Level 1 を確認し、`XRBoundedReferenceSpace.boundsGeometry` がある場合とない場合でテレポート候補を判定する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Device API, MDN `requestReferenceSpace()` and bounded reference spaces guidance, the Immersive Web teleportation sample, and WebXR Layers API Level 1, today's original HTML sample checks teleport candidates differently when `XRBoundedReferenceSpace.boundsGeometry` is available versus when the app falls back to `local-floor`.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-08-22.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-08-22_html_bounded_space_teleport_guard.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-08-21">
           <div class="card-top">
             <div>
@@ -554,29 +577,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-08-11.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-08-11_html_hit_test_confidence_funnel.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-10">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.10</p>
-              <h2>Anchor 復元ログを運用データに変える</h2>
-              <p class="card-subtitle">Turn anchor restore logs into operations data</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-10" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Anchors、Plane Detection、DOM Overlay、Immersive Web Samples を確認し、persistent anchor の復元失敗を時系列ログ、原因分類、複数オペレーター競合、CSV 出力として扱う自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing WebXR Anchors, Plane Detection, DOM Overlay, and Immersive Web Samples, today's original HTML sample treats persistent-anchor restore failures as timeline logs, failure classifications, multi-operator conflicts, and CSV-ready operations data.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-10.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-10_html_anchor_ops_conflict_timeline.html">代表サンプル / Sample</a>
           </div>
         </article>
       
