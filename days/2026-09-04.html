@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Permissions Policy と hit-test / camera gate を同じ commit window で見る | 2026-09-04</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.09.04</p>
+      <h1>Permissions Policy と hit-test / camera gate を同じ commit window で見る</h1>
+      <p class="hero-subtitle">Viewing Permissions Policy, hit-test, and camera gates in one commit window</p>
+      <p>W3C WebXR Device API、WebXR Hit Test Module、Permissions Policy、Immersive Web Raw Camera Access、Immersive Web Samples を参照し、`xr-spatial-tracking`、`camera-access`、hit-test pose を起動前から同じ判断表で扱う本命サンプルと、`document.permissionsPolicy.allowsFeature()` の実チェックを含む派生サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the W3C WebXR Device API, WebXR Hit Test Module, Permissions Policy, Immersive Web Raw Camera Access, and Immersive Web Samples, today's original work adds a main sample that puts `xr-spatial-tracking`, `camera-access`, and hit-test pose into one launch/commit gate, plus a derivative sample that includes real `document.permissionsPolicy.allowsFeature()` checks.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-09-04_html_policy_hit_camera_commit_gate.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-03.html">← 2026.09.03</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Policy Hit Camera Commit Gate</h3>
+              <p>WebXR の `xr-spatial-tracking`、Raw Camera Access、Hit Test を同じ commit window に置き、取得してよい状態か、配置してよい状態かを分けて可視化する最小サンプルです。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-04_html_policy_hit_camera_commit_gate.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Permissions Policy Probe Pad</h3>
+              <p>`document.permissionsPolicy.allowsFeature()` が使える時は実値を読み、使えない時は AR 起動前 checklist として `camera` / `xr-spatial-tracking` / `fullscreen` のリスクを比較します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-04_html_permissions_policy_probe_pad.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Device API は、spatial tracking を必要とする session や reference space が `xr-spatial-tracking` permissions policy と同意要件に関係することを明示しています。</span>
+              <span class="en-copy">The WebXR Device API makes spatial-tracking sessions and reference spaces depend on the `xr-spatial-tracking` permissions policy and consent requirements.</span>
+            </li>
+          
+            <li>
+              <span>Permissions Policy の `document.permissionsPolicy.allowsFeature()` は、起動 UI の前で `xr-spatial-tracking` や `camera` の可否を診断する足場になります。</span>
+              <span class="en-copy">Permissions Policy `document.permissionsPolicy.allowsFeature()` is a useful launch UI probe for `xr-spatial-tracking` and `camera` availability.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Hit Test Module は active hit test source、frame ごとの results、`XRHitTestResult.getPose()` を定義し、配置 commit の直前に pose の有無を確認する設計に向いています。</span>
+              <span class="en-copy">The WebXR Hit Test Module defines active hit test sources, per-frame results, and `XRHitTestResult.getPose()`, which fits a pose check immediately before placement commit.</span>
+            </li>
+          
+            <li>
+              <span>Raw Camera Access は `camera-access` feature descriptor、`XRView.camera`、`XRWebGLBinding.getCameraImage()` を通じて pose 同期 camera texture を扱うため、hit-test と同じ frame window で gate すると説明しやすくなります。</span>
+              <span class="en-copy">Raw Camera Access uses the `camera-access` feature descriptor, `XRView.camera`, and `XRWebGLBinding.getCameraImage()` for pose-synchronized camera texture, making it natural to gate alongside hit-test in one frame window.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、このワークスペース内の `Policy Hit Camera Commit Gate` と `Permissions Policy Probe Pad` の2本です。</span>
+              <span class="en-copy">Today's public cards focus on the original workspace samples, `Policy Hit Camera Commit Gate` and `Permissions Policy Probe Pad`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>注目したのは、WebXR の起動可否、Raw Camera Access の利用可否、Hit Test の配置可否が別々の API で見えるのに、実際の AR 体験では同じ瞬間の commit 条件として説明されるべき点です。Immersive Web Samples の hit-test は frame ごとの result から reticle を置きますが、camera texture を扱う体験では、その前に policy、consent、frame freshness を同じ表で見ると不意の session block や privacy fallback を減らせます。</p>
+          <p class="en-copy">The notable point is that WebXR launch availability, Raw Camera Access availability, and Hit Test placement availability show up through separate APIs, but an AR experience needs to explain them as one commit condition. The Immersive Web hit-test sample places a reticle from per-frame results; when camera textures are involved, putting policy, consent, and frame freshness into the same table first reduces surprise session blocks and privacy fallbacks.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr-hit-test-1/" target="_blank" rel="noreferrer">WebXR Hit Test Module</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples/blob/main/hit-test.html" target="_blank" rel="noreferrer">Immersive Web Samples: Hit Test source</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Policy Hit Camera Commit Gate` は、session mode、camera-access の required / optional、`xr-spatial-tracking` policy、camera policy、hit-test result 数、pose age、camera frame age、view alignment を動かし、`COMMIT CAMERA HIT`、`PATCH WITH FALLBACK`、`HOLD PLACEMENT`、`BLOCK` の route を出します。派生サンプル `Permissions Policy Probe Pad` は、`document.permissionsPolicy` がある環境では実値を読み、ない環境では iframe allow 属性や fallback UI の checklist として扱います。</p>
+          <p class="en-copy">The main sample, `Policy Hit Camera Commit Gate`, lets you adjust session mode, camera-access required/optional choice, `xr-spatial-tracking` policy, camera policy, hit-test result count, pose age, camera frame age, and view alignment, then routes to `COMMIT CAMERA HIT`, `PATCH WITH FALLBACK`, `HOLD PLACEMENT`, or `BLOCK`. The derivative `Permissions Policy Probe Pad` reads real values when `document.permissionsPolicy` is available, and otherwise acts as a checklist for iframe allow attributes and fallback UI.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-04_html_policy_hit_camera_commit_gate.html" target="_blank" rel="noreferrer">Open main sample</a></li>
+          
+            <li><a href="../outputs/2026-09-04_html_permissions_policy_probe_pad.html" target="_blank" rel="noreferrer">Open derivative sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実機版では `navigator.xr.requestSession(&quot;immersive-ar&quot;, { optionalFeatures: [&quot;hit-test&quot;, &quot;camera-access&quot;] })` の前に、`document.permissionsPolicy?.allowsFeature(&quot;xr-spatial-tracking&quot;)` と `allowsFeature(&quot;camera&quot;)` を確認します。`camera-access` を required にすると欠落時に session 全体を止めるため、まず optional として texture path だけを縮退する設計が扱いやすいです。hit-test は source の cancel と result の `getPose(baseSpace)` null / stale を明示的にログ化し、camera texture の frame age と同じ commit window で比較します。</p>
+          <p class="en-copy">A device-backed version should check `document.permissionsPolicy?.allowsFeature(&quot;xr-spatial-tracking&quot;)` and `allowsFeature(&quot;camera&quot;)` before `navigator.xr.requestSession(&quot;immersive-ar&quot;, { optionalFeatures: [&quot;hit-test&quot;, &quot;camera-access&quot;] })`. Making `camera-access` required blocks the whole session when missing, so starting with optional and only degrading the texture path is easier to operate. Explicitly log hit-test source cancellation and `getPose(baseSpace)` null/stale states, then compare them against camera texture frame age in the same commit window.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/TR/permissions-policy/" target="_blank" rel="noreferrer">Permissions Policy</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の2本からは live policy value、feature request、consent copy の有無、iframe allow 要否、hit-test result count、pose age、camera frame age、alignment、commit route が取れます。昨日の camera texture alignment probe と組み合わせると、policy gate、texture gate、placement gate の3段階を同じ JSON row にできます。さらに 9月1日からの input log store と接続すれば、select event が来た瞬間に camera と hit-test が通っていたかを後から再判定できます。</p>
+          <p class="en-copy">The two samples expose live policy value, feature request, consent-copy presence, iframe allow requirements, hit-test result count, pose age, camera frame age, alignment, and commit route. Combined with yesterday's camera texture alignment probe, policy gate, texture gate, and placement gate can become three stages in one JSON row. Connected to the input log store from September 1, a later replay can verify whether camera and hit-test gates were passing at the moment of a select event.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Device API の permissions policy table、Permissions Policy の `allowsFeature()` と iframe allowlist、WebXR Hit Test Module の transient input hit-test、Raw Camera Access の privacy / consent 議論、Immersive Web Samples の hit-test with anchors を継続して見ます。次は transient input hit-test と `XRInputSource` ごとの result grouping を、今日の commit gate に接続すると重複が少ないです。</p>
+          <p class="en-copy">Continue watching the WebXR Device API permissions-policy table, Permissions Policy `allowsFeature()` and iframe allowlists, transient input hit-test in the WebXR Hit Test Module, Raw Camera Access privacy/consent discussions, and Immersive Web Samples hit-test with anchors. A low-duplication next step is wiring transient input hit-test and per-`XRInputSource` result grouping into today's commit gate.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Policy Hit Camera Commit Gate` で camera-access を required にし、camera policy または consent を落として session block になる流れを確認してください。次に optional に戻すと、session を止めずに `PATCH WITH FALLBACK` へ逃がせます。`Permissions Policy Probe Pad` では iframe 埋め込み想定をオンにして、`allow=&quot;xr-spatial-tracking; camera&quot;` が必要になる状態を確認します。</p>
+          <p class="en-copy">In `Policy Hit Camera Commit Gate`, set camera-access to required and lower camera policy or consent to see the session-blocking path. Then switch back to optional to route into `PATCH WITH FALLBACK` without stopping the session. In `Permissions Policy Probe Pad`, enable the iframe embedding scenario to see when `allow=&quot;xr-spatial-tracking; camera&quot;` becomes necessary.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-04_html_policy_hit_camera_commit_gate.html" target="_blank" rel="noreferrer">Open Policy Hit Camera Commit Gate</a></li>
+          
+            <li><a href="../outputs/2026-09-04_html_permissions_policy_probe_pad.html" target="_blank" rel="noreferrer">Open Permissions Policy Probe Pad</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR Device API、W3C WebXR Hit Test Module、W3C Permissions Policy、MDN `xr-spatial-tracking`、Immersive Web Raw Camera Access、Immersive Web Samples の hit-test source を確認。設計: 1本目は camera と hit-test の複合 commit gate、2本目は実 `document.permissionsPolicy` probe と iframe allow checklist。実装: `outputs/2026-09-04_html_policy_hit_camera_commit_gate.html` と `outputs/2026-09-04_html_permissions_policy_probe_pad.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。</p>
+          <p class="en-copy">Research: reviewed the W3C WebXR Device API, W3C WebXR Hit Test Module, W3C Permissions Policy, MDN `xr-spatial-tracking`, Immersive Web Raw Camera Access, and the Immersive Web Samples hit-test source. Design: make the first sample a combined camera and hit-test commit gate, and the second a real `document.permissionsPolicy` probe plus iframe allow checklist. Implementation: add `outputs/2026-09-04_html_policy_hit_camera_commit_gate.html` and `outputs/2026-09-04_html_permissions_policy_probe_pad.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>ここ数日の入力ログ、policy comparator、camera access 系は、すべて「commit の前に何を満たすべきか」を別角度から見ています。今日のサンプルで policy、camera、hit-test を同じ route 表に置いたので、次は `XRInputSource`、hit-test result、camera texture、anchor creation を1行の ledger に統合できます。AR の派手な表現より先に、なぜ配置できるのか、なぜ fallback するのかを説明可能にする段階です。</p>
+          <p class="en-copy">The recent input logs, policy comparator, and camera-access samples all look at what must pass before commit from different angles. Today's sample puts policy, camera, and hit-test in one routing table, setting up the next step: integrating `XRInputSource`, hit-test result, camera texture, and anchor creation into one ledger row. This is the phase where AR should be able to explain why placement is allowed or why fallback happens before adding more visual flourish.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Policy Hit Camera Commit Gate` です。何が動くか: session mode、camera-access の required / optional、policy、consent、camera frame age、hit-test result、pose age を操作し、camera texture と hit-test 配置を同じ commit window で判定します。次に足すなら、実 `XRSession.requestHitTestSource()` と `XRWebGLBinding.getCameraImage()` の成功 / 失敗を ledger に追加します。派生として `Permissions Policy Probe Pad` も実装しました。何が動くか: `document.permissionsPolicy.allowsFeature()` の実値を読める場合は読み、iframe allow と fallback UI の不足を score 化します。次に足すなら、親 page / iframe page の2ファイルに分けて allow 属性の差を実測します。</p>
+          <p class="en-copy">The selected main prototype is `Policy Hit Camera Commit Gate`. What it does: adjusts session mode, camera-access required/optional status, policy, consent, camera frame age, hit-test results, and pose age, then judges camera texture and hit-test placement in one commit window. Next addition: add real `XRSession.requestHitTestSource()` and `XRWebGLBinding.getCameraImage()` success/failure into the ledger. The derivative `Permissions Policy Probe Pad` was also implemented. What it does: reads real `document.permissionsPolicy.allowsFeature()` values when available and scores missing iframe allow and fallback UI pieces. Next addition: split it into parent and iframe pages to measure allow-attribute differences directly.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-04_html_policy_hit_camera_commit_gate.html" target="_blank" rel="noreferrer">Today's main sample: Policy Hit Camera Commit Gate</a></li>
+          
+            <li><a href="../outputs/2026-09-04_html_permissions_policy_probe_pad.html" target="_blank" rel="noreferrer">Today's derivative sample: Permissions Policy Probe Pad</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hit-test-1/" target="_blank" rel="noreferrer">W3C: WebXR Hit Test Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/permissions-policy/" target="_blank" rel="noreferrer">W3C: Permissions Policy</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy/xr-spatial-tracking" target="_blank" rel="noreferrer">MDN: Permissions-Policy xr-spatial-tracking</a></li>
+          
+            <li><a href="https://immersive-web.github.io/raw-camera-access/" target="_blank" rel="noreferrer">Immersive Web: WebXR Raw Camera Access Module</a></li>
+          
+            <li><a href="https://github.com/immersive-web/raw-camera-access/blob/main/explainer.md" target="_blank" rel="noreferrer">Raw Camera Access explainer</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples/blob/main/hit-test.html" target="_blank" rel="noreferrer">Immersive Web Samples: Hit Test source</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-09-04_html_policy_hit_camera_commit_gate.html" loading="lazy" title="Policy Hit Camera Commit Gate"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
