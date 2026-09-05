@@ -1,0 +1,155 @@
+{
+  "date": "2026-09-05",
+  "headline": "Transient input hit-test を inputSource ごとの commit ledger にする",
+  "headlineEn": "Turning transient input hit-test into a per-inputSource commit ledger",
+  "summary": "W3C WebXR Hit Test Module、WebXR Device API、Permissions Policy、MDN、Immersive Web Samples を参照し、`XRTransientInputHitTestResult.inputSource` と `results` の束ねを配置判断へ変換する本命サンプルと、iframe `allow` 属性差を親ページから観察する派生サンプルを追加しました。",
+  "summaryEn": "After reviewing the W3C WebXR Hit Test Module, WebXR Device API, Permissions Policy, MDN, and Immersive Web Samples, today's original work adds a main sample that turns `XRTransientInputHitTestResult.inputSource` and `results` grouping into placement decisions, plus a derivative sample that observes iframe `allow` differences from the parent page.",
+  "keyTopics": [
+    "WebXR Hit Test Module は `XRTransientInputHitTestResult` に `inputSource` と `results` を持たせ、transient input の hit-test 結果を入力源ごとに束ねます。",
+    "同モジュールの `requestHitTestSourceForTransientInput()` は `profile`、`entityTypes`、`offsetRay` を受け取り、frame ごとに `getHitTestResultsForTransientInput()` で結果を読む設計です。",
+    "WebXR Device API は transient input を、screen pointer や `transient-pointer` のように短時間だけ active input sources に入る入力として説明しています。",
+    "Permissions Policy は `xr-spatial-tracking` を WebXR の policy-controlled feature として扱い、iframe では `allow` 属性と observable policy の差を起動前に見る価値があります。",
+    "今日の公開カードは外部デモではなく、このワークスペース内の `Transient Hit Group Router` と `Iframe Policy Allow Matrix` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Hit Test Module gives `XRTransientInputHitTestResult` both `inputSource` and `results`, grouping transient hit-test results by input source.",
+    "`requestHitTestSourceForTransientInput()` accepts `profile`, `entityTypes`, and `offsetRay`, then `getHitTestResultsForTransientInput()` reads per-frame results.",
+    "The WebXR Device API describes transient input as short-lived active input sources, such as screen pointers or `transient-pointer` inputs.",
+    "Permissions Policy treats `xr-spatial-tracking` as a WebXR policy-controlled feature, making iframe `allow` attributes and observable policy useful launch probes.",
+    "Today's public cards focus on the original workspace samples, `Transient Hit Group Router` and `Iframe Policy Allow Matrix`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Transient Hit Group Router",
+      "url": "../outputs/2026-09-05_html_transient_hit_group_router.html"
+    },
+    {
+      "label": "Today's derivative sample: Iframe Policy Allow Matrix",
+      "url": "../outputs/2026-09-05_html_iframe_policy_allow_matrix.html"
+    },
+    {
+      "label": "W3C: WebXR Hit Test Module",
+      "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Hit Test Editor's Draft",
+      "url": "https://immersive-web.github.io/hit-test/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: Permissions Policy",
+      "url": "https://www.w3.org/TR/permissions-policy/"
+    },
+    {
+      "label": "MDN: XRTransientInputHitTestSource",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRTransientInputHitTestSource"
+    },
+    {
+      "label": "Immersive Web Samples: Hit Test source",
+      "url": "https://github.com/immersive-web/webxr-samples/blob/main/hit-test.html"
+    },
+    {
+      "label": "Immersive Web Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "注目したのは、通常の hit-test result ではなく transient input hit-test result が `XRInputSource` ごとの束として返る点です。タップ、視線 intent、補助 pointer が同じ frame に重なった時、単に最初の hit を使うのではなく、どの inputSource のどの results を commit したかを ledger 化できます。Immersive Web Samples の通常 hit-test は reticle 配置の基礎として参考にしつつ、今日の中心はこのワークスペース内で作った grouped result router です。",
+      "bodyEn": "The interesting point is that transient input hit-test results come back as groups per `XRInputSource`, not just as ordinary hit-test results. When a tap, gaze intent, and auxiliary pointer overlap in one frame, a ledger can record which inputSource and which results were committed instead of blindly using the first hit. The regular Immersive Web hit-test sample remains useful background for reticle placement, but today's focus is the grouped result router built in this workspace.",
+      "links": [
+        {
+          "label": "WebXR Hit Test Module",
+          "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+        },
+        {
+          "label": "Immersive Web Samples: Hit Test source",
+          "url": "https://github.com/immersive-web/webxr-samples/blob/main/hit-test.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Transient Hit Group Router` は、profile、inputSource group 数、results 数、pose age、grouping confidence、hit-test feature、`xr-spatial-tracking` policy、同一 frame dedupe を動かし、`COMMIT TRANSIENT HIT`、`PATCH WITH LAST HIT`、`HOLD RETICLE`、`BLOCK SOURCE` を出します。派生サンプル `Iframe Policy Allow Matrix` は、親ページで iframe `allow` 属性を組み替え、`iframe.permissionsPolicy` が読める場合は observable policy を比較します。",
+      "bodyEn": "The main sample, `Transient Hit Group Router`, lets you adjust profile, inputSource group count, result count, pose age, grouping confidence, hit-test feature, `xr-spatial-tracking` policy, and same-frame dedupe, then routes to `COMMIT TRANSIENT HIT`, `PATCH WITH LAST HIT`, `HOLD RETICLE`, or `BLOCK SOURCE`. The derivative `Iframe Policy Allow Matrix` changes iframe `allow` attributes from the parent page and compares observable policy when `iframe.permissionsPolicy` is available.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-09-05_html_transient_hit_group_router.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-09-05_html_iframe_policy_allow_matrix.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機版では `requestSession(\"immersive-ar\", { requiredFeatures: [\"hit-test\"] })` の後に `requestHitTestSourceForTransientInput({ profile: \"generic-touchscreen\", offsetRay: new XRRay() })` を作り、XR frame 内で `frame.getHitTestResultsForTransientInput(source)` を読みます。戻り値は `XRTransientInputHitTestResult` の配列なので、`inputSource.targetRayMode`、`profiles`、`results.length`、各 result の `getPose(baseSpace)`、event timestamp を1行ずつ保存すると後日の replay に使えます。source は不要になった時に `cancel()` します。",
+      "bodyEn": "A device-backed version should call `requestHitTestSourceForTransientInput({ profile: \"generic-touchscreen\", offsetRay: new XRRay() })` after `requestSession(\"immersive-ar\", { requiredFeatures: [\"hit-test\"] })`, then read `frame.getHitTestResultsForTransientInput(source)` inside the XR frame. Because the return value is an array of `XRTransientInputHitTestResult`, saving `inputSource.targetRayMode`, `profiles`, `results.length`, each result's `getPose(baseSpace)`, and event timestamp as ledger rows makes later replay possible. Call `cancel()` when the source is no longer needed.",
+      "links": [
+        {
+          "label": "MDN: XRTransientInputHitTestSource",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRTransientInputHitTestSource"
+        },
+        {
+          "label": "WebXR Device API transient input",
+          "url": "https://www.w3.org/TR/webxr/"
+        }
+      ]
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは inputSource group 数、profile match、result 数、pose age、grouping confidence、dedupe route、iframe allow string、observable policy、fallback / consent の有無が取れます。9月1日以降の input log store、9月3日の raw camera gate、9月4日の policy / camera / hit commit gate とつなげると、select event、camera frame、transient hit group、policy を同じ ledger row にできます。展示 UI では、配置できなかった理由を source 単位で説明する診断 overlay に使えます。",
+      "bodyEn": "The two samples expose inputSource group count, profile match, result count, pose age, grouping confidence, dedupe route, iframe allow string, observable policy, and fallback/consent presence. Connected to the input log store from September 1, the raw camera gate from September 3, and the policy/camera/hit commit gate from September 4, a select event, camera frame, transient hit group, and policy can all live in one ledger row. In installation UI, this can power a diagnostic overlay explaining why placement failed per source."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Hit Test Module の transient input 節、WebXR Device API の transient input dispatch、Permissions Policy の frame policy、Immersive Web Samples の hit-test with anchors、Input Profiles Registry の `generic-touchscreen` / tracked pointer 系 profile を継続して見ます。次は transient hit group を anchor creation と紐づけ、commit 済み group だけを undo / restore 対象にするのが重複の少ない発展です。",
+      "bodyEn": "Continue watching the transient input section of the WebXR Hit Test Module, transient input dispatch in the WebXR Device API, Permissions Policy frame policy, Immersive Web Samples hit-test with anchors, and `generic-touchscreen` / tracked pointer profiles in the Input Profiles Registry. A low-duplication next step is connecting transient hit groups to anchor creation so only committed groups become undo/restore targets."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Transient Hit Group Router` で profile を `tracked-pointer mismatch` に変え、同じ results 数でも `BLOCK SOURCE` になる流れを確認してください。次に profile を戻し、pose age を上げると `PATCH WITH LAST HIT` へ変わります。`Iframe Policy Allow Matrix` では `allow xr-spatial-tracking` か `allow camera` を外し、iframe 側の observable policy と embed score がどう変わるかを見ます。",
+      "bodyEn": "In `Transient Hit Group Router`, switch the profile to `tracked-pointer mismatch` and observe `BLOCK SOURCE` even with the same result count. Then restore the profile and raise pose age to see `PATCH WITH LAST HIT`. In `Iframe Policy Allow Matrix`, disable `allow xr-spatial-tracking` or `allow camera` and watch how observable iframe policy and embed score change.",
+      "links": [
+        {
+          "label": "Open Transient Hit Group Router",
+          "url": "../outputs/2026-09-05_html_transient_hit_group_router.html"
+        },
+        {
+          "label": "Open Iframe Policy Allow Matrix",
+          "url": "../outputs/2026-09-05_html_iframe_policy_allow_matrix.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Hit Test Module、Immersive Web Hit Test Editor's Draft、W3C WebXR Device API、W3C Permissions Policy、MDN `XRTransientInputHitTestSource`、Immersive Web Samples を確認。設計: 1本目は transient input hit-test の grouped results commit router、2本目は iframe allow 属性差の派生 probe。実装: `outputs/2026-09-05_html_transient_hit_group_router.html` と `outputs/2026-09-05_html_iframe_policy_allow_matrix.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。",
+      "bodyEn": "Research: reviewed the W3C WebXR Hit Test Module, Immersive Web Hit Test Editor's Draft, W3C WebXR Device API, W3C Permissions Policy, MDN `XRTransientInputHitTestSource`, and Immersive Web Samples. Design: make the first sample a grouped-results commit router for transient input hit-test, and the second a derivative iframe allow-attribute probe. Implementation: add `outputs/2026-09-05_html_transient_hit_group_router.html` and `outputs/2026-09-05_html_iframe_policy_allow_matrix.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日のテーマは、AR の配置を「当たった / 当たらない」ではなく、policy、consent、camera frame、input event、pose、hit result を揃えた commit ledger として扱う方向に集約しています。今日の transient grouping で inputSource 単位の責任範囲が見えたので、次は anchor 作成、undo、restore、haptics を同じ source id にぶら下げると、実機デバッグと展示中の説明 UI が作りやすくなります。",
+      "bodyEn": "Recent themes are converging on treating AR placement not as simply hit or miss, but as a commit ledger combining policy, consent, camera frame, input event, pose, and hit result. Today's transient grouping exposes responsibility per inputSource, so the next useful layer is hanging anchor creation, undo, restore, and haptics off the same source id for device debugging and exhibition-facing explanation UI."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Transient Hit Group Router` です。何が動くか: transient input profile、source group 数、results 数、pose age、confidence、policy を操作し、inputSource ごとの hit-test 結果を commit / patch / hold / block に分類します。次に足すなら、実 `requestHitTestSourceForTransientInput()` の結果を IndexedDB ledger に保存します。派生として `Iframe Policy Allow Matrix` も実装しました。何が動くか: iframe `allow` 属性を切り替え、親ページから見える observable policy と embed score を比較します。次に足すなら、親 / 子を別ファイル化し、GitHub Pages 上で same-origin と cross-origin 埋め込み差を実測します。",
+      "bodyEn": "The selected main prototype is `Transient Hit Group Router`. What it does: adjusts transient input profile, source group count, result count, pose age, confidence, and policy, then classifies per-inputSource hit-test results into commit / patch / hold / block. Next addition: save real `requestHitTestSourceForTransientInput()` results into an IndexedDB ledger. The derivative `Iframe Policy Allow Matrix` was also implemented. What it does: toggles iframe `allow` attributes and compares parent-observable policy with an embed score. Next addition: split parent and child into separate files and measure same-origin versus cross-origin embed behavior on GitHub Pages."
+    }
+  ]
+}

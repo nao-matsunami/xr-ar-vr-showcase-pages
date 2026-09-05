@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iframe Policy Allow Matrix</title>
+  <style>
+    :root {
+      --ink: #17212b;
+      --muted: #65717c;
+      --line: #d8e0e5;
+      --paper: #fff;
+      --bg: #f5f8f6;
+      --blue: #246f9b;
+      --green: #2c8357;
+      --amber: #aa6a22;
+      --red: #bb3e42;
+      --plum: #6b59a8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    main {
+      width: min(1120px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 32px;
+    }
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.5rem, 4vw, 2.7rem);
+      line-height: 1.06;
+      letter-spacing: 0;
+    }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    button {
+      min-height: 42px;
+      border: 1px solid #1e5f86;
+      border-radius: 8px;
+      background: var(--blue);
+      color: white;
+      font-weight: 850;
+      padding: 0 14px;
+      cursor: pointer;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 310px 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(31, 48, 61, .06);
+    }
+    .controls {
+      display: grid;
+      gap: 13px;
+      align-content: start;
+    }
+    .toggle {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      min-height: 36px;
+      color: #334253;
+      font-size: .88rem;
+      font-weight: 780;
+    }
+    input { accent-color: var(--blue); transform: scale(1.12); }
+    select {
+      width: 100%;
+      min-height: 38px;
+      accent-color: var(--blue);
+    }
+    label.text {
+      display: grid;
+      gap: 6px;
+      color: #334253;
+      font-size: .88rem;
+      font-weight: 780;
+    }
+    .score {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .card {
+      min-height: 135px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+      background: #fbfcfd;
+    }
+    .badge {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: .76rem;
+      font-weight: 850;
+      border: 1px solid var(--line);
+    }
+    .ok { color: var(--green); background: #e8f5ee; border-color: rgba(44,131,87,.34); }
+    .warn { color: var(--amber); background: #fff3df; border-color: rgba(170,106,34,.34); }
+    .bad { color: var(--red); background: #ffedef; border-color: rgba(187,62,66,.34); }
+    .frames {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    iframe {
+      width: 100%;
+      min-height: 180px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+    }
+    .matrix {
+      margin-top: 14px;
+      display: grid;
+      gap: 8px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 170px 1fr 130px;
+      gap: 10px;
+      align-items: center;
+      min-height: 52px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: white;
+      font-size: .86rem;
+    }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    pre {
+      overflow: auto;
+      margin: 14px 0 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: #17212b;
+      color: #eaf2f7;
+      line-height: 1.45;
+      font-size: .82rem;
+    }
+    @media (max-width: 840px) {
+      header, .layout, .score, .frames, .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Iframe Policy Allow Matrix</h1>
+        <p>Permissions Policy の iframe `allow` 属性差を、親ページから見える `iframe.permissionsPolicy` とサンプル内 checklist で比較する派生試作です。</p>
+      </div>
+      <button id="refresh">再構築</button>
+    </header>
+
+    <section class="layout">
+      <aside class="panel controls">
+        <label class="text">Frame origin model
+          <select id="origin">
+            <option value="self">same origin / self</option>
+            <option value="partner">partner origin</option>
+            <option value="unknown">unknown embed</option>
+          </select>
+        </label>
+        <label class="toggle">allow xr-spatial-tracking <input id="allowXr" type="checkbox" checked></label>
+        <label class="toggle">allow camera <input id="allowCamera" type="checkbox" checked></label>
+        <label class="toggle">allow fullscreen <input id="allowFullscreen" type="checkbox" checked></label>
+        <label class="toggle">child has fallback UI <input id="fallback" type="checkbox" checked></label>
+        <label class="toggle">child shows consent copy <input id="consent" type="checkbox" checked></label>
+      </aside>
+
+      <section class="panel">
+        <div class="score" id="score"></div>
+        <div class="frames">
+          <iframe id="frameA" title="permissive XR frame"></iframe>
+          <iframe id="frameB" title="restricted XR frame"></iframe>
+        </div>
+        <div class="matrix" id="matrix"></div>
+        <pre id="snippet"></pre>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const controls = ["origin", "allowXr", "allowCamera", "allowFullscreen", "fallback", "consent"];
+    const featureLabels = {
+      "xr-spatial-tracking": "XR spatial tracking",
+      camera: "Camera",
+      fullscreen: "Fullscreen"
+    };
+
+    function readPolicy(target, feature) {
+      const policy = target.permissionsPolicy || target.featurePolicy || document.permissionsPolicy || document.featurePolicy;
+      if (!policy || typeof policy.allowsFeature !== "function") return "unknown";
+      try {
+        return policy.allowsFeature(feature);
+      } catch {
+        return "unsupported";
+      }
+    }
+
+    function statusClass(value) {
+      if (value === true) return "ok";
+      if (value === false) return "bad";
+      return "warn";
+    }
+
+    function statusLabel(value) {
+      if (value === true) return "allowed";
+      if (value === false) return "blocked";
+      return String(value);
+    }
+
+    function childDoc(label, mode) {
+      return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><style>
+        body{margin:0;font-family:system-ui,sans-serif;color:#17212b;background:#fbfcfd;padding:14px}
+        strong{display:block;margin-bottom:8px}p{margin:0;color:#66717c;line-height:1.5}.pill{display:inline-block;margin-top:10px;border:1px solid #d8e0e5;border-radius:999px;padding:6px 9px;font-weight:800;color:${mode === "open" ? "#2c8357" : "#bb3e42"};background:${mode === "open" ? "#e8f5ee" : "#ffedef"}}</style></head><body><strong>${label}</strong><p>親ページ側の iframe policy observable probe 用の子フレーム。</p><span class="pill">${mode}</span></body></html>`;
+    }
+
+    function update() {
+      const origin = $("origin").value;
+      const allow = [];
+      if ($("allowXr").checked) allow.push("xr-spatial-tracking");
+      if ($("allowCamera").checked) allow.push("camera");
+      if ($("allowFullscreen").checked) allow.push("fullscreen");
+      const allowString = allow.join("; ");
+      const frameA = $("frameA");
+      const frameB = $("frameB");
+      frameA.setAttribute("allow", allowString);
+      frameB.setAttribute("allow", $("allowFullscreen").checked ? "fullscreen" : "");
+      frameA.srcdoc = childDoc("Frame A: requested allowlist", "open");
+      frameB.srcdoc = childDoc("Frame B: restricted comparison", "restricted");
+
+      requestAnimationFrame(() => {
+        const features = ["xr-spatial-tracking", "camera", "fullscreen"];
+        const rows = features.map((feature) => {
+          const parentValue = readPolicy(document, feature);
+          const frameAValue = readPolicy(frameA, feature);
+          const frameBValue = readPolicy(frameB, feature);
+          return { feature, parentValue, frameAValue, frameBValue };
+        });
+
+        let score = 100;
+        if (!$("allowXr").checked) score -= 32;
+        if (!$("allowCamera").checked) score -= 24;
+        if (origin !== "self") score -= 12;
+        if (!$("fallback").checked) score -= 14;
+        if (!$("consent").checked) score -= 10;
+        score = Math.max(0, score);
+        const route = score >= 78 ? "embed ready" : score >= 52 ? "embed with fallback" : "hold embed";
+        const routeClass = score >= 78 ? "ok" : score >= 52 ? "warn" : "bad";
+
+        $("score").innerHTML = [
+          ["embed score", score, routeClass, route],
+          ["allow attr", allowString || "none", allowString ? "ok" : "bad", "parent supplied policy hints"],
+          ["origin model", origin, origin === "self" ? "ok" : "warn", "headers can still narrow child policy"]
+        ].map(([title, value, klass, body]) => `<article class="card"><span class="badge ${klass}">${value}</span><strong>${title}</strong><p>${body}</p></article>`).join("");
+
+        $("matrix").innerHTML = rows.map((row) => `<div class="row">
+          <strong>${featureLabels[row.feature]}</strong>
+          <span>parent: ${statusLabel(row.parentValue)} / frame A: ${statusLabel(row.frameAValue)} / frame B: ${statusLabel(row.frameBValue)}</span>
+          <span class="badge ${statusClass(row.frameAValue)}">${statusLabel(row.frameAValue)}</span>
+        </div>`).join("");
+
+        $("snippet").textContent = [
+          `route: ${route}`,
+          `<iframe allow="${allowString}"></iframe>`,
+          `frameA.permissionsPolicy?.allowsFeature("xr-spatial-tracking") => ${statusLabel(rows[0].frameAValue)}`,
+          `frameA.permissionsPolicy?.allowsFeature("camera") => ${statusLabel(rows[1].frameAValue)}`,
+          $("fallback").checked ? "fallback UI: inline preview remains available" : "fallback UI: missing",
+          $("consent").checked ? "consent copy: present before requestSession" : "consent copy: missing"
+        ].join("\n");
+      });
+    }
+
+    controls.forEach((id) => $(id).addEventListener("input", update));
+    $("refresh").addEventListener("click", update);
+    update();
+  </script>
+</body>
+</html>
