@@ -1,0 +1,151 @@
+{
+  "date": "2026-09-06",
+  "headline": "Transient hit group を anchor 作成と復元台帳へつなぐ",
+  "headlineEn": "Connecting transient hit groups to anchor creation and restore ledgers",
+  "summary": "WebXR Anchors Module、WebXR Hit Test Module、WebXR Device API、MDN、Immersive Web Samples を参照し、transient hit-test の結果を anchor commit に変換する本命サンプルと、persistent anchor の restore / undo / delete を扱う派生サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Anchors Module, WebXR Hit Test Module, WebXR Device API, MDN, and Immersive Web Samples, today's original work adds a main sample that turns transient hit-test results into anchor commits, plus a derivative sample for persistent anchor restore / undo / delete queues.",
+  "keyTopics": [
+    "WebXR Anchors Module は 2026-04-27 Editor's Draft として、`anchors` feature、`XRAnchor.anchorSpace`、`requestPersistentHandle()`、`delete()` を定義しています。",
+    "同モジュールは anchor 作成を `XRFrame.createAnchor(pose, space)` と `XRHitTestResult.createAnchor()` の2経路に分け、hit-test result から real-world object に attached した anchor を作れる設計です。",
+    "persistent anchor は origin ごとの UUID map として扱われ、`persistentAnchors`、`restorePersistentAnchor(uuid)`、`deletePersistentAnchor(uuid)` により復元・削除できます。",
+    "WebXR Hit Test Module は `hit-test` feature が `xr-spatial-tracking` policy に依存すること、`XRTransientInputHitTestResult` が `inputSource` と `results` を束ねることを示しています。",
+    "今日の公開カードは外部デモではなく、このワークスペース内の `Transient Hit Anchor Ledger` と `Anchor Restore Undo Queue` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Anchors Module, Editor's Draft dated 2026-04-27, defines the `anchors` feature, `XRAnchor.anchorSpace`, `requestPersistentHandle()`, and `delete()`.",
+    "The module separates anchor creation into `XRFrame.createAnchor(pose, space)` and `XRHitTestResult.createAnchor()`, allowing anchors to be attached to real-world objects via hit-test results.",
+    "Persistent anchors are modeled as an origin-scoped UUID map and can be listed, restored, and deleted through `persistentAnchors`, `restorePersistentAnchor(uuid)`, and `deletePersistentAnchor(uuid)`.",
+    "The WebXR Hit Test Module shows that the `hit-test` feature depends on the `xr-spatial-tracking` policy and that `XRTransientInputHitTestResult` groups `inputSource` and `results`.",
+    "Today's public cards focus on the original workspace samples, `Transient Hit Anchor Ledger` and `Anchor Restore Undo Queue`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Transient Hit Anchor Ledger",
+      "url": "../outputs/2026-09-06_html_transient_hit_anchor_ledger.html"
+    },
+    {
+      "label": "Today's derivative sample: Anchor Restore Undo Queue",
+      "url": "../outputs/2026-09-06_html_anchor_restore_undo_queue.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "W3C: WebXR Hit Test Module",
+      "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+    },
+    {
+      "label": "W3C: WebXR Device API publication history",
+      "url": "https://www.w3.org/standards/history/webxr/"
+    },
+    {
+      "label": "MDN: XRAnchor",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRAnchor"
+    },
+    {
+      "label": "Immersive Web Samples: Anchors",
+      "url": "https://immersive-web.github.io/webxr-samples/anchors.html"
+    },
+    {
+      "label": "Immersive Web Samples: Hit Test with Anchors source",
+      "url": "https://github.com/immersive-web/webxr-samples/blob/main/hit-test-anchors.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目点は、昨日の transient hit-test group を単なる配置候補で終わらせず、`XRHitTestResult.createAnchor()` または `XRFrame.createAnchor(pose, space)` のどちらで anchor commit するかに接続できることです。Immersive Web Samples の anchors / hit-test with anchors は実API利用の基礎として参照しつつ、公開カードの中心はこのワークスペースで作った source group から anchor 台帳へ変換する2本です。",
+      "bodyEn": "The notable point today is connecting yesterday's transient hit-test groups beyond placement candidates into a choice between `XRHitTestResult.createAnchor()` and `XRFrame.createAnchor(pose, space)` for anchor commits. The Immersive Web anchors and hit-test-with-anchors samples are useful API references, but the public cards center on the two original workspace samples that convert source groups into anchor ledgers.",
+      "links": [
+        {
+          "label": "WebXR Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        },
+        {
+          "label": "Immersive Web Samples: Hit Test with Anchors source",
+          "url": "https://github.com/immersive-web/webxr-samples/blob/main/hit-test-anchors.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Transient Hit Anchor Ledger` は、anchor 作成経路、transient group 数、hit result 数、pose drift、persistent anchor map の負荷、anchors feature、frame 活性を動かし、`COMMIT ANCHOR`、`PATCH CAPACITY`、`HOLD NO HIT`、`BLOCK INACTIVE FRAME` を出します。派生サンプル `Anchor Restore Undo Queue` は、UUID の存在、session 状態、restore latency、tracking confidence、undo depth から restore / retry / visual fallback / delete を選びます。",
+      "bodyEn": "The main sample, `Transient Hit Anchor Ledger`, lets you adjust anchor creation route, transient group count, hit result count, pose drift, persistent anchor map load, anchors feature, and frame activity, then routes to `COMMIT ANCHOR`, `PATCH CAPACITY`, `HOLD NO HIT`, or `BLOCK INACTIVE FRAME`. The derivative `Anchor Restore Undo Queue` chooses restore / retry / visual fallback / delete from UUID presence, session state, restore latency, tracking confidence, and undo depth.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-09-06_html_transient_hit_anchor_ledger.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-09-06_html_anchor_restore_undo_queue.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機版では `requestSession(\"immersive-ar\", { requiredFeatures: [\"hit-test\", \"anchors\"] })` の後に transient hit-test source を作り、`frame.getHitTestResultsForTransientInput(source)` の各 group から最有力 result を選びます。hit result が十分なら `result.createAnchor()`、pose drift が大きい場合は `frame.createAnchor(pose, referenceSpace)` へ回し、promise の settle 時刻、`frame.trackedAnchors` の出現、`requestPersistentHandle()` の UUID を同じ ledger row に保存します。不要になった hit-test source は `cancel()` し、削除時は `anchor.delete()` または `deletePersistentAnchor(uuid)` を明示的に記録します。",
+      "bodyEn": "A device-backed version should call `requestSession(\"immersive-ar\", { requiredFeatures: [\"hit-test\", \"anchors\"] })`, create a transient hit-test source, then select the best result from each group returned by `frame.getHitTestResultsForTransientInput(source)`. Use `result.createAnchor()` when the hit result is good enough, route to `frame.createAnchor(pose, referenceSpace)` when pose drift is high, and save promise settle time, `frame.trackedAnchors` appearance, and `requestPersistentHandle()` UUID in the same ledger row. Explicitly call `cancel()` for unused hit-test sources and record `anchor.delete()` or `deletePersistentAnchor(uuid)` on removal.",
+      "links": [
+        {
+          "label": "MDN: XRAnchor",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRAnchor"
+        },
+        {
+          "label": "WebXR Hit Test Module",
+          "url": "https://www.w3.org/TR/webxr-hit-test-1/"
+        }
+      ]
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは inputSource group 数、hit result 数、anchor 作成経路、pose drift、frame active gate、persistent UUID、restore latency、tracking confidence、undo depth、delete route が取れます。9月1日の input log store、9月4日の policy / camera / hit commit gate、9月5日の transient hit group router と合わせると、入力イベントから anchor の作成、復元、削除までを同じ source id で追えるようになります。展示用途では、置いたオブジェクトが消えた理由を `policy`、`hit`、`anchor`、`restore` のどこで止まったかとして説明できます。",
+      "bodyEn": "The two samples expose inputSource group count, hit result count, anchor creation route, pose drift, frame-active gate, persistent UUID, restore latency, tracking confidence, undo depth, and delete route. Combined with the September 1 input log store, September 4 policy / camera / hit commit gate, and September 5 transient hit group router, a single source id can track the path from input event through anchor creation, restore, and deletion. In exhibition use, the UI can explain why a placed object disappeared by showing whether it stopped at policy, hit, anchor, or restore."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Anchors Module の persistent anchor 周辺、`XRFrame.trackedAnchors` の更新、`XRHitTestResult.createAnchor()` の browser 実装状況、W3C WebXR Device API の最新 Candidate Recommendation Draft、Immersive Web Samples の anchors 系 source を継続して見ます。次は IndexedDB に保存済みの input / hit / anchor ledger を日をまたいで replay し、復元失敗時に re-hit する流れを扱うと重複が少ないです。",
+      "bodyEn": "Continue watching persistent-anchor details in the WebXR Anchors Module, `XRFrame.trackedAnchors` updates, browser implementation status for `XRHitTestResult.createAnchor()`, the latest W3C WebXR Device API Candidate Recommendation Draft, and Immersive Web anchor sample sources. A low-duplication next step is replaying saved input / hit / anchor ledgers across days and triggering re-hit when restore fails."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Transient Hit Anchor Ledger` で作成経路を hit result から frame pose に切り替え、pose drift と anchor map load を上げると `PATCH CAPACITY` や `PATCH FROM FRAME POSE` に変わります。`Anchor Restore Undo Queue` では UUID を missing にして fallback marker の有無を切り替え、復元不能時のユーザー向け表示を確認してください。",
+      "bodyEn": "In `Transient Hit Anchor Ledger`, switch the creation route from hit result to frame pose, then raise pose drift and anchor map load to trigger `PATCH CAPACITY` or `PATCH FROM FRAME POSE`. In `Anchor Restore Undo Queue`, mark the UUID as missing and toggle the fallback marker to inspect the user-facing behavior when restore cannot proceed.",
+      "links": [
+        {
+          "label": "Open Transient Hit Anchor Ledger",
+          "url": "../outputs/2026-09-06_html_transient_hit_anchor_ledger.html"
+        },
+        {
+          "label": "Open Anchor Restore Undo Queue",
+          "url": "../outputs/2026-09-06_html_anchor_restore_undo_queue.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Anchors Module、WebXR Hit Test Module、WebXR Device API publication history、MDN `XRAnchor`、Immersive Web Samples の anchors / hit-test with anchors を確認。設計: 1本目は transient hit group から anchor commit への判断表、2本目は persistent anchor の restore / undo / delete queue。実装: `outputs/2026-09-06_html_transient_hit_anchor_ledger.html` と `outputs/2026-09-06_html_anchor_restore_undo_queue.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。",
+      "bodyEn": "Research: reviewed the WebXR Anchors Module, WebXR Hit Test Module, WebXR Device API publication history, MDN `XRAnchor`, and Immersive Web anchors / hit-test-with-anchors samples. Design: make the first sample a decision table from transient hit groups to anchor commits, and the second a persistent anchor restore / undo / delete queue. Implementation: add `outputs/2026-09-06_html_transient_hit_anchor_ledger.html` and `outputs/2026-09-06_html_anchor_restore_undo_queue.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "7月からの蓄積は、hit-test、permission、input profile、gamepad、camera、policy を個別に見た段階から、9月に入り commit ledger と replay へ寄っています。今日 anchor を接続したことで、AR 配置の寿命が `tap -> hit -> anchor -> persistent handle -> restore / delete` まで伸びました。以後は実機の promise timing と `trackedAnchors` の出入りを保存できると、展示中の障害解析にも再利用できます。",
+      "bodyEn": "The archive has moved from inspecting hit-test, permission, input profile, gamepad, camera, and policy individually into commit ledgers and replay in September. By connecting anchors today, the AR placement lifecycle now spans `tap -> hit -> anchor -> persistent handle -> restore / delete`. Saving real device promise timing and `trackedAnchors` membership changes next would make the data reusable for exhibition troubleshooting."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Transient Hit Anchor Ledger` です。何が動くか: transient group、hit result、pose drift、frame active、anchors feature、persistent handle を操作し、anchor commit / patch / hold / block を判定します。次に足すなら、実 `XRHitTestResult.createAnchor()` の promise 結果を IndexedDB に保存します。派生として `Anchor Restore Undo Queue` も実装しました。何が動くか: persistent UUID、session 状態、restore latency、tracking confidence、undo depth を操作し、restore / retry / fallback / delete を分類します。次に足すなら、1本目の UUID ledger を読み込んで実際の restore queue として再利用します。",
+      "bodyEn": "The selected main prototype is `Transient Hit Anchor Ledger`. What it does: adjusts transient groups, hit results, pose drift, frame activity, anchors feature, and persistent handle settings, then classifies anchor commit / patch / hold / block. Next addition: save real `XRHitTestResult.createAnchor()` promise results into IndexedDB. The derivative `Anchor Restore Undo Queue` was also implemented. What it does: adjusts persistent UUID, session state, restore latency, tracking confidence, and undo depth, then classifies restore / retry / fallback / delete. Next addition: load the first sample's UUID ledger and reuse it as an actual restore queue."
+    }
+  ]
+}

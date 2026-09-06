@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transient Hit Anchor Ledger</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17202a;
+      --muted: #5f6e7a;
+      --line: #d7e1e6;
+      --paper: #ffffff;
+      --bg: #f4f8f9;
+      --blue: #246f9f;
+      --green: #2b835f;
+      --amber: #ad671d;
+      --red: #b94343;
+      --violet: #6760a8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, #fbfcfd 0%, var(--bg) 100%);
+    }
+    main {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 34px;
+    }
+    header {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 18px;
+      align-items: end;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 2.35rem;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .panel, .status {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(33, 54, 72, .07);
+      padding: 16px;
+    }
+    .route {
+      font-size: 1.35rem;
+      font-weight: 850;
+      margin-bottom: 8px;
+    }
+    .route.commit { color: var(--green); }
+    .route.patch { color: var(--blue); }
+    .route.hold { color: var(--amber); }
+    .route.block { color: var(--red); }
+    .grid {
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .controls {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: .86rem;
+      font-weight: 780;
+      color: #314252;
+    }
+    select, input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+    .switch {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      min-height: 34px;
+    }
+    .switch input {
+      transform: scale(1.15);
+      accent-color: var(--blue);
+    }
+    .stage {
+      display: grid;
+      grid-template-columns: 1fr 250px;
+      gap: 14px;
+    }
+    .world {
+      min-height: 360px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(36,111,159,.12) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(43,131,95,.12) 1px, transparent 1px),
+        radial-gradient(circle at 48% 58%, #ffffff 0 17%, #e9f0f2 18% 100%);
+      background-size: 38px 38px, 38px 38px, 100% 100%;
+    }
+    .ray {
+      position: absolute;
+      left: 50%;
+      top: 14%;
+      width: 3px;
+      height: 245px;
+      transform-origin: 50% 0;
+      background: linear-gradient(180deg, var(--blue), rgba(36,111,159,0));
+      opacity: .85;
+    }
+    .hit, .anchor {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      transform: translate(-50%, -50%);
+      font-weight: 900;
+    }
+    .hit {
+      width: 58px;
+      height: 58px;
+      border: 3px solid var(--blue);
+      border-radius: 50%;
+      background: rgba(255,255,255,.72);
+      color: var(--blue);
+    }
+    .anchor {
+      width: 72px;
+      height: 72px;
+      border-radius: 8px;
+      border: 3px solid var(--green);
+      background: rgba(231,247,239,.9);
+      color: var(--green);
+      box-shadow: 0 12px 30px rgba(43,131,95,.17);
+    }
+    .anchor.warn {
+      border-color: var(--amber);
+      color: var(--amber);
+      background: rgba(255,245,224,.9);
+    }
+    .anchor.bad {
+      border-color: var(--red);
+      color: var(--red);
+      background: rgba(255,238,238,.9);
+      opacity: .58;
+    }
+    .stack {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfd;
+    }
+    .stat strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 1.1rem;
+    }
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: #f9fbfc;
+      color: #2f3d4b;
+      font-size: .8rem;
+      font-weight: 820;
+    }
+    .chip.ok { color: var(--green); background: #e8f5ee; border-color: rgba(43,131,95,.35); }
+    .chip.warn { color: var(--amber); background: #fff4e2; border-color: rgba(173,103,29,.35); }
+    .chip.bad { color: var(--red); background: #ffedef; border-color: rgba(185,67,67,.35); }
+    .ledger {
+      margin-top: 14px;
+      display: grid;
+      gap: 8px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 150px 1fr 120px;
+      gap: 10px;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #edf1f3;
+      font-size: .86rem;
+    }
+    .row span:first-child { color: var(--muted); }
+    .pill {
+      justify-self: start;
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: .74rem;
+      font-weight: 850;
+      background: #edf3f7;
+      color: #304250;
+    }
+    @media (max-width: 900px) {
+      header, .grid, .stage, .row { grid-template-columns: 1fr; }
+      h1 { font-size: 1.7rem; }
+      .world { min-height: 320px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Transient Hit Anchor Ledger</h1>
+        <p>transient hit-test の source group を、`XRHitTestResult.createAnchor()` と `XRFrame.createAnchor()` のどちらで処理するかに落とし込む最小サンプルです。</p>
+      </div>
+      <aside class="status">
+        <div id="route" class="route">判定中</div>
+        <p id="summary">hit result、frame 活性、anchor feature、persistent handle、容量をまとめて anchor commit の台帳にします。</p>
+      </aside>
+    </header>
+
+    <section class="grid">
+      <aside class="panel controls">
+        <label>Anchor creation route
+          <select id="creationRoute">
+            <option value="hit">hitTestResult.createAnchor()</option>
+            <option value="frame">frame.createAnchor(pose, space)</option>
+            <option value="none">visual marker only</option>
+          </select>
+        </label>
+        <label>Transient groups <output id="groupsOut">2</output>
+          <input id="groups" type="range" min="0" max="4" value="2">
+        </label>
+        <label>Usable hit results <output id="hitsOut">2</output>
+          <input id="hits" type="range" min="0" max="5" value="2">
+        </label>
+        <label>Pose drift cm <output id="driftOut">4</output>
+          <input id="drift" type="range" min="0" max="28" value="4">
+        </label>
+        <label>Anchor map load % <output id="capacityOut">48</output>
+          <input id="capacity" type="range" min="0" max="100" value="48">
+        </label>
+        <label class="switch">anchors feature enabled
+          <input id="anchorsFeature" type="checkbox" checked>
+        </label>
+        <label class="switch">XR frame still active
+          <input id="frameActive" type="checkbox" checked>
+        </label>
+        <label class="switch">request persistent handle
+          <input id="persistent" type="checkbox" checked>
+        </label>
+      </aside>
+
+      <section class="panel">
+        <div class="chips" id="chips"></div>
+        <div class="stage">
+          <div id="world" class="world"></div>
+          <div class="stack" id="stats"></div>
+        </div>
+      </section>
+    </section>
+
+    <section id="ledger" class="panel ledger"></section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const inputs = ["creationRoute", "groups", "hits", "drift", "capacity", "anchorsFeature", "frameActive", "persistent"];
+
+    function verdict(state) {
+      if (!state.anchorsFeature) return ["block", "BLOCK ANCHOR FEATURE", "session request に anchors が無いため、配置は visual marker に縮退します。"];
+      if (!state.frameActive) return ["block", "BLOCK INACTIVE FRAME", "frame が inactive なので createAnchor promise は拒否される前提です。"];
+      if (state.creationRoute === "none") return ["hold", "HOLD AS MARKER", "anchor は作らず、source group と pose を一時 marker として残します。"];
+      if (state.groups === 0 || state.hits === 0) return ["hold", "HOLD NO HIT", "transient group または hit result が無く、anchor に変換できません。"];
+      if (state.capacity > 88) return ["patch", "PATCH CAPACITY", "persistent anchor map が混雑しているため、短命 anchor と eviction warning を台帳化します。"];
+      if (state.drift > 16) return ["patch", "PATCH FROM FRAME POSE", "hit result のずれが大きいため frame.createAnchor fallback を候補にします。"];
+      return ["commit", "COMMIT ANCHOR", "hit result と frame が揃ったので、source group を anchor commit として記録します。"];
+    }
+
+    function readState() {
+      return {
+        creationRoute: $("creationRoute").value,
+        groups: Number($("groups").value),
+        hits: Number($("hits").value),
+        drift: Number($("drift").value),
+        capacity: Number($("capacity").value),
+        anchorsFeature: $("anchorsFeature").checked,
+        frameActive: $("frameActive").checked,
+        persistent: $("persistent").checked
+      };
+    }
+
+    function chip(label, level) {
+      return `<span class="chip ${level}">${label}</span>`;
+    }
+
+    function renderWorld(state, kind) {
+      const world = $("world");
+      world.innerHTML = "";
+      for (let i = 0; i < Math.max(1, state.groups); i += 1) {
+        const ray = document.createElement("div");
+        ray.className = "ray";
+        ray.style.transform = `rotate(${(i - 1.5) * 17}deg)`;
+        world.appendChild(ray);
+      }
+      for (let i = 0; i < state.hits; i += 1) {
+        const hit = document.createElement("div");
+        hit.className = "hit";
+        hit.style.left = `${28 + i * 14}%`;
+        hit.style.top = `${58 + Math.sin(i) * 12}%`;
+        hit.textContent = `H${i + 1}`;
+        world.appendChild(hit);
+      }
+      const anchor = document.createElement("div");
+      anchor.className = `anchor ${kind === "patch" ? "warn" : kind === "block" ? "bad" : ""}`;
+      anchor.style.left = `${54 + state.drift * .7}%`;
+      anchor.style.top = `${62 - state.groups * 3}%`;
+      anchor.textContent = state.creationRoute === "none" ? "M" : "A";
+      world.appendChild(anchor);
+    }
+
+    function render() {
+      const state = readState();
+      $("groupsOut").textContent = state.groups;
+      $("hitsOut").textContent = state.hits;
+      $("driftOut").textContent = state.drift;
+      $("capacityOut").textContent = state.capacity;
+      const [kind, label, message] = verdict(state);
+      $("route").className = `route ${kind}`;
+      $("route").textContent = label;
+      $("summary").textContent = message;
+      $("chips").innerHTML = [
+        chip(state.anchorsFeature ? "anchors feature" : "no anchors feature", state.anchorsFeature ? "ok" : "bad"),
+        chip(state.frameActive ? "active XRFrame" : "inactive XRFrame", state.frameActive ? "ok" : "bad"),
+        chip(`${state.creationRoute} route`, state.creationRoute === "none" ? "warn" : "ok"),
+        chip(state.persistent ? "persistent handle requested" : "session-only anchor", state.persistent ? "ok" : "warn"),
+        chip(`${state.capacity}% anchor map load`, state.capacity > 88 ? "bad" : state.capacity > 70 ? "warn" : "ok")
+      ].join("");
+      renderWorld(state, kind);
+      $("stats").innerHTML = [
+        ["Commit source", state.groups ? `source-${Math.min(state.groups, 2)}` : "none"],
+        ["Anchor API", state.creationRoute === "hit" ? "XRHitTestResult.createAnchor" : state.creationRoute === "frame" ? "XRFrame.createAnchor" : "none"],
+        ["Persistent key", state.persistent && kind !== "block" ? "uuid queued" : "not requested"],
+        ["Next action", kind === "commit" ? "track in frame.trackedAnchors" : kind === "patch" ? "warn and save fallback pose" : kind === "hold" ? "keep reticle only" : "do not call createAnchor"]
+      ].map(([name, value]) => `<div class="stat"><strong>${value}</strong><p>${name}</p></div>`).join("");
+      $("ledger").innerHTML = [
+        ["inputSource group", `${state.groups} groups / ${state.hits} usable hits`, state.groups && state.hits ? "observed" : "empty"],
+        ["createAnchor gate", `${state.anchorsFeature ? "feature ok" : "feature missing"}, ${state.frameActive ? "frame active" : "frame inactive"}`, kind === "block" ? "reject" : "ready"],
+        ["persistence", state.persistent ? `requestPersistentHandle, map load ${state.capacity}%` : "session scoped anchor", state.capacity > 88 ? "evict risk" : "normal"],
+        ["drift guard", `${state.drift} cm estimated pose drift`, state.drift > 16 ? "patch" : "clean"]
+      ].map(([a, b, c]) => `<div class="row"><span>${a}</span><strong>${b}</strong><span class="pill">${c}</span></div>`).join("");
+    }
+
+    inputs.forEach((id) => $(id).addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>

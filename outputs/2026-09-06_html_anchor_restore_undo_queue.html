@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anchor Restore Undo Queue</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18222d;
+      --muted: #62717e;
+      --line: #d8e1e6;
+      --paper: #fff;
+      --bg: #f5f8f8;
+      --blue: #236f99;
+      --green: #2c805d;
+      --amber: #aa681c;
+      --red: #b94446;
+      --violet: #625faa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, #fbfcfc 0%, var(--bg) 100%);
+    }
+    main {
+      width: min(1160px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 34px;
+    }
+    header {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      align-items: end;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 2.25rem;
+      line-height: 1.07;
+      letter-spacing: 0;
+    }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .panel, .status {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 10px 28px rgba(33, 54, 72, .07);
+    }
+    .route {
+      font-size: 1.3rem;
+      font-weight: 850;
+      margin-bottom: 8px;
+    }
+    .route.restore { color: var(--green); }
+    .route.queue { color: var(--blue); }
+    .route.warn { color: var(--amber); }
+    .route.delete { color: var(--red); }
+    .grid {
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .controls {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: .86rem;
+      font-weight: 780;
+      color: #314252;
+    }
+    select, input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+    .switch {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      min-height: 34px;
+    }
+    .switch input {
+      transform: scale(1.15);
+      accent-color: var(--blue);
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .card {
+      min-height: 122px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 12px;
+      display: grid;
+      align-content: start;
+      gap: 7px;
+    }
+    .card strong { font-size: .95rem; }
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: #e9eef1;
+      overflow: hidden;
+    }
+    .bar span {
+      display: block;
+      height: 100%;
+      width: 40%;
+      background: linear-gradient(90deg, var(--red), var(--amber), var(--green));
+    }
+    .timeline {
+      display: grid;
+      gap: 8px;
+    }
+    .step {
+      display: grid;
+      grid-template-columns: 150px 1fr 120px;
+      gap: 10px;
+      align-items: center;
+      border-bottom: 1px solid #edf1f3;
+      padding-bottom: 8px;
+      font-size: .86rem;
+    }
+    .step span:first-child { color: var(--muted); }
+    .pill {
+      justify-self: start;
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: .74rem;
+      font-weight: 850;
+      background: #eef3f6;
+      color: #304250;
+    }
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: #f9fbfc;
+      color: #2f3d4b;
+      font-size: .8rem;
+      font-weight: 820;
+    }
+    .chip.ok { color: var(--green); background: #e8f5ee; border-color: rgba(44,128,93,.35); }
+    .chip.warn { color: var(--amber); background: #fff4e2; border-color: rgba(170,104,28,.35); }
+    .chip.bad { color: var(--red); background: #ffedef; border-color: rgba(185,68,70,.35); }
+    @media (max-width: 900px) {
+      header, .grid, .board, .step { grid-template-columns: 1fr; }
+      h1 { font-size: 1.65rem; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Anchor Restore Undo Queue</h1>
+        <p>persistent anchor の restore / delete / undo を、ユーザー操作と tracking confidence のキューとして試す派生サンプルです。</p>
+      </div>
+      <aside class="status">
+        <div id="route" class="route">判定中</div>
+        <p id="summary">persistent handle の有無、session 状態、復元遅延、tracking confidence から次の処理を選びます。</p>
+      </aside>
+    </header>
+
+    <section class="grid">
+      <aside class="panel controls">
+        <label>User action
+          <select id="action">
+            <option value="restore">restorePersistentAnchor(uuid)</option>
+            <option value="undo">undo last commit</option>
+            <option value="delete">deletePersistentAnchor(uuid)</option>
+            <option value="rescan">rescan then restore</option>
+          </select>
+        </label>
+        <label>Persistent anchors known <output id="knownOut">3</output>
+          <input id="known" type="range" min="0" max="8" value="3">
+        </label>
+        <label>Restore latency ms <output id="latencyOut">80</output>
+          <input id="latency" type="range" min="20" max="420" value="80">
+        </label>
+        <label>Tracking confidence <output id="confidenceOut">82</output>
+          <input id="confidence" type="range" min="0" max="100" value="82">
+        </label>
+        <label>Undo depth <output id="undoOut">2</output>
+          <input id="undoDepth" type="range" min="0" max="6" value="2">
+        </label>
+        <label class="switch">session still running
+          <input id="sessionRunning" type="checkbox" checked>
+        </label>
+        <label class="switch">UUID exists in persistentAnchors
+          <input id="uuidExists" type="checkbox" checked>
+        </label>
+        <label class="switch">visual fallback marker
+          <input id="fallback" type="checkbox" checked>
+        </label>
+      </aside>
+
+      <section class="panel">
+        <div class="chips" id="chips"></div>
+        <div class="board" id="board"></div>
+        <div class="timeline" id="timeline"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const inputs = ["action", "known", "latency", "confidence", "undoDepth", "sessionRunning", "uuidExists", "fallback"];
+
+    function readState() {
+      return {
+        action: $("action").value,
+        known: Number($("known").value),
+        latency: Number($("latency").value),
+        confidence: Number($("confidence").value),
+        undoDepth: Number($("undoDepth").value),
+        sessionRunning: $("sessionRunning").checked,
+        uuidExists: $("uuidExists").checked,
+        fallback: $("fallback").checked
+      };
+    }
+
+    function decide(s) {
+      if (!s.sessionRunning) return ["delete", "REJECT ENDED SESSION", "session が ended なので restore / delete promise は失敗扱いにします。"];
+      if (!s.uuidExists || s.known === 0) return [s.fallback ? "warn" : "delete", s.fallback ? "SHOW FALLBACK MARKER" : "DROP UNKNOWN UUID", "persistentAnchors に UUID が無いため、復元せず placeholder へ逃がします。"];
+      if (s.action === "delete") return ["delete", "DELETE PERSISTENT ANCHOR", "map から UUID を消し、anchor.delete() 済みとしてキューを閉じます。"];
+      if (s.action === "undo") {
+        if (s.undoDepth === 0) return ["warn", "HOLD EMPTY UNDO", "undo できる commit が無いので tracking row だけ残します。"];
+        return ["queue", "QUEUE UNDO DELETE", "最後の commit を deletePersistentAnchor と visual rollback の2段階で処理します。"];
+      }
+      if (s.confidence < 45) return ["warn", "RESCAN BEFORE RESTORE", "tracking confidence が低いため、復元前に rescan と hit-test 再確認を挟みます。"];
+      if (s.latency > 260) return ["queue", "QUEUE RESTORE RETRY", "restore が遅いため、UI は marker を保ったまま再試行キューに入れます。"];
+      return ["restore", "RESTORE ANCHOR", "UUID と session が揃い、trackedAnchors へ戻せる状態です。"];
+    }
+
+    function chip(label, level) {
+      return `<span class="chip ${level}">${label}</span>`;
+    }
+
+    function card(title, value, score) {
+      return `<div class="card"><strong>${value}</strong><p>${title}</p><div class="bar"><span style="width:${score}%"></span></div></div>`;
+    }
+
+    function render() {
+      const s = readState();
+      $("knownOut").textContent = s.known;
+      $("latencyOut").textContent = s.latency;
+      $("confidenceOut").textContent = s.confidence;
+      $("undoOut").textContent = s.undoDepth;
+      const [kind, label, message] = decide(s);
+      $("route").className = `route ${kind}`;
+      $("route").textContent = label;
+      $("summary").textContent = message;
+      $("chips").innerHTML = [
+        chip(s.sessionRunning ? "session running" : "session ended", s.sessionRunning ? "ok" : "bad"),
+        chip(s.uuidExists ? "uuid exists" : "uuid missing", s.uuidExists ? "ok" : "bad"),
+        chip(`${s.known} persistent anchors`, s.known > 0 ? "ok" : "bad"),
+        chip(`${s.latency}ms restore`, s.latency > 260 ? "warn" : "ok"),
+        chip(`${s.confidence}% tracking`, s.confidence < 45 ? "warn" : "ok")
+      ].join("");
+      $("board").innerHTML = [
+        card("persistentAnchors list", `${s.known} UUIDs`, Math.min(100, s.known * 13)),
+        card("restore latency", `${s.latency} ms`, Math.max(6, 100 - s.latency / 4.2)),
+        card("tracking confidence", `${s.confidence}%`, s.confidence),
+        card("undo stack", `${s.undoDepth} rows`, Math.min(100, s.undoDepth * 17))
+      ].join("");
+      const steps = [
+        ["lookup", s.uuidExists && s.known ? "UUID found in persistentAnchors" : "UUID missing from persistentAnchors", s.uuidExists ? "pass" : "fail"],
+        ["session gate", s.sessionRunning ? "session.ended is false" : "session.ended is true", s.sessionRunning ? "pass" : "reject"],
+        ["operation", `${s.action} requested`, kind === "delete" ? "destructive" : "queued"],
+        ["visual state", s.fallback ? "marker remains while promise settles" : "no fallback marker", s.fallback ? "stable" : "bare"],
+        ["next addition", "feed real restore promise timing into the ledger", "future"]
+      ];
+      $("timeline").innerHTML = steps.map(([a, b, c]) => `<div class="step"><span>${a}</span><strong>${b}</strong><span class="pill">${c}</span></div>`).join("");
+    }
+
+    inputs.forEach((id) => $(id).addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>
