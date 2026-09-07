@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>保存済み anchor 台帳を re-hit replay へつなぐ | 2026-09-07</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.09.07</p>
+      <h1>保存済み anchor 台帳を re-hit replay へつなぐ</h1>
+      <p class="hero-subtitle">Connecting saved anchor ledgers to re-hit replay</p>
+      <p>WebXR Anchors Module、WebXR Hit Test Module、WebXR Device API、MDN、Immersive Web Samples を参照し、保存済み input / hit / anchor ledger を日跨ぎで再生して restore 失敗時に re-hit する本命サンプルと、persistent UUID map の保持・削除 budget を見る派生サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the WebXR Anchors Module, WebXR Hit Test Module, WebXR Device API, MDN, and Immersive Web Samples, today's original work adds a main sample that replays saved input / hit / anchor ledgers across days and re-hits when restore fails, plus a derivative sample for persistent UUID map retention and pruning budgets.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-09-07_html_anchor_rehit_replay_bridge.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-06.html">← 2026.09.06</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Anchor Re-hit Replay Bridge</h3>
+              <p>保存済みの input / hit / anchor ledger を再生し、persistent anchor の復元に失敗した時だけ re-hit して再 anchor 化する最小検証です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-07_html_anchor_rehit_replay_bridge.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Anchor UUID Retention Budget</h3>
+              <p>persistent anchor の UUID map が増えた時、どれを残し、どれを削除し、どれを visual marker に落とすかを LRU 風に検証します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-07_html_anchor_uuid_retention_budget.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Anchors Module は persistent anchor を origin ごとの UUID map として扱い、`persistentAnchors`、`restorePersistentAnchor(uuid)`、`deletePersistentAnchor(uuid)` を定義しています。</span>
+              <span class="en-copy">The WebXR Anchors Module models persistent anchors as an origin-scoped UUID map and defines `persistentAnchors`, `restorePersistentAnchor(uuid)`, and `deletePersistentAnchor(uuid)`.</span>
+            </li>
+          
+            <li>
+              <span>`XRFrame.trackedAnchors` はその frame で追跡中の anchor set を返すため、restore の promise 解決だけでなく frame 内で実際に追跡されているかを別に見る必要があります。</span>
+              <span class="en-copy">`XRFrame.trackedAnchors` returns the anchor set tracked in that frame, so restore should be verified separately from promise resolution.</span>
+            </li>
+          
+            <li>
+              <span>Anchors Module は native anchor が一時的に unlocatable になる場合や、最終的に tracking を失う場合を許容しており、復元失敗時の re-hit / visual fallback 設計が必要です。</span>
+              <span class="en-copy">The Anchors Module allows native anchors to become temporarily unlocatable or permanently stop tracking, making re-hit and visual fallback paths important after restore failure.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Hit Test Module は transient input hit-test の結果を `inputSource` ごとに group 化するため、保存 ledger から再配置する時も source id と hit confidence を残す価値があります。</span>
+              <span class="en-copy">The WebXR Hit Test Module groups transient input hit-test results by `inputSource`, so saved ledgers should preserve source id and hit confidence for later replacement placement.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、このワークスペース内の `Anchor Re-hit Replay Bridge` と `Anchor UUID Retention Budget` の2本です。</span>
+              <span class="en-copy">Today's public cards focus on original workspace samples, `Anchor Re-hit Replay Bridge` and `Anchor UUID Retention Budget`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目点は、昨日の transient hit -&gt; anchor ledger をその日の配置で終わらせず、翌日以降の session で `restorePersistentAnchor(uuid)` を試し、失敗や drift 増加の時だけ新しい hit-test result から再 anchor 化する流れです。Immersive Web Samples の hit-test with anchors は hit result から anchor を作る基礎として参照しつつ、公開カードの中心はこのワークスペースで作った日跨ぎ replay と retention budget の2本です。</p>
+          <p class="en-copy">The notable point today is extending yesterday's transient-hit-to-anchor ledger beyond same-day placement: on later sessions, try `restorePersistentAnchor(uuid)`, and only re-anchor from a new hit-test result when restore fails or drift grows. The Immersive Web hit-test-with-anchors sample is useful as a baseline for creating anchors from hit results, but the public cards center on the two original workspace samples for cross-day replay and retention budgeting.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">WebXR Anchors Module</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples/blob/main/hit-test-anchors.html" target="_blank" rel="noreferrer">Immersive Web Samples: Hit Test with Anchors source</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Anchor Re-hit Replay Bridge` は、保存 row、restore latency、pose drift、新しい hit confidence、anchor map load、UUID の有無、tracked anchor の有無を動かし、`RESTORE`、`RE-HIT CREATE`、`HOLD VISUAL`、`BLOCK` を出します。派生サンプル `Anchor UUID Retention Budget` は、persistent anchor 数、soft cap、最古 anchor の age、restore 成功率、re-hit confidence から、保持、削除予定、保存停止を分類します。</p>
+          <p class="en-copy">The main sample, `Anchor Re-hit Replay Bridge`, adjusts saved rows, restore latency, pose drift, new hit confidence, anchor map load, UUID presence, and tracked-anchor presence, then routes to `RESTORE`, `RE-HIT CREATE`, `HOLD VISUAL`, or `BLOCK`. The derivative `Anchor UUID Retention Budget` classifies keep, prune-soon, or stop-saving decisions from persistent anchor count, soft cap, oldest anchor age, restore success rate, and re-hit confidence.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-07_html_anchor_rehit_replay_bridge.html" target="_blank" rel="noreferrer">Open main sample</a></li>
+          
+            <li><a href="../outputs/2026-09-07_html_anchor_uuid_retention_budget.html" target="_blank" rel="noreferrer">Open derivative sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実機版では保存 row に source id、event type、hit confidence、pose matrix、persistent UUID、作成経路、promise settle time を入れます。次回 session で `session.persistentAnchors` に UUID があるか見て `restorePersistentAnchor(uuid)` を試し、復元後は `frame.trackedAnchors` と `frame.getPose(anchor.anchorSpace, referenceSpace)` で確認します。復元が遅い、untracked、drift が大きい、または UUID が消えた場合だけ transient hit-test source を作り直し、十分な hit result から `XRHitTestResult.createAnchor()` へ回します。map 圧が高い場合は `deletePersistentAnchor(uuid)` を明示的に使い、hit-test source は不要になったら `cancel()` します。</p>
+          <p class="en-copy">A device-backed version should store source id, event type, hit confidence, pose matrix, persistent UUID, creation route, and promise settle time in each row. In the next session, check whether the UUID appears in `session.persistentAnchors`, try `restorePersistentAnchor(uuid)`, then verify the restored anchor with `frame.trackedAnchors` and `frame.getPose(anchor.anchorSpace, referenceSpace)`. Only recreate the transient hit-test source when restore is slow, untracked, drifting, or the UUID disappeared, then route a confident hit result to `XRHitTestResult.createAnchor()`. When map pressure is high, explicitly call `deletePersistentAnchor(uuid)`, and call `cancel()` for hit-test sources that are no longer needed.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRAnchor" target="_blank" rel="noreferrer">MDN: XRAnchor</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hit-test-1/" target="_blank" rel="noreferrer">WebXR Hit Test Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の2本からは replay row id、ledger age、persistent UUID、restore latency、tracked 状態、pose drift、新 hit confidence、anchor map pressure、削除候補数、replacement route が取れます。9月1日の input log store、9月5日の transient hit group router、9月6日の transient hit anchor ledger とつなぐと、tap から anchor 作成、翌日の restore、失敗時の re-hit、古い UUID の削除までを一つの監査ログにできます。展示や業務 AR では、置いたラベルが戻らない理由をユーザー向けには短く、開発者向けには route と metric で説明できます。</p>
+          <p class="en-copy">The two samples expose replay row id, ledger age, persistent UUID, restore latency, tracked state, pose drift, new hit confidence, anchor map pressure, prune candidate count, and replacement route. Connected with the September 1 input log store, September 5 transient hit group router, and September 6 transient hit anchor ledger, one audit log can cover tap, anchor creation, next-day restore, re-hit after failure, and old UUID deletion. For exhibition or operational AR, the UI can explain missing labels briefly to users while preserving route and metric detail for developers.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Anchors Module の persistent anchor 周辺、`requestPersistentHandle()` と `deletePersistentAnchor(uuid)`、`XRFrame.trackedAnchors` の frame 更新、Hit Test Module の transient input hit-test、WebXR Device API の session feature negotiation、Immersive Web Samples の anchors 系 source を継続して見ます。次は IndexedDB から実際に前日 row を読み、今日の replay bridge に import する流れを扱うと重複が少ないです。</p>
+          <p class="en-copy">Continue watching persistent-anchor details in the WebXR Anchors Module, `requestPersistentHandle()` and `deletePersistentAnchor(uuid)`, frame updates for `XRFrame.trackedAnchors`, transient input hit testing in the Hit Test Module, WebXR Device API session feature negotiation, and Immersive Web anchor sample sources. A low-duplication next step is importing actual previous-day rows from IndexedDB into today's replay bridge.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Anchor Re-hit Replay Bridge` で stale UUID の row を選び、restore latency と drift を上げた状態で new hit confidence を 0.6 以上にすると `RE-HIT CREATE` に切り替わります。`Anchor UUID Retention Budget` では persistent anchors in map を soft cap に近づけ、restore success rate を下げると prune queue が増え、削除 API の有無で保存停止か削除再保存かが分かれます。</p>
+          <p class="en-copy">In `Anchor Re-hit Replay Bridge`, choose the stale UUID row, raise restore latency and drift, then push new hit confidence above 0.6 to switch into `RE-HIT CREATE`. In `Anchor UUID Retention Budget`, move persistent anchors close to the soft cap and lower restore success rate to grow the prune queue; toggling delete API support splits the route between stop-saving and delete-then-save.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-07_html_anchor_rehit_replay_bridge.html" target="_blank" rel="noreferrer">Open Anchor Re-hit Replay Bridge</a></li>
+          
+            <li><a href="../outputs/2026-09-07_html_anchor_uuid_retention_budget.html" target="_blank" rel="noreferrer">Open Anchor UUID Retention Budget</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Anchors Module、WebXR Hit Test Module、WebXR Device API、MDN `XRAnchor`、Immersive Web Samples の hit-test with anchors を確認。設計: 1本目は保存 ledger の restore / verify / re-hit / new anchor bridge、2本目は persistent UUID map の retention budget。実装: `outputs/2026-09-07_html_anchor_rehit_replay_bridge.html` と `outputs/2026-09-07_html_anchor_uuid_retention_budget.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。</p>
+          <p class="en-copy">Research: reviewed the WebXR Anchors Module, WebXR Hit Test Module, WebXR Device API, MDN `XRAnchor`, and Immersive Web hit-test-with-anchors samples. Design: make the first sample a restore / verify / re-hit / new-anchor bridge for saved ledgers, and the second a retention budget for persistent UUID maps. Implementation: add `outputs/2026-09-07_html_anchor_rehit_replay_bridge.html` and `outputs/2026-09-07_html_anchor_uuid_retention_budget.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月前半の流れは、入力ログ、policy / camera / hit gate、transient hit group、anchor ledger から、今日は日跨ぎ復元と保持 budget へ進みました。AR の配置体験は、作る瞬間よりも翌日戻るか、戻らない時にどれだけ自然に再配置できるかで品質差が出ます。今後は実機で `restorePersistentAnchor()` の latency と `trackedAnchors` 出現 frame を採り、今日の合成 replay に流し込むのが有効です。</p>
+          <p class="en-copy">The early September sequence has moved from input logs, policy / camera / hit gates, transient hit groups, and anchor ledgers into cross-day restore and retention budgets today. AR placement quality depends less on the first placement moment and more on whether it returns the next day, and how naturally it can be replaced when it does not. The useful next step is collecting real-device `restorePersistentAnchor()` latency and the frame where `trackedAnchors` includes the anchor, then feeding that into today's synthetic replay.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Anchor Re-hit Replay Bridge` です。何が動くか: 保存 row、restore latency、pose drift、hit confidence、UUID / tracked / feature gate を操作し、restore、re-hit create、visual hold、block を判定します。次に足すなら、IndexedDB から9月1日と9月6日の ledger row を読み込む import を追加します。派生として `Anchor UUID Retention Budget` も実装しました。何が動くか: UUID map の件数、soft cap、age、restore 成功率、re-hit confidence を操作し、保持、削除候補、保存停止を分類します。次に足すなら、1本目で再作成した UUID を retention queue に渡して削除予定を自動更新します。</p>
+          <p class="en-copy">The selected main prototype is `Anchor Re-hit Replay Bridge`. What it does: adjusts saved rows, restore latency, pose drift, hit confidence, UUID / tracked / feature gates, then classifies restore, re-hit create, visual hold, or block. Next addition: import ledger rows from IndexedDB, especially September 1 and September 6 data. The derivative `Anchor UUID Retention Budget` was also implemented. What it does: adjusts UUID map count, soft cap, age, restore success rate, and re-hit confidence, then classifies keep, prune candidate, or stop saving. Next addition: pass UUIDs recreated in the first sample into the retention queue and update prune candidates automatically.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-07_html_anchor_rehit_replay_bridge.html" target="_blank" rel="noreferrer">Today's main sample: Anchor Re-hit Replay Bridge</a></li>
+          
+            <li><a href="../outputs/2026-09-07_html_anchor_uuid_retention_budget.html" target="_blank" rel="noreferrer">Today's derivative sample: Anchor UUID Retention Budget</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hit-test-1/" target="_blank" rel="noreferrer">W3C: WebXR Hit Test Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRAnchor" target="_blank" rel="noreferrer">MDN: XRAnchor</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/hit-test-anchors.html" target="_blank" rel="noreferrer">Immersive Web Samples: Hit Test with Anchors</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples/blob/main/hit-test-anchors.html" target="_blank" rel="noreferrer">Immersive Web Samples source: hit-test-anchors.html</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-09-07_html_anchor_rehit_replay_bridge.html" loading="lazy" title="Anchor Re-hit Replay Bridge"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
