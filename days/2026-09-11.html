@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR Depth Sensing を occlusion に渡す前の信頼度ゲートにする | 2026-09-11</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.09.11</p>
+      <h1>WebXR Depth Sensing を occlusion に渡す前の信頼度ゲートにする</h1>
+      <p class="hero-subtitle">Turning WebXR Depth Sensing into a confidence gate before occlusion</p>
+      <p>W3C WebXR Depth Sensing Module、MDN の depth interfaces、Immersive Web の depth proposal samples を参照し、depth frame を commit / patch / hold / block に分ける本命サンプルと、occlusion shader の threshold / feather / bias を調整する派生サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing the W3C WebXR Depth Sensing Module, MDN depth interfaces, and Immersive Web depth proposal samples, today's original work adds a main sample that classifies depth frames as commit / patch / hold / block and a derivative sample for tuning occlusion shader threshold, feather, and bias behavior.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-09-11_html_depth_sensing_confidence_gate.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-10.html">← 2026.09.10</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Depth Sensing Confidence Gate</h3>
+              <p>WebXR Depth Sensing の CPU / GPU usage、depthActive、frame age、raw-to-meters scale、view alignment を合成し、occlusion や物理反応へ渡してよい depth row かを判定する最小ラボ。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-11_html_depth_sensing_confidence_gate.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Depth Occlusion Threshold Mixer</h3>
+              <p>Depth Sensing から来る depth texture / CPU buffer を shader で使う前提で、occlusion の hard edge、feather、bias、hole fallback を調整する派生試作。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-11_html_depth_occlusion_threshold_mixer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>W3C WebXR Depth Sensing Module の最新版は 2026-08-25 Working Draft で、`depth-sensing` feature、`depthSensing` session init、CPU / GPU usage、depth format preference、`matchDepthView` を整理しています。</span>
+              <span class="en-copy">The latest W3C WebXR Depth Sensing Module is the 2026-08-25 Working Draft, covering the `depth-sensing` feature, `depthSensing` session init, CPU / GPU usage, depth format preferences, and `matchDepthView`.</span>
+            </li>
+          
+            <li>
+              <span>Depth Sensing は real world geometry までの距離を XR device から得る拡張で、用途として occlusion、仮想物体と現実環境の物理反応、非視覚的な環境理解が挙げられています。</span>
+              <span class="en-copy">Depth Sensing extends WebXR with distance information to real-world geometry, with use cases including occlusion, physical interaction between virtual objects and the real environment, and non-visual environment awareness.</span>
+            </li>
+          
+            <li>
+              <span>`XRCPUDepthInformation` は `ArrayBuffer` と `getDepthInMeters()`、`XRWebGLDepthInformation` は depth texture を扱い、raw 値は `rawValueToMeters` で meter に変換します。</span>
+              <span class="en-copy">`XRCPUDepthInformation` exposes an `ArrayBuffer` and `getDepthInMeters()`, while `XRWebGLDepthInformation` exposes a depth texture; raw values are converted to meters through `rawValueToMeters`.</span>
+            </li>
+          
+            <li>
+              <span>`depthActive` が false の場合は depth data 取得を拒否する設計なので、アプリ側は pause / resume、frame age、view alignment、holes を見て fallback を用意する必要があります。</span>
+              <span class="en-copy">Because attempts to obtain depth data are rejected when `depthActive` is false, applications need fallbacks based on pause / resume state, frame age, view alignment, and depth holes.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、このワークスペース内で作った `Depth Sensing Confidence Gate` と `Depth Occlusion Threshold Mixer` の2本です。</span>
+              <span class="en-copy">Today's public cards focus on the original workspace samples `Depth Sensing Confidence Gate` and `Depth Occlusion Threshold Mixer`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は WebXR Depth Sensing Module と、Immersive Web Samples の AR Depth Sensing GPU / CPU proposal sample です。仕様は `depth-sensing` を session feature として要求し、usage preference と data format preference によって CPU buffer か GPU texture かを選ぶ流れを示しています。面白いのは、depth が単なる見た目の mask ではなく、frame が active か、view と depth buffer が対応しているか、raw 値を meter に直せるか、privacy / performance 上 pause されていないかという運用判断を伴う点です。公式サンプルは depth 取得の基準として参照し、公開カードの中心はこのワークスペース内の信頼度ゲートと occlusion 閾値ミキサーにしました。</p>
+          <p class="en-copy">Today's notable references are the WebXR Depth Sensing Module and the AR Depth Sensing GPU / CPU proposal samples from Immersive Web Samples. The specification presents depth sensing as a session feature, with usage and data-format preferences selecting CPU buffers or GPU textures. The interesting part is that depth is not just a visual mask: it depends on whether the frame is active, the depth buffer matches the view, raw values can be converted to meters, and the feature has not been paused for privacy or performance reasons. The official samples are used as acquisition references, while the public cards center on the original workspace confidence gate and occlusion threshold mixer.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr-depth-sensing-1/" target="_blank" rel="noreferrer">W3C: WebXR Depth Sensing Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/proposals/" target="_blank" rel="noreferrer">Immersive Web Samples: Proposals</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Depth Sensing Confidence Gate` は depth usage、depth type、frame age、rawValueToMeters、view alignment、depth confidence、holes、depthActive、matchDepthView を操作し、`COMMIT DEPTH`、`PATCH DEPTH`、`HOLD FRAME`、`BLOCK DEPTH` に分岐します。派生サンプル `Depth Occlusion Threshold Mixer` は virtual object depth、real surface depth、threshold bias、feather width、holes、sensor noise、depth source、smooth depth を動かし、hard mask、feather、hold mask、fallback を切り替えます。</p>
+          <p class="en-copy">The main sample, `Depth Sensing Confidence Gate`, adjusts depth usage, depth type, frame age, rawValueToMeters, view alignment, depth confidence, holes, depthActive, and matchDepthView, then routes to `COMMIT DEPTH`, `PATCH DEPTH`, `HOLD FRAME`, or `BLOCK DEPTH`. The derivative sample, `Depth Occlusion Threshold Mixer`, adjusts virtual object depth, real surface depth, threshold bias, feather width, holes, sensor noise, depth source, and smooth depth, switching between hard mask, feather, hold mask, and fallback behavior.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-11_html_depth_sensing_confidence_gate.html" target="_blank" rel="noreferrer">Open main sample</a></li>
+          
+            <li><a href="../outputs/2026-09-11_html_depth_occlusion_threshold_mixer.html" target="_blank" rel="noreferrer">Open derivative sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実機版では `navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['depth-sensing'], depthSensing: { usagePreference, dataFormatPreference, depthTypeRequest } })` を起点にし、session の `depthUsage`、`depthDataFormat`、`depthType`、`depthActive` をログに残します。CPU route では `XRFrame.getDepthInformation(view)` から `XRCPUDepthInformation.data` または `getDepthInMeters()` を使い、GPU route では `XRWebGLBinding.getDepthInformation(view)` の texture を shader へ渡す設計にします。`matchDepthView` が false の時や frame が古い時は、depthInfo の view と現在 view の差を補正するか、mask を1-2 frame 保持する fallback が必要です。</p>
+          <p class="en-copy">A device-backed version should start with `navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['depth-sensing'], depthSensing: { usagePreference, dataFormatPreference, depthTypeRequest } })`, then log the session's `depthUsage`, `depthDataFormat`, `depthType`, and `depthActive`. The CPU route can use `XRFrame.getDepthInformation(view)` with `XRCPUDepthInformation.data` or `getDepthInMeters()`, while the GPU route should pass the texture from `XRWebGLBinding.getDepthInformation(view)` into a shader. When `matchDepthView` is false or the frame is old, the app should either compensate for the difference between depthInfo's view and the current view or hold the mask for one or two frames.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の2本からは depth usage、depth type、frame age、rawValueToMeters、alignment error、confidence、hole ratio、depthActive、route、virtual / real depth delta、threshold bias、feather width、noise、visibility alpha、artifact risk が取れます。9月3日の raw camera access gate、9月4日の policy hit camera commit gate、9月10日の layer redraw recovery と合わせると、camera、hit-test、depth、composition layer のどこで品質が落ちたのかを1つの health ledger にできます。展示 UI なら現実遮蔽の破綻を即時に薄い shadow fallback へ落とし、業務 UI なら depth confidence が低いときだけ配置確定を保留できます。</p>
+          <p class="en-copy">The two samples produce depth usage, depth type, frame age, rawValueToMeters, alignment error, confidence, hole ratio, depthActive, route, virtual / real depth delta, threshold bias, feather width, noise, visibility alpha, and artifact risk. Combined with the September 3 raw camera access gate, September 4 policy hit camera commit gate, and September 10 layer redraw recovery sample, they can form one health ledger that explains whether camera, hit testing, depth, or composition layers caused a quality drop. For exhibition UI, broken real-world occlusion can fall back to a subtle shadow; for operational UI, placement confirmation can pause only when depth confidence is low.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Depth Sensing Module の Working Draft / Editor's Draft、Immersive Web Samples の phone-ar-depth と phone-ar-depth-gpu、MDN の `XRDepthInformation`、`XRCPUDepthInformation`、`XRWebGLDepthInformation`、ブラウザ実装の depth-sensing feature flag と device support を継続して見ます。次は `depthActive` pause / resume と layer redraw を同じ timeline に並べ、depth が止まった時に occlusion layer を捨てるべきか、薄く保持するべきかを扱うと流れが良いです。</p>
+          <p class="en-copy">Continue watching the WebXR Depth Sensing Module Working Draft / Editor's Draft, Immersive Web Samples `phone-ar-depth` and `phone-ar-depth-gpu`, MDN pages for `XRDepthInformation`, `XRCPUDepthInformation`, and `XRWebGLDepthInformation`, plus browser feature flags and device support for depth sensing. A good next step is placing `depthActive` pause / resume and layer redraw on the same timeline to decide whether an occlusion layer should be discarded or softly retained when depth pauses.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Depth Sensing Confidence Gate` で frame age を 180ms 近く、view alignment error を 45px 以上、または `matchDepthView` を off にすると `HOLD FRAME` に寄ります。depthActive を off、または usage を not enabled にすると `BLOCK DEPTH` になります。`Depth Occlusion Threshold Mixer` では virtual depth と real surface depth を近づけ、feather を増やすと `FEATHER EDGE`、holes と noise を増やすと `BIAS + HOLD` に変わります。</p>
+          <p class="en-copy">In `Depth Sensing Confidence Gate`, raise frame age toward 180ms, push view alignment above 45px, or turn `matchDepthView` off to move toward `HOLD FRAME`; turn off depthActive or set usage to not enabled to get `BLOCK DEPTH`. In `Depth Occlusion Threshold Mixer`, move virtual depth and real surface depth close together and increase feather for `FEATHER EDGE`; increase holes and noise to switch to `BIAS + HOLD`.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-11_html_depth_sensing_confidence_gate.html" target="_blank" rel="noreferrer">Open Depth Sensing Confidence Gate</a></li>
+          
+            <li><a href="../outputs/2026-09-11_html_depth_occlusion_threshold_mixer.html" target="_blank" rel="noreferrer">Open Depth Occlusion Threshold Mixer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR Depth Sensing Module 2026-08-25 Working Draft、Immersive Web Depth Sensing Editor's Draft、MDN `XRWebGLDepthInformation` / `XRCPUDepthInformation.data`、Immersive Web Samples proposal page と GitHub source を確認。設計: 1本目は depth frame の信頼度 gate、2本目は occlusion shader threshold の派生検証。実装: `outputs/2026-09-11_html_depth_sensing_confidence_gate.html` と `outputs/2026-09-11_html_depth_occlusion_threshold_mixer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。</p>
+          <p class="en-copy">Research: reviewed the W3C WebXR Depth Sensing Module 2026-08-25 Working Draft, Immersive Web Depth Sensing Editor's Draft, MDN `XRWebGLDepthInformation` / `XRCPUDepthInformation.data`, and the Immersive Web Samples proposal page and GitHub source. Design: make the first sample a depth-frame confidence gate and the second a derivative occlusion shader threshold probe. Implementation: add `outputs/2026-09-11_html_depth_sensing_confidence_gate.html` and `outputs/2026-09-11_html_depth_occlusion_threshold_mixer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>今週の流れは camera access、permissions policy、transient hit-test、anchor、layer lifecycle から、現実遮蔽の最後の材料である depth へ進みました。WebXR の AR 体験では、hit-test が置き場所を決め、anchor が持続性を作り、camera / depth が現実感を支え、layer が UI 品質を守ります。今日の2本は、その中の depth を「取れたら使う」ではなく「どの品質なら何に渡せるか」として扱うための足場です。</p>
+          <p class="en-copy">This week's sequence has moved from camera access, permissions policy, transient hit testing, anchors, and layer lifecycle into depth, the last ingredient for real-world occlusion. In WebXR AR, hit testing chooses placement, anchors provide persistence, camera and depth support realism, and layers protect UI quality. Today's two samples treat depth not as something to use whenever it exists, but as a signal whose quality determines what it may feed.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Depth Sensing Confidence Gate` です。何が動くか: depth usage、depth type、frame age、scale、alignment、confidence、holes、depthActive、matchDepthView を操作し、commit、patch、hold、block を判定します。次に足すなら、実機の `XRFrame.getDepthInformation(view)` から sample row を IndexedDB に保存し、9月4日の policy / hit / camera gate と同じ commit ledger に流します。派生として `Depth Occlusion Threshold Mixer` も実装しました。何が動くか: virtual / real depth、bias、feather、holes、noise、depth source を操作し、hard mask、feather、hold mask、fallback を切り替えます。次に足すなら、1本目の confidence score を shader 側の feather width と hold duration に自動反映します。</p>
+          <p class="en-copy">The selected main prototype is `Depth Sensing Confidence Gate`. What it does: adjusts depth usage, depth type, frame age, scale, alignment, confidence, holes, depthActive, and matchDepthView, then classifies commit, patch, hold, or block. Next addition: save real `XRFrame.getDepthInformation(view)` sample rows into IndexedDB and feed them into the same commit ledger as the September 4 policy / hit / camera gate. The derivative `Depth Occlusion Threshold Mixer` was also implemented. What it does: adjusts virtual / real depth, bias, feather, holes, noise, and depth source, then switches between hard mask, feather, hold mask, and fallback. Next addition: automatically map the first sample's confidence score into shader feather width and hold duration.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-11_html_depth_sensing_confidence_gate.html" target="_blank" rel="noreferrer">Today's main sample: Depth Sensing Confidence Gate</a></li>
+          
+            <li><a href="../outputs/2026-09-11_html_depth_occlusion_threshold_mixer.html" target="_blank" rel="noreferrer">Today's derivative sample: Depth Occlusion Threshold Mixer</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-depth-sensing-1/" target="_blank" rel="noreferrer">W3C: WebXR Depth Sensing Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/depth-sensing/" target="_blank" rel="noreferrer">Immersive Web: Depth Sensing Editor's Draft</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLDepthInformation" target="_blank" rel="noreferrer">MDN: XRWebGLDepthInformation</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRCPUDepthInformation/data" target="_blank" rel="noreferrer">MDN: XRCPUDepthInformation data</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/proposals/" target="_blank" rel="noreferrer">Immersive Web Samples: Proposals</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples/blob/main/proposals/phone-ar-depth-gpu.html" target="_blank" rel="noreferrer">Immersive Web Samples source: AR Depth GPU</a></li>
+          
+            <li><a href="https://github.com/immersive-web/depth-sensing/blob/main/explainer.md" target="_blank" rel="noreferrer">Immersive Web Depth Sensing explainer</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-09-11_html_depth_sensing_confidence_gate.html" loading="lazy" title="Depth Sensing Confidence Gate"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

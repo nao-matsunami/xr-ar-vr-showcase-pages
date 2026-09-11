@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Layer Proxy Density Tuner</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f272a;
+      --muted: #5e6d72;
+      --paper: #ffffff;
+      --bg: #f7f6f2;
+      --line: #dedbd0;
+      --blue: #286a91;
+      --green: #2d7a55;
+      --amber: #9b6c24;
+      --red: #ac504b;
+      --magenta: #9a4f7c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(40, 106, 145, .1), transparent 260px),
+        var(--bg);
+    }
+    main {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 34px;
+    }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 2.25rem;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .panel, .stage, .summary, .table {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(47, 43, 35, .07);
+    }
+    .summary { padding: 16px; }
+    .decision {
+      font-size: 1.35rem;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .decision.ok { color: var(--green); }
+    .decision.pad { color: var(--blue); }
+    .decision.merge { color: var(--amber); }
+    .decision.block { color: var(--red); }
+    .grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: .86rem;
+      font-weight: 760;
+      color: #38484d;
+    }
+    input[type="range"], select { width: 100%; accent-color: var(--blue); }
+    .switch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 34px;
+      color: #38484d;
+      font-weight: 760;
+      font-size: .9rem;
+    }
+    .switch input { transform: scale(1.12); accent-color: var(--blue); }
+    button {
+      border: 1px solid #c5c0b4;
+      background: #fbfaf7;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: white;
+    }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stage {
+      min-height: 462px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(40, 106, 145, .08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(45, 122, 85, .08) 1px, transparent 1px),
+        #fffefa;
+      background-size: 38px 38px;
+    }
+    .view {
+      position: relative;
+      min-height: 312px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: linear-gradient(180deg, #ffffff, #ece8dc);
+      overflow: hidden;
+    }
+    .quad {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 58%;
+      height: 48%;
+      transform: translate(-50%, -50%) rotateX(9deg);
+      border: 3px solid var(--blue);
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(40, 106, 145, .15), rgba(255, 255, 255, .96));
+      box-shadow: 0 18px 30px rgba(47, 43, 35, .13);
+    }
+    .proxy {
+      position: absolute;
+      border: 2px solid rgba(154, 79, 124, .74);
+      background: rgba(154, 79, 124, .1);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      color: var(--magenta);
+      font-size: .8rem;
+      transform: translate(-50%, -50%);
+    }
+    .cursor {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 3px solid var(--green);
+      left: var(--cx);
+      top: var(--cy);
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,.72);
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .metric {
+      min-height: 82px;
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffefa;
+    }
+    .metric strong { display: block; font-size: 1.15rem; margin-bottom: 4px; }
+    .table {
+      margin-top: 14px;
+      padding: 14px;
+      display: grid;
+      gap: 8px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 120px 1fr 130px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffefa;
+      font-size: .88rem;
+    }
+    .tag {
+      justify-self: start;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-weight: 850;
+      background: #e7f1f5;
+      color: var(--blue);
+    }
+    .tag.ok { background: #e4f2e9; color: var(--green); }
+    .tag.warn { background: #fff0d6; color: var(--amber); }
+    .tag.bad { background: #ffe8e4; color: var(--red); }
+    @media (max-width: 840px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Layer Proxy Density Tuner</h1>
+        <p>WebXR Layers の quad layer に直接 hit test できない場面を想定し、projection layer 側に置く透明 proxy の数、余白、誤タップ率を見積もる派生試作です。</p>
+      </div>
+      <section class="summary" aria-live="polite">
+        <div id="decision" class="decision pad">EXPAND PROXIES</div>
+        <p id="reason">視線ぶれに対して proxy 余白が不足しています。</p>
+      </section>
+    </header>
+
+    <section class="grid">
+      <aside class="panel" aria-label="Proxy density controls">
+        <label>Interactive controls <span id="controlsValue">6</span>
+          <input id="controlCount" type="range" min="1" max="14" value="6">
+        </label>
+        <label>Proxy padding cm <span id="paddingValue">4</span>
+          <input id="padding" type="range" min="0" max="12" value="4">
+        </label>
+        <label>Pointer jitter cm <span id="jitterValue">7</span>
+          <input id="jitter" type="range" min="0" max="18" value="7">
+        </label>
+        <label>Layer distance m <span id="distanceValue">1.4</span>
+          <input id="distance" type="range" min="6" max="30" value="14">
+        </label>
+        <label>Layout
+          <select id="layout">
+            <option value="grid">grid buttons</option>
+            <option value="rail">side rail</option>
+            <option value="dense">dense toolbar</option>
+          </select>
+        </label>
+        <div class="switch"><span>gaze input</span><input id="gaze" type="checkbox" checked></div>
+        <div class="switch"><span>proxy debug visible</span><input id="debug" type="checkbox" checked></div>
+        <div class="buttons">
+          <button id="shuffle" class="primary" type="button">Move pointer</button>
+          <button id="reset" type="button">Reset</button>
+        </div>
+      </aside>
+
+      <div>
+        <section class="stage">
+          <div class="view">
+            <div class="quad" id="quad"></div>
+            <div class="cursor" id="cursor"></div>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="proxyMetric">6</strong><span>proxy objects</span></div>
+            <div class="metric"><strong id="missMetric">18%</strong><span>estimated miss rate</span></div>
+            <div class="metric"><strong id="overlapMetric">low</strong><span>overlap risk</span></div>
+            <div class="metric"><strong id="costMetric">1.2 ms</strong><span>projection cost</span></div>
+          </div>
+        </section>
+        <section class="table" id="table" aria-label="Proxy notes"></section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const controls = {
+      controlCount: document.querySelector("#controlCount"),
+      padding: document.querySelector("#padding"),
+      jitter: document.querySelector("#jitter"),
+      distance: document.querySelector("#distance"),
+      layout: document.querySelector("#layout"),
+      gaze: document.querySelector("#gaze"),
+      debug: document.querySelector("#debug")
+    };
+    const labels = {
+      controlsValue: document.querySelector("#controlsValue"),
+      paddingValue: document.querySelector("#paddingValue"),
+      jitterValue: document.querySelector("#jitterValue"),
+      distanceValue: document.querySelector("#distanceValue")
+    };
+    const decisionEl = document.querySelector("#decision");
+    const reasonEl = document.querySelector("#reason");
+    const quadEl = document.querySelector("#quad");
+    const cursorEl = document.querySelector("#cursor");
+    const tableEl = document.querySelector("#table");
+    const proxyMetric = document.querySelector("#proxyMetric");
+    const missMetric = document.querySelector("#missMetric");
+    const overlapMetric = document.querySelector("#overlapMetric");
+    const costMetric = document.querySelector("#costMetric");
+    let cursorSeed = 0.37;
+
+    function getState() {
+      const count = Number(controls.controlCount.value);
+      const padding = Number(controls.padding.value);
+      const jitter = Number(controls.jitter.value);
+      const distance = Number(controls.distance.value) / 10;
+      const layout = controls.layout.value;
+      const density = count / (layout === "dense" ? 8 : layout === "rail" ? 10 : 12);
+      const missRate = Math.max(0, Math.min(0.82, (jitter - padding * 0.8) / 24 + (controls.gaze.checked ? 0.1 : 0) + (distance - 1.4) * 0.04));
+      const overlap = Math.max(0, density + padding / 12 - 0.65);
+      const cost = 0.35 + count * 0.11 + padding * 0.025 + (controls.debug.checked ? 0.28 : 0);
+      let decision = "READY";
+      let cls = "ok";
+      let reason = "proxy 数と余白のバランスはこの layer 距離で扱いやすい状態です。";
+      if (missRate > 0.34 && overlap < 0.55) {
+        decision = "EXPAND PROXIES";
+        cls = "pad";
+        reason = "視線ぶれに対して proxy 余白が不足しています。";
+      } else if (overlap > 0.82) {
+        decision = "MERGE TARGETS";
+        cls = "merge";
+        reason = "proxy が重なりすぎるため、近い操作を group 化してから判定します。";
+      } else if (cost > 2.1 || (missRate > 0.5 && overlap > 0.5)) {
+        decision = "BLOCK LAYOUT";
+        cls = "block";
+        reason = "hit proxy の維持 cost と誤入力が高く、layer UI の配置変更が必要です。";
+      }
+      return { count, padding, jitter, distance, layout, density, missRate, overlap, cost, decision, cls, reason };
+    }
+
+    function makeProxy(i, state) {
+      const cols = state.layout === "rail" ? 1 : state.layout === "dense" ? Math.min(state.count, 7) : Math.ceil(Math.sqrt(state.count));
+      const rows = Math.ceil(state.count / cols);
+      const indexCol = i % cols;
+      const indexRow = Math.floor(i / cols);
+      const left = state.layout === "rail" ? 25 : 22 + indexCol * (56 / Math.max(1, cols - 1 || 1));
+      const top = state.layout === "rail" ? 18 + indexRow * (64 / Math.max(1, rows - 1 || 1)) : 23 + indexRow * (52 / Math.max(1, rows - 1 || 1));
+      const width = state.layout === "dense" ? 13 + state.padding : 15 + state.padding * 1.2;
+      const height = state.layout === "rail" ? 9 + state.padding : 11 + state.padding;
+      return `<div class="proxy" style="left:${left}%;top:${top}%;width:${width}%;height:${height}%;${controls.debug.checked ? "" : "opacity:.18"}">${i + 1}</div>`;
+    }
+
+    function tagClass(state) {
+      if (state.cls === "ok") return "ok";
+      if (state.cls === "merge") return "warn";
+      if (state.cls === "block") return "bad";
+      return "";
+    }
+
+    function render() {
+      const s = getState();
+      labels.controlsValue.textContent = s.count;
+      labels.paddingValue.textContent = s.padding;
+      labels.jitterValue.textContent = s.jitter;
+      labels.distanceValue.textContent = s.distance.toFixed(1);
+      decisionEl.textContent = s.decision;
+      decisionEl.className = `decision ${s.cls}`;
+      reasonEl.textContent = s.reason;
+      quadEl.innerHTML = Array.from({ length: s.count }, (_, i) => makeProxy(i, s)).join("");
+      const cx = 50 + Math.sin(cursorSeed * 6.28) * (14 + s.jitter * 0.5);
+      const cy = 50 + Math.cos(cursorSeed * 4.8) * (10 + s.jitter * 0.38);
+      cursorEl.style.setProperty("--cx", `${cx.toFixed(1)}%`);
+      cursorEl.style.setProperty("--cy", `${cy.toFixed(1)}%`);
+      proxyMetric.textContent = s.count;
+      missMetric.textContent = `${Math.round(s.missRate * 100)}%`;
+      overlapMetric.textContent = s.overlap > 0.82 ? "high" : s.overlap > 0.45 ? "medium" : "low";
+      costMetric.textContent = `${s.cost.toFixed(1)} ms`;
+      tableEl.innerHTML = [
+        ["coverage", `${s.count} controls, padding ${s.padding} cm, jitter ${s.jitter} cm`, s.missRate > 0.34 ? "miss risk" : "ok"],
+        ["overlap", `${s.layout} layout, density ${s.density.toFixed(2)}, overlap ${s.overlap.toFixed(2)}`, overlapMetric.textContent],
+        ["projection", `transparent mesh cost ${s.cost.toFixed(1)} ms at ${s.distance.toFixed(1)} m`, s.cost > 2.1 ? "heavy" : "ok"],
+        ["route", s.reason, s.decision]
+      ].map(([name, body, tag]) => `<div class="row"><strong>${name}</strong><span>${body}</span><span class="tag ${tagClass(s)}">${tag}</span></div>`).join("");
+    }
+
+    Object.values(controls).forEach((control) => control.addEventListener("input", render));
+    document.querySelector("#shuffle").addEventListener("click", () => {
+      cursorSeed = (cursorSeed + 0.23) % 1;
+      render();
+    });
+    document.querySelector("#reset").addEventListener("click", () => {
+      controls.controlCount.value = 6;
+      controls.padding.value = 4;
+      controls.jitter.value = 7;
+      controls.distance.value = 14;
+      controls.layout.value = "grid";
+      controls.gaze.checked = true;
+      controls.debug.checked = true;
+      cursorSeed = 0.37;
+      render();
+    });
+    render();
+  </script>
+</body>
+</html>

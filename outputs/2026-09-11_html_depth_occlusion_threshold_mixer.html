@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Depth Occlusion Threshold Mixer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #20282b;
+      --muted: #617074;
+      --paper: #ffffff;
+      --bg: #f7f5ef;
+      --line: #ddd8c9;
+      --blue: #286a92;
+      --green: #2c7955;
+      --amber: #9a6a25;
+      --red: #aa4d49;
+      --rose: #a14f71;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, rgba(161, 79, 113, .1), transparent 260px), var(--bg);
+    }
+    main { width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 34px; }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 8px; font-size: 2.2rem; line-height: 1.06; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .summary, .panel, .stage, .table {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(47, 43, 35, .07);
+    }
+    .summary { padding: 16px; }
+    .decision { font-size: 1.32rem; font-weight: 900; margin-bottom: 8px; }
+    .decision.clean { color: var(--green); }
+    .decision.feather { color: var(--blue); }
+    .decision.bias { color: var(--amber); }
+    .decision.off { color: var(--red); }
+    .grid { display: grid; grid-template-columns: 320px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { padding: 16px; display: grid; gap: 14px; align-content: start; }
+    label { display: grid; gap: 6px; font-size: .86rem; font-weight: 760; color: #3d494c; }
+    input[type="range"], select { width: 100%; accent-color: var(--rose); }
+    .switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 760; font-size: .9rem; }
+    .switch input { transform: scale(1.12); accent-color: var(--rose); }
+    button {
+      border: 1px solid #c8c1b1;
+      background: #fffdfa;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary { border-color: var(--rose); background: var(--rose); color: white; }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stage {
+      min-height: 468px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      background:
+        linear-gradient(90deg, rgba(40, 106, 146, .08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(44, 121, 85, .08) 1px, transparent 1px),
+        #fffefa;
+      background-size: 38px 38px;
+    }
+    .scene {
+      position: relative;
+      min-height: 320px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff, #ece7dc);
+    }
+    .real-object {
+      position: absolute;
+      left: 18%;
+      top: 24%;
+      width: 38%;
+      height: 54%;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #d4e4df, #8aa9a0);
+      border: 2px solid rgba(32, 40, 43, .16);
+      box-shadow: 0 18px 28px rgba(32, 40, 43, .14);
+    }
+    .virtual-object {
+      position: absolute;
+      left: 45%;
+      top: 28%;
+      width: 34%;
+      height: 48%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #fff, #f6b25d 20%, #df6e51 58%, #8e3f68 100%);
+      opacity: var(--visible);
+      filter: blur(var(--blur));
+      transform: translateX(var(--bias));
+      box-shadow: 0 18px 30px rgba(161, 79, 113, .22);
+    }
+    .mask {
+      position: absolute;
+      left: 35%;
+      top: 18%;
+      width: var(--mask);
+      height: 66%;
+      border: 2px dashed rgba(40, 106, 146, .65);
+      background: rgba(40, 106, 146, .08);
+      border-radius: 8px;
+    }
+    .scanline {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: var(--scan);
+      height: 3px;
+      background: var(--rose);
+      opacity: .72;
+    }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { min-height: 82px; padding: 11px; border: 1px solid var(--line); border-radius: 8px; background: #fffefa; }
+    .metric strong { display: block; font-size: 1.15rem; margin-bottom: 4px; }
+    .table { margin-top: 14px; padding: 14px; display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 130px 1fr 120px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffefa;
+      font-size: .88rem;
+    }
+    .tag { justify-self: start; border-radius: 999px; padding: 4px 8px; font-weight: 850; background: #e8f1f6; color: var(--blue); }
+    .tag.ok { background: #e3f1e8; color: var(--green); }
+    .tag.warn { background: #fff0d6; color: var(--amber); }
+    .tag.bad { background: #ffe7e4; color: var(--red); }
+    @media (max-width: 840px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Depth Occlusion Threshold Mixer</h1>
+        <p>Depth Sensing から来る depth texture / CPU buffer を shader で使う前提で、occlusion の hard edge、feather、bias、hole fallback を調整する派生試作。</p>
+      </div>
+      <section class="summary">
+        <div id="decision" class="decision feather">FEATHER EDGE</div>
+        <p id="summary">境界を少しぼかすと、depth noise を隠しながら前後関係を維持できます。</p>
+      </section>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <label>Virtual object depth <span id="virtualLabel">1.25m</span>
+          <input id="virtualDepth" type="range" min="40" max="260" value="125">
+        </label>
+        <label>Real surface depth <span id="realLabel">1.08m</span>
+          <input id="realDepth" type="range" min="40" max="260" value="108">
+        </label>
+        <label>Threshold bias <span id="biasLabel">4cm</span>
+          <input id="bias" type="range" min="-20" max="28" value="4">
+        </label>
+        <label>Feather width <span id="featherLabel">14cm</span>
+          <input id="feather" type="range" min="0" max="42" value="14">
+        </label>
+        <label>Hole fallback <span id="holeLabel">18%</span>
+          <input id="holes" type="range" min="0" max="60" value="18">
+        </label>
+        <label>Sensor noise <span id="noiseLabel">12%</span>
+          <input id="noise" type="range" min="0" max="55" value="12">
+        </label>
+        <label>
+          Depth source
+          <select id="source">
+            <option value="gpu">GPU texture</option>
+            <option value="cpu">CPU buffer</option>
+            <option value="none">No depth</option>
+          </select>
+        </label>
+        <label class="switch">Smooth depth <input id="smooth" type="checkbox" checked></label>
+        <div class="buttons">
+          <button id="soft" class="primary">Soft Occlusion</button>
+          <button id="hard">Hard Edge</button>
+        </div>
+      </aside>
+
+      <section>
+        <div class="stage">
+          <div class="scene" id="scene">
+            <div class="real-object"></div>
+            <div class="virtual-object" id="virtualObject"></div>
+            <div class="mask" id="mask"></div>
+            <div class="scanline" id="scanline"></div>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="delta">17cm</strong><span>depth delta</span></div>
+            <div class="metric"><strong id="alpha">0.62</strong><span>virtual visibility</span></div>
+            <div class="metric"><strong id="route">feather</strong><span>shader route</span></div>
+            <div class="metric"><strong id="risk">low</strong><span>artifact risk</span></div>
+          </div>
+        </div>
+        <div id="table" class="table"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const controls = ["virtualDepth", "realDepth", "bias", "feather", "holes", "noise", "source", "smooth"].map($);
+
+    function update() {
+      const v = {
+        virtualDepth: Number($("virtualDepth").value) / 100,
+        realDepth: Number($("realDepth").value) / 100,
+        bias: Number($("bias").value) / 100,
+        feather: Number($("feather").value) / 100,
+        holes: Number($("holes").value),
+        noise: Number($("noise").value),
+        source: $("source").value,
+        smooth: $("smooth").checked
+      };
+      $("virtualLabel").textContent = `${v.virtualDepth.toFixed(2)}m`;
+      $("realLabel").textContent = `${v.realDepth.toFixed(2)}m`;
+      $("biasLabel").textContent = `${Math.round(v.bias * 100)}cm`;
+      $("featherLabel").textContent = `${Math.round(v.feather * 100)}cm`;
+      $("holeLabel").textContent = `${v.holes}%`;
+      $("noiseLabel").textContent = `${v.noise}%`;
+
+      const delta = v.virtualDepth - v.realDepth - v.bias;
+      const noisePenalty = (v.noise + v.holes * .8) / 100;
+      let kind = "clean";
+      let title = "CLEAN OCCLUSION";
+      let text = "virtual object と real surface の前後が十分に離れており、硬い occlusion でも破綻しにくいです。";
+      let route = "hard mask";
+      if (v.source === "none") {
+        kind = "off"; title = "DEPTH OFF"; text = "depth source がないため、shadow blob と depth-free reticle で代替します。"; route = "fallback";
+      } else if (v.holes > 42 || v.noise > 40) {
+        kind = "bias"; title = "BIAS + HOLD"; text = "穴や noise が多いため、bias を広げて古い mask を短時間保持します。"; route = "hold mask";
+      } else if (Math.abs(delta) < v.feather + noisePenalty) {
+        kind = "feather"; title = "FEATHER EDGE"; text = "境界を少しぼかすと、depth noise を隠しながら前後関係を維持できます。"; route = "feather";
+      }
+      const visibility = v.source === "none" ? .92 : Math.max(.18, Math.min(.94, delta < 0 ? .28 + v.feather : .72 - noisePenalty * .6));
+      const blur = kind === "feather" ? Math.max(1, v.feather * 18) : kind === "bias" ? 3 : 0;
+      const maskWidth = Math.max(18, Math.min(58, 30 + v.feather * 70 + v.holes * .15));
+      const risk = kind === "off" ? "high" : kind === "bias" ? "medium" : v.noise > 22 ? "watch" : "low";
+
+      $("decision").className = `decision ${kind}`;
+      $("decision").textContent = title;
+      $("summary").textContent = text;
+      $("virtualObject").style.setProperty("--visible", visibility.toFixed(2));
+      $("virtualObject").style.setProperty("--blur", `${blur}px`);
+      $("virtualObject").style.setProperty("--bias", `${v.bias * 140}px`);
+      $("mask").style.setProperty("--mask", `${maskWidth}%`);
+      $("scanline").style.setProperty("--scan", `${22 + v.noise * .9}%`);
+      $("delta").textContent = `${Math.round(delta * 100)}cm`;
+      $("alpha").textContent = visibility.toFixed(2);
+      $("route").textContent = route;
+      $("risk").textContent = risk;
+
+      const rows = [
+        ["source", `${v.source} / ${v.smooth ? "smooth" : "raw"} depth`, v.source === "none" ? "missing" : "ready"],
+        ["threshold", `${Math.round(v.bias * 100)}cm bias, ${Math.round(v.feather * 100)}cm feather`, kind === "clean" ? "hard" : "soft"],
+        ["quality", `${v.holes}% holes, ${v.noise}% noise`, risk],
+        ["next route", text, title]
+      ];
+      $("table").innerHTML = rows.map(([name, body, tag]) => {
+        const tagClass = tag === "ready" || tag === "hard" || tag === "low" ? "ok" : tag === "medium" || tag === "watch" || tag === "soft" ? "warn" : "bad";
+        return `<div class="row"><strong>${name}</strong><span>${body}</span><span class="tag ${tagClass}">${tag}</span></div>`;
+      }).join("");
+    }
+
+    controls.forEach((control) => control.addEventListener("input", update));
+    $("soft").addEventListener("click", () => {
+      $("virtualDepth").value = 124; $("realDepth").value = 112; $("bias").value = 4; $("feather").value = 18; $("holes").value = 16; $("noise").value = 14; $("source").value = "gpu"; $("smooth").checked = true; update();
+    });
+    $("hard").addEventListener("click", () => {
+      $("virtualDepth").value = 175; $("realDepth").value = 94; $("bias").value = 2; $("feather").value = 2; $("holes").value = 4; $("noise").value = 5; $("source").value = "cpu"; $("smooth").checked = false; update();
+    });
+    update();
+  </script>
+</body>
+</html>

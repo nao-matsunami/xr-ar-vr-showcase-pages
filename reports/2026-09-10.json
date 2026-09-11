@@ -1,0 +1,147 @@
+{
+  "date": "2026-09-10",
+  "headline": "WebXR layer の redraw と hit proxy を運用目線で切り分ける",
+  "headlineEn": "Separating WebXR layer redraw and hit-proxy operations",
+  "summary": "WebXR Device API、WebXR Layers API、MDN XRQuadLayer、Immersive Web Layers Samples を参照し、composition layer の redraw 復旧判断を可視化する本命サンプルと、quad layer UI 用の透明 proxy 密度を調整する派生サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Device API, WebXR Layers API, MDN XRQuadLayer, and Immersive Web Layers Samples, today's original work adds a main sample that visualizes composition-layer redraw recovery decisions and a derivative sample for tuning transparent proxy density around quad-layer UI.",
+  "keyTopics": [
+    "WebXR Device API は session support 確認、transient activation、`requestSession()`、XR animation frame loop という基本 flow を明示しており、layer 復旧もこの frame loop の中で扱う必要があります。",
+    "MDN の `XRQuadLayer` は `layers` feature が必要で、`XRWebGLBinding.createQuadLayer()` または `XRMediaBinding.createQuadLayer()` から作成し、`session.updateRenderState()` の layers に渡す流れを示しています。",
+    "`XRQuadLayer` の `redraw` event は layer resource lost や compositor が layer を再投影できない時の再描画 cue として扱えるため、再描画・延期・再作成の分岐が必要です。",
+    "Immersive Web Layers Samples には projection / quad / equirect / media / destroy layer / layer-vs-non-layer / layer hit test などがあり、layer の表現品質と lifecycle を横断して確認できます。",
+    "今日の公開カードは外部デモではなく、このワークスペース内で作った `Layer Redraw Recovery Console` と `Layer Proxy Density Tuner` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Device API defines the basic flow of checking session support, waiting for transient activation, calling `requestSession()`, and running an XR animation frame loop, so layer recovery belongs inside that loop.",
+    "MDN's `XRQuadLayer` notes that the `layers` feature is required, quad layers are created with `XRWebGLBinding.createQuadLayer()` or `XRMediaBinding.createQuadLayer()`, and they are presented through `session.updateRenderState()` layers.",
+    "`XRQuadLayer`'s `redraw` event can be treated as a cue for lost resources or compositor reprojection failure, requiring branches for redraw, defer, and rebuild.",
+    "The Immersive Web Layers Samples cover projection, quad, equirect, media, destroy layer, layer-vs-non-layer, and layer hit test examples, making them useful references for quality and lifecycle checks.",
+    "Today's public cards focus on the original workspace samples `Layer Redraw Recovery Console` and `Layer Proxy Density Tuner`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Layer Redraw Recovery Console",
+      "url": "../outputs/2026-09-10_html_layer_redraw_recovery_console.html"
+    },
+    {
+      "label": "Today's derivative sample: Layer Proxy Density Tuner",
+      "url": "../outputs/2026-09-10_html_layer_proxy_density_tuner.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "MDN: XRQuadLayer",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRQuadLayer"
+    },
+    {
+      "label": "Immersive Web Samples: Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    },
+    {
+      "label": "Immersive Web Samples source: layers",
+      "url": "https://github.com/immersive-web/webxr-samples/tree/main/layers-samples"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は WebXR Layers Samples の layer hit test と destroy layer です。quad / media / projection layer は描画品質や compositor 最適化の利点がある一方、composition layer 自体の lifecycle、`redraw` event、直接 hit test しにくい UI 面の proxy 管理を別に考える必要があります。公式サンプルは挙動確認の基準として参照し、公開カードの中心はこのワークスペース内の redraw recovery と proxy density の2本にしました。",
+      "bodyEn": "Today's notable references are the layer-hit-test and destroy-layer paths in the WebXR Layers Samples. Quad, media, and projection layers can improve visual quality and compositor behavior, but they also require separate thinking about composition-layer lifecycle, `redraw` events, and proxy management for UI surfaces that are hard to hit-test directly. The official samples serve as behavioral references, while the public cards center on the two original workspace samples for redraw recovery and proxy density.",
+      "links": [
+        {
+          "label": "WebXR Layers Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+        },
+        {
+          "label": "MDN: XRQuadLayer",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRQuadLayer"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Layer Redraw Recovery Console` は redraw 発生頻度、texture age、frame budget pressure、viewer motion、layer kind、resources lost、static content を操作し、`CLEAN`、`REDRAW NEXT FRAME`、`DEFER REDRAW`、`REBUILD LAYER` に分岐します。派生サンプル `Layer Proxy Density Tuner` は layer UI 上の操作数、proxy padding、pointer jitter、layer distance、layout、gaze input を動かし、proxy を広げる、target をまとめる、layout を止める、準備完了を判定します。",
+      "bodyEn": "The main sample, `Layer Redraw Recovery Console`, adjusts redraw frequency, texture age, frame-budget pressure, viewer motion, layer kind, resource loss, and static-content state, then routes to `CLEAN`, `REDRAW NEXT FRAME`, `DEFER REDRAW`, or `REBUILD LAYER`. The derivative `Layer Proxy Density Tuner` adjusts control count, proxy padding, pointer jitter, layer distance, layout, and gaze input, then decides whether to expand proxies, merge targets, block the layout, or proceed.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-09-10_html_layer_redraw_recovery_console.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-09-10_html_layer_proxy_density_tuner.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機版では `XRSession.requestAnimationFrame()` の loop 内で layer ごとの dirty flag、last redraw time、texture age、estimated redraw cost、viewer pose delta を記録します。`redraw` event が来たら即座に canvas を描き直すだけでなく、static layer なら予算の低い frame へ延期し、resource lost 相当なら `XRWebGLBinding` または `XRMediaBinding` から layer を作り直して `session.updateRenderState({ layers })` に戻します。quad layer 上のボタンは projection layer 側の透明 mesh / reticle proxy と対応表を持たせ、layout 変更時に proxy bounds を再計算します。",
+      "bodyEn": "A device-backed version should record per-layer dirty flags, last redraw time, texture age, estimated redraw cost, and viewer-pose delta inside the `XRSession.requestAnimationFrame()` loop. When a `redraw` event arrives, do more than repaint immediately: static layers can defer to a cheaper frame, while resource-loss cases should recreate the layer through `XRWebGLBinding` or `XRMediaBinding` and put it back into `session.updateRenderState({ layers })`. Buttons on a quad layer should keep a mapping to transparent meshes or reticle proxies in the projection layer, recalculating proxy bounds whenever layout changes.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        },
+        {
+          "label": "W3C: WebXR Device API application flow",
+          "url": "https://www.w3.org/TR/webxr/"
+        }
+      ]
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは layer kind、redraw queue、texture age、frame budget pressure、viewer motion、resource lost flag、redraw route、proxy count、padding、pointer jitter、estimated miss rate、overlap risk、projection cost が取れます。8月24日の layer lifecycle destroy queue、8月25日の layer hit proxy sync lab、8月30日の gamepad poller stability とつなぐと、layer が壊れる、再描画する、proxy がずれる、入力が混む、という展示 UI の不調を一つの状態表にできます。",
+      "bodyEn": "The two samples expose layer kind, redraw queue, texture age, frame-budget pressure, viewer motion, resource-loss flag, redraw route, proxy count, padding, pointer jitter, estimated miss rate, overlap risk, and projection cost. Connected with the August 24 layer lifecycle destroy queue, August 25 layer hit proxy sync lab, and August 30 gamepad poller stability sample, they can form one state table for exhibition UI failures: layer loss, redraw pressure, proxy mismatch, and crowded input."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Layers API Level 1 の composition layer、projection layer、quad layer、media layer、`redraw` event、Immersive Web Samples の layer hit test / destroy layer / layer-vs-non-layer、MDN の Layers 関連ページ、ブラウザ実装の feature flag と対応状況を継続して見ます。次は実際の canvas redraw 時間を performance marker で採り、今日の合成 cost に流し込むと検証が進みます。",
+      "bodyEn": "Continue watching composition layers, projection layers, quad layers, media layers, the `redraw` event, Immersive Web Samples for layer hit test / destroy layer / layer-vs-non-layer, MDN's layer-related pages, and browser feature flags / support status. A useful next step is measuring real canvas redraw time with performance markers and feeding those values into today's synthetic cost model."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Layer Redraw Recovery Console` で frame budget pressure を 85% 以上、static content を on、texture age を低めにすると `DEFER REDRAW` になります。resources lost を on にすると `REBUILD LAYER` へ切り替わります。`Layer Proxy Density Tuner` では gaze input を on にし、pointer jitter を上げ、padding を下げると `EXPAND PROXIES`、dense toolbar で control 数と padding を上げると `MERGE TARGETS` へ寄ります。",
+      "bodyEn": "In `Layer Redraw Recovery Console`, push frame-budget pressure above 85%, keep static content on, and keep texture age low to get `DEFER REDRAW`; turn on resources lost to switch to `REBUILD LAYER`. In `Layer Proxy Density Tuner`, enable gaze input, increase pointer jitter, and lower padding to get `EXPAND PROXIES`; use a dense toolbar with more controls and padding to move toward `MERGE TARGETS`.",
+      "links": [
+        {
+          "label": "Open Layer Redraw Recovery Console",
+          "url": "../outputs/2026-09-10_html_layer_redraw_recovery_console.html"
+        },
+        {
+          "label": "Open Layer Proxy Density Tuner",
+          "url": "../outputs/2026-09-10_html_layer_proxy_density_tuner.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、Immersive Web Layers API、MDN `XRQuadLayer`、Immersive Web Layers Samples、webxr-samples の layers source を確認。設計: 1本目は redraw event 後の復旧 console、2本目は layer UI の transparent proxy density tuner。実装: `outputs/2026-09-10_html_layer_redraw_recovery_console.html` と `outputs/2026-09-10_html_layer_proxy_density_tuner.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。",
+      "bodyEn": "Research: reviewed the W3C WebXR Device API, Immersive Web Layers API, MDN `XRQuadLayer`, Immersive Web Layers Samples, and webxr-samples layer sources. Design: make the first sample a redraw-event recovery console and the second a transparent-proxy density tuner for layer UI. Implementation: add `outputs/2026-09-10_html_layer_redraw_recovery_console.html` and `outputs/2026-09-10_html_layer_proxy_density_tuner.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "これまでの流れは anchor / hit-test / input log から、今日は composition layer の運用へ戻りました。WebXR layer は品質を上げるための描画手段ですが、展示や業務 UI では「きれいに出る」だけでは足りず、いつ再描画し、いつ捨てて作り直し、どの proxy で触らせるかが品質になります。今日の2本は、その運用判断を実機なしでも触れる形にしたものです。",
+      "bodyEn": "The recent sequence has moved from anchors, hit testing, and input logs back into composition-layer operations today. WebXR layers can improve visual quality, but exhibition and operational UI need more than clean rendering: quality depends on when to redraw, when to discard and recreate, and which proxies accept interaction. Today's two samples make those operational decisions adjustable without requiring a headset."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Layer Redraw Recovery Console` です。何が動くか: redraw rate、texture age、budget、motion、layer kind、resource lost を操作し、clean、redraw、defer、rebuild を判定します。次に足すなら、実 canvas の再描画時間と `redraw` event 時刻を IndexedDB に保存して、日別の layer health log にします。派生として `Layer Proxy Density Tuner` も実装しました。何が動くか: control 数、padding、pointer jitter、距離、layout、gaze input を操作し、proxy 拡張、target 統合、layout block を判定します。次に足すなら、1本目の layer rebuild 時に proxy bounds を再同期し、古い proxy を自動で無効化します。",
+      "bodyEn": "The selected main prototype is `Layer Redraw Recovery Console`. What it does: adjusts redraw rate, texture age, budget, motion, layer kind, and resource loss, then classifies clean, redraw, defer, or rebuild routes. Next addition: save real canvas redraw times and `redraw` event timestamps to IndexedDB as a daily layer-health log. The derivative `Layer Proxy Density Tuner` was also implemented. What it does: adjusts control count, padding, pointer jitter, distance, layout, and gaze input, then classifies proxy expansion, target merging, or layout blocking. Next addition: resync proxy bounds whenever the first sample rebuilds a layer and automatically invalidate stale proxies."
+    }
+  ]
+}

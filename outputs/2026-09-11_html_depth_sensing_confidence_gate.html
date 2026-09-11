@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Depth Sensing Confidence Gate</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1e282b;
+      --muted: #5d6d72;
+      --paper: #ffffff;
+      --bg: #f4f7f2;
+      --line: #d7dfd4;
+      --blue: #2b6c95;
+      --green: #2e7b56;
+      --amber: #a16b22;
+      --red: #b15149;
+      --plum: #87507f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, rgba(43, 108, 149, .1), transparent 280px), var(--bg);
+    }
+    main { width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 34px; }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 8px; font-size: 2.25rem; line-height: 1.05; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .summary, .panel, .stage, .ledger {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(45, 55, 48, .07);
+    }
+    .summary { padding: 16px; }
+    .decision { font-size: 1.35rem; font-weight: 900; margin-bottom: 8px; }
+    .decision.commit { color: var(--green); }
+    .decision.patch { color: var(--blue); }
+    .decision.hold { color: var(--amber); }
+    .decision.block { color: var(--red); }
+    .grid { display: grid; grid-template-columns: 320px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { padding: 16px; display: grid; gap: 14px; align-content: start; }
+    label { display: grid; gap: 6px; font-size: .86rem; font-weight: 760; color: #38494d; }
+    input[type="range"], select { width: 100%; accent-color: var(--blue); }
+    .switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 760; font-size: .9rem; }
+    .switch input { transform: scale(1.12); accent-color: var(--blue); }
+    button {
+      border: 1px solid #bdc9bb;
+      background: #fbfcfa;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary { border-color: var(--blue); background: var(--blue); color: white; }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stage {
+      min-height: 468px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(43, 108, 149, .08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(46, 123, 86, .08) 1px, transparent 1px),
+        #fffefa;
+      background-size: 40px 40px;
+    }
+    .viewport {
+      position: relative;
+      min-height: 320px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff, #e9eee8);
+    }
+    .camera {
+      position: absolute;
+      inset: 18px;
+      border: 2px solid rgba(43, 108, 149, .32);
+      border-radius: 8px;
+      background: radial-gradient(circle at 50% 58%, rgba(135, 80, 127, .12), transparent 35%);
+    }
+    .depth-grid {
+      position: absolute;
+      inset: 34px;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 5px;
+    }
+    .cell {
+      border: 1px solid rgba(30, 40, 43, .1);
+      border-radius: 6px;
+      background: hsl(var(--hue), 60%, var(--light));
+      opacity: var(--alpha);
+    }
+    .reticle {
+      position: absolute;
+      left: var(--rx);
+      top: var(--ry);
+      width: 54px;
+      height: 54px;
+      border: 3px solid var(--plum);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, .55);
+    }
+    .reticle::after {
+      content: "";
+      position: absolute;
+      inset: 16px;
+      border-radius: 50%;
+      background: var(--plum);
+    }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { min-height: 82px; padding: 11px; border: 1px solid var(--line); border-radius: 8px; background: #fffefa; }
+    .metric strong { display: block; font-size: 1.15rem; margin-bottom: 4px; }
+    .ledger { margin-top: 14px; padding: 14px; display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 120px 1fr 130px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffefa;
+      font-size: .88rem;
+    }
+    .tag { justify-self: start; border-radius: 999px; padding: 4px 8px; font-weight: 850; background: #e7f1f6; color: var(--blue); }
+    .tag.ok { background: #e5f3ea; color: var(--green); }
+    .tag.warn { background: #fff0d6; color: var(--amber); }
+    .tag.bad { background: #ffe8e4; color: var(--red); }
+    @media (max-width: 840px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Depth Sensing Confidence Gate</h1>
+        <p>WebXR Depth Sensing の CPU / GPU usage、depthActive、frame age、raw-to-meters scale、view alignment を合成し、occlusion や物理反応へ渡してよい depth row かを判定する最小ラボ。</p>
+      </div>
+      <section class="summary">
+        <div id="decision" class="decision commit">COMMIT DEPTH</div>
+        <p id="summary">depth frame は現在の view と十分に近く、occlusion へ渡せます。</p>
+      </section>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <label>Depth usage
+          <select id="usage">
+            <option value="cpu">cpu-optimized</option>
+            <option value="gpu">gpu-optimized</option>
+            <option value="none">not enabled</option>
+          </select>
+        </label>
+        <label>Depth type
+          <select id="type">
+            <option value="raw">raw</option>
+            <option value="smooth">smooth</option>
+          </select>
+        </label>
+        <label>Frame age <span id="ageLabel">42 ms</span>
+          <input id="age" type="range" min="0" max="240" value="42">
+        </label>
+        <label>Raw value to meters <span id="scaleLabel">0.0010</span>
+          <input id="scale" type="range" min="2" max="40" value="10">
+        </label>
+        <label>View alignment error <span id="alignLabel">6 px</span>
+          <input id="align" type="range" min="0" max="80" value="6">
+        </label>
+        <label>Depth confidence <span id="confLabel">84%</span>
+          <input id="confidence" type="range" min="0" max="100" value="84">
+        </label>
+        <label>Depth holes <span id="holesLabel">9%</span>
+          <input id="holes" type="range" min="0" max="60" value="9">
+        </label>
+        <label class="switch">depthActive <input id="active" type="checkbox" checked></label>
+        <label class="switch">matchDepthView <input id="match" type="checkbox" checked></label>
+        <div class="buttons">
+          <button id="stable" class="primary">Stable AR</button>
+          <button id="stress">Stress Depth</button>
+        </div>
+      </aside>
+
+      <section>
+        <div class="stage">
+          <div class="viewport">
+            <div class="camera"></div>
+            <div id="depthGrid" class="depth-grid"></div>
+            <div id="reticle" class="reticle"></div>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="quality">83</strong><span>quality score</span></div>
+            <div class="metric"><strong id="meters">1.42m</strong><span>sample depth</span></div>
+            <div class="metric"><strong id="route">occlusion</strong><span>route</span></div>
+            <div class="metric"><strong id="format">Uint16</strong><span>format path</span></div>
+          </div>
+        </div>
+        <div id="ledger" class="ledger"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const controls = ["usage", "type", "age", "scale", "align", "confidence", "holes", "active", "match"].map($);
+    const grid = $("depthGrid");
+
+    for (let i = 0; i < 40; i += 1) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      grid.appendChild(cell);
+    }
+
+    function classify(v) {
+      if (!v.active || v.usage === "none") return ["block", "BLOCK DEPTH", "depth-sensing が使えないため、camera feed + reticle fallback に落とします。", "no depth"];
+      if (!v.match || v.align > 45 || v.age > 180) return ["hold", "HOLD FRAME", "view と depth buffer の対応が弱く、次の animation frame まで保持します。", "wait"];
+      if (v.confidence < 58 || v.holes > 32 || v.age > 110) return ["patch", "PATCH DEPTH", "欠損や古い値を近傍 depth で補ってから渡します。", "patched"];
+      return ["commit", "COMMIT DEPTH", "depth frame は現在の view と十分に近く、occlusion へ渡せます。", "occlusion"];
+    }
+
+    function update() {
+      const v = {
+        usage: $("usage").value,
+        type: $("type").value,
+        age: Number($("age").value),
+        scale: Number($("scale").value) / 10000,
+        align: Number($("align").value),
+        confidence: Number($("confidence").value),
+        holes: Number($("holes").value),
+        active: $("active").checked,
+        match: $("match").checked
+      };
+      $("ageLabel").textContent = `${v.age} ms`;
+      $("scaleLabel").textContent = v.scale.toFixed(4);
+      $("alignLabel").textContent = `${v.align} px`;
+      $("confLabel").textContent = `${v.confidence}%`;
+      $("holesLabel").textContent = `${v.holes}%`;
+
+      const quality = Math.max(0, Math.round(v.confidence - v.holes * 1.1 - v.age * .12 - v.align * .35 + (v.active ? 8 : -40)));
+      const depthMeters = (820 * v.scale + 0.58 + v.align / 160).toFixed(2);
+      const [kind, title, text, route] = classify(v);
+      $("decision").className = `decision ${kind}`;
+      $("decision").textContent = title;
+      $("summary").textContent = text;
+      $("quality").textContent = quality;
+      $("meters").textContent = `${depthMeters}m`;
+      $("route").textContent = route;
+      $("format").textContent = v.usage === "gpu" ? "texture" : v.type === "raw" ? "Uint16" : "Float32";
+      $("reticle").style.setProperty("--rx", `${50 + v.align * .22}%`);
+      $("reticle").style.setProperty("--ry", `${50 + (v.age - 60) * .04}%`);
+
+      [...grid.children].forEach((cell, index) => {
+        const wave = Math.sin(index * .7 + v.age * .03) * 18;
+        const hole = (index * 13 + v.holes) % 100 < v.holes;
+        cell.style.setProperty("--hue", hole ? 6 : 198 - quality * .7 + wave);
+        cell.style.setProperty("--light", `${hole ? 91 : 76 - quality * .22}%`);
+        cell.style.setProperty("--alpha", hole ? .32 : .58 + quality / 180);
+      });
+
+      const rows = [
+        ["feature", v.usage === "none" ? "depth-sensing disabled" : `${v.usage}-optimized / ${v.type}`, v.active ? "enabled" : "paused"],
+        ["frame", `${v.age}ms old, ${v.align}px alignment error`, v.age < 90 && v.align < 24 ? "ok" : "watch"],
+        ["buffer", `${v.holes}% holes, scale ${v.scale.toFixed(4)}`, v.holes < 20 ? "usable" : "patch"],
+        ["route", text, title]
+      ];
+      $("ledger").innerHTML = rows.map(([name, body, tag]) => {
+        const tagClass = tag === "ok" || tag === "usable" || tag === "enabled" ? "ok" : tag === "patch" || tag === "watch" ? "warn" : title.includes("BLOCK") ? "bad" : "";
+        return `<div class="row"><strong>${name}</strong><span>${body}</span><span class="tag ${tagClass}">${tag}</span></div>`;
+      }).join("");
+    }
+
+    controls.forEach((control) => control.addEventListener("input", update));
+    $("stable").addEventListener("click", () => {
+      $("usage").value = "cpu"; $("type").value = "raw"; $("age").value = 36; $("scale").value = 10; $("align").value = 5; $("confidence").value = 88; $("holes").value = 7; $("active").checked = true; $("match").checked = true; update();
+    });
+    $("stress").addEventListener("click", () => {
+      $("usage").value = "gpu"; $("type").value = "smooth"; $("age").value = 172; $("scale").value = 18; $("align").value = 38; $("confidence").value = 54; $("holes").value = 34; $("active").checked = true; $("match").checked = false; update();
+    });
+    update();
+  </script>
+</body>
+</html>

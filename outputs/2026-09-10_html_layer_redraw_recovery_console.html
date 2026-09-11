@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Layer Redraw Recovery Console</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1d252a;
+      --muted: #5d6b72;
+      --paper: #ffffff;
+      --bg: #f4f7f6;
+      --line: #d6e0df;
+      --blue: #256d9b;
+      --green: #2d7c56;
+      --amber: #a56f25;
+      --red: #b34f4b;
+      --violet: #6750a4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(37, 109, 155, .11), transparent 280px),
+        var(--bg);
+    }
+    main {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 34px;
+    }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 2.3rem;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .panel, .stage, .summary, .log {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(37, 49, 53, .07);
+    }
+    .summary { padding: 16px; }
+    .decision {
+      font-size: 1.35rem;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .decision.clean { color: var(--green); }
+    .decision.redraw { color: var(--blue); }
+    .decision.defer { color: var(--amber); }
+    .decision.rebuild { color: var(--red); }
+    .grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: .86rem;
+      font-weight: 760;
+      color: #34484f;
+    }
+    input[type="range"], select { width: 100%; accent-color: var(--blue); }
+    .switch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 34px;
+      color: #34484f;
+      font-weight: 760;
+      font-size: .9rem;
+    }
+    .switch input { transform: scale(1.12); accent-color: var(--blue); }
+    button {
+      border: 1px solid #b8c8c9;
+      background: #f9fbfb;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: white;
+    }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stage {
+      min-height: 460px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(37, 109, 155, .1) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(45, 124, 86, .1) 1px, transparent 1px),
+        #fbfcfb;
+      background-size: 40px 40px;
+    }
+    .xr-view {
+      position: relative;
+      min-height: 310px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 50% 56%, rgba(37, 109, 155, .11), transparent 30%),
+        linear-gradient(180deg, #ffffff, #edf2f1);
+      overflow: hidden;
+    }
+    .projection {
+      position: absolute;
+      inset: 18px;
+      border: 2px solid rgba(37, 109, 155, .32);
+      border-radius: 8px;
+    }
+    .layer {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 46%;
+      height: 34%;
+      transform: translate(-50%, -50%) rotateX(8deg) rotateZ(var(--tilt));
+      border: 3px solid var(--blue);
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(37, 109, 155, .18), rgba(255, 255, 255, .92));
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 14px;
+      font-weight: 900;
+      color: var(--blue);
+      box-shadow: 0 18px 30px rgba(37, 49, 53, .14);
+    }
+    .layer.dirty { border-color: var(--amber); color: var(--amber); }
+    .layer.lost { border-color: var(--red); color: var(--red); background: repeating-linear-gradient(45deg, #fff, #fff 12px, #ffe9e6 12px, #ffe9e6 24px); }
+    .sprite {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--violet);
+      left: var(--x);
+      top: var(--y);
+      transform: translate(-50%, -50%);
+      opacity: .8;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .metric {
+      min-height: 82px;
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+    }
+    .metric strong { display: block; font-size: 1.15rem; margin-bottom: 4px; }
+    .log {
+      margin-top: 14px;
+      padding: 14px;
+      display: grid;
+      gap: 8px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 115px 1fr 125px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      font-size: .88rem;
+    }
+    .tag {
+      justify-self: start;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-weight: 850;
+      background: #e8f4f8;
+      color: var(--blue);
+    }
+    .tag.warn { background: #fff0d8; color: var(--amber); }
+    .tag.bad { background: #ffe8e6; color: var(--red); }
+    .tag.ok { background: #e5f4ea; color: var(--green); }
+    @media (max-width: 840px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Layer Redraw Recovery Console</h1>
+        <p>WebXR Layers の composition layer が `redraw` を要求した時、次 frame で再描画するか、低優先度に回すか、layer を作り直すかを切り分ける最小検証です。</p>
+      </div>
+      <section class="summary" aria-live="polite">
+        <div id="decision" class="decision redraw">REDRAW NEXT FRAME</div>
+        <p id="reason">layer texture は汚れていて、予算内で再描画できます。</p>
+      </section>
+    </header>
+
+    <section class="grid">
+      <aside class="panel" aria-label="Layer redraw controls">
+        <label>Redraw events per second <span id="redrawValue">4</span>
+          <input id="redrawRate" type="range" min="0" max="18" value="4">
+        </label>
+        <label>Texture age ms <span id="ageValue">72</span>
+          <input id="textureAge" type="range" min="0" max="600" value="72">
+        </label>
+        <label>Frame budget pressure % <span id="budgetValue">56</span>
+          <input id="budget" type="range" min="0" max="100" value="56">
+        </label>
+        <label>Viewer motion speed <span id="motionValue">0.42</span>
+          <input id="motion" type="range" min="0" max="100" value="42">
+        </label>
+        <label>Layer kind
+          <select id="layerKind">
+            <option value="quad">XRQuadLayer HUD</option>
+            <option value="equirect">XREquirectLayer media</option>
+            <option value="projection">XRProjectionLayer scene</option>
+          </select>
+        </label>
+        <div class="switch"><span>resources lost</span><input id="lost" type="checkbox"></div>
+        <div class="switch"><span>static content</span><input id="staticContent" type="checkbox" checked></div>
+        <div class="buttons">
+          <button id="pulse" class="primary" type="button">Inject redraw</button>
+          <button id="reset" type="button">Reset</button>
+        </div>
+      </aside>
+
+      <div>
+        <section class="stage">
+          <div class="xr-view">
+            <div class="projection"></div>
+            <div id="layer" class="layer">quad layer<br>redraw queue</div>
+            <div class="sprite" style="--x: 21%; --y: 28%"></div>
+            <div class="sprite" style="--x: 76%; --y: 32%"></div>
+            <div class="sprite" style="--x: 34%; --y: 78%"></div>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="queueMetric">2</strong><span>queued redraws</span></div>
+            <div class="metric"><strong id="costMetric">3.8 ms</strong><span>estimated redraw cost</span></div>
+            <div class="metric"><strong id="staleMetric">72 ms</strong><span>visible texture age</span></div>
+            <div class="metric"><strong id="riskMetric">low</strong><span>viewer-visible risk</span></div>
+          </div>
+        </section>
+        <section class="log" id="log" aria-label="Decision log"></section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const controls = {
+      redrawRate: document.querySelector("#redrawRate"),
+      textureAge: document.querySelector("#textureAge"),
+      budget: document.querySelector("#budget"),
+      motion: document.querySelector("#motion"),
+      layerKind: document.querySelector("#layerKind"),
+      lost: document.querySelector("#lost"),
+      staticContent: document.querySelector("#staticContent")
+    };
+    const labels = {
+      redrawValue: document.querySelector("#redrawValue"),
+      ageValue: document.querySelector("#ageValue"),
+      budgetValue: document.querySelector("#budgetValue"),
+      motionValue: document.querySelector("#motionValue")
+    };
+    const decisionEl = document.querySelector("#decision");
+    const reasonEl = document.querySelector("#reason");
+    const layerEl = document.querySelector("#layer");
+    const logEl = document.querySelector("#log");
+    const queueMetric = document.querySelector("#queueMetric");
+    const costMetric = document.querySelector("#costMetric");
+    const staleMetric = document.querySelector("#staleMetric");
+    const riskMetric = document.querySelector("#riskMetric");
+    let injected = 0;
+
+    function state() {
+      const redrawRate = Number(controls.redrawRate.value);
+      const textureAge = Number(controls.textureAge.value);
+      const budget = Number(controls.budget.value);
+      const motion = Number(controls.motion.value) / 100;
+      const kind = controls.layerKind.value;
+      const baseCost = kind === "equirect" ? 5.2 : kind === "projection" ? 6.8 : 3.1;
+      const queue = Math.max(0, Math.round(redrawRate / 3 + injected));
+      const cost = baseCost + queue * 0.65 + motion * 2.2;
+      const riskScore = textureAge / 600 + motion * 0.7 + redrawRate / 30;
+      let decision = "CLEAN";
+      let cls = "clean";
+      let reason = "texture は新しく、composition layer を維持できます。";
+      if (controls.lost.checked) {
+        decision = "REBUILD LAYER";
+        cls = "rebuild";
+        reason = "resources lost が立っているため、redraw だけではなく layer 作成から復旧します。";
+      } else if (budget > 82 && controls.staticContent.checked && textureAge < 420) {
+        decision = "DEFER REDRAW";
+        cls = "defer";
+        reason = "frame budget が詰まっているため、静的 layer の redraw を次の余裕 frame へ送ります。";
+      } else if (queue > 0 || textureAge > 150 || riskScore > 0.72) {
+        decision = "REDRAW NEXT FRAME";
+        cls = "redraw";
+        reason = "表示劣化が見え始める前に、次の XR animation frame で texture を更新します。";
+      }
+      return { redrawRate, textureAge, budget, motion, kind, baseCost, queue, cost, riskScore, decision, cls, reason };
+    }
+
+    function tagClass(decision) {
+      if (decision === "CLEAN") return "ok";
+      if (decision === "DEFER REDRAW") return "warn";
+      if (decision === "REBUILD LAYER") return "bad";
+      return "";
+    }
+
+    function render() {
+      const s = state();
+      labels.redrawValue.textContent = s.redrawRate;
+      labels.ageValue.textContent = s.textureAge;
+      labels.budgetValue.textContent = s.budget;
+      labels.motionValue.textContent = s.motion.toFixed(2);
+      decisionEl.textContent = s.decision;
+      decisionEl.className = `decision ${s.cls}`;
+      reasonEl.textContent = s.reason;
+      layerEl.className = `layer ${s.cls === "rebuild" ? "lost" : s.cls === "redraw" || s.cls === "defer" ? "dirty" : ""}`;
+      layerEl.style.setProperty("--tilt", `${(s.motion * 10 - 3).toFixed(1)}deg`);
+      layerEl.innerHTML = `${s.kind} layer<br>${s.decision.toLowerCase()}`;
+      queueMetric.textContent = s.queue;
+      costMetric.textContent = `${s.cost.toFixed(1)} ms`;
+      staleMetric.textContent = `${s.textureAge} ms`;
+      riskMetric.textContent = s.riskScore > 0.95 ? "high" : s.riskScore > 0.62 ? "medium" : "low";
+      const rows = [
+        ["redraw", `${s.redrawRate}/s, queue ${s.queue}`, s.queue ? "pending" : "none"],
+        ["budget", `${s.budget}% pressure, ${s.cost.toFixed(1)} ms cost`, s.budget > 82 ? "tight" : "ok"],
+        ["visibility", `${s.textureAge} ms old, motion ${s.motion.toFixed(2)}`, riskMetric.textContent],
+        ["route", s.reason, s.decision]
+      ];
+      logEl.innerHTML = rows.map(([name, body, tag]) => `<div class="row"><strong>${name}</strong><span>${body}</span><span class="tag ${tagClass(s.decision)}">${tag}</span></div>`).join("");
+      injected = Math.max(0, injected - 0.18);
+    }
+
+    Object.values(controls).forEach((control) => control.addEventListener("input", render));
+    document.querySelector("#pulse").addEventListener("click", () => {
+      injected += 2;
+      render();
+    });
+    document.querySelector("#reset").addEventListener("click", () => {
+      controls.redrawRate.value = 4;
+      controls.textureAge.value = 72;
+      controls.budget.value = 56;
+      controls.motion.value = 42;
+      controls.layerKind.value = "quad";
+      controls.lost.checked = false;
+      controls.staticContent.checked = true;
+      injected = 0;
+      render();
+    });
+    render();
+    setInterval(render, 900);
+  </script>
+</body>
+</html>
