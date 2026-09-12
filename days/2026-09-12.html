@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR Plane Detection を配置前の平面ライフサイクル台帳にする | 2026-09-12</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.09.12</p>
+      <h1>WebXR Plane Detection を配置前の平面ライフサイクル台帳にする</h1>
+      <p class="hero-subtitle">Turning WebXR Plane Detection into a pre-placement plane lifecycle ledger</p>
+      <p>Chrome 147 の WebXR Plane Detection、Immersive Web の Plane Detection 仕様 / explainer、MDN の `XRPlane` を参照し、検出平面の age、polygon、orientation、semantic label、depth / hit-test agreement を配置前に判定する本命サンプルと、semantic label から配置先を選ぶ派生サンプルを追加しました。</p>
+      <p class="en-copy">After reviewing Chrome 147's WebXR Plane Detection note, the Immersive Web Plane Detection specification / explainer, and MDN's `XRPlane`, today's original work adds a main sample that gates detected planes before placement and a derivative sample that routes placement by semantic plane label.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-11.html">← 2026.09.11</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Plane Detection Lifecycle Ledger</h3>
+              <p>WebXR Plane Detection の `detectedPlanes` を想定し、lastChangedTime、polygon size、orientation、semantic label、depth confidence を合成して配置に使える平面かを判定する最小ラボ。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Plane Label Placement Router</h3>
+              <p>Plane Detection の semantic label を直接信じ切らず、目的物、surface label、面積、傾き、depth confidence を合わせて配置先を選ぶ派生試作。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-12_html_plane_label_placement_router.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>Chrome 147 のリリースノートでは、WebXR Plane Detection が `detectedPlanes` と `lastChangedTime` を通じて実世界の壁、床、テーブルなどの flat surface 情報を提供する点が紹介されています。</span>
+              <span class="en-copy">Chrome 147's release notes describe WebXR Plane Detection as exposing real-world flat surfaces such as walls, floors, and tables through `detectedPlanes` and `lastChangedTime`.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の Plane Detection 仕様は `plane-detection` feature descriptor、`XRFrame.detectedPlanes`、`XRPlane.planeSpace`、`polygon`、`orientation`、`semanticLabel` を整理しています。</span>
+              <span class="en-copy">The Immersive Web Plane Detection specification defines the `plane-detection` feature descriptor plus `XRFrame.detectedPlanes`, `XRPlane.planeSpace`, `polygon`, `orientation`, and `semanticLabel`.</span>
+            </li>
+          
+            <li>
+              <span>Plane Detection は Hit Test の単発結果よりも広い面の状態を扱える一方、平面の更新時刻、polygon の揺れ、semantic label の信頼度、Depth Sensing との一致をアプリ側で見る必要があります。</span>
+              <span class="en-copy">Plane Detection can reason about broad surfaces beyond single hit-test results, but applications still need to inspect update age, polygon jitter, semantic label confidence, and agreement with depth sensing.</span>
+            </li>
+          
+            <li>
+              <span>昨日の Depth Sensing confidence gate から一歩進め、今日は depth が示す距離と plane が示す surface を同じ placement ledger に載せる設計にしました。</span>
+              <span class="en-copy">Building on yesterday's Depth Sensing confidence gate, today's design puts depth distance and plane surface state into the same placement ledger.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、このワークスペース内で作った `Plane Detection Lifecycle Ledger` と `Plane Label Placement Router` の2本です。</span>
+              <span class="en-copy">Today's public cards focus on the original workspace samples `Plane Detection Lifecycle Ledger` and `Plane Label Placement Router`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>今日の注目は Chrome 147 の WebXR Plane Detection と、Immersive Web の Plane Detection 仕様 / explainer です。`plane-detection` feature が有効な AR session では、`XRFrame.detectedPlanes` から `XRPlane` の集合を読み、`planeSpace`、`polygon`、`orientation`、`semanticLabel`、`lastChangedTime` を配置判断に使えます。面白いのは、Hit Test がその瞬間の交点を返すのに対し、Plane Detection は surface の寿命や更新差分を扱える点です。公式情報は参照として使い、公開カードの中心はこのワークスペース内で作った平面ライフサイクル台帳と semantic 配置 router にしました。</p>
+          <p class="en-copy">Today's notable references are Chrome 147's WebXR Plane Detection note and the Immersive Web Plane Detection specification / explainer. In an AR session with the `plane-detection` feature enabled, `XRFrame.detectedPlanes` exposes a set of `XRPlane` objects whose `planeSpace`, `polygon`, `orientation`, `semanticLabel`, and `lastChangedTime` can guide placement decisions. The interesting distinction is that hit testing returns an intersection for the current moment, while plane detection exposes surface lifetime and update deltas. The official material is used as reference, while the public cards center on the original workspace plane lifecycle ledger and semantic placement router.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developer.chrome.com/release-notes/147" target="_blank" rel="noreferrer">Chrome Developers: Chrome 147 release notes</a></li>
+          
+            <li><a href="https://immersive-web.github.io/plane-detection/" target="_blank" rel="noreferrer">Immersive Web: WebXR Plane Detection Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Plane Detection Lifecycle Ledger` は plane feature、semantic label、orientation、plane age、polygon area、normal drift、depth agreement、hit-test support、session active を操作し、`COMMIT PLANE`、`PATCH PLANE`、`HOLD PLANE`、`BLOCK PLANE` に分岐します。派生サンプル `Plane Label Placement Router` は配置したい object intent と detected label、面積、傾き、depth confidence、freshness、retarget tolerance を合わせ、floor、table、wall、reticle preview のどこに置くかを選びます。</p>
+          <p class="en-copy">The main sample, `Plane Detection Lifecycle Ledger`, adjusts plane feature availability, semantic label, orientation, plane age, polygon area, normal drift, depth agreement, hit-test support, and session activity, routing to `COMMIT PLANE`, `PATCH PLANE`, `HOLD PLANE`, or `BLOCK PLANE`. The derivative sample, `Plane Label Placement Router`, combines object intent with detected label, area, tilt, depth confidence, freshness, and retarget tolerance to choose between floor, table, wall, or reticle preview placement.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html" target="_blank" rel="noreferrer">Open main sample</a></li>
+          
+            <li><a href="../outputs/2026-09-12_html_plane_label_placement_router.html" target="_blank" rel="noreferrer">Open derivative sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実機版では `navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['plane-detection'] })` または optional feature で session を開始し、各 frame で `frame.detectedPlanes` を読む構成にします。`XRPlane.lastChangedTime` を前回値と比較して geometry 更新を検出し、`planeSpace` の pose と `polygon` の面積 / normal drift を ledger row にします。`semanticLabel` は床、壁、テーブルなどの初期 route に使えますが、Depth Sensing の confidence や Hit Test の一致が弱い場合は配置確定ではなく preview / patch に落とす方が安全です。</p>
+          <p class="en-copy">A device-backed version can start an AR session with `navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['plane-detection'] })` or the same descriptor as an optional feature, then read `frame.detectedPlanes` each frame. Compare `XRPlane.lastChangedTime` with the previous value to detect geometry updates, and log `planeSpace` pose plus polygon area and normal drift as ledger rows. `semanticLabel` can seed routes such as floor, wall, and table, but placement should fall back to preview or patch when depth confidence or hit-test agreement is weak.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の2本からは plane feature availability、semantic label、orientation、plane age、polygon area、normal drift、depth agreement、hit-test support、session state、object intent、retarget tolerance、placement route が取れます。9月4日の policy / hit / camera gate、9月7日の anchor replay bridge、9月11日の depth confidence gate と組み合わせると、平面検出から anchor 確定、遮蔽、再配置までを1つの AR placement health ledger にできます。展示 UI なら壁面パネルと床面演出の自動振り分け、業務 UI ならテーブル上だけに工具パネルを出すといった制御に使えます。</p>
+          <p class="en-copy">The two samples produce plane feature availability, semantic label, orientation, plane age, polygon area, normal drift, depth agreement, hit-test support, session state, object intent, retarget tolerance, and placement route. Combined with the September 4 policy / hit / camera gate, September 7 anchor replay bridge, and September 11 depth confidence gate, they can form one AR placement health ledger from plane detection through anchor confirmation, occlusion, and relocation. For installations, this can route wall panels and floor effects automatically; for operational UI, it can restrict tool panels to table surfaces only.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>Chrome の Plane Detection 実装状況、Immersive Web Plane Detection 仕様 / explainer、MDN の `XRPlane` / `XRFrame.detectedPlanes`、WebXR Anchors と Hit Test の仕様更新、ブラウザの `plane-detection` feature flag と device support を継続して見ます。次は detected plane から anchor を作るまでの handoff queue、または plane polygon の frame-to-frame 差分を可視化する jitter heatmap を扱うと重複が少ないです。</p>
+          <p class="en-copy">Continue watching Chrome's Plane Detection implementation status, the Immersive Web Plane Detection specification / explainer, MDN pages for `XRPlane` and `XRFrame.detectedPlanes`, WebXR Anchors and Hit Test updates, plus browser `plane-detection` flags and device support. A good next step is a handoff queue from detected plane to anchor creation, or a jitter heatmap that visualizes frame-to-frame changes in plane polygons.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Plane Detection Lifecycle Ledger` で Plane age を 340ms 以上、Normal drift を 28deg 以上、または label を unknown にすると hold / patch に寄ります。Feature を not available にすると `BLOCK PLANE` になります。`Plane Label Placement Router` では object intent と detected label をずらし、Retarget tolerance を上げると `RETARGET`、depth confidence と freshness を下げると `BLOCK PLACEMENT` になります。</p>
+          <p class="en-copy">In `Plane Detection Lifecycle Ledger`, push plane age above 340ms, normal drift above 28deg, or set the label to unknown to move toward hold / patch; set the feature to not available to get `BLOCK PLANE`. In `Plane Label Placement Router`, mismatch object intent and detected label, then raise retarget tolerance for `RETARGET`; lower depth confidence and freshness for `BLOCK PLACEMENT`.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html" target="_blank" rel="noreferrer">Open Plane Detection Lifecycle Ledger</a></li>
+          
+            <li><a href="../outputs/2026-09-12_html_plane_label_placement_router.html" target="_blank" rel="noreferrer">Open Plane Label Placement Router</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Chrome 147 release notes、Immersive Web Plane Detection Module、Plane Detection explainer、MDN `XRPlane` / `XRFrame.detectedPlanes`、Immersive Web Samples proposals を確認。設計: 1本目は detected plane の lifecycle ledger、2本目は semantic label を使う placement router。実装: `outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html` と `outputs/2026-09-12_html_plane_label_placement_router.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。</p>
+          <p class="en-copy">Research: reviewed Chrome 147 release notes, the Immersive Web Plane Detection Module, the Plane Detection explainer, MDN `XRPlane` / `XRFrame.detectedPlanes`, and Immersive Web Samples proposals. Design: make the first sample a lifecycle ledger for detected planes and the second a placement router using semantic labels. Implementation: add `outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html` and `outputs/2026-09-12_html_plane_label_placement_router.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>ここ数日の流れは policy、camera、hit-test、anchors、layers、depth から plane へ進み、AR placement の材料がほぼ揃ってきました。Plane Detection は配置の文脈を与え、Hit Test は一点の確度を与え、Depth Sensing は現実遮蔽と距離の裏付けを与え、Anchors は持続性を与えます。今日の2本は、その中の plane を「広い面が見えた」という事実ではなく「どの用途へ渡せる surface か」として扱うための足場です。</p>
+          <p class="en-copy">The recent sequence has moved from policy, camera, hit testing, anchors, layers, and depth into planes, bringing together most ingredients for AR placement. Plane Detection provides placement context, Hit Test provides point-level confidence, Depth Sensing supports occlusion and distance evidence, and Anchors provide persistence. Today's two samples treat planes not merely as detected broad surfaces, but as surfaces that must be routed to the right use.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Plane Detection Lifecycle Ledger` です。何が動くか: plane feature、label、orientation、age、area、normal drift、depth agreement、hit-test support を操作し、commit、patch、hold、block を判定します。次に足すなら、実機の `frame.detectedPlanes` から plane id / polygon / lastChangedTime を IndexedDB に保存し、9月7日の anchor replay bridge へ handoff します。派生として `Plane Label Placement Router` も実装しました。何が動くか: object intent と detected label、面積、傾き、depth confidence、freshness、retarget tolerance から配置先を選びます。次に足すなら、1本目の plane score を2本目の retarget tolerance と anchor handoff policy に自動反映します。</p>
+          <p class="en-copy">The selected main prototype is `Plane Detection Lifecycle Ledger`. What it does: adjusts plane feature, label, orientation, age, area, normal drift, depth agreement, and hit-test support, then classifies commit, patch, hold, or block. Next addition: save real `frame.detectedPlanes` plane id / polygon / lastChangedTime rows into IndexedDB and hand them off to the September 7 anchor replay bridge. The derivative `Plane Label Placement Router` was also implemented. What it does: chooses a placement target from object intent, detected label, area, tilt, depth confidence, freshness, and retarget tolerance. Next addition: automatically map the first sample's plane score into the second sample's retarget tolerance and anchor handoff policy.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html" target="_blank" rel="noreferrer">Today's main sample: Plane Detection Lifecycle Ledger</a></li>
+          
+            <li><a href="../outputs/2026-09-12_html_plane_label_placement_router.html" target="_blank" rel="noreferrer">Today's derivative sample: Plane Label Placement Router</a></li>
+          
+            <li><a href="https://developer.chrome.com/release-notes/147" target="_blank" rel="noreferrer">Chrome Developers: Chrome 147 release notes</a></li>
+          
+            <li><a href="https://immersive-web.github.io/plane-detection/" target="_blank" rel="noreferrer">Immersive Web: WebXR Plane Detection Module</a></li>
+          
+            <li><a href="https://github.com/immersive-web/plane-detection/blob/main/explainer.md" target="_blank" rel="noreferrer">Immersive Web: Plane Detection explainer</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRPlane" target="_blank" rel="noreferrer">MDN: XRPlane</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRFrame/detectedPlanes" target="_blank" rel="noreferrer">MDN: XRFrame detectedPlanes</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/proposals/" target="_blank" rel="noreferrer">Immersive Web Samples: WebXR proposals</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html" loading="lazy" title="Plane Detection Lifecycle Ledger"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 65</span>
+        <span>days: 66</span>
         <span>page: 1 / 6</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -309,6 +309,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-09-12">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.12</p>
+              <h2>WebXR Plane Detection を配置前の平面ライフサイクル台帳にする</h2>
+              <p class="card-subtitle">Turning WebXR Plane Detection into a pre-placement plane lifecycle ledger</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-12" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">Chrome 147 の WebXR Plane Detection、Immersive Web の Plane Detection 仕様 / explainer、MDN の `XRPlane` を参照し、検出平面の age、polygon、orientation、semantic label、depth / hit-test agreement を配置前に判定する本命サンプルと、semantic label から配置先を選ぶ派生サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing Chrome 147's WebXR Plane Detection note, the Immersive Web Plane Detection specification / explainer, and MDN's `XRPlane`, today's original work adds a main sample that gates detected planes before placement and a derivative sample that routes placement by semantic plane label.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-09-12.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-09-11">
           <div class="card-top">
             <div>
@@ -558,29 +581,6 @@
           <div class="actions">
             <a class="primary" href="days/2026-08-30.html">その日のページ / Day</a>
             <a class="secondary-link" href="outputs/2026-08-30_html_xr_gamepad_frame_poller_stability_lab.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-29">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.29</p>
-              <h2>WebXR Input Profile component mapping cache と xr-standard slot replay を自作サンプル化</h2>
-              <p class="card-subtitle">Original samples for WebXR Input Profile component mapping cache and xr-standard slot replay</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-29" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR Gamepads Module、WebXR Device API、Immersive Web の Input Profiles / motion-controllers、Immersive Web Samples の Controller State / Input Selection を確認し、profile component を `xr-standard` の button / axes slot へ割り当てる本命サンプルと、slot 値から semantic action をリプレイする派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the W3C WebXR Gamepads Module, WebXR Device API, Immersive Web Input Profiles and motion-controllers, and the Immersive Web Controller State and Input Selection samples, today's original work adds a main sample that maps profile components onto `xr-standard` button/axes slots plus a derivative replay pad that turns slot values into semantic actions.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-08-29.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-08-29_html_profile_component_mapping_cache.html">代表サンプル / Sample</a>
           </div>
         </article>
       

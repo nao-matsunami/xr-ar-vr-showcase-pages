@@ -1,0 +1,141 @@
+{
+  "date": "2026-09-12",
+  "headline": "WebXR Plane Detection を配置前の平面ライフサイクル台帳にする",
+  "headlineEn": "Turning WebXR Plane Detection into a pre-placement plane lifecycle ledger",
+  "summary": "Chrome 147 の WebXR Plane Detection、Immersive Web の Plane Detection 仕様 / explainer、MDN の `XRPlane` を参照し、検出平面の age、polygon、orientation、semantic label、depth / hit-test agreement を配置前に判定する本命サンプルと、semantic label から配置先を選ぶ派生サンプルを追加しました。",
+  "summaryEn": "After reviewing Chrome 147's WebXR Plane Detection note, the Immersive Web Plane Detection specification / explainer, and MDN's `XRPlane`, today's original work adds a main sample that gates detected planes before placement and a derivative sample that routes placement by semantic plane label.",
+  "keyTopics": [
+    "Chrome 147 のリリースノートでは、WebXR Plane Detection が `detectedPlanes` と `lastChangedTime` を通じて実世界の壁、床、テーブルなどの flat surface 情報を提供する点が紹介されています。",
+    "Immersive Web の Plane Detection 仕様は `plane-detection` feature descriptor、`XRFrame.detectedPlanes`、`XRPlane.planeSpace`、`polygon`、`orientation`、`semanticLabel` を整理しています。",
+    "Plane Detection は Hit Test の単発結果よりも広い面の状態を扱える一方、平面の更新時刻、polygon の揺れ、semantic label の信頼度、Depth Sensing との一致をアプリ側で見る必要があります。",
+    "昨日の Depth Sensing confidence gate から一歩進め、今日は depth が示す距離と plane が示す surface を同じ placement ledger に載せる設計にしました。",
+    "今日の公開カードは外部デモではなく、このワークスペース内で作った `Plane Detection Lifecycle Ledger` と `Plane Label Placement Router` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "Chrome 147's release notes describe WebXR Plane Detection as exposing real-world flat surfaces such as walls, floors, and tables through `detectedPlanes` and `lastChangedTime`.",
+    "The Immersive Web Plane Detection specification defines the `plane-detection` feature descriptor plus `XRFrame.detectedPlanes`, `XRPlane.planeSpace`, `polygon`, `orientation`, and `semanticLabel`.",
+    "Plane Detection can reason about broad surfaces beyond single hit-test results, but applications still need to inspect update age, polygon jitter, semantic label confidence, and agreement with depth sensing.",
+    "Building on yesterday's Depth Sensing confidence gate, today's design puts depth distance and plane surface state into the same placement ledger.",
+    "Today's public cards focus on the original workspace samples `Plane Detection Lifecycle Ledger` and `Plane Label Placement Router`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Plane Detection Lifecycle Ledger",
+      "url": "../outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html"
+    },
+    {
+      "label": "Today's derivative sample: Plane Label Placement Router",
+      "url": "../outputs/2026-09-12_html_plane_label_placement_router.html"
+    },
+    {
+      "label": "Chrome Developers: Chrome 147 release notes",
+      "url": "https://developer.chrome.com/release-notes/147"
+    },
+    {
+      "label": "Immersive Web: WebXR Plane Detection Module",
+      "url": "https://immersive-web.github.io/plane-detection/"
+    },
+    {
+      "label": "Immersive Web: Plane Detection explainer",
+      "url": "https://github.com/immersive-web/plane-detection/blob/main/explainer.md"
+    },
+    {
+      "label": "MDN: XRPlane",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRPlane"
+    },
+    {
+      "label": "MDN: XRFrame detectedPlanes",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRFrame/detectedPlanes"
+    },
+    {
+      "label": "Immersive Web Samples: WebXR proposals",
+      "url": "https://immersive-web.github.io/webxr-samples/proposals/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は Chrome 147 の WebXR Plane Detection と、Immersive Web の Plane Detection 仕様 / explainer です。`plane-detection` feature が有効な AR session では、`XRFrame.detectedPlanes` から `XRPlane` の集合を読み、`planeSpace`、`polygon`、`orientation`、`semanticLabel`、`lastChangedTime` を配置判断に使えます。面白いのは、Hit Test がその瞬間の交点を返すのに対し、Plane Detection は surface の寿命や更新差分を扱える点です。公式情報は参照として使い、公開カードの中心はこのワークスペース内で作った平面ライフサイクル台帳と semantic 配置 router にしました。",
+      "bodyEn": "Today's notable references are Chrome 147's WebXR Plane Detection note and the Immersive Web Plane Detection specification / explainer. In an AR session with the `plane-detection` feature enabled, `XRFrame.detectedPlanes` exposes a set of `XRPlane` objects whose `planeSpace`, `polygon`, `orientation`, `semanticLabel`, and `lastChangedTime` can guide placement decisions. The interesting distinction is that hit testing returns an intersection for the current moment, while plane detection exposes surface lifetime and update deltas. The official material is used as reference, while the public cards center on the original workspace plane lifecycle ledger and semantic placement router.",
+      "links": [
+        {
+          "label": "Chrome Developers: Chrome 147 release notes",
+          "url": "https://developer.chrome.com/release-notes/147"
+        },
+        {
+          "label": "Immersive Web: WebXR Plane Detection Module",
+          "url": "https://immersive-web.github.io/plane-detection/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Plane Detection Lifecycle Ledger` は plane feature、semantic label、orientation、plane age、polygon area、normal drift、depth agreement、hit-test support、session active を操作し、`COMMIT PLANE`、`PATCH PLANE`、`HOLD PLANE`、`BLOCK PLANE` に分岐します。派生サンプル `Plane Label Placement Router` は配置したい object intent と detected label、面積、傾き、depth confidence、freshness、retarget tolerance を合わせ、floor、table、wall、reticle preview のどこに置くかを選びます。",
+      "bodyEn": "The main sample, `Plane Detection Lifecycle Ledger`, adjusts plane feature availability, semantic label, orientation, plane age, polygon area, normal drift, depth agreement, hit-test support, and session activity, routing to `COMMIT PLANE`, `PATCH PLANE`, `HOLD PLANE`, or `BLOCK PLANE`. The derivative sample, `Plane Label Placement Router`, combines object intent with detected label, area, tilt, depth confidence, freshness, and retarget tolerance to choose between floor, table, wall, or reticle preview placement.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-09-12_html_plane_label_placement_router.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機版では `navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['plane-detection'] })` または optional feature で session を開始し、各 frame で `frame.detectedPlanes` を読む構成にします。`XRPlane.lastChangedTime` を前回値と比較して geometry 更新を検出し、`planeSpace` の pose と `polygon` の面積 / normal drift を ledger row にします。`semanticLabel` は床、壁、テーブルなどの初期 route に使えますが、Depth Sensing の confidence や Hit Test の一致が弱い場合は配置確定ではなく preview / patch に落とす方が安全です。",
+      "bodyEn": "A device-backed version can start an AR session with `navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['plane-detection'] })` or the same descriptor as an optional feature, then read `frame.detectedPlanes` each frame. Compare `XRPlane.lastChangedTime` with the previous value to detect geometry updates, and log `planeSpace` pose plus polygon area and normal drift as ledger rows. `semanticLabel` can seed routes such as floor, wall, and table, but placement should fall back to preview or patch when depth confidence or hit-test agreement is weak."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは plane feature availability、semantic label、orientation、plane age、polygon area、normal drift、depth agreement、hit-test support、session state、object intent、retarget tolerance、placement route が取れます。9月4日の policy / hit / camera gate、9月7日の anchor replay bridge、9月11日の depth confidence gate と組み合わせると、平面検出から anchor 確定、遮蔽、再配置までを1つの AR placement health ledger にできます。展示 UI なら壁面パネルと床面演出の自動振り分け、業務 UI ならテーブル上だけに工具パネルを出すといった制御に使えます。",
+      "bodyEn": "The two samples produce plane feature availability, semantic label, orientation, plane age, polygon area, normal drift, depth agreement, hit-test support, session state, object intent, retarget tolerance, and placement route. Combined with the September 4 policy / hit / camera gate, September 7 anchor replay bridge, and September 11 depth confidence gate, they can form one AR placement health ledger from plane detection through anchor confirmation, occlusion, and relocation. For installations, this can route wall panels and floor effects automatically; for operational UI, it can restrict tool panels to table surfaces only."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Chrome の Plane Detection 実装状況、Immersive Web Plane Detection 仕様 / explainer、MDN の `XRPlane` / `XRFrame.detectedPlanes`、WebXR Anchors と Hit Test の仕様更新、ブラウザの `plane-detection` feature flag と device support を継続して見ます。次は detected plane から anchor を作るまでの handoff queue、または plane polygon の frame-to-frame 差分を可視化する jitter heatmap を扱うと重複が少ないです。",
+      "bodyEn": "Continue watching Chrome's Plane Detection implementation status, the Immersive Web Plane Detection specification / explainer, MDN pages for `XRPlane` and `XRFrame.detectedPlanes`, WebXR Anchors and Hit Test updates, plus browser `plane-detection` flags and device support. A good next step is a handoff queue from detected plane to anchor creation, or a jitter heatmap that visualizes frame-to-frame changes in plane polygons."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Plane Detection Lifecycle Ledger` で Plane age を 340ms 以上、Normal drift を 28deg 以上、または label を unknown にすると hold / patch に寄ります。Feature を not available にすると `BLOCK PLANE` になります。`Plane Label Placement Router` では object intent と detected label をずらし、Retarget tolerance を上げると `RETARGET`、depth confidence と freshness を下げると `BLOCK PLACEMENT` になります。",
+      "bodyEn": "In `Plane Detection Lifecycle Ledger`, push plane age above 340ms, normal drift above 28deg, or set the label to unknown to move toward hold / patch; set the feature to not available to get `BLOCK PLANE`. In `Plane Label Placement Router`, mismatch object intent and detected label, then raise retarget tolerance for `RETARGET`; lower depth confidence and freshness for `BLOCK PLACEMENT`.",
+      "links": [
+        {
+          "label": "Open Plane Detection Lifecycle Ledger",
+          "url": "../outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html"
+        },
+        {
+          "label": "Open Plane Label Placement Router",
+          "url": "../outputs/2026-09-12_html_plane_label_placement_router.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Chrome 147 release notes、Immersive Web Plane Detection Module、Plane Detection explainer、MDN `XRPlane` / `XRFrame.detectedPlanes`、Immersive Web Samples proposals を確認。設計: 1本目は detected plane の lifecycle ledger、2本目は semantic label を使う placement router。実装: `outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html` と `outputs/2026-09-12_html_plane_label_placement_router.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。",
+      "bodyEn": "Research: reviewed Chrome 147 release notes, the Immersive Web Plane Detection Module, the Plane Detection explainer, MDN `XRPlane` / `XRFrame.detectedPlanes`, and Immersive Web Samples proposals. Design: make the first sample a lifecycle ledger for detected planes and the second a placement router using semantic labels. Implementation: add `outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html` and `outputs/2026-09-12_html_plane_label_placement_router.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日の流れは policy、camera、hit-test、anchors、layers、depth から plane へ進み、AR placement の材料がほぼ揃ってきました。Plane Detection は配置の文脈を与え、Hit Test は一点の確度を与え、Depth Sensing は現実遮蔽と距離の裏付けを与え、Anchors は持続性を与えます。今日の2本は、その中の plane を「広い面が見えた」という事実ではなく「どの用途へ渡せる surface か」として扱うための足場です。",
+      "bodyEn": "The recent sequence has moved from policy, camera, hit testing, anchors, layers, and depth into planes, bringing together most ingredients for AR placement. Plane Detection provides placement context, Hit Test provides point-level confidence, Depth Sensing supports occlusion and distance evidence, and Anchors provide persistence. Today's two samples treat planes not merely as detected broad surfaces, but as surfaces that must be routed to the right use."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Plane Detection Lifecycle Ledger` です。何が動くか: plane feature、label、orientation、age、area、normal drift、depth agreement、hit-test support を操作し、commit、patch、hold、block を判定します。次に足すなら、実機の `frame.detectedPlanes` から plane id / polygon / lastChangedTime を IndexedDB に保存し、9月7日の anchor replay bridge へ handoff します。派生として `Plane Label Placement Router` も実装しました。何が動くか: object intent と detected label、面積、傾き、depth confidence、freshness、retarget tolerance から配置先を選びます。次に足すなら、1本目の plane score を2本目の retarget tolerance と anchor handoff policy に自動反映します。",
+      "bodyEn": "The selected main prototype is `Plane Detection Lifecycle Ledger`. What it does: adjusts plane feature, label, orientation, age, area, normal drift, depth agreement, and hit-test support, then classifies commit, patch, hold, or block. Next addition: save real `frame.detectedPlanes` plane id / polygon / lastChangedTime rows into IndexedDB and hand them off to the September 7 anchor replay bridge. The derivative `Plane Label Placement Router` was also implemented. What it does: chooses a placement target from object intent, detected label, area, tilt, depth confidence, freshness, and retarget tolerance. Next addition: automatically map the first sample's plane score into the second sample's retarget tolerance and anchor handoff policy."
+    }
+  ]
+}

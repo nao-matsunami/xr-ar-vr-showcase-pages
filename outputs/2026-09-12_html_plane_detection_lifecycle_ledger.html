@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plane Detection Lifecycle Ledger</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #243033;
+      --muted: #607074;
+      --paper: #fffdfa;
+      --bg: #f3f6f4;
+      --line: #d8dfdc;
+      --blue: #2f6f91;
+      --green: #317b5c;
+      --amber: #a46d24;
+      --red: #b45048;
+      --violet: #765f94;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, rgba(47, 111, 145, .12), transparent 300px), var(--bg);
+    }
+    main { width: min(1160px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 34px; }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 8px; font-size: 2.2rem; line-height: 1.06; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .summary, .panel, .stage, .ledger {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 26px rgba(38, 48, 51, .07);
+    }
+    .summary { padding: 16px; }
+    .verdict { font-size: 1.3rem; font-weight: 900; margin-bottom: 8px; }
+    .verdict.commit { color: var(--green); }
+    .verdict.patch { color: var(--blue); }
+    .verdict.hold { color: var(--amber); }
+    .verdict.block { color: var(--red); }
+    .grid { display: grid; grid-template-columns: 315px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { padding: 16px; display: grid; gap: 14px; align-content: start; }
+    label { display: grid; gap: 6px; font-size: .86rem; font-weight: 760; color: #38484b; }
+    select, input[type="range"] { width: 100%; accent-color: var(--blue); }
+    .switch { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .switch input { transform: scale(1.12); accent-color: var(--blue); }
+    button {
+      border: 1px solid #bfcbc7;
+      background: #fbfcfa;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary { border-color: var(--blue); background: var(--blue); color: white; }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stage {
+      min-height: 500px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(47, 111, 145, .08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(49, 123, 92, .08) 1px, transparent 1px),
+        #fffefa;
+      background-size: 44px 44px;
+    }
+    .viewport {
+      position: relative;
+      min-height: 340px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff, #e9eee9);
+    }
+    .horizon {
+      position: absolute;
+      left: -10%;
+      right: -10%;
+      top: 28%;
+      border-top: 2px solid rgba(36, 48, 51, .12);
+      transform: rotate(-4deg);
+    }
+    .plane {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: var(--w);
+      height: var(--h);
+      border: 2px solid var(--stroke);
+      background: var(--fill);
+      transform: rotate(var(--r)) skewX(var(--skew));
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      color: #142226;
+      font-weight: 880;
+      box-shadow: 0 12px 24px rgba(36, 48, 51, .12);
+    }
+    .plane.stale { opacity: .45; border-style: dashed; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { min-height: 78px; padding: 11px; border: 1px solid var(--line); border-radius: 8px; background: #fffefa; }
+    .metric strong { display: block; font-size: 1.15rem; margin-bottom: 4px; }
+    .ledger { margin-top: 14px; padding: 14px; display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 112px 1fr 122px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffefa;
+      font-size: .88rem;
+    }
+    .tag { justify-self: start; border-radius: 999px; padding: 4px 8px; font-weight: 850; background: #e8f2f6; color: var(--blue); }
+    .tag.ok { background: #e5f3ea; color: var(--green); }
+    .tag.warn { background: #fff1d8; color: var(--amber); }
+    .tag.bad { background: #ffe9e5; color: var(--red); }
+    @media (max-width: 840px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Plane Detection Lifecycle Ledger</h1>
+        <p>WebXR Plane Detection の `detectedPlanes` を想定し、lastChangedTime、polygon size、orientation、semantic label、depth confidence を合成して配置に使える平面かを判定する最小ラボ。</p>
+      </div>
+      <section class="summary">
+        <div id="verdict" class="verdict commit">COMMIT PLANE</div>
+        <p id="summary">安定した floor plane があり、配置候補として採用できます。</p>
+      </section>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <label>Plane feature
+          <select id="feature">
+            <option value="enabled">plane-detection enabled</option>
+            <option value="optional">optional feature only</option>
+            <option value="missing">not available</option>
+          </select>
+        </label>
+        <label>Primary plane label
+          <select id="label">
+            <option value="floor">floor</option>
+            <option value="table">table</option>
+            <option value="wall">wall</option>
+            <option value="unknown">unknown</option>
+          </select>
+        </label>
+        <label>Orientation
+          <select id="orientation">
+            <option value="horizontal">horizontal</option>
+            <option value="vertical">vertical</option>
+            <option value="tilted">tilted</option>
+          </select>
+        </label>
+        <label>Plane age since change <span id="ageLabel">64 ms</span>
+          <input id="age" type="range" min="0" max="520" value="64">
+        </label>
+        <label>Polygon area <span id="areaLabel">1.8 m2</span>
+          <input id="area" type="range" min="5" max="50" value="18">
+        </label>
+        <label>Normal drift <span id="driftLabel">4 deg</span>
+          <input id="drift" type="range" min="0" max="45" value="4">
+        </label>
+        <label>Depth agreement <span id="depthLabel">82%</span>
+          <input id="depth" type="range" min="0" max="100" value="82">
+        </label>
+        <label>Hit-test support <span id="hitLabel">76%</span>
+          <input id="hit" type="range" min="0" max="100" value="76">
+        </label>
+        <label class="switch">session active <input id="active" type="checkbox" checked></label>
+        <div class="buttons">
+          <button id="stable" class="primary">Stable Room</button>
+          <button id="moving">Moving Scan</button>
+        </div>
+      </aside>
+
+      <section>
+        <div class="stage">
+          <div id="viewport" class="viewport">
+            <div class="horizon"></div>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="score">88</strong><span>plane score</span></div>
+            <div class="metric"><strong id="route">place</strong><span>route</span></div>
+            <div class="metric"><strong id="planes">3</strong><span>tracked planes</span></div>
+            <div class="metric"><strong id="anchor">anchor ok</strong><span>anchor handoff</span></div>
+          </div>
+        </div>
+        <div id="ledger" class="ledger"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const controls = ["feature", "label", "orientation", "age", "area", "drift", "depth", "hit", "active"].map($);
+    const viewport = $("viewport");
+    const palette = {
+      floor: ["rgba(49, 123, 92, .22)", "#317b5c"],
+      table: ["rgba(47, 111, 145, .23)", "#2f6f91"],
+      wall: ["rgba(118, 95, 148, .21)", "#765f94"],
+      unknown: ["rgba(164, 109, 36, .2)", "#a46d24"]
+    };
+
+    function classify(v) {
+      if (!v.active || v.feature === "missing") return ["block", "BLOCK PLANE", "Plane Detection が使えないため、hit-test reticle に戻します。", "fallback", "off"];
+      if (v.feature === "optional" && v.hit < 45) return ["hold", "HOLD SCAN", "optional feature のため、hit-test と depth の一致を待ちます。", "wait", "hold"];
+      if (v.age > 340 || v.drift > 28) return ["hold", "HOLD PLANE", "平面更新が古いか normal drift が大きく、配置確定を保留します。", "wait", "hold"];
+      if (v.area < 0.9 || v.depth < 58 || v.hit < 55 || v.label === "unknown") return ["patch", "PATCH PLANE", "polygon または semantic label が弱いので、depth / hit-test で補強します。", "patch", "review"];
+      return ["commit", "COMMIT PLANE", "安定した平面があり、anchor handoff へ進めます。", "place", "anchor ok"];
+    }
+
+    function values() {
+      return {
+        feature: $("feature").value,
+        label: $("label").value,
+        orientation: $("orientation").value,
+        age: Number($("age").value),
+        area: Number($("area").value) / 10,
+        drift: Number($("drift").value),
+        depth: Number($("depth").value),
+        hit: Number($("hit").value),
+        active: $("active").checked
+      };
+    }
+
+    function renderPlanes(v, status) {
+      viewport.querySelectorAll(".plane").forEach((node) => node.remove());
+      const [fill, stroke] = palette[v.label];
+      const base = [
+        { label: v.label, x: 18, y: v.orientation === "vertical" ? 18 : 58, w: 54 + v.area * 9, h: v.orientation === "vertical" ? 54 : 34 + v.area * 4, r: v.orientation === "vertical" ? -2 : -7, stale: status === "hold" },
+        { label: "candidate", x: 58, y: 46, w: 24 + v.hit / 4, h: 18 + v.depth / 5, r: 8, stale: status !== "commit" },
+        { label: "old plane", x: 8, y: 18, w: 28, h: 24, r: 16, stale: true }
+      ];
+      base.forEach((p) => {
+        const node = document.createElement("div");
+        node.className = `plane${p.stale ? " stale" : ""}`;
+        node.style.setProperty("--x", `${p.x}%`);
+        node.style.setProperty("--y", `${p.y}%`);
+        node.style.setProperty("--w", `${Math.min(72, p.w)}%`);
+        node.style.setProperty("--h", `${Math.min(46, p.h)}%`);
+        node.style.setProperty("--r", `${p.r}deg`);
+        node.style.setProperty("--skew", v.orientation === "tilted" ? "10deg" : "0deg");
+        node.style.setProperty("--fill", fill);
+        node.style.setProperty("--stroke", stroke);
+        node.textContent = p.label;
+        viewport.appendChild(node);
+      });
+    }
+
+    function render() {
+      const v = values();
+      $("ageLabel").textContent = `${v.age} ms`;
+      $("areaLabel").textContent = `${v.area.toFixed(1)} m2`;
+      $("driftLabel").textContent = `${v.drift} deg`;
+      $("depthLabel").textContent = `${v.depth}%`;
+      $("hitLabel").textContent = `${v.hit}%`;
+
+      const [status, title, text, route, anchor] = classify(v);
+      const featurePenalty = v.feature === "optional" ? 10 : v.feature === "missing" ? 70 : 0;
+      const orientationPenalty = v.orientation === "tilted" ? 12 : 0;
+      const score = Math.max(0, Math.round((v.depth * .32) + (v.hit * .28) + (Math.min(v.area, 3.2) * 11) - (v.age / 12) - v.drift - featurePenalty - orientationPenalty + (v.active ? 18 : -40)));
+
+      $("verdict").className = `verdict ${status}`;
+      $("verdict").textContent = title;
+      $("summary").textContent = text;
+      $("score").textContent = score;
+      $("route").textContent = route;
+      $("planes").textContent = v.feature === "missing" ? "0" : status === "commit" ? "3" : "2";
+      $("anchor").textContent = anchor;
+      renderPlanes(v, status);
+
+      const rows = [
+        ["feature", v.feature, v.feature === "enabled" ? "ok" : v.feature === "optional" ? "warn" : "bad"],
+        ["semantic", `${v.label} / ${v.orientation}`, v.label === "unknown" || v.orientation === "tilted" ? "warn" : "ok"],
+        ["stability", `${v.age}ms age / ${v.drift}deg drift`, v.age > 340 || v.drift > 28 ? "warn" : "ok"],
+        ["agreement", `${v.depth}% depth / ${v.hit}% hit`, v.depth < 58 || v.hit < 55 ? "warn" : "ok"]
+      ];
+      $("ledger").innerHTML = rows.map(([name, detail, tone]) => `<div class="row"><strong>${name}</strong><span>${detail}</span><span class="tag ${tone}">${tone}</span></div>`).join("");
+    }
+
+    controls.forEach((control) => control.addEventListener("input", render));
+    $("stable").addEventListener("click", () => {
+      $("feature").value = "enabled"; $("label").value = "floor"; $("orientation").value = "horizontal";
+      $("age").value = 64; $("area").value = 18; $("drift").value = 4; $("depth").value = 82; $("hit").value = 76; $("active").checked = true;
+      render();
+    });
+    $("moving").addEventListener("click", () => {
+      $("feature").value = "optional"; $("label").value = "unknown"; $("orientation").value = "tilted";
+      $("age").value = 410; $("area").value = 9; $("drift").value = 32; $("depth").value = 49; $("hit").value = 42; $("active").checked = true;
+      render();
+    });
+    render();
+  </script>
+</body>
+</html>
