@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mesh Plane Fusion Occlusion Probe</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #232b31;
+      --muted: #657073;
+      --paper: #fffefa;
+      --bg: #f0f3f2;
+      --line: #d8dfdc;
+      --blue: #2f6f91;
+      --green: #337856;
+      --amber: #a86c25;
+      --red: #b54d47;
+      --rose: #8f5870;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, rgba(143, 88, 112, .12), transparent 320px), var(--bg);
+    }
+    main { width: min(1160px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 36px; }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 8px; font-size: 2.05rem; line-height: 1.08; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .summary, .panel, .stage, .metric, .log {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 26px rgba(35, 43, 49, .07);
+    }
+    .summary { padding: 16px; }
+    .verdict { font-size: 1.24rem; font-weight: 900; margin-bottom: 8px; }
+    .verdict.fuse { color: var(--green); }
+    .verdict.mask { color: var(--blue); }
+    .verdict.preview { color: var(--amber); }
+    .verdict.off { color: var(--red); }
+    .grid { display: grid; grid-template-columns: 318px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { padding: 16px; display: grid; gap: 14px; align-content: start; }
+    label { display: grid; gap: 6px; font-size: .86rem; font-weight: 760; color: #38454a; }
+    select, input[type="range"] { width: 100%; accent-color: var(--rose); }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    button {
+      border: 1px solid #c3cac8;
+      background: #fbfcfa;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary { border-color: var(--rose); background: var(--rose); color: white; }
+    .stage {
+      min-height: 520px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      background:
+        linear-gradient(90deg, rgba(47, 111, 145, .08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(143, 88, 112, .07) 1px, transparent 1px),
+        #fffefa;
+      background-size: 40px 40px;
+    }
+    .scene {
+      min-height: 350px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff 0 42%, #e7ecea 42% 100%);
+    }
+    svg { width: 100%; height: 100%; min-height: 350px; display: block; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { min-height: 78px; padding: 11px; box-shadow: none; }
+    .metric strong { display: block; font-size: 1.12rem; margin-bottom: 4px; }
+    .log { margin-top: 14px; padding: 14px; display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 118px 1fr 124px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffefa;
+      font-size: .88rem;
+    }
+    .tag { justify-self: start; border-radius: 999px; padding: 4px 8px; font-weight: 850; background: #e9eff6; color: var(--blue); }
+    .tag.ok { background: #e4f1e8; color: var(--green); }
+    .tag.warn { background: #fff0d6; color: var(--amber); }
+    .tag.bad { background: #ffe7e3; color: var(--red); }
+    @media (max-width: 860px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Mesh Plane Fusion Occlusion Probe</h1>
+        <p>Plane Detection の安定面と Mesh Detection の細部形状を突き合わせ、配置 anchor、occlusion mask、preview fallback のどれを採用するかを見る派生試作。</p>
+      </div>
+      <section class="summary">
+        <div id="verdict" class="verdict fuse">FUSE PLANE + MESH</div>
+        <p id="summary">平面の寿命と mesh の細部が一致しているため、anchor は plane、mask は mesh へ分担できます。</p>
+      </section>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <label>Placement intent
+          <select id="intent">
+            <option value="table">table object</option>
+            <option value="wall">wall annotation</option>
+            <option value="floor">floor portal</option>
+            <option value="physics">physics toy</option>
+          </select>
+        </label>
+        <label>Plane stability <span id="planeLabel">86%</span>
+          <input id="plane" type="range" min="0" max="100" value="86">
+        </label>
+        <label>Mesh detail <span id="meshLabel">68%</span>
+          <input id="meshDetail" type="range" min="0" max="100" value="68">
+        </label>
+        <label>Normal agreement <span id="normalLabel">80%</span>
+          <input id="normal" type="range" min="0" max="100" value="80">
+        </label>
+        <label>Depth holes <span id="holesLabel">12%</span>
+          <input id="holes" type="range" min="0" max="70" value="12">
+        </label>
+        <label>Anchor latency <span id="latencyLabel">96 ms</span>
+          <input id="latency" type="range" min="20" max="760" value="96">
+        </label>
+        <label>Privacy reduction <span id="privacyLabel">18%</span>
+          <input id="privacy" type="range" min="0" max="75" value="18">
+        </label>
+        <div class="buttons">
+          <button id="balanced" class="primary">Balanced Room</button>
+          <button id="rough">Rough Scan</button>
+        </div>
+      </aside>
+
+      <section>
+        <div class="stage">
+          <div class="scene">
+            <svg viewBox="0 0 700 380" role="img" aria-label="Plane mesh fusion occlusion probe">
+              <rect width="700" height="380" fill="rgba(255,255,255,.5)"></rect>
+              <g id="grid"></g>
+              <polygon id="planePoly" points="150,205 548,190 620,310 88,326" fill="rgba(47,111,145,.15)" stroke="#2f6f91" stroke-width="3" stroke-dasharray="8 7"></polygon>
+              <g id="meshRidge"></g>
+              <rect id="object" x="312" y="142" width="82" height="98" rx="8" fill="rgba(143,88,112,.72)" stroke="#8f5870" stroke-width="3"></rect>
+              <path id="mask" d="" fill="rgba(181,77,71,.2)" stroke="#b54d47" stroke-width="2"></path>
+              <text id="intentText" x="26" y="34" fill="#232b31" font-size="18" font-weight="850">table object</text>
+              <text id="fusionText" x="26" y="60" fill="#657073" font-size="13">plane anchor, mesh occlusion</text>
+            </svg>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="fusionScore">84</strong><span>fusion score</span></div>
+            <div class="metric"><strong id="anchorRoute">plane</strong><span>anchor route</span></div>
+            <div class="metric"><strong id="maskRoute">mesh</strong><span>occlusion route</span></div>
+            <div class="metric"><strong id="lag">1 frame</strong><span>visual delay</span></div>
+          </div>
+        </div>
+        <div id="log" class="log"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const controls = ["intent", "plane", "meshDetail", "normal", "holes", "latency", "privacy"].map($);
+
+    function grid() {
+      let out = "";
+      for (let x = 40; x < 700; x += 40) out += `<line x1="${x}" y1="0" x2="${x}" y2="380" stroke="rgba(35,43,49,.055)"/>`;
+      for (let y = 40; y < 380; y += 40) out += `<line x1="0" y1="${y}" x2="700" y2="${y}" stroke="rgba(35,43,49,.055)"/>`;
+      $("grid").innerHTML = out;
+    }
+
+    function compute() {
+      const intent = $("intent").value;
+      const plane = Number($("plane").value);
+      const mesh = Number($("meshDetail").value);
+      const normal = Number($("normal").value);
+      const holes = Number($("holes").value);
+      const latency = Number($("latency").value);
+      const privacy = Number($("privacy").value);
+      let score = plane * .32 + mesh * .24 + normal * .24 - holes * .45 - Math.max(0, latency - 160) * .04 - privacy * .22 + 20;
+      if (intent === "physics") score += mesh * .08 - holes * .18;
+      score = Math.max(0, Math.min(100, Math.round(score)));
+      let state = "fuse";
+      let anchor = "plane";
+      let mask = "mesh";
+      let summary = "平面の寿命と mesh の細部が一致しているため、anchor は plane、mask は mesh へ分担できます。";
+      if (score < 38 || plane < 35 || normal < 38) {
+        state = "off"; anchor = "none"; mask = "none";
+        summary = "plane と mesh の整合が弱いため、配置を止めて reticle preview に戻します。";
+      } else if (mesh < 42 || holes > 42 || privacy > 52) {
+        state = "preview"; anchor = plane > 62 ? "plane" : "hit-test"; mask = "soft preview";
+        summary = "mesh の細部が不足しているため、anchor は保守的に残し、occlusion は薄い preview にします。";
+      } else if (latency > 330 || holes > 26) {
+        state = "mask"; anchor = "plane"; mask = "depth";
+        summary = "anchor は plane に渡せますが、mesh mask は遅いので depth-based occlusion に切り替えます。";
+      }
+      return { intent, plane, mesh, normal, holes, latency, privacy, score, state, anchor, mask, summary };
+    }
+
+    function draw(data) {
+      const color = data.state === "fuse" ? "#337856" : data.state === "mask" ? "#2f6f91" : data.state === "preview" ? "#a86c25" : "#b54d47";
+      const lift = (100 - data.normal) * .55;
+      const hole = data.holes * .7;
+      $("planePoly").setAttribute("stroke", color);
+      $("planePoly").setAttribute("points", `${150 - lift},205 ${548 + lift},190 ${620 - lift * .4},${310 + lift} ${88 + lift * .5},326`);
+      $("object").setAttribute("fill", data.state === "off" ? "rgba(181,77,71,.32)" : "rgba(143,88,112,.72)");
+      $("object").setAttribute("y", String(142 + Math.max(0, data.latency - 180) * .035));
+      $("mask").setAttribute("d", `M ${280 - hole} ${230 - lift} C 350 ${190 - data.mesh * .25} ${430 + hole} ${202 + lift} ${482 + hole} ${250} L ${464 - hole * .4} ${318} C 382 ${344} ${292 + hole} ${318} ${280 - hole} ${230 - lift} Z`);
+      $("mask").setAttribute("fill", data.state === "fuse" ? "rgba(51,120,86,.22)" : data.state === "mask" ? "rgba(47,111,145,.2)" : data.state === "preview" ? "rgba(168,108,37,.18)" : "rgba(181,77,71,.16)");
+      $("mask").setAttribute("stroke", color);
+      let ridge = "";
+      const points = 8 + Math.round(data.mesh / 14);
+      for (let i = 0; i < points; i += 1) {
+        const x = 158 + i * (390 / Math.max(1, points - 1));
+        const y = 220 + Math.sin(i * 1.15) * (16 + data.mesh * .11) + lift * .2;
+        ridge += `<circle cx="${x}" cy="${y}" r="${4 + data.mesh * .035}" fill="${color}" opacity="${.35 + data.mesh * .004}"/>`;
+      }
+      $("meshRidge").innerHTML = ridge;
+      $("intentText").textContent = data.intent.replace("-", " ");
+      $("fusionText").textContent = data.state === "fuse" ? "plane anchor, mesh occlusion" : data.state === "mask" ? "plane anchor, depth mask fallback" : data.state === "preview" ? "conservative preview route" : "reticle only";
+    }
+
+    function render() {
+      const data = compute();
+      $("planeLabel").textContent = `${data.plane}%`;
+      $("meshLabel").textContent = `${data.mesh}%`;
+      $("normalLabel").textContent = `${data.normal}%`;
+      $("holesLabel").textContent = `${data.holes}%`;
+      $("latencyLabel").textContent = `${data.latency} ms`;
+      $("privacyLabel").textContent = `${data.privacy}%`;
+      $("fusionScore").textContent = data.score;
+      $("anchorRoute").textContent = data.anchor;
+      $("maskRoute").textContent = data.mask;
+      $("lag").textContent = data.latency > 360 ? "3 frames" : data.latency > 180 ? "2 frames" : "1 frame";
+      $("verdict").className = `verdict ${data.state}`;
+      $("verdict").textContent = data.state === "fuse" ? "FUSE PLANE + MESH" : data.state === "mask" ? "DEPTH MASK FALLBACK" : data.state === "preview" ? "PREVIEW ONLY" : "FUSION OFF";
+      $("summary").textContent = data.summary;
+      draw(data);
+      const rows = [
+        ["plane", `${data.plane}% stable placement surface`, data.plane > 65 ? "ok" : data.plane > 38 ? "warn" : "bad"],
+        ["mesh", `${data.mesh}% detail, ${data.privacy}% privacy reduction`, data.mesh > 58 && data.privacy < 45 ? "ok" : "warn"],
+        ["normal", `${data.normal}% agreement between plane normal and mesh ridge`, data.normal > 70 ? "ok" : data.normal > 42 ? "warn" : "bad"],
+        ["depth", `${data.holes}% holes before mask handoff`, data.holes < 22 ? "ok" : data.holes < 45 ? "warn" : "bad"],
+        ["latency", `${data.latency} ms from mesh update to visual route`, data.latency < 170 ? "ok" : data.latency < 360 ? "warn" : "bad"]
+      ];
+      $("log").innerHTML = rows.map(([name, text, level]) => `<div class="row"><strong>${name}</strong><span>${text}</span><span class="tag ${level}">${level}</span></div>`).join("");
+    }
+
+    $("balanced").addEventListener("click", () => {
+      $("intent").value = "table"; $("plane").value = 86; $("meshDetail").value = 68; $("normal").value = 80; $("holes").value = 12; $("latency").value = 96; $("privacy").value = 18; render();
+    });
+    $("rough").addEventListener("click", () => {
+      $("intent").value = "physics"; $("plane").value = 58; $("meshDetail").value = 44; $("normal").value = 51; $("holes").value = 38; $("latency").value = 340; $("privacy").value = 46; render();
+    });
+    controls.forEach((control) => control.addEventListener("input", render));
+    grid();
+    render();
+  </script>
+</body>
+</html>

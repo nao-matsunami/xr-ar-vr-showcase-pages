@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plane Anchor Handoff Queue</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202b2e;
+      --muted: #637174;
+      --paper: #fffefa;
+      --bg: #eef3f4;
+      --line: #d7dfde;
+      --blue: #2f6f91;
+      --green: #2f7a59;
+      --amber: #a16524;
+      --red: #b24b45;
+      --plum: #755b86;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, rgba(47, 111, 145, .14), transparent 320px), var(--bg);
+    }
+    main { width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 36px; }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 8px; font-size: 2.15rem; line-height: 1.08; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .summary, .panel, .stage, .queue, .tile {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 26px rgba(32, 43, 46, .07);
+    }
+    .summary { padding: 16px; }
+    .verdict { font-size: 1.28rem; font-weight: 900; margin-bottom: 8px; }
+    .verdict.commit { color: var(--green); }
+    .verdict.patch { color: var(--blue); }
+    .verdict.hold { color: var(--amber); }
+    .verdict.block { color: var(--red); }
+    .grid { display: grid; grid-template-columns: 318px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { padding: 16px; display: grid; gap: 14px; align-content: start; }
+    label { display: grid; gap: 6px; font-size: .86rem; font-weight: 760; color: #354548; }
+    select, input[type="range"] { width: 100%; accent-color: var(--blue); }
+    .switch { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .switch input { transform: scale(1.12); accent-color: var(--blue); }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    button {
+      border: 1px solid #bfcbc9;
+      background: #fbfcfa;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary { border-color: var(--blue); background: var(--blue); color: white; }
+    .stage {
+      min-height: 518px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(47, 111, 145, .08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(47, 122, 89, .08) 1px, transparent 1px),
+        #fffefa;
+      background-size: 42px 42px;
+    }
+    .room {
+      position: relative;
+      min-height: 350px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff 0 43%, #e7ede9 43% 100%);
+    }
+    .wall-line {
+      position: absolute;
+      left: -10%;
+      right: -10%;
+      top: 42%;
+      border-top: 2px solid rgba(32, 43, 46, .12);
+      transform: rotate(-3deg);
+    }
+    .plane {
+      position: absolute;
+      left: 18%;
+      top: 45%;
+      width: var(--plane-w);
+      height: var(--plane-h);
+      border: 2px solid var(--plane-stroke);
+      background: var(--plane-fill);
+      transform: rotate(var(--plane-rot)) skewX(var(--plane-skew));
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+      box-shadow: 0 16px 28px rgba(32, 43, 46, .12);
+    }
+    .plane::after {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border: 4px solid var(--reticle);
+      border-radius: 50%;
+      box-shadow: 0 0 0 7px rgba(255, 255, 255, .78);
+      transform: translate(var(--hit-x), var(--hit-y));
+    }
+    .anchor-card {
+      position: absolute;
+      right: 8%;
+      top: 16%;
+      width: 170px;
+      min-height: 92px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--anchor);
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(255, 254, 250, .94);
+      font-size: .86rem;
+      box-shadow: 0 12px 24px rgba(32, 43, 46, .1);
+    }
+    .connector {
+      position: absolute;
+      left: 53%;
+      top: 45%;
+      width: 30%;
+      height: 34%;
+      border-top: 3px dashed var(--anchor);
+      border-right: 3px dashed var(--anchor);
+      border-radius: 0 40px 0 0;
+      opacity: .74;
+    }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .tile { min-height: 78px; padding: 11px; box-shadow: none; }
+    .tile strong { display: block; font-size: 1.14rem; margin-bottom: 4px; }
+    .queue { margin-top: 14px; padding: 14px; display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 116px 1fr 126px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffefa;
+      font-size: .88rem;
+    }
+    .tag { justify-self: start; border-radius: 999px; padding: 4px 8px; font-weight: 850; background: #e8f2f6; color: var(--blue); }
+    .tag.ok { background: #e4f2e9; color: var(--green); }
+    .tag.warn { background: #fff0d5; color: var(--amber); }
+    .tag.bad { background: #ffe7e3; color: var(--red); }
+    @media (max-width: 860px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Plane Anchor Handoff Queue</h1>
+        <p>WebXR Plane Detection で見えた平面を、Hit Test、Depth、Anchors の作成条件へ渡す前に queue 化する最小ラボ。平面は見えた瞬間ではなく、anchor に渡せる状態かで判定します。</p>
+      </div>
+      <section class="summary">
+        <div id="verdict" class="verdict commit">CREATE ANCHOR</div>
+        <p id="summary">平面、hit-test、depth、anchor feature が揃っているため、surface-attached anchor に渡せます。</p>
+      </section>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <label>Plane source
+          <select id="source">
+            <option value="native">native detected plane</option>
+            <option value="quantized">privacy-quantized plane</option>
+            <option value="emulated">emulated plane from hit-test</option>
+            <option value="missing">no plane</option>
+          </select>
+        </label>
+        <label>Semantic label
+          <select id="label">
+            <option value="table">table</option>
+            <option value="floor">floor</option>
+            <option value="wall">wall</option>
+            <option value="unknown">unknown</option>
+          </select>
+        </label>
+        <label>Anchor feature
+          <select id="anchorFeature">
+            <option value="native">anchors required</option>
+            <option value="optional">anchors optional</option>
+            <option value="emulated">emulated anchors</option>
+            <option value="missing">not available</option>
+          </select>
+        </label>
+        <label>Plane age <span id="ageLabel">72 ms</span>
+          <input id="age" type="range" min="0" max="620" value="72">
+        </label>
+        <label>Polygon stability <span id="stabilityLabel">84%</span>
+          <input id="stability" type="range" min="0" max="100" value="84">
+        </label>
+        <label>Hit-test agreement <span id="hitLabel">78%</span>
+          <input id="hit" type="range" min="0" max="100" value="78">
+        </label>
+        <label>Depth agreement <span id="depthLabel">82%</span>
+          <input id="depth" type="range" min="0" max="100" value="82">
+        </label>
+        <label>Tracking confidence <span id="trackingLabel">88%</span>
+          <input id="tracking" type="range" min="0" max="100" value="88">
+        </label>
+        <label class="switch">frame active <input id="frameActive" type="checkbox" checked></label>
+        <div class="buttons">
+          <button id="good" class="primary">Ready Plane</button>
+          <button id="bad">Noisy Scan</button>
+        </div>
+      </aside>
+
+      <section>
+        <div class="stage">
+          <div class="room" id="room">
+            <div class="wall-line"></div>
+            <div class="connector"></div>
+            <div class="plane" id="plane">detected<br>plane</div>
+            <div class="anchor-card">
+              <strong id="anchorTitle">surface anchor</strong>
+              <p id="anchorCopy">native entity attached</p>
+            </div>
+          </div>
+          <div class="stats">
+            <div class="tile"><strong id="score">86</strong><span>handoff score</span></div>
+            <div class="tile"><strong id="route">surface</strong><span>anchor route</span></div>
+            <div class="tile"><strong id="delay">1 frame</strong><span>queue delay</span></div>
+            <div class="tile"><strong id="risk">low</strong><span>drift risk</span></div>
+          </div>
+        </div>
+        <div id="queue" class="queue"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const controls = ["source", "label", "anchorFeature", "age", "stability", "hit", "depth", "tracking", "frameActive"].map($);
+    const stateColor = {
+      create: ["commit", "#2f7a59", "rgba(47, 122, 89, .23)", "#2f7a59"],
+      patch: ["patch", "#2f6f91", "rgba(47, 111, 145, .22)", "#2f6f91"],
+      wait: ["hold", "#a16524", "rgba(161, 101, 36, .22)", "#a16524"],
+      block: ["block", "#b24b45", "rgba(178, 75, 69, .2)", "#b24b45"]
+    };
+
+    function scoreModel() {
+      const source = $("source").value;
+      const anchorFeature = $("anchorFeature").value;
+      const age = Number($("age").value);
+      const stability = Number($("stability").value);
+      const hit = Number($("hit").value);
+      const depth = Number($("depth").value);
+      const tracking = Number($("tracking").value);
+      const active = $("frameActive").checked;
+      let score = Math.round(stability * .28 + hit * .22 + depth * .2 + tracking * .22 + Math.max(0, 100 - age / 5) * .08);
+      if (source === "quantized") score -= 8;
+      if (source === "emulated") score -= 14;
+      if (source === "missing") score -= 52;
+      if (anchorFeature === "optional") score -= 8;
+      if (anchorFeature === "emulated") score -= 16;
+      if (anchorFeature === "missing") score -= 46;
+      if (!active) score -= 42;
+      score = Math.max(0, Math.min(100, score));
+
+      let key = "create";
+      let title = "CREATE ANCHOR";
+      let summary = "平面、hit-test、depth、anchor feature が揃っているため、surface-attached anchor に渡せます。";
+      let route = "surface";
+      if (source === "missing" || anchorFeature === "missing" || !active) {
+        key = "block";
+        title = "BLOCK HANDOFF";
+        summary = "plane / anchors / active frame のどれかが欠けているため、anchor 作成へ進めません。";
+        route = "blocked";
+      } else if (score < 56 || age > 430) {
+        key = "wait";
+        title = "HOLD QUEUE";
+        summary = "平面は見えていますが、更新が古いか confidence が低いため次 frame の再評価を待ちます。";
+        route = "wait";
+      } else if (score < 76 || source !== "native" || anchorFeature !== "native") {
+        key = "patch";
+        title = "PATCH THEN ANCHOR";
+        summary = "平面を直接 anchor に渡す前に、hit-test pose か emulated anchor で補正します。";
+        route = source === "emulated" || anchorFeature === "emulated" ? "emulate" : "patch";
+      }
+      return { source, anchorFeature, age, stability, hit, depth, tracking, score, key, title, summary, route };
+    }
+
+    function render() {
+      const model = scoreModel();
+      const color = stateColor[model.key];
+      $("verdict").className = `verdict ${color[0]}`;
+      $("verdict").textContent = model.title;
+      $("summary").textContent = model.summary;
+      $("score").textContent = model.score;
+      $("route").textContent = model.route;
+      $("delay").textContent = model.key === "create" ? "1 frame" : model.key === "patch" ? "2 frames" : model.key === "wait" ? "wait" : "stop";
+      $("risk").textContent = model.score > 80 ? "low" : model.score > 62 ? "medium" : model.score > 40 ? "high" : "blocked";
+      $("ageLabel").textContent = `${model.age} ms`;
+      $("stabilityLabel").textContent = `${model.stability}%`;
+      $("hitLabel").textContent = `${model.hit}%`;
+      $("depthLabel").textContent = `${model.depth}%`;
+      $("trackingLabel").textContent = `${model.tracking}%`;
+      $("room").style.setProperty("--plane-w", `${190 + model.stability * 1.7}px`);
+      $("room").style.setProperty("--plane-h", `${82 + model.depth * .75}px`);
+      $("room").style.setProperty("--plane-rot", `${(100 - model.stability) * .12 - 3}deg`);
+      $("room").style.setProperty("--plane-skew", `${(100 - model.hit) * .05}deg`);
+      $("room").style.setProperty("--plane-stroke", color[1]);
+      $("room").style.setProperty("--plane-fill", color[2]);
+      $("room").style.setProperty("--reticle", model.hit > 62 ? "#2f7a59" : "#a16524");
+      $("room").style.setProperty("--anchor", color[3]);
+      $("room").style.setProperty("--hit-x", `${(model.hit - 70) * .85}px`);
+      $("room").style.setProperty("--hit-y", `${(82 - model.depth) * .55}px`);
+      $("plane").innerHTML = `${$("label").value}<br>${model.source}`;
+      $("anchorTitle").textContent = model.route === "blocked" ? "handoff stopped" : model.route === "emulate" ? "emulated anchor" : model.route === "patch" ? "patched anchor" : "surface anchor";
+      $("anchorCopy").textContent = model.anchorFeature === "native" ? "native entity attached" : model.anchorFeature === "optional" ? "feature optional route" : model.anchorFeature === "emulated" ? "free-floating fallback" : "feature missing";
+
+      const rows = [
+        ["detect", `label=${$("label").value}, source=${model.source}, age=${model.age}ms`, model.source === "missing" ? "bad" : model.age < 260 ? "ok" : "warn"],
+        ["stabilize", `polygon stability ${model.stability}% / tracking ${model.tracking}%`, model.stability > 72 && model.tracking > 72 ? "ok" : "warn"],
+        ["cross-check", `hit-test ${model.hit}% / depth ${model.depth}% agreement`, model.hit > 68 && model.depth > 68 ? "ok" : "warn"],
+        ["handoff", `anchor feature=${model.anchorFeature}, route=${model.route}`, model.key === "create" ? "ok" : model.key === "patch" ? "warn" : "bad"]
+      ];
+      $("queue").innerHTML = rows.map(([step, body, tone]) => `<div class="row"><span class="tag ${tone}">${step}</span><span>${body}</span><strong>${tone === "ok" ? "pass" : tone === "warn" ? "review" : "stop"}</strong></div>`).join("");
+    }
+
+    controls.forEach((control) => control.addEventListener("input", render));
+    $("good").addEventListener("click", () => {
+      $("source").value = "native";
+      $("label").value = "table";
+      $("anchorFeature").value = "native";
+      $("age").value = 72;
+      $("stability").value = 84;
+      $("hit").value = 78;
+      $("depth").value = 82;
+      $("tracking").value = 88;
+      $("frameActive").checked = true;
+      render();
+    });
+    $("bad").addEventListener("click", () => {
+      $("source").value = "quantized";
+      $("label").value = "unknown";
+      $("anchorFeature").value = "optional";
+      $("age").value = 486;
+      $("stability").value = 42;
+      $("hit").value = 46;
+      $("depth").value = 39;
+      $("tracking").value = 55;
+      $("frameActive").checked = true;
+      render();
+    });
+    render();
+  </script>
+</body>
+</html>

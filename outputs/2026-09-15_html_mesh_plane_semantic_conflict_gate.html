@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mesh Plane Semantic Conflict Gate</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #20252e;
+      --muted: #626d78;
+      --paper: #fffefa;
+      --bg: #f0f1ee;
+      --line: #d9ded8;
+      --green: #32744e;
+      --blue: #336b93;
+      --amber: #a66b24;
+      --red: #b34e46;
+      --plum: #6e5f83;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(51, 107, 147, .12), transparent 310px),
+        linear-gradient(135deg, rgba(50, 116, 78, .1), transparent 46%),
+        var(--bg);
+    }
+    main { width: min(1160px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 36px; }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 345px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 8px; font-size: 2rem; line-height: 1.08; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .summary, .panel, .stage, .metric, .matrix {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(32, 37, 46, .07);
+    }
+    .summary { padding: 16px; }
+    .verdict { font-size: 1.18rem; font-weight: 900; margin-bottom: 8px; }
+    .verdict.commit { color: var(--green); }
+    .verdict.split { color: var(--blue); }
+    .verdict.hold { color: var(--amber); }
+    .verdict.block { color: var(--red); }
+    .grid { display: grid; grid-template-columns: 320px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { padding: 16px; display: grid; gap: 14px; align-content: start; }
+    label { display: grid; gap: 6px; font-size: .86rem; font-weight: 760; color: #343e48; }
+    select, input[type="range"] { width: 100%; accent-color: var(--blue); }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    button {
+      border: 1px solid #c2c8c2;
+      background: #fbfcfb;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary { border-color: var(--blue); background: var(--blue); color: white; }
+    .stage {
+      min-height: 520px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      background:
+        linear-gradient(90deg, rgba(51, 107, 147, .08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(50, 116, 78, .08) 1px, transparent 1px),
+        #fffefa;
+      background-size: 40px 40px;
+    }
+    .scene {
+      min-height: 350px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff 0 46%, #e7ebe6 46% 100%);
+    }
+    svg { width: 100%; height: 100%; min-height: 350px; display: block; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { min-height: 76px; padding: 11px; box-shadow: none; }
+    .metric strong { display: block; font-size: 1.08rem; margin-bottom: 4px; }
+    .matrix { margin-top: 14px; padding: 14px; display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 128px 1fr 130px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffefa;
+      font-size: .88rem;
+    }
+    .tag { justify-self: start; border-radius: 999px; padding: 4px 8px; font-weight: 850; background: #e5eef5; color: var(--blue); }
+    .tag.ok { background: #e5f1e8; color: var(--green); }
+    .tag.warn { background: #fff0d7; color: var(--amber); }
+    .tag.bad { background: #ffe6e3; color: var(--red); }
+    @media (max-width: 860px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Mesh Plane Semantic Conflict Gate</h1>
+        <p>`XRMesh.semanticLabel` と `XRPlane.semanticLabel` を想定し、同じ場所の意味ラベルが食い違う時に anchor、occlusion、annotation を分ける派生試作。</p>
+      </div>
+      <section class="summary">
+        <div id="verdict" class="verdict commit">COMMIT SHARED SURFACE</div>
+        <p id="summary">plane と mesh の label が揃っており、同じ surface として anchor と occlusion に使えます。</p>
+      </section>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <label>Plane label
+          <select id="planeLabel">
+            <option value="table">table</option>
+            <option value="wall">wall</option>
+            <option value="floor">floor</option>
+            <option value="unknown">unknown</option>
+          </select>
+        </label>
+        <label>Mesh label
+          <select id="meshLabel">
+            <option value="table">table</option>
+            <option value="wall">wall</option>
+            <option value="floor">floor</option>
+            <option value="clutter">clutter</option>
+            <option value="unknown">unknown</option>
+          </select>
+        </label>
+        <label>Label confidence <span id="labelConfidenceLabel">82%</span>
+          <input id="labelConfidence" type="range" min="0" max="100" value="82">
+        </label>
+        <label>Pose overlap <span id="overlapLabel">76%</span>
+          <input id="overlap" type="range" min="0" max="100" value="76">
+        </label>
+        <label>Normal agreement <span id="normalLabel">80%</span>
+          <input id="normal" type="range" min="0" max="100" value="80">
+        </label>
+        <label>Depth support <span id="depthLabel">74%</span>
+          <input id="depth" type="range" min="0" max="100" value="74">
+        </label>
+        <label>Privacy reduction <span id="privacyLabel">18%</span>
+          <input id="privacy" type="range" min="0" max="100" value="18">
+        </label>
+        <label>Annotation risk <span id="riskLabel">24%</span>
+          <input id="risk" type="range" min="0" max="100" value="24">
+        </label>
+        <div class="buttons">
+          <button id="match" class="primary">Matching Labels</button>
+          <button id="conflict">Conflict Case</button>
+        </div>
+      </aside>
+
+      <section>
+        <div class="stage">
+          <div class="scene">
+            <svg viewBox="0 0 720 380" role="img" aria-label="Semantic label conflict visualization">
+              <rect width="720" height="380" fill="rgba(255,255,255,.5)"></rect>
+              <path id="plane" d="M112 264 L608 224 L662 278 L160 328 Z" fill="rgba(50,116,78,.16)" stroke="#32744e" stroke-width="4"></path>
+              <g id="mesh"></g>
+              <circle id="gate" cx="360" cy="258" r="34" fill="#fffefa" stroke="#336b93" stroke-width="6"></circle>
+              <path id="splitLine" d="M250 120 C320 176 416 170 486 236" fill="none" stroke="#6e5f83" stroke-width="5" stroke-linecap="round" stroke-dasharray="12 10"></path>
+              <text id="planeText" x="28" y="38" fill="#32744e" font-size="18" font-weight="850">plane: table</text>
+              <text id="meshText" x="28" y="64" fill="#336b93" font-size="18" font-weight="850">mesh: table</text>
+              <text id="routeText" x="28" y="92" fill="#626d78" font-size="13">shared surface can receive anchor + occlusion</text>
+            </svg>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="score">82</strong><span>semantic score</span></div>
+            <div class="metric"><strong id="anchor">plane+mesh</strong><span>anchor route</span></div>
+            <div class="metric"><strong id="occlusion">mesh</strong><span>occlusion route</span></div>
+            <div class="metric"><strong id="ui">show</strong><span>annotation route</span></div>
+          </div>
+        </div>
+        <div id="matrix" class="matrix"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const controls = ["planeLabel", "meshLabel", "labelConfidence", "overlap", "normal", "depth", "privacy", "risk"].map($);
+
+    function state() {
+      const planeLabel = $("planeLabel").value;
+      const meshLabel = $("meshLabel").value;
+      const labelConfidence = Number($("labelConfidence").value);
+      const overlap = Number($("overlap").value);
+      const normal = Number($("normal").value);
+      const depth = Number($("depth").value);
+      const privacy = Number($("privacy").value);
+      const risk = Number($("risk").value);
+      const exactMatch = planeLabel === meshLabel && planeLabel !== "unknown";
+      const compatible = exactMatch || planeLabel === "unknown" || meshLabel === "unknown" || (planeLabel === "floor" && meshLabel === "clutter");
+      const score = Math.max(0, Math.min(100, Math.round(
+        labelConfidence * .28 + overlap * .22 + normal * .2 + depth * .18 - privacy * .14 - risk * .16 + (exactMatch ? 18 : compatible ? 2 : -18)
+      )));
+      let route = "COMMIT SHARED SURFACE";
+      let cls = "commit";
+      let text = "plane と mesh の label が揃っており、同じ surface として anchor と occlusion に使えます。";
+      if (score < 34 || (!compatible && risk > 68)) {
+        route = "BLOCK ANNOTATION";
+        cls = "block";
+        text = "意味ラベルと pose が食い違うため、annotation と anchor 作成を止めて再検出を待ちます。";
+      } else if (score < 56 || privacy > 62) {
+        route = "HOLD FOR RELABEL";
+        cls = "hold";
+        text = "privacy reduction または label confidence の不足があるため、reticle preview のまま label 更新を待ちます。";
+      } else if (!exactMatch || score < 74) {
+        route = "SPLIT RESPONSIBILITY";
+        cls = "split";
+        text = "anchor は plane に任せ、mesh は occlusion / collision の補助に限定します。";
+      }
+      return { planeLabel, meshLabel, labelConfidence, overlap, normal, depth, privacy, risk, exactMatch, compatible, score, route, cls, text };
+    }
+
+    function draw(s) {
+      const color = s.cls === "commit" ? "#32744e" : s.cls === "split" ? "#336b93" : s.cls === "hold" ? "#a66b24" : "#b34e46";
+      let mesh = "";
+      for (let i = 0; i < 16; i += 1) {
+        const x = 110 + (i % 8) * 64 + Math.sin(i + s.privacy / 15) * 12;
+        const y = 202 + Math.floor(i / 8) * 44 + Math.cos(i * .7 + s.overlap / 20) * 18;
+        mesh += `<path d="M${x} ${y} L${x + 50} ${y - 20} L${x + 68} ${y + 24} Z" fill="${color}" opacity=".22" stroke="${color}" stroke-width="1.4"/>`;
+      }
+      $("mesh").innerHTML = mesh;
+      $("gate").setAttribute("stroke", color);
+      $("gate").setAttribute("r", String(24 + s.score * .18));
+      $("splitLine").style.display = s.cls === "split" || s.cls === "hold" ? "block" : "none";
+      $("planeText").textContent = `plane: ${s.planeLabel}`;
+      $("meshText").textContent = `mesh: ${s.meshLabel}`;
+      $("routeText").textContent = `${s.route.toLowerCase()} · score ${s.score}`;
+    }
+
+    function matrix(s) {
+      const rows = [
+        ["label pair", `${s.planeLabel} plane vs ${s.meshLabel} mesh`, s.exactMatch ? "match" : s.compatible ? "soft match" : "conflict"],
+        ["pose geometry", `overlap ${s.overlap}%, normal agreement ${s.normal}%`, s.overlap > 66 && s.normal > 66 ? "aligned" : "drift"],
+        ["depth check", `depth support ${s.depth}%, privacy reduction ${s.privacy}%`, s.depth > 62 && s.privacy < 55 ? "trusted" : "limited"],
+        ["ui safety", `annotation risk ${s.risk}%`, s.risk < 42 ? "show" : s.risk < 72 ? "ghost" : "hide"]
+      ];
+      $("matrix").innerHTML = rows.map(([name, detail, verdict]) => {
+        const ok = ["match", "aligned", "trusted", "show"].includes(verdict);
+        const bad = ["conflict", "hide"].includes(verdict);
+        return `<div class="row"><strong>${name}</strong><span>${detail}</span><span class="tag ${ok ? "ok" : bad ? "bad" : "warn"}">${verdict}</span></div>`;
+      }).join("");
+    }
+
+    function update() {
+      const s = state();
+      $("labelConfidenceLabel").textContent = `${s.labelConfidence}%`;
+      $("overlapLabel").textContent = `${s.overlap}%`;
+      $("normalLabel").textContent = `${s.normal}%`;
+      $("depthLabel").textContent = `${s.depth}%`;
+      $("privacyLabel").textContent = `${s.privacy}%`;
+      $("riskLabel").textContent = `${s.risk}%`;
+      $("verdict").textContent = s.route;
+      $("verdict").className = `verdict ${s.cls}`;
+      $("summary").textContent = s.text;
+      $("score").textContent = s.score;
+      $("anchor").textContent = s.cls === "commit" ? "plane+mesh" : s.cls === "split" ? "plane" : s.cls === "hold" ? "preview" : "none";
+      $("occlusion").textContent = s.cls === "block" ? "none" : s.depth > 60 ? "mesh" : "depth";
+      $("ui").textContent = s.risk < 42 && s.cls !== "block" ? "show" : s.risk < 72 ? "ghost" : "hide";
+      draw(s);
+      matrix(s);
+    }
+
+    controls.forEach((control) => control.addEventListener("input", update));
+    $("match").addEventListener("click", () => {
+      $("planeLabel").value = "table"; $("meshLabel").value = "table"; $("labelConfidence").value = 88;
+      $("overlap").value = 82; $("normal").value = 84; $("depth").value = 78; $("privacy").value = 16; $("risk").value = 22; update();
+    });
+    $("conflict").addEventListener("click", () => {
+      $("planeLabel").value = "wall"; $("meshLabel").value = "clutter"; $("labelConfidence").value = 58;
+      $("overlap").value = 48; $("normal").value = 44; $("depth").value = 52; $("privacy").value = 58; $("risk").value = 73; update();
+    });
+    update();
+  </script>
+</body>
+</html>

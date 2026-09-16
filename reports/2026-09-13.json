@@ -1,0 +1,145 @@
+{
+  "date": "2026-09-13",
+  "headline": "検出平面を Anchor 作成へ渡す前に queue で判定する",
+  "headlineEn": "Queueing detected planes before handing them to anchor creation",
+  "summary": "WebXR Device API 2026-06-09 CRD、Immersive Web の Plane Detection / Anchors / Hit Test 仕様、公式 WebXR Samples を参照し、検出平面から anchor 作成へ進む条件を queue 化する本命サンプルと、`XRPlane.polygon` の frame-to-frame jitter を見る派生サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Device API 2026-06-09 CRD, Immersive Web Plane Detection / Anchors / Hit Test specifications, and official WebXR Samples, today's original work adds a main sample that queues detected planes before anchor creation plus a derivative sample that visualizes frame-to-frame `XRPlane.polygon` jitter.",
+  "keyTopics": [
+    "WebXR Device API の最新公開版は 2026-06-09 Candidate Recommendation Draft で、`requestSession()`、user activation、frame loop、reference space などの基礎フローは引き続き WebXR 実装の土台です。",
+    "Plane Detection は `plane-detection` feature descriptor、`XRFrame.detectedPlanes`、`XRPlane.planeSpace`、`polygon`、`orientation`、`lastChangedTime`、semantic label を扱い、単発の Hit Test では得にくい surface の寿命と形状を使えます。",
+    "Anchors Module は `anchors` feature descriptor、`XRFrame.createAnchor()`、`XRHitTestResult.createAnchor()`、`XRAnchor.anchorSpace`、native anchor / emulated native anchor の考え方を整理しています。",
+    "Hit Test と Anchors の公式サンプルは、交点で reticle を出し、選択時に anchor を作って配置物を追跡する基本パターンを示しています。",
+    "今日の公開カードは外部デモではなく、このワークスペース内で作った `Plane Anchor Handoff Queue` と `Plane Polygon Jitter Heatmap` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The latest published WebXR Device API is the 9 June 2026 Candidate Recommendation Draft, and its `requestSession()`, user activation, frame loop, and reference space flow remain the baseline for WebXR implementations.",
+    "Plane Detection exposes the `plane-detection` feature descriptor, `XRFrame.detectedPlanes`, `XRPlane.planeSpace`, `polygon`, `orientation`, `lastChangedTime`, and semantic labels, giving applications surface lifetime and shape beyond one-off Hit Test results.",
+    "The Anchors Module defines the `anchors` feature descriptor, `XRFrame.createAnchor()`, `XRHitTestResult.createAnchor()`, `XRAnchor.anchorSpace`, and the distinction between native and emulated native anchors.",
+    "The official Hit Test and Hit Test with Anchors samples show the baseline pattern of rendering a reticle at a hit result and creating anchors from selected positions.",
+    "Today's public cards focus on the original workspace samples `Plane Anchor Handoff Queue` and `Plane Polygon Jitter Heatmap`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Plane Anchor Handoff Queue",
+      "url": "../outputs/2026-09-13_html_plane_anchor_handoff_queue.html"
+    },
+    {
+      "label": "Today's derivative sample: Plane Polygon Jitter Heatmap",
+      "url": "../outputs/2026-09-13_html_plane_polygon_jitter_heatmap.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR Plane Detection Module",
+      "url": "https://immersive-web.github.io/plane-detection/"
+    },
+    {
+      "label": "Immersive Web: Plane Detection explainer",
+      "url": "https://github.com/immersive-web/plane-detection/blob/main/explainer.md"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "Immersive Web: WebXR Hit Test Module",
+      "url": "https://immersive-web.github.io/hit-test/"
+    },
+    {
+      "label": "Immersive Web Samples: Hit Test with Anchors",
+      "url": "https://immersive-web.github.io/webxr-samples/hit-test-anchors.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は、昨日扱った Plane Detection を Anchors と Hit Test へ接続するところです。Plane Detection 仕様では `XRFrame.detectedPlanes` から平面集合を読み、`polygon` や `lastChangedTime` で surface の形状と更新を見られます。一方 Anchors 仕様では、`XRHitTestResult.createAnchor()` や `XRFrame.createAnchor()` が返す anchor は、native origin として実世界に固定されるか、端末側で emulated native anchor になる可能性があります。面白いのは、平面が見えたことと anchor に渡してよいことが同じではない点です。そこで今日は、plane、hit-test、depth、anchor feature の状態を queue に載せ、作成、補正、保留、停止に分ける自作サンプルにしました。",
+      "bodyEn": "Today's focus is connecting yesterday's Plane Detection work to Anchors and Hit Test. The Plane Detection specification exposes plane sets through `XRFrame.detectedPlanes`, with `polygon` and `lastChangedTime` showing surface shape and updates. The Anchors specification, meanwhile, allows anchors from `XRHitTestResult.createAnchor()` or `XRFrame.createAnchor()`, which may be backed by native origins or emulated native anchors depending on device support. The interesting point is that seeing a plane is not the same as being ready to hand it to anchor creation. Today's original sample therefore queues plane, hit-test, depth, and anchor feature state, then routes to create, patch, hold, or block.",
+      "links": [
+        {
+          "label": "Immersive Web: WebXR Plane Detection Module",
+          "url": "https://immersive-web.github.io/plane-detection/"
+        },
+        {
+          "label": "Immersive Web: WebXR Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        },
+        {
+          "label": "Immersive Web Samples: Hit Test with Anchors",
+          "url": "https://immersive-web.github.io/webxr-samples/hit-test-anchors.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Plane Anchor Handoff Queue` は plane source、semantic label、anchor feature、plane age、polygon stability、hit-test agreement、depth agreement、tracking confidence、active frame を操作し、`CREATE ANCHOR`、`PATCH THEN ANCHOR`、`HOLD QUEUE`、`BLOCK HANDOFF` に分岐します。派生サンプル `Plane Polygon Jitter Heatmap` は plane shape、frame delta、vertex jitter、normal drift、area change、privacy quantization、depth cross-check を動かし、前 frame の polygon と現在 frame の polygon のズレを heatmap と vertex label で表示します。",
+      "bodyEn": "The main sample, `Plane Anchor Handoff Queue`, adjusts plane source, semantic label, anchor feature, plane age, polygon stability, hit-test agreement, depth agreement, tracking confidence, and active frame, routing to `CREATE ANCHOR`, `PATCH THEN ANCHOR`, `HOLD QUEUE`, or `BLOCK HANDOFF`. The derivative sample, `Plane Polygon Jitter Heatmap`, adjusts plane shape, frame delta, vertex jitter, normal drift, area change, privacy quantization, and depth cross-check, then visualizes the previous and current frame polygons as a heatmap with vertex labels.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-09-13_html_plane_anchor_handoff_queue.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-09-13_html_plane_polygon_jitter_heatmap.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機版では `navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['plane-detection', 'anchors'], optionalFeatures: ['hit-test', 'depth-sensing'] })` のように feature を交渉し、frame ごとに `frame.detectedPlanes`、`frame.getHitTestResults()`、`frame.trackedAnchors` を同じ ledger row に載せます。`XRPlane.lastChangedTime` が新しい平面は即 anchor 化せず、数 frame の polygon stability と depth agreement を待つ方が安全です。`XRHitTestResult.createAnchor()` は hit した native entity に付く意図を伝えられるため、平面の semantic label と hit result を照合してから渡すと、free-floating anchor へ落ちた時の fallback 説明もしやすくなります。",
+      "bodyEn": "A device-backed version can negotiate features with a call like `navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['plane-detection', 'anchors'], optionalFeatures: ['hit-test', 'depth-sensing'] })`, then write `frame.detectedPlanes`, `frame.getHitTestResults()`, and `frame.trackedAnchors` into the same ledger row each frame. A plane with a fresh `XRPlane.lastChangedTime` should usually wait for a few frames of polygon stability and depth agreement before anchor creation. Since `XRHitTestResult.createAnchor()` can communicate intent to attach to the hit native entity, matching the plane semantic label with the hit result before handoff also makes fallback to free-floating anchors easier to explain."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは plane source、semantic label、anchor feature、plane age、polygon stability、hit-test agreement、depth agreement、tracking confidence、anchor route、vertex jitter、normal drift、area change、privacy quantization、anchor delay が取れます。9月7日の anchor replay bridge、9月11日の depth confidence gate、9月12日の plane lifecycle ledger と組み合わせると、検出、平面品質、anchor handoff、restore、re-hit までを日跨ぎで再生できます。展示では壁面と机上の配置判断、業務 UI では保守対象の面だけに annotation を貼る判断、ゲームでは床・壁・テーブル別の物理ルール切り替えに使えます。",
+      "bodyEn": "The two samples produce plane source, semantic label, anchor feature, plane age, polygon stability, hit-test agreement, depth agreement, tracking confidence, anchor route, vertex jitter, normal drift, area change, privacy quantization, and anchor delay. Combined with the September 7 anchor replay bridge, September 11 depth confidence gate, and September 12 plane lifecycle ledger, they can replay detection, plane quality, anchor handoff, restore, and re-hit across days. This can support placement decisions for walls and tables in installations, surface-specific annotations in operational UI, and floor / wall / table physics rules in games."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Device API の CRD 更新、Plane Detection の `semanticLabel` / privacy quantization 議論、Anchors Module の native anchor と emulated native anchor の扱い、Hit Test with Anchors サンプルの実装差分、ブラウザごとの `plane-detection` / `anchors` / `hit-test` feature support を継続して見ます。次は今日の handoff queue を IndexedDB logger へ接続し、実機 frame から plane id、polygon、lastChangedTime、anchor promise resolution を保存する流れがよさそうです。",
+      "bodyEn": "Continue watching WebXR Device API CRD updates, Plane Detection discussion around `semanticLabel` and privacy quantization, native versus emulated native anchors in the Anchors Module, implementation changes in the Hit Test with Anchors sample, and browser support for `plane-detection`, `anchors`, and `hit-test`. A good next step is connecting today's handoff queue to the IndexedDB logger and saving real device plane id, polygon, lastChangedTime, and anchor promise resolution rows."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Plane Anchor Handoff Queue` では Plane source を `privacy-quantized plane`、Anchor feature を `anchors optional`、Plane age を 430ms 以上にすると `HOLD QUEUE` か `PATCH THEN ANCHOR` へ寄ります。Anchor feature を `not available`、または frame active を off にすると `BLOCK HANDOFF` になります。`Plane Polygon Jitter Heatmap` では Vertex jitter と Area change を上げると赤い頂点が増え、anchor delay が hold / blocked に変わります。",
+      "bodyEn": "In `Plane Anchor Handoff Queue`, set Plane source to `privacy-quantized plane`, Anchor feature to `anchors optional`, and Plane age above 430ms to move toward `HOLD QUEUE` or `PATCH THEN ANCHOR`. Set Anchor feature to `not available`, or turn off frame active, to get `BLOCK HANDOFF`. In `Plane Polygon Jitter Heatmap`, raise Vertex jitter and Area change to increase red vertices and change anchor delay to hold / blocked.",
+      "links": [
+        {
+          "label": "Open Plane Anchor Handoff Queue",
+          "url": "../outputs/2026-09-13_html_plane_anchor_handoff_queue.html"
+        },
+        {
+          "label": "Open Plane Polygon Jitter Heatmap",
+          "url": "../outputs/2026-09-13_html_plane_polygon_jitter_heatmap.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、Immersive Web Plane Detection Module / explainer、WebXR Anchors Module、WebXR Hit Test Module、Immersive Web Samples の Hit Test with Anchors を確認。設計: 1本目は detected plane から anchor へ渡す queue、2本目は plane polygon の揺れを frame 差分で見る heatmap。実装: `outputs/2026-09-13_html_plane_anchor_handoff_queue.html` と `outputs/2026-09-13_html_plane_polygon_jitter_heatmap.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。",
+      "bodyEn": "Research: reviewed the W3C WebXR Device API, Immersive Web Plane Detection Module / explainer, WebXR Anchors Module, WebXR Hit Test Module, and the Immersive Web Samples Hit Test with Anchors sample. Design: make the first sample a queue from detected planes to anchors, and the second a frame-difference heatmap for plane polygon jitter. Implementation: add `outputs/2026-09-13_html_plane_anchor_handoff_queue.html` and `outputs/2026-09-13_html_plane_polygon_jitter_heatmap.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "ここ数日は policy、hit-test、anchors、depth、plane を個別に扱ってきました。今日の handoff queue は、それらを「配置してよいか」の一本道に並べる小さな整理です。Plane Detection は面の文脈、Hit Test は一点の接地、Depth Sensing は現実との整合、Anchors は持続性を担当します。平面が大きく見えても polygon が揺れているなら保留し、hit と depth が一致してから anchor に渡す、という判断が AR 体験の落ち着きを作ります。",
+      "bodyEn": "Recent work has treated policy, hit testing, anchors, depth, and planes separately. Today's handoff queue arranges those pieces into one placement decision path. Plane Detection provides surface context, Hit Test provides point contact, Depth Sensing provides real-world agreement, and Anchors provide persistence. Even a large detected plane should be held if its polygon is jittering, then handed to anchor creation only after hit and depth agree; that decision makes AR placement feel calmer."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Plane Anchor Handoff Queue` です。何が動くか: plane source、semantic label、anchor feature、plane age、polygon stability、hit-test agreement、depth agreement、tracking confidence、active frame を操作し、anchor 作成、補正、保留、停止を判定します。次に足すなら、実機の `frame.detectedPlanes` と `XRHitTestResult.createAnchor()` の promise resolution を IndexedDB に保存し、anchor が `trackedAnchors` に入るまでの latency を測ります。派生として `Plane Polygon Jitter Heatmap` も実装しました。何が動くか: 前 frame と現在 frame の polygon を重ね、頂点移動、normal drift、area change、privacy quantization、depth cross-check から anchor delay を出します。次に足すなら、heatmap の score を本命サンプルの polygon stability へ自動入力し、平面品質が anchor handoff をどう止めるかを連動させます。",
+      "bodyEn": "The selected main prototype is `Plane Anchor Handoff Queue`. What it does: adjusts plane source, semantic label, anchor feature, plane age, polygon stability, hit-test agreement, depth agreement, tracking confidence, and active frame, then classifies anchor creation, patching, holding, or blocking. Next addition: save real `frame.detectedPlanes` rows and `XRHitTestResult.createAnchor()` promise resolution into IndexedDB, then measure latency until anchors appear in `trackedAnchors`. The derivative `Plane Polygon Jitter Heatmap` was also implemented. What it does: overlays previous and current frame polygons, then uses vertex movement, normal drift, area change, privacy quantization, and depth cross-check to produce anchor delay. Next addition: feed the heatmap score into the main sample's polygon stability control so plane quality directly controls anchor handoff."
+    }
+  ]
+}

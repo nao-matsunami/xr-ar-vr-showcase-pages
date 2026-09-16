@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 66</span>
+        <span>days: 70</span>
         <span>page: 5 / 6</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -309,6 +309,98 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-07-28">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.28</p>
+              <h2>capability probe から secondary view 予算を組む</h2>
+              <p class="card-subtitle">Planning secondary-view budgets from capability probes</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-28" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API、WebXR AR Module、Raw Camera Access、Immersive Web WebGPU samples を確認し、今日は権限リクエスト前の `navigator.xr` / `navigator.gpu` 存在確認と、AR の secondary views / first-person observer view 追加時の描画予算を可視化する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Device API, WebXR AR Module, Raw Camera Access, and Immersive Web WebGPU samples, today's original HTML sample visualizes pre-permission `navigator.xr` / `navigator.gpu` checks and render-budget changes when AR secondary views / first-person observer views are enabled.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-28.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-28_html_capability_probe_secondary_view_planner.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-07-27">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.27</p>
+              <h2>camera-access を要求する前に代替経路へ振り分ける</h2>
+              <p class="card-subtitle">Routing to fallback paths before requesting camera access</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-27" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Raw Camera Access、WebXR Device API、Layers API、Immersive Web samples と support overview を確認し、今日は camera-access を使う前に depth、hit test、anchors、lighting、overlay へ処理を逃がせるかを可視化する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing WebXR Raw Camera Access, WebXR Device API, the Layers API, Immersive Web samples, and the support overview, today's original HTML sample visualizes whether work can route to depth, hit test, anchors, lighting, or overlay before requesting camera access.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-27.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-27_html_camera_access_fallback_router.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-07-26">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.26</p>
+              <h2>カメラ画像アクセスを処理予算とプライバシー表示で制御する</h2>
+              <p class="card-subtitle">Governing camera image access with processing budget and privacy indicators</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-26" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Raw Camera Access、AR secondary views、DOM Overlays、Layers samples、Immersive Web のサポート確認ページを調べ、今日は camera-access の同意、privacy indicator、gaze / hand 優先度、anchor refresh を小さな処理予算で競合させる自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing WebXR Raw Camera Access, AR secondary views, DOM Overlays, Layers samples, and the Immersive Web support page, today's original HTML sample lets camera-access consent, a privacy indicator, gaze and hand priority, and anchor refresh compete for a small processing budget.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-26.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-26_html_camera_privacy_foveation_governor.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-07-25">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.25</p>
+              <h2>DOM 操作中もアンカー更新を止めない選択ゲート</h2>
+              <p class="card-subtitle">A selection gate that keeps anchor refresh running during DOM interaction</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-25" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR DOM Overlays、Anchors、Hit Test、Depth Sensing、Immersive Web 公式 samples を確認し、今日は overlay 上の UI 操作で world select を保留しながら、stale depth と anchor drift の更新キューだけを継続する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing WebXR DOM Overlays, Anchors, Hit Test, Depth Sensing, and the Immersive Web official samples, today's original HTML sample keeps stale-depth and anchor-drift refresh scheduling alive while DOM overlay interaction holds world selection.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-25.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-25_html_overlay_anchor_refresh_queue.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-07-24">
           <div class="card-top">
             <div>
@@ -489,98 +581,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-07-17.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-07-17_html_foreground_warp_mismatch_scope.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-07-16">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.07.16</p>
-              <h2>低頻度描画を deltaPose 風の姿勢補正で観察する</h2>
-              <p class="card-subtitle">Observing low-rate rendering with deltaPose-style pose compensation</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-07-16" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Layers API の Space Warp と XRProjectionLayer.deltaPose を確認し、今日は projection layer を低頻度で描いた場合の姿勢ずれと、deltaPose 風の補正結果を通常ブラウザで比較する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing Space Warp and XRProjectionLayer.deltaPose in the WebXR Layers API, today's original HTML sample compares low-rate projection rendering against deltaPose-style compensation in a normal browser.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-07-16.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-07-16_html_delta_pose_space_warp_lab.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-07-15">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.07.15</p>
-              <h2>静的レイヤーの再描画タイミングを分けて観察する</h2>
-              <p class="card-subtitle">Separating redraw timing for static composition layers</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-07-15" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Layers API の needsRedraw、redraw event、isStatic、fixedFoveation、layers 配列の扱いを確認し、今日は静的注釈 quad と動的ポインタ layer の更新頻度差を通常ブラウザで観察する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing needsRedraw, redraw events, isStatic, fixedFoveation, and the layers array in the WebXR Layers API, today's original HTML sample explores different update rates for a static annotation quad and a dynamic pointer layer in a normal browser.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-07-15.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-07-15_html_static_layer_redraw_meter.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-07-14">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.07.14</p>
-              <h2>360 メディア背景と注釈レイヤーを分けて観察する</h2>
-              <p class="card-subtitle">Separating 360 media backgrounds from annotation layers</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-07-14" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Layers API、XREquirectLayer、XRCubeLayer、XRMediaBinding を確認し、今日は 360 メディア背景、字幕 quad、注釈 quad の分離と奥行き順を通常ブラウザで触れる自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Layers API, XREquirectLayer, XRCubeLayer, and XRMediaBinding, today's original HTML sample explores separating a 360 media background from caption and annotation quad layers in a normal browser.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-07-14.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-07-14_html_equirect_media_annotation_deck.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-07-13">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.07.13</p>
-              <h2>Cylinder Layer で曲面 UI の可読性を観察する</h2>
-              <p class="card-subtitle">Observing curved UI readability with cylinder-layer ideas</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-07-13" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Layers API、XRCylinderLayer、XRQuadLayer、公式 WebXR Samples を確認し、今日は曲面 UI の視線角、半径、stereo offset、手前カードとの depth sorting を操作できる自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Layers API, XRCylinderLayer, XRQuadLayer, and the official WebXR Samples, today's original HTML sample explores curved UI readability through viewer yaw, radius, stereo offset, and depth sorting against a nearer card.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-07-13.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-07-13_html_curved_layer_readability_tunnel.html">代表サンプル / Sample</a>
           </div>
         </article>
       

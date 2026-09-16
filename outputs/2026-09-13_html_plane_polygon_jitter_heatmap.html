@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plane Polygon Jitter Heatmap</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #222c2f;
+      --muted: #647174;
+      --paper: #fffefa;
+      --bg: #f1f4ef;
+      --line: #d9dfd6;
+      --blue: #2e718f;
+      --green: #317857;
+      --amber: #a86924;
+      --red: #b24d46;
+      --plum: #745e88;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, rgba(49, 120, 87, .13), transparent 320px), var(--bg);
+    }
+    main { width: min(1160px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 36px; }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 8px; font-size: 2.1rem; line-height: 1.08; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .summary, .panel, .stage, .log, .metric {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 26px rgba(34, 44, 47, .07);
+    }
+    .summary { padding: 16px; }
+    .verdict { font-size: 1.26rem; font-weight: 900; margin-bottom: 8px; }
+    .verdict.stable { color: var(--green); }
+    .verdict.patch { color: var(--blue); }
+    .verdict.hold { color: var(--amber); }
+    .verdict.block { color: var(--red); }
+    .grid { display: grid; grid-template-columns: 318px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { padding: 16px; display: grid; gap: 14px; align-content: start; }
+    label { display: grid; gap: 6px; font-size: .86rem; font-weight: 760; color: #374649; }
+    select, input[type="range"] { width: 100%; accent-color: var(--green); }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    button {
+      border: 1px solid #c2cac1;
+      background: #fbfcfa;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary { border-color: var(--green); background: var(--green); color: white; }
+    .stage {
+      min-height: 520px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      background:
+        linear-gradient(90deg, rgba(46, 113, 143, .08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(49, 120, 87, .08) 1px, transparent 1px),
+        #fffefa;
+      background-size: 40px 40px;
+    }
+    .canvas-wrap {
+      min-height: 350px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff, #e9eee8);
+    }
+    svg { width: 100%; height: 100%; min-height: 350px; display: block; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { min-height: 78px; padding: 11px; box-shadow: none; }
+    .metric strong { display: block; font-size: 1.14rem; margin-bottom: 4px; }
+    .log { margin-top: 14px; padding: 14px; display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 112px 1fr 116px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffefa;
+      font-size: .88rem;
+    }
+    .tag { justify-self: start; border-radius: 999px; padding: 4px 8px; font-weight: 850; background: #e7f2e9; color: var(--green); }
+    .tag.warn { background: #fff0d4; color: var(--amber); }
+    .tag.bad { background: #ffe8e3; color: var(--red); }
+    @media (max-width: 860px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Plane Polygon Jitter Heatmap</h1>
+        <p>`XRPlane.polygon` と `lastChangedTime` の frame-to-frame 差分を想定し、どの頂点が揺れて anchor handoff を遅らせるかを見る派生ラボ。</p>
+      </div>
+      <section class="summary">
+        <div id="verdict" class="verdict stable">STABLE POLYGON</div>
+        <p id="summary">頂点差分が小さく、平面の面積と normal が安定しています。</p>
+      </section>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <label>Plane shape
+          <select id="shape">
+            <option value="table">table rectangle</option>
+            <option value="floor">floor slab</option>
+            <option value="wall">wall panel</option>
+            <option value="narrow">narrow shelf</option>
+          </select>
+        </label>
+        <label>Frame delta <span id="deltaLabel">38 ms</span>
+          <input id="delta" type="range" min="16" max="520" value="38">
+        </label>
+        <label>Vertex jitter <span id="jitterLabel">8 cm</span>
+          <input id="jitter" type="range" min="0" max="48" value="8">
+        </label>
+        <label>Normal drift <span id="normalLabel">5 deg</span>
+          <input id="normal" type="range" min="0" max="38" value="5">
+        </label>
+        <label>Area change <span id="areaLabel">6%</span>
+          <input id="area" type="range" min="0" max="55" value="6">
+        </label>
+        <label>Privacy quantization <span id="quantLabel">12 cm</span>
+          <input id="quant" type="range" min="0" max="40" value="12">
+        </label>
+        <label>Depth cross-check <span id="depthLabel">78%</span>
+          <input id="depth" type="range" min="0" max="100" value="78">
+        </label>
+        <div class="buttons">
+          <button id="stable" class="primary">Stable Frame</button>
+          <button id="scan">Scan Noise</button>
+        </div>
+      </aside>
+
+      <section>
+        <div class="stage">
+          <div class="canvas-wrap">
+            <svg viewBox="0 0 700 380" role="img" aria-label="Plane polygon jitter heatmap">
+              <defs>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="5" result="blur"></feGaussianBlur>
+                  <feMerge>
+                    <feMergeNode in="blur"></feMergeNode>
+                    <feMergeNode in="SourceGraphic"></feMergeNode>
+                  </feMerge>
+                </filter>
+              </defs>
+              <rect x="0" y="0" width="700" height="380" fill="rgba(255,255,255,.45)"></rect>
+              <g id="grid"></g>
+              <polygon id="prevPoly" fill="rgba(46,113,143,.14)" stroke="#2e718f" stroke-width="2" stroke-dasharray="6 6"></polygon>
+              <polygon id="nextPoly" fill="rgba(49,120,87,.22)" stroke="#317857" stroke-width="3"></polygon>
+              <g id="rays"></g>
+              <g id="points"></g>
+              <text id="shapeText" x="26" y="34" fill="#222c2f" font-size="18" font-weight="800">table rectangle</text>
+              <text id="heatText" x="26" y="60" fill="#647174" font-size="13">green current polygon, dashed blue previous polygon</text>
+            </svg>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="score">86</strong><span>stability score</span></div>
+            <div class="metric"><strong id="maxMove">8 cm</strong><span>max vertex move</span></div>
+            <div class="metric"><strong id="anchorDelay">1 frame</strong><span>anchor delay</span></div>
+            <div class="metric"><strong id="sampleRate">26 fps</strong><span>plane updates</span></div>
+          </div>
+        </div>
+        <div id="log" class="log"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const controls = ["shape", "delta", "jitter", "normal", "area", "quant", "depth"].map($);
+    const baseShapes = {
+      table: [[210,135],[475,130],[510,250],[180,260]],
+      floor: [[120,150],[580,135],[650,330],[55,340]],
+      wall: [[205,85],[520,100],[505,305],[190,285]],
+      narrow: [[235,165],[490,160],[510,215],[218,226]]
+    };
+
+    function grid() {
+      let lines = "";
+      for (let x = 40; x < 700; x += 40) lines += `<line x1="${x}" y1="0" x2="${x}" y2="380" stroke="rgba(34,44,47,.06)"/>`;
+      for (let y = 40; y < 380; y += 40) lines += `<line x1="0" y1="${y}" x2="700" y2="${y}" stroke="rgba(34,44,47,.06)"/>`;
+      $("grid").innerHTML = lines;
+    }
+
+    function compute() {
+      const shape = $("shape").value;
+      const delta = Number($("delta").value);
+      const jitter = Number($("jitter").value);
+      const normal = Number($("normal").value);
+      const area = Number($("area").value);
+      const quant = Number($("quant").value);
+      const depth = Number($("depth").value);
+      const score = Math.max(0, Math.min(100, Math.round(100 - jitter * .9 - normal * 1.25 - area * .72 - Math.max(0, delta - 120) * .05 - quant * .32 + (depth - 70) * .2)));
+      return { shape, delta, jitter, normal, area, quant, depth, score };
+    }
+
+    function shiftedPoints(model) {
+      const base = baseShapes[model.shape];
+      return base.map(([x, y], i) => {
+        const wave = Math.sin((i + 1) * 1.7 + model.delta * .02);
+        const bias = (i % 2 === 0 ? -1 : 1);
+        const q = model.quant * .18;
+        return [
+          x + wave * model.jitter * 1.9 + bias * model.area * .65 + q,
+          y + Math.cos((i + 2) * 1.3) * model.jitter * 1.35 + bias * model.normal * .95 - q
+        ];
+      });
+    }
+
+    function render() {
+      const model = compute();
+      const base = baseShapes[model.shape];
+      const next = shiftedPoints(model);
+      const maxMove = Math.round(Math.max(...next.map((point, i) => Math.hypot(point[0] - base[i][0], point[1] - base[i][1]))) / 2);
+      $("prevPoly").setAttribute("points", base.map((p) => p.join(",")).join(" "));
+      $("nextPoly").setAttribute("points", next.map((p) => p.join(",")).join(" "));
+      $("shapeText").textContent = model.shape.replace("-", " ");
+      $("deltaLabel").textContent = `${model.delta} ms`;
+      $("jitterLabel").textContent = `${model.jitter} cm`;
+      $("normalLabel").textContent = `${model.normal} deg`;
+      $("areaLabel").textContent = `${model.area}%`;
+      $("quantLabel").textContent = `${model.quant} cm`;
+      $("depthLabel").textContent = `${model.depth}%`;
+      $("score").textContent = model.score;
+      $("maxMove").textContent = `${maxMove} cm`;
+      $("anchorDelay").textContent = model.score > 80 ? "1 frame" : model.score > 62 ? "2 frames" : model.score > 42 ? "hold" : "blocked";
+      $("sampleRate").textContent = `${Math.round(1000 / model.delta)} fps`;
+
+      let key = "stable";
+      let title = "STABLE POLYGON";
+      let summary = "頂点差分が小さく、平面の面積と normal が安定しています。";
+      if (model.score < 42 || model.depth < 35) {
+        key = "block";
+        title = "BLOCK POLYGON";
+        summary = "polygon 差分か depth mismatch が大きく、配置と anchor 作成を止めます。";
+      } else if (model.score < 62 || model.delta > 340) {
+        key = "hold";
+        title = "HOLD FOR NEXT FRAME";
+        summary = "平面は有効ですが、更新間隔か頂点揺れが大きいため次 frame を待ちます。";
+      } else if (model.score < 80 || model.quant > 26) {
+        key = "patch";
+        title = "PATCH POLYGON";
+        summary = "平面は使えますが、quantization や面積変化を anchor 前に補正します。";
+      }
+      $("verdict").className = `verdict ${key}`;
+      $("verdict").textContent = title;
+      $("summary").textContent = summary;
+
+      $("points").innerHTML = next.map(([x, y], i) => {
+        const move = Math.round(Math.hypot(x - base[i][0], y - base[i][1]) / 2);
+        const color = move > 22 ? "#b24d46" : move > 12 ? "#a86924" : "#317857";
+        const radius = 8 + Math.min(24, move * .72);
+        return `<circle cx="${x}" cy="${y}" r="${radius}" fill="${color}" opacity=".28" filter="url(#glow)"></circle><circle cx="${x}" cy="${y}" r="5" fill="${color}"></circle><text x="${x + 10}" y="${y - 8}" fill="${color}" font-size="12" font-weight="800">v${i + 1} ${move}cm</text>`;
+      }).join("");
+      $("rays").innerHTML = next.map(([x, y], i) => `<line x1="${base[i][0]}" y1="${base[i][1]}" x2="${x}" y2="${y}" stroke="#745e88" stroke-width="2" stroke-dasharray="4 5" opacity=".58"></line>`).join("");
+
+      const rows = [
+        ["polygon", `max vertex move ${maxMove}cm, area change ${model.area}%`, maxMove > 22 || model.area > 38 ? "bad" : maxMove > 12 || model.area > 22 ? "warn" : ""],
+        ["normal", `normal drift ${model.normal}deg, quantization ${model.quant}cm`, model.normal > 24 ? "bad" : model.normal > 12 || model.quant > 24 ? "warn" : ""],
+        ["depth", `depth cross-check ${model.depth}%`, model.depth < 35 ? "bad" : model.depth < 66 ? "warn" : ""],
+        ["handoff", `anchor delay ${$("anchorDelay").textContent}, stability score ${model.score}`, key === "block" ? "bad" : key === "hold" || key === "patch" ? "warn" : ""]
+      ];
+      $("log").innerHTML = rows.map(([step, body, tone]) => `<div class="row"><span class="tag ${tone}">${step}</span><span>${body}</span><strong>${tone === "bad" ? "stop" : tone === "warn" ? "review" : "pass"}</strong></div>`).join("");
+    }
+
+    controls.forEach((control) => control.addEventListener("input", render));
+    $("stable").addEventListener("click", () => {
+      $("shape").value = "table";
+      $("delta").value = 38;
+      $("jitter").value = 8;
+      $("normal").value = 5;
+      $("area").value = 6;
+      $("quant").value = 12;
+      $("depth").value = 78;
+      render();
+    });
+    $("scan").addEventListener("click", () => {
+      $("shape").value = "floor";
+      $("delta").value = 410;
+      $("jitter").value = 32;
+      $("normal").value = 22;
+      $("area").value = 34;
+      $("quant").value = 28;
+      $("depth").value = 48;
+      render();
+    });
+    grid();
+    render();
+  </script>
+</body>
+</html>

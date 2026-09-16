@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anchor Mesh Ghost Replay</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2830;
+      --muted: #61707b;
+      --paper: #fffdf7;
+      --bg: #eef2f5;
+      --line: #d4dde2;
+      --green: #2f7a59;
+      --cyan: #277f92;
+      --amber: #a86e20;
+      --red: #b24a45;
+      --violet: #665c9f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(39, 127, 146, .12), transparent 340px),
+        linear-gradient(120deg, rgba(47, 122, 89, .1), transparent 45%),
+        var(--bg);
+    }
+    main { width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 36px; }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 8px; font-size: 2.05rem; line-height: 1.08; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .summary, .panel, .stage, .metric, .ledger {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(31, 40, 48, .07);
+    }
+    .summary { padding: 16px; }
+    .verdict { font-size: 1.22rem; font-weight: 900; margin-bottom: 8px; }
+    .ok { color: var(--green); }
+    .ghost { color: var(--cyan); }
+    .hold { color: var(--amber); }
+    .bad { color: var(--red); }
+    .grid { display: grid; grid-template-columns: 320px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { padding: 16px; display: grid; gap: 14px; align-content: start; }
+    label { display: grid; gap: 6px; font-size: .86rem; font-weight: 760; color: #35424a; }
+    select, input[type="range"] { width: 100%; accent-color: var(--cyan); }
+    .switch { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .switch input { transform: scale(1.12); accent-color: var(--cyan); }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    button {
+      border: 1px solid #bbc7cd;
+      background: #fbfcfb;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary { border-color: var(--cyan); background: var(--cyan); color: white; }
+    .stage {
+      min-height: 540px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      background:
+        linear-gradient(90deg, rgba(39, 127, 146, .08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(47, 122, 89, .08) 1px, transparent 1px),
+        #fffdf7;
+      background-size: 42px 42px;
+    }
+    .viewport {
+      min-height: 360px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff 0 48%, #e8eef0 48% 100%);
+    }
+    svg { width: 100%; height: 100%; min-height: 360px; display: block; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { min-height: 78px; padding: 11px; box-shadow: none; }
+    .metric strong { display: block; font-size: 1.08rem; margin-bottom: 4px; }
+    .ledger { margin-top: 14px; padding: 14px; display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 124px 1fr 136px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf7;
+      font-size: .88rem;
+    }
+    .tag { justify-self: start; border-radius: 999px; padding: 4px 8px; font-weight: 850; background: #e1f0f4; color: var(--cyan); }
+    .tag.ok { background: #e1f0e8; color: var(--green); }
+    .tag.warn { background: #fff0d5; color: var(--amber); }
+    .tag.bad { background: #ffe6e3; color: var(--red); }
+    @media (max-width: 860px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Anchor Mesh Ghost Replay</h1>
+        <p>9月15日の mesh anchor ledger を日跨ぎで再生し、mesh score が悪化した anchor を commit から ghost / hold / re-hit へ戻す最小サンプル。</p>
+      </div>
+      <section class="summary">
+        <div id="verdict" class="verdict ok">KEEP SOLID ANCHOR</div>
+        <p id="summary">保存済み anchor の mesh / plane / depth 履歴が安定しているため、通常表示を維持します。</p>
+      </section>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <label>Replay source
+          <select id="source">
+            <option value="idb">IndexedDB ledger rows</option>
+            <option value="json">exported JSON replay</option>
+            <option value="seed">seed fallback rows</option>
+            <option value="stale">stale persistent handle</option>
+          </select>
+        </label>
+        <label>Anchor age <span id="ageLabel">18 h</span>
+          <input id="age" type="range" min="0" max="96" value="18">
+        </label>
+        <label>Mesh score now <span id="meshNowLabel">78%</span>
+          <input id="meshNow" type="range" min="0" max="100" value="78">
+        </label>
+        <label>Mesh score previous <span id="meshPrevLabel">82%</span>
+          <input id="meshPrev" type="range" min="0" max="100" value="82">
+        </label>
+        <label>Plane stability <span id="planeLabel">86%</span>
+          <input id="plane" type="range" min="0" max="100" value="86">
+        </label>
+        <label>Depth agreement <span id="depthLabel">80%</span>
+          <input id="depth" type="range" min="0" max="100" value="80">
+        </label>
+        <label>Tracked anchors match <span id="trackedLabel">92%</span>
+          <input id="tracked" type="range" min="0" max="100" value="92">
+        </label>
+        <label>Re-hit confidence <span id="rehitLabel">64%</span>
+          <input id="rehit" type="range" min="0" max="100" value="64">
+        </label>
+        <label class="switch">Persistent handle restored
+          <input id="restored" type="checkbox" checked>
+        </label>
+        <div class="buttons">
+          <button id="stable" class="primary">Stable Replay</button>
+          <button id="decay">Mesh Decay</button>
+        </div>
+      </aside>
+
+      <section>
+        <div class="stage">
+          <div class="viewport">
+            <svg viewBox="0 0 720 390" role="img" aria-label="Anchor ghost replay visualization">
+              <rect width="720" height="390" fill="rgba(255,255,255,.45)"></rect>
+              <path id="planeShape" d="M96 266 L624 232 L672 286 L148 330 Z" fill="rgba(47,122,89,.14)" stroke="#2f7a59" stroke-width="4"></path>
+              <g id="mesh"></g>
+              <g id="history"></g>
+              <circle id="anchor" cx="360" cy="258" r="26" fill="#fffdf7" stroke="#277f92" stroke-width="6"></circle>
+              <circle id="ghostRing" cx="360" cy="258" r="43" fill="none" stroke="#665c9f" stroke-width="4" stroke-dasharray="8 7" opacity=".35"></circle>
+              <path id="rehitRay" d="M168 96 C250 154 306 196 360 258" fill="none" stroke="#b24a45" stroke-width="4" stroke-linecap="round" opacity=".5"></path>
+              <text id="label" x="28" y="38" fill="#1f2830" font-size="18" font-weight="850">IndexedDB ledger rows</text>
+              <text id="subLabel" x="28" y="64" fill="#61707b" font-size="13">replay checks whether a solid anchor should become ghosted</text>
+            </svg>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="score">84</strong><span>replay trust</span></div>
+            <div class="metric"><strong id="delta">-4</strong><span>mesh delta</span></div>
+            <div class="metric"><strong id="route">solid</strong><span>display route</span></div>
+            <div class="metric"><strong id="payload">idb row</strong><span>stored source</span></div>
+          </div>
+        </div>
+        <div id="ledger" class="ledger"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const controls = ["source", "age", "meshNow", "meshPrev", "plane", "depth", "tracked", "rehit", "restored"].map($);
+
+    function evaluate() {
+      const source = $("source").value;
+      const age = Number($("age").value);
+      const meshNow = Number($("meshNow").value);
+      const meshPrev = Number($("meshPrev").value);
+      const plane = Number($("plane").value);
+      const depth = Number($("depth").value);
+      const tracked = Number($("tracked").value);
+      const rehit = Number($("rehit").value);
+      const restored = $("restored").checked;
+      const delta = meshNow - meshPrev;
+      const sourcePenalty = source === "idb" ? 0 : source === "json" ? 4 : source === "seed" ? 12 : 28;
+      const agePenalty = age > 72 ? 18 : age > 36 ? 9 : age > 18 ? 4 : 0;
+      const score = Math.max(0, Math.min(100, Math.round(
+        meshNow * .25 + plane * .23 + depth * .21 + tracked * .2 + rehit * .11 + delta * .32 - sourcePenalty - agePenalty + (restored ? 8 : -22)
+      )));
+
+      let route = "KEEP SOLID ANCHOR";
+      let cls = "ok";
+      let summary = "保存済み anchor の mesh / plane / depth 履歴が安定しているため、通常表示を維持します。";
+      if (!restored || source === "stale") {
+        route = "RE-HIT REQUIRED";
+        cls = "bad";
+        summary = "persistent handle の復元が弱いため、既存 anchor を捨てずに re-hit 候補へ戻します。";
+      } else if (score < 42 || delta < -34) {
+        route = "RETURN TO GHOST";
+        cls = "ghost";
+        summary = "mesh score の悪化が大きいため、solid 表示を ghost 表示に戻して再確認します。";
+      } else if (score < 64 || age > 54) {
+        route = "HOLD AND FADE";
+        cls = "hold";
+        summary = "tracking は残っていますが古さや一致率に不安があるため、薄く保持して次 frame を待ちます。";
+      }
+
+      return { source, age, meshNow, meshPrev, plane, depth, tracked, rehit, restored, delta, score, route, cls, summary };
+    }
+
+    function meshPath(yOffset, scale) {
+      const pts = [];
+      for (let i = 0; i < 11; i += 1) {
+        const x = 118 + i * 48;
+        const y = 250 + Math.sin(i * .9) * 18 * scale + yOffset;
+        pts.push(`${x},${y}`);
+      }
+      return pts.join(" ");
+    }
+
+    function drawMesh(state) {
+      const opacity = .22 + state.meshNow / 150;
+      const stress = Math.max(0, (state.meshPrev - state.meshNow) / 100);
+      $("mesh").innerHTML = `
+        <polyline points="${meshPath(4, 1.1)}" fill="none" stroke="#277f92" stroke-width="5" opacity="${opacity.toFixed(2)}"></polyline>
+        <polyline points="${meshPath(-20 * stress, 1.8)}" fill="none" stroke="#b24a45" stroke-width="3" opacity="${(.18 + stress).toFixed(2)}" stroke-dasharray="7 8"></polyline>
+        ${Array.from({ length: 7 }, (_, i) => {
+          const x = 160 + i * 70;
+          const y = 250 + Math.sin(i * .85) * 22 - stress * 26;
+          return `<circle cx="${x}" cy="${y}" r="${5 + stress * 9}" fill="#277f92" opacity="${opacity.toFixed(2)}"></circle>`;
+        }).join("")}
+      `;
+      $("history").innerHTML = Array.from({ length: 5 }, (_, i) => {
+        const r = 16 + i * 12;
+        const o = Math.max(.08, .35 - i * .055 - stress * .08);
+        return `<circle cx="360" cy="258" r="${r}" fill="none" stroke="#665c9f" stroke-width="3" opacity="${o}"></circle>`;
+      }).join("");
+    }
+
+    function render() {
+      const s = evaluate();
+      ["age", "meshNow", "meshPrev", "plane", "depth", "tracked", "rehit"].forEach((id) => {
+        $(id + "Label").textContent = id === "age" ? `${$(id).value} h` : `${$(id).value}%`;
+      });
+      $("verdict").className = `verdict ${s.cls}`;
+      $("verdict").textContent = s.route;
+      $("summary").textContent = s.summary;
+      $("score").textContent = s.score;
+      $("delta").textContent = s.delta > 0 ? `+${s.delta}` : s.delta;
+      $("route").textContent = s.route.toLowerCase().replaceAll(" ", "-");
+      $("payload").textContent = s.source === "idb" ? "idb row" : s.source === "json" ? "json replay" : s.source === "seed" ? "seed row" : "stale id";
+      $("label").textContent = $("source").selectedOptions[0].textContent;
+      $("subLabel").textContent = `age ${s.age}h / restored ${s.restored ? "yes" : "no"} / re-hit ${s.rehit}%`;
+      $("anchor").setAttribute("stroke", s.cls === "ok" ? "#2f7a59" : s.cls === "ghost" ? "#277f92" : s.cls === "hold" ? "#a86e20" : "#b24a45");
+      $("anchor").setAttribute("fill-opacity", s.cls === "ghost" ? ".36" : s.cls === "hold" ? ".62" : "1");
+      $("ghostRing").setAttribute("opacity", s.cls === "ghost" ? ".92" : s.cls === "hold" ? ".48" : ".22");
+      $("rehitRay").setAttribute("opacity", s.cls === "bad" ? ".9" : s.cls === "ghost" ? ".55" : ".25");
+      drawMesh(s);
+
+      const rows = [
+        ["mesh delta", `${s.meshPrev}% -> ${s.meshNow}%`, s.delta < -24 ? "bad" : s.delta < -10 ? "warn" : "ok"],
+        ["plane/depth", `plane ${s.plane}% / depth ${s.depth}%`, s.plane > 70 && s.depth > 68 ? "ok" : "warn"],
+        ["tracked set", `${s.tracked}% match / ${s.restored ? "handle restored" : "handle missing"}`, s.restored && s.tracked > 70 ? "ok" : "bad"],
+        ["route", s.summary, s.cls === "ok" ? "ok" : s.cls === "bad" ? "bad" : "warn"]
+      ];
+      $("ledger").innerHTML = rows.map(([name, body, cls]) => `
+        <div class="row">
+          <strong>${name}</strong>
+          <span>${body}</span>
+          <span class="tag ${cls}">${cls}</span>
+        </div>
+      `).join("");
+    }
+
+    controls.forEach((control) => control.addEventListener("input", render));
+    $("stable").addEventListener("click", () => {
+      $("source").value = "idb"; $("age").value = 12; $("meshNow").value = 84; $("meshPrev").value = 80;
+      $("plane").value = 88; $("depth").value = 82; $("tracked").value = 94; $("rehit").value = 66; $("restored").checked = true;
+      render();
+    });
+    $("decay").addEventListener("click", () => {
+      $("source").value = "json"; $("age").value = 44; $("meshNow").value = 38; $("meshPrev").value = 82;
+      $("plane").value = 67; $("depth").value = 52; $("tracked").value = 69; $("rehit").value = 72; $("restored").checked = true;
+      render();
+    });
+    render();
+  </script>
+</body>
+</html>

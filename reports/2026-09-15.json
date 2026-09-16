@@ -1,0 +1,141 @@
+{
+  "date": "2026-09-15",
+  "headline": "mesh score を anchor handoff と semantic gate に戻す",
+  "headlineEn": "Feeding mesh scores back into anchor handoff and semantic gates",
+  "summary": "WebXR Device API 2026-06-09 CRD、W3C の WebXR 公開一覧、WebXR Mesh Detection Module、Plane Detection Module、Anchors Module、Depth Sensing Module を参照し、昨日の mesh triangle budget を anchor handoff queue に戻す本命サンプルと、mesh / plane semantic label の矛盾を判定する派生サンプルを追加しました。",
+  "summaryEn": "After checking the WebXR Device API 9 June 2026 CRD, W3C's WebXR publication list, the WebXR Mesh Detection Module, Plane Detection Module, Anchors Module, and Depth Sensing Module, today's original work adds a main sample that feeds yesterday's mesh triangle budget back into an anchor handoff queue plus a derivative sample that gates conflicts between mesh and plane semantic labels.",
+  "keyTopics": [
+    "WebXR Device API の 2026-06-09 Candidate Recommendation Draft は、session、frame、reference space、feature negotiation を扱う土台で、mesh / plane / anchor を同じ frame ledger に入れる時の前提になります。",
+    "WebXR Mesh Detection Module は `mesh-detection` feature descriptor、`XRFrame.detectedMeshes`、`XRMesh.vertices`、`indices`、`lastChangedTime`、`semanticLabel` を定義し、plane より細かい実世界形状の使い道を示します。",
+    "Plane Detection Module は floor / wall / table などの安定した surface と `XRPlane.polygon` を返すため、anchor 作成の土台として mesh より落ち着いた候補になりやすいです。",
+    "Anchors Module は実世界に固定した pose を tracking し続ける仕組みなので、mesh の細部情報をそのまま anchor に使うより、plane / depth / mesh score を gate にしたほうが扱いやすいです。",
+    "今日の公開カードは外部デモではなく、このワークスペース内で作った `Mesh Anchor Stability Ledger` と `Mesh Plane Semantic Conflict Gate` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The 9 June 2026 WebXR Device API Candidate Recommendation Draft is the baseline for sessions, frames, reference spaces, and feature negotiation when putting mesh / plane / anchor state into the same frame ledger.",
+    "The WebXR Mesh Detection Module defines the `mesh-detection` feature descriptor, `XRFrame.detectedMeshes`, `XRMesh.vertices`, `indices`, `lastChangedTime`, and `semanticLabel`, pointing to finer real-world geometry than planes can offer.",
+    "The Plane Detection Module returns stable surfaces such as floor / wall / table plus `XRPlane.polygon`, making planes calmer anchor bases than dense meshes.",
+    "The Anchors Module tracks poses fixed relative to the real world, so it is easier to gate anchor creation with plane / depth / mesh scores than to attach directly to mesh detail.",
+    "Today's public cards focus on the original workspace samples `Mesh Anchor Stability Ledger` and `Mesh Plane Semantic Conflict Gate`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Mesh Anchor Stability Ledger",
+      "url": "../outputs/2026-09-15_html_mesh_anchor_stability_ledger.html"
+    },
+    {
+      "label": "Today's derivative sample: Mesh Plane Semantic Conflict Gate",
+      "url": "../outputs/2026-09-15_html_mesh_plane_semantic_conflict_gate.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: WebXR publications",
+      "url": "https://www.w3.org/groups/wg/immersive-web/publications/"
+    },
+    {
+      "label": "Immersive Web: WebXR Mesh Detection Module",
+      "url": "https://immersive-web.github.io/real-world-meshing/"
+    },
+    {
+      "label": "Immersive Web: Plane Detection Module",
+      "url": "https://immersive-web.github.io/plane-detection/"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "W3C: WebXR Depth Sensing Module",
+      "url": "https://www.w3.org/TR/webxr-depth-sensing-1/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "昨日は mesh を三角形 budget と plane 融合で使い分けました。今日はその mesh score を、9月13日に作った plane anchor handoff queue へ戻す流れにしました。Mesh Detection は細かい形状を返せる一方、三角形数、更新頻度、privacy reduction、semantic label の揺れに影響されます。Plane Detection はより粗いが安定した surface を返せるので、anchor は plane に、collision / occlusion は mesh に、最終確認は depth に、という分業が実装上の落としどころになります。",
+      "bodyEn": "Yesterday routed meshes by triangle budget and plane fusion. Today feeds that mesh score back into the plane anchor handoff queue built on September 13. Mesh Detection can return fine geometry, but it is affected by triangle count, update churn, privacy reduction, and semantic label instability. Plane Detection is coarser but provides stable surfaces, so the practical split is: anchors from planes, collision / occlusion from meshes, and final confirmation from depth.",
+      "links": [
+        {
+          "label": "Immersive Web: WebXR Mesh Detection Module",
+          "url": "https://immersive-web.github.io/real-world-meshing/"
+        },
+        {
+          "label": "Immersive Web: WebXR Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Mesh Anchor Stability Ledger` は mesh input、anchor intent、mesh fusion score、plane stability、triangle pressure、depth cross-check、anchor promise latency、frame budget spare、frame active を動かし、`COMMIT ANCHOR`、`PATCH WITH PLANE`、`HOLD RETICLE`、`BLOCK HANDOFF` に分けます。派生サンプル `Mesh Plane Semantic Conflict Gate` は plane label と mesh label、label confidence、pose overlap、normal agreement、depth support、privacy reduction、annotation risk を操作し、同じ surface として扱うか、anchor と occlusion の責務を分けるか、annotation を止めるかを判定します。",
+      "bodyEn": "The main sample, `Mesh Anchor Stability Ledger`, adjusts mesh input, anchor intent, mesh fusion score, plane stability, triangle pressure, depth cross-check, anchor promise latency, frame budget spare, and frame activity, then routes to `COMMIT ANCHOR`, `PATCH WITH PLANE`, `HOLD RETICLE`, or `BLOCK HANDOFF`. The derivative sample, `Mesh Plane Semantic Conflict Gate`, adjusts plane label, mesh label, label confidence, pose overlap, normal agreement, depth support, privacy reduction, and annotation risk to decide whether a surface is shared, whether anchor and occlusion responsibilities should split, or whether annotations should be stopped.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-09-15_html_mesh_anchor_stability_ledger.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-09-15_html_mesh_plane_semantic_conflict_gate.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機版では `navigator.xr.requestSession('immersive-ar', { optionalFeatures: ['mesh-detection', 'plane-detection', 'depth-sensing', 'anchors'] })` のように feature を交渉し、各 frame で `frame.detectedMeshes`、`frame.detectedPlanes`、depth information、anchor promise の状態を1行の ledger に保存します。`XRMesh.lastChangedTime` と `XRPlane.lastChangedTime` は geometry 更新の時刻として扱い、`meshSpace` / `planeSpace` の pose 変化とは分けて記録します。anchor 作成前に mesh score を見ると、同じ table label でも edge clutter が強い場合は `PATCH WITH PLANE` に落とせます。",
+      "bodyEn": "A device-backed version can negotiate features with `navigator.xr.requestSession('immersive-ar', { optionalFeatures: ['mesh-detection', 'plane-detection', 'depth-sensing', 'anchors'] })`, then save `frame.detectedMeshes`, `frame.detectedPlanes`, depth information, and anchor promise state into one ledger row per frame. Treat `XRMesh.lastChangedTime` and `XRPlane.lastChangedTime` as geometry update times, separate from `meshSpace` / `planeSpace` pose changes. Checking the mesh score before anchor creation lets a table-labeled plane fall back to `PATCH WITH PLANE` when edge clutter is high."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは mesh input、anchor intent、mesh fusion score、plane stability、triangle pressure、depth cross-check、anchor promise latency、frame budget spare、semantic score、plane label、mesh label、pose overlap、normal agreement、annotation risk、anchor route、occlusion route が取れます。9月11日の depth confidence gate、9月13日の plane anchor handoff queue、9月14日の mesh triangle budget router と組み合わせると、実空間 UI の `置ける / 置けるが薄く表示 / まだ待つ / 置かない` を一貫した policy として扱えます。展示では机や壁の境界に沿う演出、業務用途では危険な面への annotation 抑制、ゲームでは現実形状に反応する軽い遮蔽や衝突に使えます。",
+      "bodyEn": "The two samples produce mesh input, anchor intent, mesh fusion score, plane stability, triangle pressure, depth cross-check, anchor promise latency, frame budget spare, semantic score, plane label, mesh label, pose overlap, normal agreement, annotation risk, anchor route, and occlusion route. Combined with the September 11 depth confidence gate, September 13 plane anchor handoff queue, and September 14 mesh triangle budget router, they form one policy for `place / ghost-place / wait / do not place` in real-world UI. This can support installation effects along desk and wall boundaries, safer operational annotation suppression, and lightweight occlusion or collision in games."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Mesh Detection Module の `semanticLabel` と privacy reduction、Plane Detection の label / polygon 更新、Anchors Module の persistent handle 周り、Depth Sensing の Working Draft、W3C Immersive Web Working Group の WebXR / WebGPU Binding Module 追加議論を継続して見ます。次は今日の ledger row を IndexedDB に保存し、日跨ぎで `mesh score が悪化した anchor は ghost 表示に戻す` ところまで試すと流れが強くなります。",
+      "bodyEn": "Continue watching `semanticLabel` and privacy reduction in the WebXR Mesh Detection Module, Plane Detection label / polygon updates, persistent handles in the Anchors Module, the Depth Sensing Working Draft, and the Immersive Web Working Group discussion around adding a WebXR / WebGPU Binding Module. A strong next step is saving today's ledger rows to IndexedDB and replaying them across days so anchors whose mesh score worsens can return to ghost display."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Mesh Anchor Stability Ledger` では Triangle pressure を上げ、Anchor promise latency を 300 ms 以上にすると `HOLD RETICLE` に寄ります。Mesh input を `missing mesh` にすると `BLOCK HANDOFF`、Mesh fusion と Plane stability を高くすると `COMMIT ANCHOR` に戻ります。`Mesh Plane Semantic Conflict Gate` では Plane label を `wall`、Mesh label を `clutter`、Annotation risk を高くすると `BLOCK ANNOTATION` になり、label の一致や pose overlap を戻すと shared surface に復帰します。",
+      "bodyEn": "In `Mesh Anchor Stability Ledger`, raise Triangle pressure and push Anchor promise latency above 300 ms to approach `HOLD RETICLE`. Set Mesh input to `missing mesh` for `BLOCK HANDOFF`, or raise Mesh fusion and Plane stability to return to `COMMIT ANCHOR`. In `Mesh Plane Semantic Conflict Gate`, set Plane label to `wall`, Mesh label to `clutter`, and Annotation risk high for `BLOCK ANNOTATION`; matching labels and restoring pose overlap brings the route back to a shared surface.",
+      "links": [
+        {
+          "label": "Open Mesh Anchor Stability Ledger",
+          "url": "../outputs/2026-09-15_html_mesh_anchor_stability_ledger.html"
+        },
+        {
+          "label": "Open Mesh Plane Semantic Conflict Gate",
+          "url": "../outputs/2026-09-15_html_mesh_plane_semantic_conflict_gate.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、WebXR 公開一覧、Mesh Detection Module、Plane Detection Module、Anchors Module、Depth Sensing Module、公式 proposal samples を確認。設計: 1本目は mesh score を anchor handoff の ledger に戻す本命、2本目は mesh / plane semantic label の矛盾を検出する派生。実装: `outputs/2026-09-15_html_mesh_anchor_stability_ledger.html` と `outputs/2026-09-15_html_mesh_plane_semantic_conflict_gate.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。",
+      "bodyEn": "Research: checked the W3C WebXR Device API, W3C WebXR publication list, Mesh Detection Module, Plane Detection Module, Anchors Module, Depth Sensing Module, and official proposal samples. Design: make the first sample the main ledger that feeds mesh scores back into anchor handoff, and the second a derivative gate for mesh / plane semantic label conflicts. Implementation: add `outputs/2026-09-15_html_mesh_anchor_stability_ledger.html` and `outputs/2026-09-15_html_mesh_plane_semantic_conflict_gate.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "9月前半の流れは、入力 ledger、camera / policy gate、hit-test、anchor、depth、plane、mesh へ進んできました。今日の整理で、mesh は単体の見た目ではなく `anchor 作成前の判断材料` になりました。実装の考え方は単純で、粗く安定した plane を配置の土台にし、細かい mesh を collision / occlusion の補助にし、depth で現実との一致を確認します。semantic label が食い違う時は、見た目を派手に続けるより、責務を分けるか ghost 表示に戻すほうがユーザーには納得しやすいです。",
+      "bodyEn": "The first half of September moved through input ledgers, camera / policy gates, hit-test, anchors, depth, planes, and meshes. Today's step turns meshes from a visual artifact into an input for pre-anchor decisions. The implementation model is simple: use coarse stable planes for placement, fine meshes for collision / occlusion support, and depth to confirm real-world agreement. When semantic labels disagree, splitting responsibilities or returning to ghost display is easier for users to trust than continuing with a flashy placement."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Mesh Anchor Stability Ledger` です。何が動くか: mesh input、anchor intent、mesh fusion score、plane stability、triangle pressure、depth cross-check、anchor promise latency、frame budget spare、frame active を操作し、anchor handoff を commit / patch / hold / block に分けます。次に足すなら、実機の `frame.detectedMeshes` と `frame.detectedPlanes` から同じ ledger row を IndexedDB に保存し、anchor promise の resolve 時刻まで追います。派生として `Mesh Plane Semantic Conflict Gate` も実装しました。何が動くか: plane label と mesh label、label confidence、pose overlap、normal agreement、depth support、privacy reduction、annotation risk から shared / split / hold / block を判定します。次に足すなら、label conflict の履歴を日跨ぎで replay し、同じ場所のラベルが安定するまで annotation を ghost 表示にします。",
+      "bodyEn": "The selected main prototype is `Mesh Anchor Stability Ledger`. What it does: adjusts mesh input, anchor intent, mesh fusion score, plane stability, triangle pressure, depth cross-check, anchor promise latency, frame budget spare, and frame activity, then routes anchor handoff to commit / patch / hold / block. Next addition: save the same ledger row from real `frame.detectedMeshes` and `frame.detectedPlanes` into IndexedDB and track anchor promise resolution time. The derivative `Mesh Plane Semantic Conflict Gate` was also implemented. What it does: uses plane label, mesh label, label confidence, pose overlap, normal agreement, depth support, privacy reduction, and annotation risk to decide shared / split / hold / block. Next addition: replay label conflict history across days and keep annotations ghosted until the label stabilizes at the same location."
+    }
+  ]
+}

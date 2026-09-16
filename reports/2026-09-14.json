@@ -1,0 +1,137 @@
+{
+  "date": "2026-09-14",
+  "headline": "検出 mesh を三角形 budget と plane 融合で使い分ける",
+  "headlineEn": "Routing detected meshes by triangle budget and plane fusion",
+  "summary": "WebXR Device API 2026-06-09 CRD、WebXR Mesh Detection Module、Depth Sensing Module、Plane Detection explainer、公式 Mesh Detection proposal sample を参照し、`XRFrame.detectedMeshes` の頂点・三角形・更新時刻から mesh 利用可否を判定する本命サンプルと、plane と mesh を分担して anchor / occlusion に回す派生サンプルを追加しました。",
+  "summaryEn": "After reviewing the WebXR Device API 2026-06-09 CRD, WebXR Mesh Detection Module, Depth Sensing Module, Plane Detection explainer, and official Mesh Detection proposal sample, today's original work adds a main sample that routes `XRFrame.detectedMeshes` by vertices, triangles, and update age, plus a derivative sample that splits plane and mesh responsibilities for anchors and occlusion.",
+  "keyTopics": [
+    "WebXR Device API の最新公開版は 2026-06-09 Candidate Recommendation Draft で、immersive session、frame loop、reference space、feature negotiation が今日の mesh / plane / depth 接続の土台です。",
+    "WebXR Mesh Detection Module は 2026-02-02 Draft Community Group Report で、`mesh-detection` feature descriptor、`XRFrame.detectedMeshes`、`XRMesh.meshSpace`、`vertices`、`indices`、`lastChangedTime`、`semanticLabel` を定義しています。",
+    "Mesh Detection の公式 proposal sample は、取得した mesh data を使った JavaScript 側 hit test と placement の流れを示しており、Plane Detection より細かい形状を扱うヒントになります。",
+    "Depth Sensing Module は現実の奥行きとの整合確認に使え、mesh の occlusion mask や collision に渡す前の confidence gate と相性がよいです。",
+    "今日の公開カードは外部デモではなく、このワークスペース内で作った `Mesh Detection Triangle Budget Router` と `Mesh Plane Fusion Occlusion Probe` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The latest published WebXR Device API is the 9 June 2026 Candidate Recommendation Draft, and immersive sessions, frame loops, reference spaces, and feature negotiation are the baseline for today's mesh / plane / depth connection.",
+    "The WebXR Mesh Detection Module is a 2 February 2026 Draft Community Group Report defining the `mesh-detection` feature descriptor, `XRFrame.detectedMeshes`, `XRMesh.meshSpace`, `vertices`, `indices`, `lastChangedTime`, and `semanticLabel`.",
+    "The official Mesh Detection proposal sample demonstrates JavaScript-side hit testing and placement using obtained mesh data, which is useful when a plane is too coarse for real-world shape details.",
+    "The Depth Sensing Module can validate agreement with real-world depth before a mesh is handed to occlusion masks or collision routes.",
+    "Today's public cards focus on the original workspace samples `Mesh Detection Triangle Budget Router` and `Mesh Plane Fusion Occlusion Probe`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Mesh Detection Triangle Budget Router",
+      "url": "../outputs/2026-09-14_html_mesh_detection_triangle_budget_router.html"
+    },
+    {
+      "label": "Today's derivative sample: Mesh Plane Fusion Occlusion Probe",
+      "url": "../outputs/2026-09-14_html_mesh_plane_fusion_occlusion_probe.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR Mesh Detection Module",
+      "url": "https://immersive-web.github.io/real-world-meshing/"
+    },
+    {
+      "label": "Immersive Web Samples: AR Mesh Detection",
+      "url": "https://immersive-web.github.io/webxr-samples/proposals/mesh-detection.html"
+    },
+    {
+      "label": "W3C: WebXR Depth Sensing Module",
+      "url": "https://www.w3.org/TR/webxr-depth-sensing-1/"
+    },
+    {
+      "label": "Immersive Web: Plane Detection explainer",
+      "url": "https://github.com/immersive-web/plane-detection/blob/main/explainer.md"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日の注目は Plane Detection の次の段として、WebXR Mesh Detection を `placement に使える実世界形状` として扱うことです。Mesh Detection Module では、session が `mesh-detection` feature を有効にしたとき、`XRFrame.detectedMeshes` から `XRMeshSet` を読み、各 `XRMesh` には `meshSpace`、`vertices`、`indices`、`lastChangedTime`、`semanticLabel` が入ります。面白いのは、mesh は plane より細かい一方で、三角形数、更新頻度、privacy LOD、depth holes の影響を受けやすい点です。そこで今日は、mesh をただ表示するのではなく、collision、occlusion、decimation、hold、block へ振り分ける自作サンプルにしました。",
+      "bodyEn": "Today's focus is treating WebXR Mesh Detection as the next step after Plane Detection: real-world geometry that can be used for placement decisions. The Mesh Detection Module exposes an `XRMeshSet` through `XRFrame.detectedMeshes` when a session enables the `mesh-detection` feature. Each `XRMesh` carries `meshSpace`, `vertices`, `indices`, `lastChangedTime`, and `semanticLabel`. The interesting tradeoff is that meshes can describe finer detail than planes, but they are sensitive to triangle count, update churn, privacy LOD, and depth holes. Today's original sample therefore routes meshes to collision, occlusion, decimation, hold, or block instead of merely visualizing them.",
+      "links": [
+        {
+          "label": "Immersive Web: WebXR Mesh Detection Module",
+          "url": "https://immersive-web.github.io/real-world-meshing/"
+        },
+        {
+          "label": "Immersive Web Samples: AR Mesh Detection",
+          "url": "https://immersive-web.github.io/webxr-samples/proposals/mesh-detection.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Mesh Detection Triangle Budget Router` は mesh source、semantic label、triangle count、vertex churn、mesh age、depth agreement、tracking confidence、active frame を操作し、`COMMIT MESH`、`DECIMATE FIRST`、`HOLD MESH`、`BLOCK MESH` に分岐します。派生サンプル `Mesh Plane Fusion Occlusion Probe` は plane stability、mesh detail、normal agreement、depth holes、anchor latency、privacy reduction を動かし、anchor は plane、occlusion は mesh、または depth mask / preview fallback に切り替える小さな検証です。",
+      "bodyEn": "The main sample, `Mesh Detection Triangle Budget Router`, adjusts mesh source, semantic label, triangle count, vertex churn, mesh age, depth agreement, tracking confidence, and active frame, then routes to `COMMIT MESH`, `DECIMATE FIRST`, `HOLD MESH`, or `BLOCK MESH`. The derivative sample, `Mesh Plane Fusion Occlusion Probe`, adjusts plane stability, mesh detail, normal agreement, depth holes, anchor latency, and privacy reduction, then chooses whether anchors should come from planes while occlusion comes from meshes, or whether depth-mask / preview fallback is safer.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-09-14_html_mesh_detection_triangle_budget_router.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-09-14_html_mesh_plane_fusion_occlusion_probe.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機版では `navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['mesh-detection'], optionalFeatures: ['plane-detection', 'depth-sensing', 'anchors'] })` のように feature を交渉し、frame ごとに `frame.detectedMeshes`、`frame.detectedPlanes`、depth confidence、anchor promise state を同じ ledger row へ保存します。`XRMesh.lastChangedTime` は pose 変化ではなく mesh attribute 更新時刻なので、`meshSpace` の pose と `lastChangedTime` を別々に扱うのが大事です。三角形数が高い mesh は collision 用には decimate し、visual occlusion には depth holes と normal agreement を足して gate すると、AR の配置が落ち着きます。",
+      "bodyEn": "A device-backed version can negotiate features with `navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['mesh-detection'], optionalFeatures: ['plane-detection', 'depth-sensing', 'anchors'] })`, then save `frame.detectedMeshes`, `frame.detectedPlanes`, depth confidence, and anchor promise state into the same ledger row each frame. `XRMesh.lastChangedTime` represents mesh attribute updates, not pose changes, so the `meshSpace` pose and `lastChangedTime` should be tracked separately. Dense meshes should be decimated for collision, while visual occlusion should be gated with depth holes and normal agreement for calmer AR placement."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは mesh source、semantic label、triangle count、estimated vertices、vertex churn、mesh age、depth agreement、tracking confidence、frame budget、plane stability、mesh detail、normal agreement、depth holes、anchor latency、privacy reduction、anchor route、occlusion route が取れます。9月11日の depth confidence gate、9月12日の plane lifecycle ledger、9月13日の plane anchor handoff queue と合わせると、平面で安定配置し、mesh で細部 collision / occlusion を足し、depth で最終確認する流れを作れます。展示では壁や家具の凹凸に反応する演出、業務 UI では障害物のある面への annotation 制御、ゲームでは現実形状への軽い物理反応に使えます。",
+      "bodyEn": "The two samples produce mesh source, semantic label, triangle count, estimated vertices, vertex churn, mesh age, depth agreement, tracking confidence, frame budget, plane stability, mesh detail, normal agreement, depth holes, anchor latency, privacy reduction, anchor route, and occlusion route. Combined with the September 11 depth confidence gate, September 12 plane lifecycle ledger, and September 13 plane anchor handoff queue, they form a flow where planes provide stable placement, meshes add fine collision / occlusion, and depth provides the final reality check. This can drive installation effects that react to wall or furniture contours, operational annotations that avoid obstructed surfaces, and game objects that lightly respond to real-world geometry."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Mesh Detection Module の `vertices` / `indices` / privacy reduction の更新、公式 Mesh Detection proposal sample の実装差分、Depth Sensing の Working Draft と editor's draft、Plane Detection の semantic label と mesh semantic label の整合、ブラウザごとの `mesh-detection` / `plane-detection` / `depth-sensing` support を継続して見ます。次は mesh の triangle budget を IndexedDB logger に保存し、9月13日の anchor handoff queue へ mesh score を戻すと重複が少ないです。",
+      "bodyEn": "Continue watching the Mesh Detection Module's `vertices` / `indices` / privacy reduction behavior, implementation changes in the official Mesh Detection proposal sample, the Depth Sensing Working Draft and editor's draft, semantic label alignment between planes and meshes, and browser support for `mesh-detection`, `plane-detection`, and `depth-sensing`. A good next step is saving mesh triangle budget rows into the IndexedDB logger and feeding the mesh score back into the September 13 anchor handoff queue."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Mesh Detection Triangle Budget Router` では Triangle count を 1600 以上、Vertex churn を 45% 以上にすると `DECIMATE FIRST` へ寄ります。Depth agreement や Tracking confidence を下げると `HOLD MESH`、Frame active を off または Mesh source を `no mesh` にすると `BLOCK MESH` になります。`Mesh Plane Fusion Occlusion Probe` では Depth holes と Anchor latency を上げると `DEPTH MASK FALLBACK`、Mesh detail と Normal agreement を下げると `PREVIEW ONLY` に変わります。",
+      "bodyEn": "In `Mesh Detection Triangle Budget Router`, raise Triangle count above 1600 and Vertex churn above 45% to push toward `DECIMATE FIRST`. Lower Depth agreement or Tracking confidence for `HOLD MESH`, or turn off Frame active / set Mesh source to `no mesh` for `BLOCK MESH`. In `Mesh Plane Fusion Occlusion Probe`, raise Depth holes and Anchor latency for `DEPTH MASK FALLBACK`, or lower Mesh detail and Normal agreement for `PREVIEW ONLY`.",
+      "links": [
+        {
+          "label": "Open Mesh Detection Triangle Budget Router",
+          "url": "../outputs/2026-09-14_html_mesh_detection_triangle_budget_router.html"
+        },
+        {
+          "label": "Open Mesh Plane Fusion Occlusion Probe",
+          "url": "../outputs/2026-09-14_html_mesh_plane_fusion_occlusion_probe.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、WebXR Mesh Detection Module、公式 AR Mesh Detection sample、WebXR Depth Sensing Module、Plane Detection explainer を確認。設計: 1本目は `XRMesh` の三角形 budget と更新状態の router、2本目は plane と mesh の責務分担を試す occlusion probe。実装: `outputs/2026-09-14_html_mesh_detection_triangle_budget_router.html` と `outputs/2026-09-14_html_mesh_plane_fusion_occlusion_probe.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。",
+      "bodyEn": "Research: reviewed the W3C WebXR Device API, WebXR Mesh Detection Module, official AR Mesh Detection sample, WebXR Depth Sensing Module, and Plane Detection explainer. Design: make the first sample an `XRMesh` triangle-budget and update-state router, and the second an occlusion probe for dividing responsibilities between planes and meshes. Implementation: add `outputs/2026-09-14_html_mesh_detection_triangle_budget_router.html` and `outputs/2026-09-14_html_mesh_plane_fusion_occlusion_probe.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and confirm publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "Plane Detection は面の意味と安定した配置に強く、Mesh Detection は実世界形状の細部に強いです。Depth Sensing はその2つが現実の奥行きと合っているかの横串になります。今日の整理では、anchor は plane に任せ、collision / occlusion は mesh に任せ、depth holes が多い時は preview や depth mask fallback へ落とす、という分業にしました。これで9月前半に作った policy、hit-test、anchor、depth、plane の流れに、real-world mesh の粒度が足されました。",
+      "bodyEn": "Plane Detection is strong for surface meaning and stable placement, while Mesh Detection is strong for real-world shape detail. Depth Sensing cuts across both by checking whether the inferred geometry agrees with real-world depth. Today's organization gives anchors to planes, collision / occlusion to meshes, and falls back to preview or depth masks when depth holes are high. This adds real-world mesh granularity to the policy, hit-test, anchor, depth, and plane flow built in the first half of September."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Mesh Detection Triangle Budget Router` です。何が動くか: mesh source、semantic label、triangle count、vertex churn、mesh age、depth agreement、tracking confidence、active frame を操作し、mesh を commit / decimate / hold / block に分けます。次に足すなら、実機の `frame.detectedMeshes` から `vertices.length`、`indices.length`、`lastChangedTime`、`semanticLabel` を保存し、同じ mesh が何 frame 安定したかを測ります。派生として `Mesh Plane Fusion Occlusion Probe` も実装しました。何が動くか: plane stability、mesh detail、normal agreement、depth holes、anchor latency、privacy reduction から、anchor route と occlusion route を切り替えます。次に足すなら、9月13日の plane handoff queue に mesh fusion score を渡し、anchor 作成前に mesh が邪魔していないかを判定します。",
+      "bodyEn": "The selected main prototype is `Mesh Detection Triangle Budget Router`. What it does: adjusts mesh source, semantic label, triangle count, vertex churn, mesh age, depth agreement, tracking confidence, and active frame, then routes the mesh to commit / decimate / hold / block. Next addition: save real `frame.detectedMeshes` values such as `vertices.length`, `indices.length`, `lastChangedTime`, and `semanticLabel`, then measure how many frames the same mesh stays stable. The derivative `Mesh Plane Fusion Occlusion Probe` was also implemented. What it does: uses plane stability, mesh detail, normal agreement, depth holes, anchor latency, and privacy reduction to switch anchor and occlusion routes. Next addition: pass the mesh fusion score into the September 13 plane handoff queue so anchor creation checks whether mesh detail is conflicting with placement."
+    }
+  ]
+}

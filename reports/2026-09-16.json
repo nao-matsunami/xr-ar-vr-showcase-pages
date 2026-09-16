@@ -1,0 +1,145 @@
+{
+  "date": "2026-09-16",
+  "headline": "mesh が悪化した anchor を ghost replay に戻す",
+  "headlineEn": "Replaying anchors back to ghost state when mesh quality worsens",
+  "summary": "WebXR Anchors Module、Mesh Detection Module、Plane Detection Module、Depth Sensing Module、Immersive Web Samples を参照し、昨日の mesh anchor ledger を日跨ぎで再生して ghost 表示へ戻す本命サンプルと、semantic label の履歴安定度を見る派生サンプルを追加しました。",
+  "summaryEn": "After checking the WebXR Anchors Module, Mesh Detection Module, Plane Detection Module, Depth Sensing Module, and Immersive Web Samples, today's original work adds a main sample that replays yesterday's mesh anchor ledger across days and returns weak anchors to ghost display, plus a derivative sample that stabilizes semantic labels over a history window.",
+  "keyTopics": [
+    "WebXR Anchors Module は `requestPersistentHandle()`、`restorePersistentAnchor()`、`deletePersistentAnchor()`、`frame.trackedAnchors` を定義し、日跨ぎ replay の核になります。",
+    "WebXR Mesh Detection Module は `XRMesh.vertices`、`indices`、`lastChangedTime`、`semanticLabel`、`frame.detectedMeshes` を返すため、anchor を維持してよいかの後判定に使えます。",
+    "Plane Detection は粗いが安定した surface を返せるため、mesh が悪化した時の ghost / re-hit / plane patch の避難先になります。",
+    "Depth Sensing は mesh / plane の見た目だけでなく、現実との奥行き一致を確認する cross-check として重要です。",
+    "今日の公開カードは外部デモではなく、このワークスペース内で作った `Anchor Mesh Ghost Replay` と `Semantic Label Stabilizer` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Anchors Module defines `requestPersistentHandle()`, `restorePersistentAnchor()`, `deletePersistentAnchor()`, and `frame.trackedAnchors`, making it the core of cross-day replay.",
+    "The WebXR Mesh Detection Module exposes `XRMesh.vertices`, `indices`, `lastChangedTime`, `semanticLabel`, and `frame.detectedMeshes`, which can be used to re-evaluate whether an anchor should stay solid.",
+    "Plane Detection returns coarser but steadier surfaces, giving weak meshes an escape route through ghosting, re-hit, or plane patching.",
+    "Depth Sensing is useful as a cross-check against the real environment, not just a visual mesh / plane input.",
+    "Today's public cards focus on the original workspace samples `Anchor Mesh Ghost Replay` and `Semantic Label Stabilizer`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Anchor Mesh Ghost Replay",
+      "url": "../outputs/2026-09-16_html_anchor_mesh_ghost_replay.html"
+    },
+    {
+      "label": "Today's derivative sample: Semantic Label Stabilizer",
+      "url": "../outputs/2026-09-16_html_semantic_label_stabilizer.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "Immersive Web: WebXR Mesh Detection Module",
+      "url": "https://immersive-web.github.io/real-world-meshing/"
+    },
+    {
+      "label": "Immersive Web: Plane Detection Module",
+      "url": "https://immersive-web.github.io/plane-detection/"
+    },
+    {
+      "label": "W3C: WebXR Depth Sensing Module",
+      "url": "https://www.w3.org/TR/webxr-depth-sensing-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Web Samples: AR Mesh Detection",
+      "url": "https://immersive-web.github.io/webxr-samples/proposals/mesh-detection.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "今日は、anchor を作る瞬間だけでなく、翌日以降に `まだ solid 表示してよいか` を判定する方向へ進めました。Anchors Module は tracked anchors と persistent handle を扱い、Mesh Detection は実世界 geometry の変化や semanticLabel を返し、Plane Detection と Depth Sensing は安定面と奥行き一致を補助します。公式サンプルでは hit-test / anchors / mesh detection の基本が分かりますが、公開カードの中心はそれらを参考にした自作の replay / stabilization UI です。",
+      "bodyEn": "Today moves beyond anchor creation time and asks whether an anchor should still be displayed solid on later days. The Anchors Module handles tracked anchors and persistent handles, Mesh Detection reports real-world geometry changes and semantic labels, while Plane Detection and Depth Sensing provide stable surface and depth agreement support. Official samples show the basics of hit-test, anchors, and mesh detection; the public cards here focus on original replay / stabilization UI built from those ideas.",
+      "links": [
+        {
+          "label": "Immersive Web: WebXR Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        },
+        {
+          "label": "Immersive Web Samples: Hit Test with Anchors",
+          "url": "https://immersive-web.github.io/webxr-samples/hit-test-anchors.html"
+        },
+        {
+          "label": "Immersive Web Samples: AR Mesh Detection",
+          "url": "https://immersive-web.github.io/webxr-samples/proposals/mesh-detection.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Anchor Mesh Ghost Replay` は replay source、anchor age、mesh score now / previous、plane stability、depth agreement、tracked anchors match、re-hit confidence、persistent handle restored を操作し、`KEEP SOLID ANCHOR`、`RETURN TO GHOST`、`HOLD AND FADE`、`RE-HIT REQUIRED` に分けます。派生サンプル `Semantic Label Stabilizer` は plane label、mesh label、history window、label agreement、pose overlap、normal agreement、privacy reduction、annotation risk を操作し、1 frame の label ではなく履歴 window の安定度で shared / split / ghost / block を決めます。",
+      "bodyEn": "The main sample, `Anchor Mesh Ghost Replay`, adjusts replay source, anchor age, current / previous mesh score, plane stability, depth agreement, tracked anchors match, re-hit confidence, and persistent handle restore state, then routes to `KEEP SOLID ANCHOR`, `RETURN TO GHOST`, `HOLD AND FADE`, or `RE-HIT REQUIRED`. The derivative sample, `Semantic Label Stabilizer`, adjusts plane label, mesh label, history window, label agreement, pose overlap, normal agreement, privacy reduction, and annotation risk, deciding shared / split / ghost / block from a history window rather than one semanticLabel frame.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-09-16_html_anchor_mesh_ghost_replay.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-09-16_html_semantic_label_stabilizer.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機版では、9月15日の ledger row に `persistentHandle`、`trackedAnchors.has(anchor)`、`meshScore`、`planeStability`、`depthAgreement`、`lastChangedTime`、`semanticLabel`、`anchorPose` を保存します。次回起動時に `session.restorePersistentAnchor(uuid)` を試し、frame 内で `trackedAnchors` に入ったか、mesh score が前回より大きく落ちたか、plane / depth の cross-check が残っているかを見ます。悪化時は即削除ではなく ghost 表示に戻し、re-hit confidence が十分なら再 anchor 化へ進めると、ユーザーにとって配置の失敗が理解しやすくなります。",
+      "bodyEn": "A device-backed version can save `persistentHandle`, `trackedAnchors.has(anchor)`, `meshScore`, `planeStability`, `depthAgreement`, `lastChangedTime`, `semanticLabel`, and `anchorPose` into the September 15 ledger row. On the next launch, call `session.restorePersistentAnchor(uuid)`, then check whether the anchor appears in `trackedAnchors`, whether the mesh score fell sharply, and whether plane / depth cross-checks still hold. When quality worsens, returning to ghost display before re-hit is clearer to users than deleting the anchor immediately."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは replay source、anchor age、mesh score delta、plane stability、depth agreement、tracked anchor match、re-hit confidence、persistent restore state、semantic label history、pose overlap、normal agreement、privacy reduction、annotation risk、display route が取れます。9月11日の depth gate、9月13日の plane anchor handoff、9月14日の mesh budget、9月15日の semantic conflict gate と組み合わせると、実空間に置いた UI を `置けた` で終わらせず、翌日以降の信頼度低下に合わせて ghost / fade / re-hit に戻せます。展示では前日からの環境変化に反応する演出、業務では危険な annotation の抑制、ゲームでは現実形状の再認識演出に使えます。",
+      "bodyEn": "The two samples produce replay source, anchor age, mesh score delta, plane stability, depth agreement, tracked anchor match, re-hit confidence, persistent restore state, semantic label history, pose overlap, normal agreement, privacy reduction, annotation risk, and display route. Combined with the September 11 depth gate, September 13 plane anchor handoff, September 14 mesh budget, and September 15 semantic conflict gate, placed real-world UI can move back to ghost / fade / re-hit when trust decays on later days. This supports installations reacting to changed rooms, safer operational annotation suppression, and games that dramatize real-world re-recognition."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Anchors Module の persistent handle と trackedAnchors、Mesh Detection の semanticLabel / lastChangedTime、Plane Detection の polygon / label 更新、Depth Sensing の Working Draft、Immersive Web Samples の anchors / mesh detection 実装を継続して見ます。次は ghost replay の row をブラウザの IndexedDB に実保存し、export / import した JSON を派生サンプルへ流し込むと、日跨ぎの検証がより実装に近づきます。",
+      "bodyEn": "Keep watching persistent handles and trackedAnchors in the Anchors Module, semanticLabel / lastChangedTime in Mesh Detection, polygon / label updates in Plane Detection, the Depth Sensing Working Draft, and the anchors / mesh detection implementations in Immersive Web Samples. A useful next step is actually writing ghost replay rows into browser IndexedDB and piping exported / imported JSON into the derivative sample."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Anchor Mesh Ghost Replay` では Mesh Decay を押すと mesh score delta が大きく落ち、solid anchor が ghost 表示へ戻ります。Replay source を stale persistent handle にするか restored を外すと `RE-HIT REQUIRED` になります。`Semantic Label Stabilizer` では Noisy Conflict を押すと wall / clutter の矛盾と annotation risk で split / block 側に寄り、Matched Label に戻すと shared label へ復帰します。",
+      "bodyEn": "In `Anchor Mesh Ghost Replay`, press Mesh Decay to drop mesh score delta and return a solid anchor to ghost display. Set Replay source to stale persistent handle or disable restored state to reach `RE-HIT REQUIRED`. In `Semantic Label Stabilizer`, press Noisy Conflict to move toward split / block from a wall / clutter conflict and annotation risk, then use Matched Label to recover shared label.",
+      "links": [
+        {
+          "label": "Open Anchor Mesh Ghost Replay",
+          "url": "../outputs/2026-09-16_html_anchor_mesh_ghost_replay.html"
+        },
+        {
+          "label": "Open Semantic Label Stabilizer",
+          "url": "../outputs/2026-09-16_html_semantic_label_stabilizer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Anchors Module、Mesh Detection Module、Plane Detection Module、Depth Sensing Module、Immersive Web Samples を確認。設計: 1本目は日跨ぎ anchor replay と ghost 復帰、2本目は semantic label conflict の履歴 window 安定化。実装: `outputs/2026-09-16_html_anchor_mesh_ghost_replay.html` と `outputs/2026-09-16_html_semantic_label_stabilizer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。",
+      "bodyEn": "Research: checked the WebXR Anchors Module, Mesh Detection Module, Plane Detection Module, Depth Sensing Module, and Immersive Web Samples. Design: make the first sample cross-day anchor replay with ghost recovery, and the second a history-window stabilizer for semantic label conflicts. Implementation: add `outputs/2026-09-16_html_anchor_mesh_ghost_replay.html` and `outputs/2026-09-16_html_semantic_label_stabilizer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and check publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "9月11日以降の流れは depth、plane、mesh、anchor handoff、semantic conflict と積んできました。今日の整理で、配置したものを `正しく置けたか` だけでなく、時間が経っても `まだ信用してよいか` として扱えるようになりました。XR の実空間 UI は、一度 commit した後も部屋の理解が更新されます。その変化を失敗ではなく、ghost / fade / re-hit の自然な状態遷移として見せるのが大事です。",
+      "bodyEn": "Since September 11 the sequence has built up depth, planes, meshes, anchor handoff, and semantic conflict handling. Today's step reframes placement from `was it placed correctly` to `can we still trust it later`. Real-world UI in XR keeps receiving updated understanding of the room after commit. Showing those changes as natural ghost / fade / re-hit transitions is more useful than treating them as abrupt failures."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Anchor Mesh Ghost Replay` です。何が動くか: replay source、anchor age、mesh score now / previous、plane stability、depth agreement、tracked anchors match、re-hit confidence、persistent handle restored を操作し、solid anchor を keep / ghost / hold / re-hit に分けます。次に足すなら、IndexedDB に実保存して、9月15日の ledger row から export / import できるようにします。派生として `Semantic Label Stabilizer` も実装しました。何が動くか: plane label と mesh label の矛盾を history window、agreement、pose overlap、normal agreement、privacy reduction、annotation risk で安定化し、shared / split / ghost / block を判定します。次に足すなら、1本目の replay row から semantic history を受け取り、同じ anchor の label が安定するまで annotation を ghost 表示にします。",
+      "bodyEn": "The selected main prototype is `Anchor Mesh Ghost Replay`. What it does: adjusts replay source, anchor age, current / previous mesh score, plane stability, depth agreement, tracked anchors match, re-hit confidence, and persistent handle restore state, then routes a solid anchor to keep / ghost / hold / re-hit. Next addition: store rows in IndexedDB and export / import the September 15 ledger rows. The derivative `Semantic Label Stabilizer` was also implemented. What it does: stabilizes plane / mesh label conflicts with history window, agreement, pose overlap, normal agreement, privacy reduction, and annotation risk, then decides shared / split / ghost / block. Next addition: receive semantic history from the main replay row and keep annotation ghosted until the same anchor's label stabilizes."
+    }
+  ]
+}

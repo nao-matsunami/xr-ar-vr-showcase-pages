@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mesh Anchor Stability Ledger</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2830;
+      --muted: #61707b;
+      --paper: #fffdf7;
+      --bg: #eef2f5;
+      --line: #d5dde1;
+      --cyan: #277f92;
+      --green: #2f7a59;
+      --amber: #a86e20;
+      --red: #b24a45;
+      --blue: #405f9b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(39, 127, 146, .12), transparent 340px),
+        linear-gradient(120deg, rgba(64, 95, 155, .08), transparent 44%),
+        var(--bg);
+    }
+    main { width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 36px; }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 8px; font-size: 2.05rem; line-height: 1.08; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .summary, .panel, .stage, .metric, .ledger {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(31, 40, 48, .07);
+    }
+    .summary { padding: 16px; }
+    .verdict { font-size: 1.22rem; font-weight: 900; margin-bottom: 8px; }
+    .verdict.commit { color: var(--green); }
+    .verdict.patch { color: var(--cyan); }
+    .verdict.hold { color: var(--amber); }
+    .verdict.block { color: var(--red); }
+    .grid { display: grid; grid-template-columns: 320px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { padding: 16px; display: grid; gap: 14px; align-content: start; }
+    label { display: grid; gap: 6px; font-size: .86rem; font-weight: 760; color: #35424a; }
+    select, input[type="range"] { width: 100%; accent-color: var(--cyan); }
+    .switch { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .switch input { transform: scale(1.12); accent-color: var(--cyan); }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    button {
+      border: 1px solid #bbc7cd;
+      background: #fbfcfb;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary { border-color: var(--cyan); background: var(--cyan); color: white; }
+    .stage {
+      min-height: 530px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      background:
+        linear-gradient(90deg, rgba(39, 127, 146, .08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(47, 122, 89, .08) 1px, transparent 1px),
+        #fffdf7;
+      background-size: 42px 42px;
+    }
+    .viewport {
+      min-height: 360px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff 0 45%, #e9eef0 45% 100%);
+    }
+    svg { width: 100%; height: 100%; min-height: 360px; display: block; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { min-height: 78px; padding: 11px; box-shadow: none; }
+    .metric strong { display: block; font-size: 1.08rem; margin-bottom: 4px; }
+    .ledger { margin-top: 14px; padding: 14px; display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 122px 1fr 132px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf7;
+      font-size: .88rem;
+    }
+    .tag { justify-self: start; border-radius: 999px; padding: 4px 8px; font-weight: 850; background: #e1f0f4; color: var(--cyan); }
+    .tag.ok { background: #e1f0e8; color: var(--green); }
+    .tag.warn { background: #fff0d5; color: var(--amber); }
+    .tag.bad { background: #ffe6e3; color: var(--red); }
+    @media (max-width: 860px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Mesh Anchor Stability Ledger</h1>
+        <p>9月13日の plane anchor handoff と9月14日の mesh triangle budget をつなぎ、mesh score を anchor 作成前の安定 ledger に戻す最小サンプル。</p>
+      </div>
+      <section class="summary">
+        <div id="verdict" class="verdict commit">COMMIT ANCHOR</div>
+        <p id="summary">plane と mesh が十分に一致し、depth と frame budget も残っているため anchor 作成へ進めます。</p>
+      </section>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <label>Mesh input
+          <select id="meshInput">
+            <option value="native">native detected mesh</option>
+            <option value="reduced">privacy-reduced mesh</option>
+            <option value="plane">plane-derived fallback</option>
+            <option value="missing">missing mesh</option>
+          </select>
+        </label>
+        <label>Anchor intent
+          <select id="intent">
+            <option value="table">table object</option>
+            <option value="wall">wall annotation</option>
+            <option value="floor">floor marker</option>
+            <option value="free">free reticle</option>
+          </select>
+        </label>
+        <label>Mesh fusion score <span id="fusionLabel">78%</span>
+          <input id="fusion" type="range" min="0" max="100" value="78">
+        </label>
+        <label>Plane stability <span id="planeLabel">84%</span>
+          <input id="plane" type="range" min="0" max="100" value="84">
+        </label>
+        <label>Triangle pressure <span id="triLabel">38%</span>
+          <input id="tri" type="range" min="0" max="100" value="38">
+        </label>
+        <label>Depth cross-check <span id="depthLabel">81%</span>
+          <input id="depth" type="range" min="0" max="100" value="81">
+        </label>
+        <label>Anchor promise latency <span id="latencyLabel">96 ms</span>
+          <input id="latency" type="range" min="0" max="520" value="96">
+        </label>
+        <label>Frame budget spare <span id="budgetLabel">58%</span>
+          <input id="budget" type="range" min="0" max="100" value="58">
+        </label>
+        <label class="switch">Frame active
+          <input id="active" type="checkbox" checked>
+        </label>
+        <div class="buttons">
+          <button id="steady" class="primary">Steady Table</button>
+          <button id="noisy">Noisy Mesh</button>
+        </div>
+      </aside>
+
+      <section>
+        <div class="stage">
+          <div class="viewport">
+            <svg viewBox="0 0 720 390" role="img" aria-label="Mesh and plane anchor stability visualization">
+              <rect width="720" height="390" fill="rgba(255,255,255,.48)"></rect>
+              <g id="mesh"></g>
+              <path id="planeShape" d="M110 264 L610 230 L660 282 L154 326 Z" fill="rgba(47,122,89,.16)" stroke="#2f7a59" stroke-width="4"></path>
+              <line id="normal" x1="360" y1="256" x2="360" y2="150" stroke="#405f9b" stroke-width="5" stroke-linecap="round"></line>
+              <circle id="anchor" cx="360" cy="256" r="18" fill="#fffdf7" stroke="#277f92" stroke-width="5"></circle>
+              <path id="reticle" d="M338 256 H382 M360 234 V278" stroke="#b24a45" stroke-width="4" stroke-linecap="round"></path>
+              <text id="label" x="28" y="38" fill="#1f2830" font-size="18" font-weight="850">native detected mesh</text>
+              <text id="subLabel" x="28" y="64" fill="#61707b" font-size="13">mesh score is feeding the anchor handoff queue</text>
+            </svg>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="score">82</strong><span>handoff score</span></div>
+            <div class="metric"><strong id="route">anchor</strong><span>selected route</span></div>
+            <div class="metric"><strong id="delay">1 frame</strong><span>anchor delay</span></div>
+            <div class="metric"><strong id="stored">ledger row</strong><span>saved payload</span></div>
+          </div>
+        </div>
+        <div id="ledger" class="ledger"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const controls = ["meshInput", "intent", "fusion", "plane", "tri", "depth", "latency", "budget", "active"].map($);
+
+    function scoreState() {
+      const meshInput = $("meshInput").value;
+      const intent = $("intent").value;
+      const fusion = Number($("fusion").value);
+      const plane = Number($("plane").value);
+      const tri = Number($("tri").value);
+      const depth = Number($("depth").value);
+      const latency = Number($("latency").value);
+      const budget = Number($("budget").value);
+      const active = $("active").checked;
+      const sourcePenalty = meshInput === "native" ? 0 : meshInput === "reduced" ? 9 : meshInput === "plane" ? 17 : 46;
+      const intentPenalty = intent === "free" ? 8 : 0;
+      const score = Math.max(0, Math.min(100, Math.round(
+        fusion * .28 + plane * .25 + depth * .23 + budget * .18 - tri * .18 - latency * .05 - sourcePenalty - intentPenalty + (active ? 12 : -32)
+      )));
+      let route = "COMMIT ANCHOR";
+      let cls = "commit";
+      let text = "plane と mesh が十分に一致し、depth と frame budget も残っているため anchor 作成へ進めます。";
+      if (!active || meshInput === "missing" || score < 34) {
+        route = "BLOCK HANDOFF";
+        cls = "block";
+        text = "frame が inactive、または mesh / plane / depth の根拠が足りないため anchor 作成を止めます。";
+      } else if (score < 56 || latency > 360) {
+        route = "HOLD RETICLE";
+        cls = "hold";
+        text = "anchor promise の待ちや depth 不一致が残るため、reticle preview を保持して次 frame を待ちます。";
+      } else if (score < 74 || tri > 68) {
+        route = "PATCH WITH PLANE";
+        cls = "patch";
+        text = "mesh は重いので collision / occlusion だけに回し、anchor は安定 plane へ戻します。";
+      }
+      return { meshInput, intent, fusion, plane, tri, depth, latency, budget, active, score, route, cls, text };
+    }
+
+    function drawMesh(state) {
+      const density = Math.round(5 + state.tri / 11);
+      let html = "";
+      for (let i = 0; i < density; i += 1) {
+        const x = 90 + (i * 37) % 520;
+        const y = 186 + Math.sin(i * .75 + state.fusion / 16) * 42 + (i % 4) * 9;
+        const wobble = (100 - state.fusion) * .22 + state.tri * .08;
+        const color = state.score > 73 ? "#2f7a59" : state.score > 55 ? "#277f92" : state.score > 33 ? "#a86e20" : "#b24a45";
+        html += `<path d="M${x} ${y} L${x + 42 + wobble * .2} ${y - 20 + wobble * .1} L${x + 62} ${y + 24 + wobble * .12} Z" fill="${color}" opacity=".24" stroke="${color}" stroke-width="1.4"/>`;
+      }
+      $("mesh").innerHTML = html;
+      const anchorSize = 12 + state.score * .12;
+      $("anchor").setAttribute("r", anchorSize.toFixed(1));
+      $("anchor").setAttribute("stroke", state.cls === "block" ? "#b24a45" : state.cls === "hold" ? "#a86e20" : state.cls === "patch" ? "#277f92" : "#2f7a59");
+      $("normal").setAttribute("y2", String(176 - state.depth * .58));
+      $("label").textContent = `${state.meshInput.replace("-", " ")} / ${state.intent}`;
+      $("subLabel").textContent = `${state.route.toLowerCase()} · score ${state.score}`;
+    }
+
+    function updateLedger(state) {
+      const rows = [
+        ["mesh row", `${state.meshInput}, fusion ${state.fusion}%, triangle pressure ${state.tri}%`, state.fusion > 64 ? "usable" : "noisy"],
+        ["plane row", `stability ${state.plane}%, intent ${state.intent}`, state.plane > 70 ? "anchor base" : "retarget"],
+        ["depth row", `cross-check ${state.depth}%, frame budget spare ${state.budget}%`, state.depth > 62 ? "confirm" : "patch"],
+        ["promise row", `latency ${state.latency} ms, frame ${state.active ? "active" : "inactive"}`, state.latency < 220 && state.active ? "create" : "wait"]
+      ];
+      $("ledger").innerHTML = rows.map(([name, detail, verdict]) => {
+        const tagClass = verdict === "usable" || verdict === "anchor base" || verdict === "confirm" || verdict === "create"
+          ? "ok"
+          : verdict === "wait" || verdict === "patch" || verdict === "retarget"
+            ? "warn"
+            : "bad";
+        return `<div class="row"><strong>${name}</strong><span>${detail}</span><span class="tag ${tagClass}">${verdict}</span></div>`;
+      }).join("");
+    }
+
+    function update() {
+      const state = scoreState();
+      $("fusionLabel").textContent = `${state.fusion}%`;
+      $("planeLabel").textContent = `${state.plane}%`;
+      $("triLabel").textContent = `${state.tri}%`;
+      $("depthLabel").textContent = `${state.depth}%`;
+      $("latencyLabel").textContent = `${state.latency} ms`;
+      $("budgetLabel").textContent = `${state.budget}%`;
+      $("verdict").textContent = state.route;
+      $("verdict").className = `verdict ${state.cls}`;
+      $("summary").textContent = state.text;
+      $("score").textContent = state.score;
+      $("route").textContent = state.route.split(" ")[0].toLowerCase();
+      $("delay").textContent = state.cls === "commit" ? "1 frame" : state.cls === "patch" ? "2 frames" : state.cls === "hold" ? "wait" : "blocked";
+      $("stored").textContent = state.cls === "block" ? "discard" : "ledger row";
+      drawMesh(state);
+      updateLedger(state);
+    }
+
+    controls.forEach((control) => control.addEventListener("input", update));
+    $("steady").addEventListener("click", () => {
+      $("meshInput").value = "native"; $("intent").value = "table"; $("fusion").value = 86; $("plane").value = 88;
+      $("tri").value = 30; $("depth").value = 84; $("latency").value = 80; $("budget").value = 64; $("active").checked = true; update();
+    });
+    $("noisy").addEventListener("click", () => {
+      $("meshInput").value = "reduced"; $("intent").value = "wall"; $("fusion").value = 46; $("plane").value = 61;
+      $("tri").value = 78; $("depth").value = 49; $("latency").value = 340; $("budget").value = 34; $("active").checked = true; update();
+    });
+    update();
+  </script>
+</body>
+</html>
