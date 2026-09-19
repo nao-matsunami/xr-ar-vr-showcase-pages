@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Semantic History Import Replayer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2830;
+      --muted: #61707b;
+      --paper: #fffdf7;
+      --bg: #edf2f5;
+      --line: #d3dde2;
+      --green: #2f7a59;
+      --blue: #277f92;
+      --amber: #a86e20;
+      --red: #b24a45;
+      --violet: #665c9f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(102, 92, 159, .13), transparent 320px),
+        linear-gradient(120deg, rgba(47, 122, 89, .1), transparent 44%),
+        var(--bg);
+    }
+    main { width: min(1160px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 36px; }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 8px; font-size: 2rem; line-height: 1.08; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .summary, .panel, .stage, .metric, .timeline {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(31, 40, 48, .07);
+    }
+    .summary { padding: 16px; }
+    .verdict { font-size: 1.18rem; font-weight: 900; margin-bottom: 8px; }
+    .ok { color: var(--green); }
+    .split { color: var(--blue); }
+    .ghost { color: var(--amber); }
+    .bad { color: var(--red); }
+    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { padding: 16px; display: grid; gap: 14px; align-content: start; }
+    label { display: grid; gap: 6px; font-size: .86rem; font-weight: 760; color: #35424a; }
+    input[type="range"], select { width: 100%; accent-color: var(--violet); }
+    button {
+      min-height: 42px;
+      border: 1px solid #bbc7cd;
+      background: #fbfcfb;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary { border-color: var(--violet); background: var(--violet); color: white; }
+    textarea {
+      width: 100%;
+      min-height: 170px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #26333c;
+      background: #fbfcfb;
+    }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stage {
+      min-height: 540px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      background:
+        linear-gradient(90deg, rgba(102, 92, 159, .08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(47, 122, 89, .08) 1px, transparent 1px),
+        #fffdf7;
+      background-size: 42px 42px;
+    }
+    .viewport {
+      min-height: 360px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff 0 46%, #e9eef0 46% 100%);
+    }
+    svg { width: 100%; height: 100%; min-height: 360px; display: block; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { min-height: 78px; padding: 11px; box-shadow: none; }
+    .metric strong { display: block; font-size: 1.08rem; margin-bottom: 4px; }
+    .timeline { margin-top: 14px; padding: 14px; display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 132px 1fr 124px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf7;
+      font-size: .88rem;
+    }
+    .tag { justify-self: start; border-radius: 999px; padding: 4px 8px; font-weight: 850; background: #e6e4f5; color: var(--violet); }
+    .tag.ok { background: #e1f0e8; color: var(--green); }
+    .tag.warn { background: #fff0d5; color: var(--amber); }
+    .tag.bad { background: #ffe6e3; color: var(--red); }
+    @media (max-width: 860px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Semantic History Import Replayer</h1>
+        <p>1本目から export した ghost replay JSON を貼り付け、semanticHistory と mesh / plane / depth 信頼度から annotation を shared / split / ghost / block に再判定する派生試作。</p>
+      </div>
+      <section class="summary">
+        <div id="verdict" class="verdict ok">SHARED LABEL</div>
+        <p id="summary">履歴内の label が安定し、annotation を同じ anchor に共有できます。</p>
+      </section>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <label>Fallback import preset
+          <select id="preset">
+            <option value="stable">stable table-top history</option>
+            <option value="conflict">wall / clutter conflict</option>
+            <option value="private">privacy reduced labels</option>
+          </select>
+        </label>
+        <label>Pose overlap <span id="poseLabel">82%</span>
+          <input id="pose" type="range" min="0" max="100" value="82">
+        </label>
+        <label>Normal agreement <span id="normalLabel">78%</span>
+          <input id="normal" type="range" min="0" max="100" value="78">
+        </label>
+        <label>Annotation risk <span id="riskLabel">22%</span>
+          <input id="risk" type="range" min="0" max="100" value="22">
+        </label>
+        <textarea id="jsonIn" spellcheck="false" aria-label="Replay JSON input"></textarea>
+        <div class="buttons">
+          <button id="load" class="primary">Import JSON</button>
+          <button id="seed">Load Preset</button>
+        </div>
+      </aside>
+
+      <section>
+        <div class="stage">
+          <div class="viewport">
+            <svg viewBox="0 0 720 390" role="img" aria-label="Semantic history import visualization">
+              <rect width="720" height="390" fill="rgba(255,255,255,.45)"></rect>
+              <path d="M96 268 L622 232 L674 286 L142 332 Z" fill="rgba(47,122,89,.14)" stroke="#2f7a59" stroke-width="4"></path>
+              <g id="chips"></g>
+              <path id="splitLine" d="M360 82 L360 308" stroke="#277f92" stroke-width="4" stroke-dasharray="9 8" opacity=".25"></path>
+              <circle id="anchor" cx="360" cy="258" r="28" fill="#fffdf7" stroke="#665c9f" stroke-width="6"></circle>
+              <circle id="guard" cx="360" cy="258" r="48" fill="none" stroke="#a86e20" stroke-width="4" stroke-dasharray="8 7" opacity=".28"></circle>
+              <text x="28" y="38" fill="#1f2830" font-size="18" font-weight="850">semantic history import</text>
+              <text id="vizText" x="28" y="64" fill="#61707b" font-size="13">paste exported rows or replay local presets</text>
+            </svg>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="agreement">92</strong><span>label agreement</span></div>
+            <div class="metric"><strong id="trust">84</strong><span>import trust</span></div>
+            <div class="metric"><strong id="route">shared</strong><span>annotation route</span></div>
+            <div class="metric"><strong id="rows">3</strong><span>history rows</span></div>
+          </div>
+        </div>
+        <div id="timeline" class="timeline"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const presets = {
+      stable: {
+        exportedAt: "2026-09-17T00:00:00.000Z",
+        rows: [
+          { label: "table-top", route: "KEEP SOLID", trust: 84, meshNow: 78, plane: 86, depth: 80, semanticHistory: ["table-top", "table-top", "table-top"] },
+          { label: "table-top", route: "KEEP SOLID", trust: 82, meshNow: 76, plane: 83, depth: 81, semanticHistory: ["table-top", "table-top", "table-edge"] },
+          { label: "table-top", route: "HOLD AND FADE", trust: 66, meshNow: 65, plane: 80, depth: 72, semanticHistory: ["table-top", "table-top", "unknown"] }
+        ]
+      },
+      conflict: {
+        exportedAt: "2026-09-17T00:00:00.000Z",
+        rows: [
+          { label: "wall-poster", route: "RETURN TO GHOST", trust: 48, meshNow: 38, plane: 58, depth: 44, semanticHistory: ["wall", "clutter", "wall"] },
+          { label: "unknown-surface", route: "RETURN TO GHOST", trust: 40, meshNow: 31, plane: 50, depth: 42, semanticHistory: ["clutter", "wall", "unknown"] },
+          { label: "wall-poster", route: "RE-HIT REQUIRED", trust: 35, meshNow: 28, plane: 44, depth: 39, semanticHistory: ["wall", "screen", "clutter"] }
+        ]
+      },
+      private: {
+        exportedAt: "2026-09-17T00:00:00.000Z",
+        rows: [
+          { label: "unknown-surface", route: "HOLD AND FADE", trust: 58, meshNow: 52, plane: 70, depth: 64, semanticHistory: ["unknown", "reduced", "surface"] },
+          { label: "unknown-surface", route: "HOLD AND FADE", trust: 56, meshNow: 49, plane: 68, depth: 62, semanticHistory: ["reduced", "unknown", "surface"] },
+          { label: "floor-marker", route: "KEEP SOLID", trust: 68, meshNow: 61, plane: 74, depth: 72, semanticHistory: ["floor", "unknown", "floor"] }
+        ]
+      }
+    };
+    let imported = presets.stable;
+
+    function flattenLabels(rows) {
+      return rows.flatMap((row) => row.semanticHistory?.length ? row.semanticHistory : [row.label]).filter(Boolean);
+    }
+
+    function evaluate() {
+      const rows = imported.rows || [];
+      const labels = flattenLabels(rows);
+      const counts = labels.reduce((memo, label) => {
+        memo[label] = (memo[label] || 0) + 1;
+        return memo;
+      }, {});
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      const dominant = sorted[0]?.[0] || "unknown";
+      const agreement = labels.length ? Math.round((sorted[0][1] / labels.length) * 100) : 0;
+      const pose = Number($("pose").value);
+      const normal = Number($("normal").value);
+      const risk = Number($("risk").value);
+      const importTrust = rows.length ? Math.round(rows.reduce((sum, row) => sum + (Number(row.trust) || 0), 0) / rows.length) : 0;
+      const ghostRows = rows.filter((row) => /GHOST|RE-HIT|HOLD/.test(row.route || "")).length;
+      const privacyPenalty = labels.filter((label) => /unknown|reduced|clutter/.test(label)).length * 5;
+      const score = Math.max(0, Math.min(100, Math.round(agreement * .32 + pose * .2 + normal * .18 + importTrust * .24 - risk * .22 - ghostRows * 8 - privacyPenalty)));
+      let route = "SHARED LABEL";
+      let cls = "ok";
+      let summary = "履歴内の label が安定し、annotation を同じ anchor に共有できます。";
+      if (risk > 72 || score < 35) {
+        route = "BLOCK ANNOTATION";
+        cls = "bad";
+        summary = "annotation risk と履歴の不安定さが大きいため、表示を止めます。";
+      } else if (score < 55 || privacyPenalty > 20) {
+        route = "GHOST LABEL";
+        cls = "ghost";
+        summary = "label は推定できますが、privacy reduction や ghost row が多いため薄く表示します。";
+      } else if (agreement < 68 || pose < 58 || normal < 58) {
+        route = "SPLIT LABEL";
+        cls = "split";
+        summary = "semantic history が割れているため、annotation を共有せず候補を分けます。";
+      }
+      return { rows, labels, counts, dominant, agreement, pose, normal, risk, importTrust, ghostRows, score, route, cls, summary };
+    }
+
+    function render() {
+      ["pose", "normal", "risk"].forEach((id) => {
+        $(`${id}Label`).textContent = `${$(id).value}%`;
+      });
+      const e = evaluate();
+      $("verdict").textContent = e.route;
+      $("verdict").className = `verdict ${e.cls}`;
+      $("summary").textContent = e.summary;
+      $("agreement").textContent = e.agreement;
+      $("trust").textContent = e.score;
+      $("route").textContent = e.route.replace(" LABEL", "").replace(" ANNOTATION", "").toLowerCase();
+      $("rows").textContent = e.rows.length;
+      $("anchor").setAttribute("stroke", e.cls === "ok" ? "#2f7a59" : e.cls === "split" ? "#277f92" : e.cls === "ghost" ? "#a86e20" : "#b24a45");
+      $("guard").setAttribute("opacity", e.cls === "ok" ? ".18" : e.cls === "ghost" ? ".72" : e.cls === "bad" ? ".9" : ".42");
+      $("splitLine").setAttribute("opacity", e.cls === "split" ? ".85" : ".25");
+      const labels = e.labels.slice(-10);
+      $("chips").innerHTML = labels.map((label, index) => {
+        const x = 92 + (index % 5) * 110;
+        const y = 106 + Math.floor(index / 5) * 62;
+        const color = label === e.dominant ? "#2f7a59" : /unknown|reduced|clutter/.test(label) ? "#a86e20" : "#277f92";
+        return `<g><rect x="${x}" y="${y}" width="92" height="32" rx="7" fill="${color}" opacity=".92"></rect><text x="${x + 46}" y="${y + 21}" text-anchor="middle" fill="white" font-size="12" font-weight="850">${label}</text></g>`;
+      }).join("");
+      $("timeline").innerHTML = e.rows.map((row, index) => {
+        const cls = /RE-HIT/.test(row.route || "") ? "bad" : /GHOST|HOLD/.test(row.route || "") ? "warn" : "ok";
+        const history = (row.semanticHistory || [row.label]).join(" / ");
+        return `<div class="row"><span>row ${index + 1}: ${row.label || "unknown"}</span><span>${history} | trust ${row.trust ?? 0}, mesh ${row.meshNow ?? 0}, plane ${row.plane ?? 0}, depth ${row.depth ?? 0}</span><span class="tag ${cls}">${row.route || "IMPORTED"}</span></div>`;
+      }).join("");
+      $("vizText").textContent = `dominant: ${e.dominant}, imported at ${imported.exportedAt || "local preset"}`;
+    }
+
+    function setPreset() {
+      imported = presets[$("preset").value];
+      $("jsonIn").value = JSON.stringify(imported, null, 2);
+      render();
+    }
+
+    $("seed").addEventListener("click", setPreset);
+    $("preset").addEventListener("change", setPreset);
+    $("load").addEventListener("click", () => {
+      try {
+        const parsed = JSON.parse($("jsonIn").value);
+        imported = { exportedAt: parsed.exportedAt || new Date().toISOString(), rows: Array.isArray(parsed.rows) ? parsed.rows : [] };
+      } catch (error) {
+        imported = { exportedAt: "parse-error", rows: [{ label: "invalid-json", route: "BLOCK ANNOTATION", trust: 0, semanticHistory: ["invalid", "json"] }] };
+      }
+      render();
+    });
+    ["pose", "normal", "risk"].forEach((id) => $(id).addEventListener("input", render));
+    setPreset();
+  </script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+{
+  "date": "2026-09-17",
+  "headline": "ghost replay row を IndexedDB に保存して semantic history へ渡す",
+  "headlineEn": "Saving ghost replay rows into IndexedDB and handing them to semantic history",
+  "summary": "WebXR Device API、Anchors Module、Mesh Detection Module、Plane Detection Module、Depth Sensing Module、Immersive Web Samples、MDN の XRAnchor / IndexedDB 情報を参照し、ghost replay row を実ブラウザ保存する本命サンプルと、その export JSON を semantic history として再判定する派生サンプルを追加しました。",
+  "summaryEn": "After checking the WebXR Device API, Anchors Module, Mesh Detection Module, Plane Detection Module, Depth Sensing Module, Immersive Web Samples, and MDN references for XRAnchor / IndexedDB, today's original work adds a main sample that stores ghost replay rows in browser IndexedDB and a derivative sample that replays the exported JSON as semantic history.",
+  "keyTopics": [
+    "WebXR Device API は 2026-06-09 Candidate Recommendation Draft で、immersive-ar セッションや frame / space / pose の基本レイヤーを支えます。",
+    "Anchors Module の `frame.trackedAnchors` と persistent anchor restore は、日跨ぎ replay row を保存・再判定する時の核になります。",
+    "Mesh Detection Module の `XRMesh.vertices`、`indices`、`lastChangedTime`、`semanticLabel` は、anchor の solid / ghost / re-hit 判定に使える変化量を与えます。",
+    "Plane Detection と Depth Sensing は、mesh が悪化した時に plane stability と depth agreement で ghost 表示の理由を補強できます。",
+    "今日の公開カードは外部デモではなく、このワークスペース内で作った `Ghost Replay IndexedDB Logger` と `Semantic History Import Replayer` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Device API Candidate Recommendation Draft of 2026-06-09 provides the base session, frame, space, and pose layer for immersive-ar work.",
+    "`frame.trackedAnchors` and persistent anchor restore from the Anchors Module are central to storing and re-evaluating cross-day replay rows.",
+    "`XRMesh.vertices`, `indices`, `lastChangedTime`, and `semanticLabel` from Mesh Detection provide change signals for solid / ghost / re-hit anchor decisions.",
+    "Plane Detection and Depth Sensing can explain why weak meshes should move through ghost display by adding plane stability and depth agreement evidence.",
+    "Today's public cards focus on the original workspace samples `Ghost Replay IndexedDB Logger` and `Semantic History Import Replayer`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Ghost Replay IndexedDB Logger",
+      "url": "../outputs/2026-09-17_html_ghost_replay_indexeddb_logger.html"
+    },
+    {
+      "label": "Today's derivative sample: Semantic History Import Replayer",
+      "url": "../outputs/2026-09-17_html_semantic_history_import_replayer.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "Immersive Web: WebXR Mesh Detection Module",
+      "url": "https://immersive-web.github.io/real-world-meshing/"
+    },
+    {
+      "label": "Immersive Web: Plane Detection repository",
+      "url": "https://github.com/immersive-web/plane-detection"
+    },
+    {
+      "label": "W3C: WebXR Depth Sensing Module",
+      "url": "https://www.w3.org/TR/webxr-depth-sensing-1/"
+    },
+    {
+      "label": "MDN: XRAnchor",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRAnchor"
+    },
+    {
+      "label": "Immersive Web Samples: Plane Detection source",
+      "url": "https://github.com/immersive-web/webxr-samples/blob/main/proposals/plane-detection.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "昨日は mesh が悪化した anchor を ghost replay に戻すところまで進めました。今日はその row を本当にブラウザ側へ保存し、次のサンプルへ JSON として渡す流れにしました。WebXR の公式仕様群は anchor、mesh、plane、depth を別々の API として定義しますが、実制作では `置いたものを翌日も信用できるか` を1つの履歴として扱う必要があります。IndexedDB はその履歴の最小保存先になり、semantic history は annotation を共有してよいかの説明可能な根拠になります。",
+      "bodyEn": "Yesterday reached the point where anchors with degraded mesh support could return to ghost replay. Today turns that row into an actual browser-side saved record and passes it to the next sample as JSON. The WebXR specifications define anchors, meshes, planes, and depth as separate APIs, but production work needs a single history for whether a placed object can still be trusted tomorrow. IndexedDB becomes a minimal local store for that history, and semantic history gives explainable evidence for whether annotation should be shared.",
+      "links": [
+        {
+          "label": "W3C: WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        },
+        {
+          "label": "Immersive Web: WebXR Mesh Detection Module",
+          "url": "https://immersive-web.github.io/real-world-meshing/"
+        },
+        {
+          "label": "MDN: XRAnchor",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRAnchor"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Ghost Replay IndexedDB Logger` は anchor label、mesh score now / previous、plane stability、depth agreement、tracked anchor match、re-hit confidence、anchor age、persistent handle restored を操作し、`KEEP SOLID`、`RETURN TO GHOST`、`HOLD AND FADE`、`RE-HIT REQUIRED` に分けます。Save Row で IndexedDB に保存し、Export JSON で派生サンプルへ渡せる形式を出します。派生サンプル `Semantic History Import Replayer` は export JSON を貼り付け、semanticHistory、pose overlap、normal agreement、annotation risk から shared / split / ghost / block を判定します。",
+      "bodyEn": "The main sample, `Ghost Replay IndexedDB Logger`, adjusts anchor label, current / previous mesh score, plane stability, depth agreement, tracked anchor match, re-hit confidence, anchor age, and persistent handle restore state, then routes to `KEEP SOLID`, `RETURN TO GHOST`, `HOLD AND FADE`, or `RE-HIT REQUIRED`. Save Row writes into IndexedDB, while Export JSON emits a payload for the derivative sample. The derivative `Semantic History Import Replayer` accepts that JSON and routes shared / split / ghost / block from semanticHistory, pose overlap, normal agreement, and annotation risk.",
+      "links": [
+        {
+          "label": "Open main sample",
+          "url": "../outputs/2026-09-17_html_ghost_replay_indexeddb_logger.html"
+        },
+        {
+          "label": "Open derivative sample",
+          "url": "../outputs/2026-09-17_html_semantic_history_import_replayer.html"
+        }
+      ]
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機版では、XR session 起動中の frame から anchor restore 結果、`frame.trackedAnchors`、mesh の `lastChangedTime` / `semanticLabel`、plane label / polygon stability、depth agreement を1 row にまとめ、IndexedDB へ保存します。サンプルでは合成値ですが、row の形は `id`、`savedAt`、`label`、`meshNow`、`meshPrev`、`plane`、`depth`、`tracked`、`rehit`、`age`、`restored`、`semanticHistory`、`route` にしてあります。まずは local-first にして、ユーザーが export した時だけ JSON を共有する設計にすると、実空間情報の扱いを慎重にできます。",
+      "bodyEn": "A device-backed version can save anchor restore result, `frame.trackedAnchors`, mesh `lastChangedTime` / `semanticLabel`, plane label / polygon stability, and depth agreement into one IndexedDB row during an XR session. The sample uses synthetic values, but the row shape is `id`, `savedAt`, `label`, `meshNow`, `meshPrev`, `plane`, `depth`, `tracked`, `rehit`, `age`, `restored`, `semanticHistory`, and `route`. Keeping the flow local-first and only sharing JSON when the user exports it is a cautious way to handle real-world information."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の2本からは、anchor label、mesh score delta、plane stability、depth agreement、tracked anchor match、re-hit confidence、persistent restore state、semanticHistory、pose overlap、normal agreement、annotation risk、annotation route が取れます。9月11日の depth gate、9月13日の plane anchor handoff、9月14日の mesh budget、9月16日の ghost replay と組み合わせると、現実空間に配置した UI を `配置した瞬間` だけでなく `時間が経ってからの信用度` で扱えます。展示では部屋の変化を演出にし、業務 UI では誤った label への注釈を止め、ゲームでは再認識の瞬間を ghost から solid への復帰として見せられます。",
+      "bodyEn": "The two samples expose anchor label, mesh score delta, plane stability, depth agreement, tracked anchor match, re-hit confidence, persistent restore state, semanticHistory, pose overlap, normal agreement, annotation risk, and annotation route. Combined with the September 11 depth gate, September 13 plane anchor handoff, September 14 mesh budget, and September 16 ghost replay, placed real-world UI can be evaluated not only at placement time but also by later trust. Installations can dramatize room changes, operational UI can suppress unsafe labels, and games can show re-recognition as a transition from ghost back to solid."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Anchors Module の persistent handle 周り、Mesh Detection の semanticLabel / lastChangedTime、Plane Detection の real-world geometry 方針、Depth Sensing Working Draft、Immersive Web Samples の plane / anchor / mesh 実装、Meta Quest 向けの WebXR エミュレーション環境を続けて見ます。次は、IndexedDB に保存した row を同じページ内で import し直すだけでなく、実 `navigator.xr.requestSession(\"immersive-ar\")` の feature negotiation と接続して、対応機能がない時の fallback row も保存したいところです。",
+      "bodyEn": "Keep watching persistent handles in the Anchors Module, semanticLabel / lastChangedTime in Mesh Detection, real-world geometry direction in Plane Detection, the Depth Sensing Working Draft, plane / anchor / mesh implementations in Immersive Web Samples, and WebXR emulation tooling for Meta Quest. A useful next step is connecting the IndexedDB rows to real `navigator.xr.requestSession(\"immersive-ar\")` feature negotiation and storing fallback rows when features are unavailable."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Ghost Replay IndexedDB Logger` で Save Row を数回押し、Mesh Decay を押してからもう一度保存し、Export JSON を押します。その JSON を `Semantic History Import Replayer` に貼って Import JSON を押すと、ghost / re-hit の row が semantic annotation を shared から ghost / block 側へ押し戻す様子が見えます。Fallback preset の conflict / private も、実機で privacy reduction や label conflict が起きた時の挙動を考える小さな叩き台になります。",
+      "bodyEn": "In `Ghost Replay IndexedDB Logger`, save a few rows, press Mesh Decay, save again, then export JSON. Paste that JSON into `Semantic History Import Replayer` and import it to see ghost / re-hit rows push semantic annotation away from shared and toward ghost / block. The conflict / private fallback presets are small starting points for thinking through privacy reduction and label conflicts on real devices.",
+      "links": [
+        {
+          "label": "Open Ghost Replay IndexedDB Logger",
+          "url": "../outputs/2026-09-17_html_ghost_replay_indexeddb_logger.html"
+        },
+        {
+          "label": "Open Semantic History Import Replayer",
+          "url": "../outputs/2026-09-17_html_semantic_history_import_replayer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、Immersive Web の Mesh / Plane / Anchors、Depth Sensing、MDN XRAnchor、Immersive Web Samples を確認。設計: 1本目は ghost replay row の IndexedDB 保存と JSON export、2本目はその import JSON による semantic history 再判定。実装: `outputs/2026-09-17_html_ghost_replay_indexeddb_logger.html` と `outputs/2026-09-17_html_semantic_history_import_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。",
+      "bodyEn": "Research: checked the W3C WebXR Device API, Immersive Web Mesh / Plane / Anchors, Depth Sensing, MDN XRAnchor, and Immersive Web Samples. Design: make the first sample an IndexedDB logger and JSON exporter for ghost replay rows, and the second a semantic history replayer from imported JSON. Implementation: add `outputs/2026-09-17_html_ghost_replay_indexeddb_logger.html` and `outputs/2026-09-17_html_semantic_history_import_replayer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and verify publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "9月中旬の流れは、depth / plane / mesh / anchor / semantic conflict を個別の判定器として作ったあと、日跨ぎの replay と保存へ進んでいます。今日の小さな一歩は `保存できる row` にしたことです。XR の実空間 UI は、一度置いたら終わりではなく、ユーザーの部屋理解が更新されるたびに信用度が変わります。その変化をローカル履歴に残し、annotation や表示強度へ戻せると、XR 体験はかなり落ち着きます。",
+      "bodyEn": "The mid-September sequence has moved from separate depth / plane / mesh / anchor / semantic conflict judges into cross-day replay and storage. Today's small but important step is making the row saveable. Real-world XR UI does not end at placement; its trust changes whenever the system's understanding of the room updates. Saving that change locally and feeding it back into annotation and display strength makes the experience much calmer."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Ghost Replay IndexedDB Logger` です。何が動くか: anchor label、mesh score now / previous、plane stability、depth agreement、tracked anchor match、re-hit confidence、anchor age、persistent handle restored を操作し、判定 row を IndexedDB に保存し、JSON export できます。次に足すなら、実 `immersive-ar` session の feature negotiation と `frame.trackedAnchors` / `detectedMeshes` をつなぎ、合成値ではなく実 frame から row を作ります。派生として `Semantic History Import Replayer` も実装しました。何が動くか: 1本目の export JSON または preset を読み込み、semanticHistory、pose overlap、normal agreement、annotation risk から shared / split / ghost / block を判定します。次に足すなら、import した row を anchor ごとに grouped timeline にして、同じ anchor の label が安定するまで annotation を ghost 表示にします。",
+      "bodyEn": "The selected main prototype is `Ghost Replay IndexedDB Logger`. What it does: adjusts anchor label, current / previous mesh score, plane stability, depth agreement, tracked anchor match, re-hit confidence, anchor age, and persistent handle restore state, saves the decision row to IndexedDB, and exports JSON. Next addition: connect real `immersive-ar` feature negotiation and `frame.trackedAnchors` / `detectedMeshes` so rows are created from real frames instead of synthetic values. The derivative `Semantic History Import Replayer` was also implemented. What it does: imports the main sample's JSON or presets, then routes shared / split / ghost / block from semanticHistory, pose overlap, normal agreement, and annotation risk. Next addition: group imported rows by anchor and keep annotation ghosted until the same anchor's label stabilizes."
+    }
+  ]
+}

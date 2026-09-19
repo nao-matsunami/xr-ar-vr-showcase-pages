@@ -269,8 +269,8 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 70</span>
-        <span>page: 1 / 6</span>
+        <span>days: 73</span>
+        <span>page: 1 / 7</span>
         <span>storage: localStorage likes</span>
       </div>
     </section>
@@ -302,6 +302,10 @@
       <a class="pager-link" href="pages/6.html">
         6
       </a>
+    
+      <a class="pager-link" href="pages/7.html">
+        7
+      </a>
     </div>
       <a class="pager-nav" href="pages/2.html">次のページ / Next</a>
     </nav>
@@ -309,6 +313,75 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-09-19">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.19</p>
+              <h2>Layers API の runtime drift を fallback row に落とす</h2>
+              <p class="card-subtitle">Turning WebXR layer runtime drift into fallback rows</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-19" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Layers API Level 1、WebXR Device API、MDN XRWebGLBinding、Immersive Web Layers Samples を参照し、layer 利用前の runtime capability を測って projection / quad / cylinder / equirect / media layer の劣化先を記録する本命サンプルと、space 選択を安定性 route として試す派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking the W3C WebXR Layers API Level 1, the WebXR Device API, MDN XRWebGLBinding, and Immersive Web Layers Samples, today's original work adds a main sample that records runtime capability and fallback routes for projection / quad / cylinder / equirect / media layers, plus a derivative sample that explores stable space routing.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">html-surface</span><span class="tag">xr</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-09-19.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-09-19_html_layer_runtime_capability_drift_monitor.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-09-18">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.18</p>
+              <h2>immersive-ar の feature negotiation を fallback row として保存する</h2>
+              <p class="card-subtitle">Saving immersive-ar feature negotiation as fallback rows</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-18" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API、MDN の requestSession / enabledFeatures、Anchors Module、Plane Detection、Mesh Detection、Immersive Web Samples を参照し、実 `immersive-ar` の起動前後に required / optional feature を整理してログ化する本命サンプルと、その export JSON を fallback policy で再判定する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking the WebXR Device API, MDN requestSession / enabledFeatures, the Anchors Module, Plane Detection, Mesh Detection, and Immersive Web Samples, today's original work adds a main sample that logs required / optional feature negotiation around a real immersive-ar request and a derivative sample that replays the exported JSON through fallback policies.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-09-18.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-09-18_html_immersive_ar_feature_negotiation_logger.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-09-17">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.17</p>
+              <h2>ghost replay row を IndexedDB に保存して semantic history へ渡す</h2>
+              <p class="card-subtitle">Saving ghost replay rows into IndexedDB and handing them to semantic history</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-17" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API、Anchors Module、Mesh Detection Module、Plane Detection Module、Depth Sensing Module、Immersive Web Samples、MDN の XRAnchor / IndexedDB 情報を参照し、ghost replay row を実ブラウザ保存する本命サンプルと、その export JSON を semantic history として再判定する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking the WebXR Device API, Anchors Module, Mesh Detection Module, Plane Detection Module, Depth Sensing Module, Immersive Web Samples, and MDN references for XRAnchor / IndexedDB, today's original work adds a main sample that stores ghost replay rows in browser IndexedDB and a derivative sample that replays the exported JSON as semantic history.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-09-17.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-09-17_html_ghost_replay_indexeddb_logger.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-09-16">
           <div class="card-top">
             <div>
@@ -515,75 +588,6 @@
           </div>
         </article>
       
-
-        <article class="card" data-slug="2026-09-05">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.05</p>
-              <h2>Transient input hit-test を inputSource ごとの commit ledger にする</h2>
-              <p class="card-subtitle">Turning transient input hit-test into a per-inputSource commit ledger</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-05" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR Hit Test Module、WebXR Device API、Permissions Policy、MDN、Immersive Web Samples を参照し、`XRTransientInputHitTestResult.inputSource` と `results` の束ねを配置判断へ変換する本命サンプルと、iframe `allow` 属性差を親ページから観察する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the W3C WebXR Hit Test Module, WebXR Device API, Permissions Policy, MDN, and Immersive Web Samples, today's original work adds a main sample that turns `XRTransientInputHitTestResult.inputSource` and `results` grouping into placement decisions, plus a derivative sample that observes iframe `allow` differences from the parent page.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-05.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-05_html_transient_hit_group_router.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-04">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.04</p>
-              <h2>Permissions Policy と hit-test / camera gate を同じ commit window で見る</h2>
-              <p class="card-subtitle">Viewing Permissions Policy, hit-test, and camera gates in one commit window</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-04" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR Device API、WebXR Hit Test Module、Permissions Policy、Immersive Web Raw Camera Access、Immersive Web Samples を参照し、`xr-spatial-tracking`、`camera-access`、hit-test pose を起動前から同じ判断表で扱う本命サンプルと、`document.permissionsPolicy.allowsFeature()` の実チェックを含む派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the W3C WebXR Device API, WebXR Hit Test Module, Permissions Policy, Immersive Web Raw Camera Access, and Immersive Web Samples, today's original work adds a main sample that puts `xr-spatial-tracking`, `camera-access`, and hit-test pose into one launch/commit gate, plus a derivative sample that includes real `document.permissionsPolicy.allowsFeature()` checks.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-04.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-04_html_policy_hit_camera_commit_gate.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-03">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.03</p>
-              <h2>Raw Camera Access の許可とフレーム鮮度を可視化する</h2>
-              <p class="card-subtitle">Visualizing Raw Camera Access permission and frame freshness</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-03" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Raw Camera Access Module、WebXR Device API、Permissions Policy、Immersive Web Samples を参照し、`camera-access` の許可、frame 鮮度、view alignment、privacy indicator を通す本命サンプルと、カメラ texture の整合・crop fallback を見る派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Raw Camera Access Module, WebXR Device API, Permissions Policy, and Immersive Web Samples, today's original work adds a main sample for `camera-access` permission, frame freshness, view alignment, and privacy indicators, plus a derivative sample for camera texture alignment and crop fallback.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-03.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-03_html_raw_camera_access_gateboard.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
     </section>
 
     
@@ -612,6 +616,10 @@
     
       <a class="pager-link" href="pages/6.html">
         6
+      </a>
+    
+      <a class="pager-link" href="pages/7.html">
+        7
       </a>
     </div>
       <a class="pager-nav" href="pages/2.html">次のページ / Next</a>

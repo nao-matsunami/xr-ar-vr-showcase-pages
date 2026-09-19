@@ -269,8 +269,8 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 70</span>
-        <span>page: 6 / 6</span>
+        <span>days: 73</span>
+        <span>page: 6 / 7</span>
         <span>storage: localStorage likes</span>
       </div>
     </section>
@@ -302,13 +302,86 @@
       <a class="pager-link is-current" href="../pages/6.html">
         6
       </a>
+    
+      <a class="pager-link" href="../pages/7.html">
+        7
+      </a>
     </div>
-      <span class="pager-nav is-disabled">次のページ / Next</span>
+      <a class="pager-nav" href="../pages/7.html">次のページ / Next</a>
     </nav>
   
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-07-19">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.19</p>
+              <h2>手関節入力の信頼度を compute pass 風に整える</h2>
+              <p class="card-subtitle">Filtering hand-joint confidence like a compute pass</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-19" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Hand Input Module、MDN XRJointSpace、Immersive Web の WebGPU samples、WebXR Layers API を確認し、今日は 25 joint の欠損・jitter・depth mismatch を HMD なしで観察できる自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Hand Input Module, MDN XRJointSpace, Immersive Web WebGPU samples, and the WebXR Layers API, today's original HTML sample visualizes 25-joint dropout, jitter, and depth mismatch without requiring a headset.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-19.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-19_html_hand_confidence_compute_filter.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-07-18">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.18</p>
+              <h2>WebXR と WebGPU の接続準備を一画面で測る</h2>
+              <p class="card-subtitle">Measuring WebXR and WebGPU binding readiness in one screen</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-18" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API の 2026-03-16 Candidate Recommendation Draft、WebXR Layers API Level 1 の 2026-06-12 Editor's Draft、Immersive Web の WebGPU samples を確認し、今日は XRGPUBinding と projection layer の導入準備を HMD なしで観察する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Device API Candidate Recommendation Draft dated 2026-03-16, the WebXR Layers API Level 1 Editor's Draft dated 2026-06-12, and the Immersive Web WebGPU samples, today's original HTML sample visualizes XRGPUBinding and projection-layer readiness without requiring a headset.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-18.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-18_html_xrgpu_binding_readiness_matrix.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-07-17">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.17</p>
+              <h2>補正された投影とライブ前景のズレを測る</h2>
+              <p class="card-subtitle">Measuring mismatch between warped projection and live foreground layers</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-17" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Layers API の depth sorting と Space Warp、Immersive Web の Input Selection Space Warp sample を確認し、今日は補正済み projection layer と未補正の前景 pointer/hand layer のスクリーン位置・奥行き判定のズレを観察する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing depth sorting and Space Warp in the WebXR Layers API plus the Immersive Web Input Selection Space Warp sample, today's original HTML sample visualizes screen-space and depth-order mismatch between a compensated projection layer and an uncompensated foreground pointer/hand layer.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-17.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-17_html_foreground_warp_mismatch_scope.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-07-16">
           <div class="card-top">
             <div>
@@ -515,29 +588,6 @@
           </div>
         </article>
       
-
-        <article class="card" data-slug="2026-07-07">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.07.07</p>
-              <h2>XR 側を自作日次サンプル形式へ移行</h2>
-              <p class="card-subtitle">XR side moved to original daily-sample format</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-07-07" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">XR / AR / VR 側の公開面を、既存デモの紹介ではなく自作サンプルの蓄積へ切り替えました。初回として、XR Layers 的な前景 HUD と奥行き面の分離感を、ポインタ視差で試せる最小 HTML サンプルを追加しています。</p>
-          <p class="description en-copy">The XR / AR / VR site has been shifted from listing existing demos to accumulating original samples. As the first entry, it adds a minimal HTML prototype that explores XR-Layers-like separation between foreground HUD and depth planes through pointer-based parallax.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-07-07.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-07-07_html_spatial_hud_depth_stack.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
     </section>
 
     
@@ -567,8 +617,12 @@
       <a class="pager-link is-current" href="../pages/6.html">
         6
       </a>
+    
+      <a class="pager-link" href="../pages/7.html">
+        7
+      </a>
     </div>
-      <span class="pager-nav is-disabled">次のページ / Next</span>
+      <a class="pager-nav" href="../pages/7.html">次のページ / Next</a>
     </nav>
   
 

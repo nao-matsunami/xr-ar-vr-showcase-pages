@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Layer Space Stability Route Sequencer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #121415;
+      --panel: #1d2226;
+      --line: #384249;
+      --text: #f5f1e8;
+      --muted: #b8c1bf;
+      --aqua: #5fc8bf;
+      --violet: #a99cf0;
+      --amber: #e3b85c;
+      --rose: #e87672;
+      --leaf: #8ccc78;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(140deg, rgba(95, 200, 191, 0.12), transparent 40%),
+        linear-gradient(40deg, transparent 45%, rgba(169, 156, 240, 0.10)),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .intro, .stage, section {
+      background: rgba(29, 34, 38, 0.94);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+    }
+
+    .intro {
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4.6vw, 56px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .stage {
+      min-height: 326px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .room {
+      position: absolute;
+      inset: 54px 42px 34px;
+      border: 1px solid rgba(245, 241, 232, 0.22);
+      transform: perspective(520px) rotateX(58deg) rotateZ(-8deg);
+      background:
+        linear-gradient(90deg, rgba(95, 200, 191, 0.18) 1px, transparent 1px),
+        linear-gradient(rgba(95, 200, 191, 0.12) 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+
+    .layer {
+      position: absolute;
+      width: 150px;
+      height: 82px;
+      left: calc(50% - 75px);
+      top: calc(50% - 41px);
+      border-radius: 8px;
+      border: 1px solid rgba(245, 241, 232, 0.48);
+      background:
+        linear-gradient(130deg, rgba(95, 200, 191, 0.44), rgba(169, 156, 240, 0.26)),
+        rgba(13, 17, 19, 0.8);
+      box-shadow: 0 0 34px rgba(95, 200, 191, 0.18);
+      transform: translate(var(--x, 0px), var(--y, 0px)) rotate(var(--r, 0deg)) scale(var(--s, 1));
+      transition: transform 220ms ease, border-color 220ms ease;
+    }
+
+    .layer::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 12px;
+      top: 10px;
+      font-size: 12px;
+      color: var(--text);
+      font-weight: 760;
+    }
+
+    .reticle {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: calc(50% - 10px);
+      top: calc(50% - 10px);
+      border: 2px solid var(--amber);
+      border-radius: 50%;
+      box-shadow: 0 0 22px rgba(227, 184, 92, 0.35);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    select, input, button {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #20272b;
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--aqua);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 760;
+      background: #264d52;
+      border-color: #4aa5aa;
+    }
+
+    section {
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      min-height: 142px;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #171c1f;
+      display: grid;
+      gap: 9px;
+    }
+
+    .card strong {
+      font-size: 15px;
+    }
+
+    .pill {
+      width: fit-content;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      background: #2b3338;
+      color: var(--muted);
+    }
+
+    .pill.good { background: var(--leaf); color: #0e2014; }
+    .pill.warn { background: var(--amber); color: #251c08; }
+    .pill.bad { background: var(--rose); color: #2a1010; }
+    .pill.info { background: var(--aqua); color: #071c1c; }
+
+    .timeline {
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 90px 1fr 132px;
+      gap: 10px;
+      align-items: center;
+      min-height: 42px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #151a1d;
+      border: 1px solid #2f393f;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .row strong { color: var(--text); }
+
+    @media (max-width: 900px) {
+      header, .controls, .cards, .row { grid-template-columns: 1fr; }
+      .stage { min-height: 280px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="intro">
+        <h1>Layer Space Stability Route Sequencer</h1>
+        <p>Layers API の `viewer` / `local` / `local-floor` / `bounded-floor` / anchor space を、意図、頭部揺れ、距離、bounds、anchor confidence から選び直す派生試作です。</p>
+      </div>
+      <div class="stage" aria-label="layer stability preview">
+        <div class="room"></div>
+        <div class="reticle"></div>
+        <div class="layer" id="previewLayer" data-label="quad"></div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Layer type
+        <select id="layerType">
+          <option value="quad">quad</option>
+          <option value="cylinder">cylinder</option>
+          <option value="equirect">equirect</option>
+          <option value="projection">projection</option>
+        </select>
+      </label>
+      <label>Intent
+        <select id="intent">
+          <option value="panel">world panel</option>
+          <option value="reticle">head reticle</option>
+          <option value="video">immersive video</option>
+          <option value="occlusion">occlusion pass</option>
+        </select>
+      </label>
+      <label>Head motion <span id="motionLabel">0.32</span>
+        <input id="motion" type="range" min="0" max="1" step="0.01" value="0.32">
+      </label>
+      <label>Anchor confidence <span id="anchorLabel">0.72</span>
+        <input id="anchor" type="range" min="0" max="1" step="0.01" value="0.72">
+      </label>
+      <button id="step">Step sequence</button>
+    </div>
+
+    <section>
+      <h2>Space candidates</h2>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <section>
+      <h2>Route sequence</h2>
+      <div class="timeline" id="timeline"></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let tick = 0;
+
+    const spaces = [
+      { id: "viewer", label: "viewer", note: "head-locked cursor / tiny UI", base: 44 },
+      { id: "local", label: "local", note: "body-locked or room-relative panel", base: 62 },
+      { id: "local-floor", label: "local-floor", note: "floor-aware placement", base: 68 },
+      { id: "bounded-floor", label: "bounded-floor", note: "guarded room-scale content", base: 58 },
+      { id: "anchor", label: "anchor space", note: "world-locked saved object", base: 64 }
+    ];
+
+    function scoreSpace(space) {
+      const type = $("layerType").value;
+      const intent = $("intent").value;
+      const motion = Number($("motion").value);
+      const anchor = Number($("anchor").value);
+      let score = space.base;
+
+      if (intent === "reticle" && space.id === "viewer") score += 35;
+      if (intent !== "reticle" && space.id === "viewer") score -= 32 + motion * 18;
+      if (intent === "panel" && ["local", "local-floor", "anchor"].includes(space.id)) score += 14;
+      if (intent === "video" && ["local", "local-floor"].includes(space.id)) score += 18;
+      if (intent === "occlusion" && type === "projection" && space.id === "local") score += 28;
+      if (type === "equirect" && space.id === "viewer") score -= 38;
+      if (type === "projection" && space.id !== "local") score -= 20;
+      if (space.id === "anchor") score += anchor * 36 - (1 - anchor) * 30;
+      if (space.id === "bounded-floor") score -= motion * 10;
+      if (space.id === "local-floor") score += Math.max(0, 14 - motion * 12);
+      return Math.max(0, Math.min(100, Math.round(score)));
+    }
+
+    function verdict(score) {
+      if (score >= 82) return { label: "use", cls: "good" };
+      if (score >= 64) return { label: "monitor", cls: "info" };
+      if (score >= 44) return { label: "fallback", cls: "warn" };
+      return { label: "avoid", cls: "bad" };
+    }
+
+    function bestSpace() {
+      return spaces.map((space) => ({ ...space, score: scoreSpace(space) })).sort((a, b) => b.score - a.score)[0];
+    }
+
+    function renderCards() {
+      $("cards").innerHTML = spaces.map((space) => {
+        const score = scoreSpace(space);
+        const v = verdict(score);
+        return `
+          <article class="card">
+            <strong>${space.label}</strong>
+            <span class="pill ${v.cls}">${v.label} · ${score}</span>
+            <p>${space.note}</p>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function routeRows() {
+      const type = $("layerType").value;
+      const intent = $("intent").value;
+      const motion = Number($("motion").value);
+      const anchor = Number($("anchor").value);
+      const best = bestSpace();
+      const rows = [
+        { step: "intent", detail: `${intent} on ${type}`, route: "choose layer type" },
+        { step: "motion", detail: `head motion ${(motion * 100).toFixed(0)}%`, route: motion > 0.68 ? "avoid head-locked panels" : "stable enough" },
+        { step: "anchor", detail: `confidence ${(anchor * 100).toFixed(0)}%`, route: anchor > 0.66 ? "anchor space candidate" : "prefer local-floor" },
+        { step: "space", detail: `${best.label} scored ${best.score}`, route: verdict(best.score).label },
+        { step: "fallback", detail: best.score < 64 ? "projection mesh or screen row" : "native layer route", route: best.score < 64 ? "save fallback reason" : "save selected space" }
+      ];
+      return rows;
+    }
+
+    function renderTimeline() {
+      $("timeline").innerHTML = routeRows().map((row) => `
+        <div class="row">
+          <strong>${row.step}</strong>
+          <span>${row.detail}</span>
+          <span>${row.route}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderPreview() {
+      const best = bestSpace();
+      const motion = Number($("motion").value);
+      const anchor = Number($("anchor").value);
+      const layer = $("previewLayer");
+      const orbit = tick * 0.8;
+      const drift = best.id === "viewer" ? motion * 18 : motion * 7;
+      const anchorPull = best.id === "anchor" ? (1 - anchor) * 24 : 0;
+      const x = Math.sin(orbit) * drift - anchorPull;
+      const y = Math.cos(orbit * 0.7) * drift * 0.52;
+      const r = best.id === "cylinder" ? Math.sin(orbit) * 10 : Math.sin(orbit) * drift * 0.45;
+      const s = $("layerType").value === "equirect" ? 1.28 : $("layerType").value === "projection" ? 1.48 : 1;
+      layer.dataset.label = `${$("layerType").value} · ${best.label}`;
+      layer.style.setProperty("--x", `${x.toFixed(1)}px`);
+      layer.style.setProperty("--y", `${y.toFixed(1)}px`);
+      layer.style.setProperty("--r", `${r.toFixed(1)}deg`);
+      layer.style.setProperty("--s", s.toString());
+      layer.style.borderColor = best.score >= 64 ? "rgba(95, 200, 191, 0.78)" : "rgba(227, 184, 92, 0.8)";
+    }
+
+    function render() {
+      $("motionLabel").textContent = Number($("motion").value).toFixed(2);
+      $("anchorLabel").textContent = Number($("anchor").value).toFixed(2);
+      renderCards();
+      renderTimeline();
+      renderPreview();
+    }
+
+    $("step").addEventListener("click", () => {
+      tick += 1;
+      renderPreview();
+    });
+
+    ["layerType", "intent", "motion", "anchor"].forEach((id) => $(id).addEventListener("input", render));
+    setInterval(() => {
+      tick += 0.04;
+      renderPreview();
+    }, 80);
+    render();
+  </script>
+</body>
+</html>

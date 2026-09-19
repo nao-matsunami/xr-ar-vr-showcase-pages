@@ -269,8 +269,8 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 70</span>
-        <span>page: 2 / 6</span>
+        <span>days: 73</span>
+        <span>page: 2 / 7</span>
         <span>storage: localStorage likes</span>
       </div>
     </section>
@@ -302,6 +302,10 @@
       <a class="pager-link" href="../pages/6.html">
         6
       </a>
+    
+      <a class="pager-link" href="../pages/7.html">
+        7
+      </a>
     </div>
       <a class="pager-nav" href="../pages/3.html">次のページ / Next</a>
     </nav>
@@ -309,6 +313,75 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-09-05">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.05</p>
+              <h2>Transient input hit-test を inputSource ごとの commit ledger にする</h2>
+              <p class="card-subtitle">Turning transient input hit-test into a per-inputSource commit ledger</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-05" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Hit Test Module、WebXR Device API、Permissions Policy、MDN、Immersive Web Samples を参照し、`XRTransientInputHitTestResult.inputSource` と `results` の束ねを配置判断へ変換する本命サンプルと、iframe `allow` 属性差を親ページから観察する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the W3C WebXR Hit Test Module, WebXR Device API, Permissions Policy, MDN, and Immersive Web Samples, today's original work adds a main sample that turns `XRTransientInputHitTestResult.inputSource` and `results` grouping into placement decisions, plus a derivative sample that observes iframe `allow` differences from the parent page.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-09-05.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-09-05_html_transient_hit_group_router.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-09-04">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.04</p>
+              <h2>Permissions Policy と hit-test / camera gate を同じ commit window で見る</h2>
+              <p class="card-subtitle">Viewing Permissions Policy, hit-test, and camera gates in one commit window</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-04" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Device API、WebXR Hit Test Module、Permissions Policy、Immersive Web Raw Camera Access、Immersive Web Samples を参照し、`xr-spatial-tracking`、`camera-access`、hit-test pose を起動前から同じ判断表で扱う本命サンプルと、`document.permissionsPolicy.allowsFeature()` の実チェックを含む派生サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the W3C WebXR Device API, WebXR Hit Test Module, Permissions Policy, Immersive Web Raw Camera Access, and Immersive Web Samples, today's original work adds a main sample that puts `xr-spatial-tracking`, `camera-access`, and hit-test pose into one launch/commit gate, plus a derivative sample that includes real `document.permissionsPolicy.allowsFeature()` checks.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-09-04.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-09-04_html_policy_hit_camera_commit_gate.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-09-03">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.03</p>
+              <h2>Raw Camera Access の許可とフレーム鮮度を可視化する</h2>
+              <p class="card-subtitle">Visualizing Raw Camera Access permission and frame freshness</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-03" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Raw Camera Access Module、WebXR Device API、Permissions Policy、Immersive Web Samples を参照し、`camera-access` の許可、frame 鮮度、view alignment、privacy indicator を通す本命サンプルと、カメラ texture の整合・crop fallback を見る派生サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Raw Camera Access Module, WebXR Device API, Permissions Policy, and Immersive Web Samples, today's original work adds a main sample for `camera-access` permission, frame freshness, view alignment, and privacy indicators, plus a derivative sample for camera texture alignment and crop fallback.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-09-03.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-09-03_html_raw_camera_access_gateboard.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-09-02">
           <div class="card-top">
             <div>
@@ -515,75 +588,6 @@
           </div>
         </article>
       
-
-        <article class="card" data-slug="2026-08-24">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.24</p>
-              <h2>WebXR レイヤーの破棄順とメディアレイヤー fallback を自作サンプル化</h2>
-              <p class="card-subtitle">Original samples for WebXR layer destruction order and media layer fallback</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-24" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Layers API Level 1、XRLayer / XRCompositionLayer の destroy、XRMediaBinding、Immersive Web の layers samples と media layer samples を確認し、composition layer の破棄待ちを可視化する本命サンプルと、メディアレイヤー再生経路を切り替える派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing WebXR Layers API Level 1, XRLayer / XRCompositionLayer destruction, XRMediaBinding, and Immersive Web layers and media-layer samples, today's original work adds a main sample for visualizing pending composition-layer destruction and a derivative sample for switching media-layer playback routes.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-24.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-24_html_layer_lifecycle_destroy_queue.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-23">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.23</p>
-              <h2>世界固定レイヤーの可読性予算とハプティック判定の派生試作</h2>
-              <p class="card-subtitle">World-locked layer readability budget with a haptic verdict derivative</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-23" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Layers API Level 1、WebXR Device API、MDN の framebuffer scale factor、Immersive Web の layers samples と WebXR samples を確認し、世界固定 UI の可読性を距離・角度・解像度・揺れから判定する本命サンプルと、判定結果をハプティックパルス列に変換する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing WebXR Layers API Level 1, the WebXR Device API, MDN's framebuffer scale factor note, Immersive Web layers samples, and WebXR samples, today's original work adds a main sample for estimating world-locked UI readability from distance, angle, resolution, and jitter, plus a derivative sample that converts verdicts into haptic pulse patterns.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-23.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-23_html_world_locked_layer_readability_budget.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-22">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.22</p>
-              <h2>bounded-floor から local-floor へ縮退するテレポート安全判定</h2>
-              <p class="card-subtitle">Teleport safety checks that degrade from bounded-floor to local-floor</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-22" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Device API、MDN の `requestReferenceSpace()` と bounded reference spaces、Immersive Web の teleportation sample、WebXR Layers API Level 1 を確認し、`XRBoundedReferenceSpace.boundsGeometry` がある場合とない場合でテレポート候補を判定する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Device API, MDN `requestReferenceSpace()` and bounded reference spaces guidance, the Immersive Web teleportation sample, and WebXR Layers API Level 1, today's original HTML sample checks teleport candidates differently when `XRBoundedReferenceSpace.boundsGeometry` is available versus when the app falls back to `local-floor`.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-22.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-22_html_bounded_space_teleport_guard.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
     </section>
 
     
@@ -612,6 +616,10 @@
     
       <a class="pager-link" href="../pages/6.html">
         6
+      </a>
+    
+      <a class="pager-link" href="../pages/7.html">
+        7
       </a>
     </div>
       <a class="pager-nav" href="../pages/3.html">次のページ / Next</a>

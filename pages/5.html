@@ -269,8 +269,8 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 70</span>
-        <span>page: 5 / 6</span>
+        <span>days: 73</span>
+        <span>page: 5 / 7</span>
         <span>storage: localStorage likes</span>
       </div>
     </section>
@@ -302,6 +302,10 @@
       <a class="pager-link" href="../pages/6.html">
         6
       </a>
+    
+      <a class="pager-link" href="../pages/7.html">
+        7
+      </a>
     </div>
       <a class="pager-nav" href="../pages/6.html">次のページ / Next</a>
     </nav>
@@ -309,6 +313,75 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-07-31">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.31</p>
+              <h2>XR 入力ソースを profile と hint で分岐する</h2>
+              <p class="card-subtitle">Routing XR input sources with profiles and visual hints</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-31" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API の入力章、Immersive Web の input explainer、WebXR Input Profiles、WebXR Gamepads Module、公式 samples を確認し、screen / gaze / tracked-pointer / hand を同じ操作系に畳み込む自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing WebXR Device API input handling, the Immersive Web input explainer, WebXR Input Profiles, the WebXR Gamepads Module, and official samples, today's original HTML sample routes screen, gaze, tracked-pointer, and hand input into one interaction policy.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-31.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-31_html_input_profile_fallback_router.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-07-30">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.30</p>
+              <h2>実測 isSessionSupported で XR 起動前の分岐を読む</h2>
+              <p class="card-subtitle">Reading XR launch branches with live isSessionSupported checks</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-30" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API、AR Module、MDN の `requestSession()` / permissions、Immersive Web samples / report を確認し、今日は実際の `navigator.xr.isSessionSupported()` 結果と、policy、user activation、optional feature、privacy 期待値を重ねて起動ルートを選ぶ自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Device API, AR Module, MDN `requestSession()` and permissions docs, plus Immersive Web samples/report, today's original HTML sample combines live `navigator.xr.isSessionSupported()` results with policy, activation, optional-feature, and privacy expectations to choose a launch route.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-30.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-30_html_immersive_session_support_radar.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-07-29">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.29</p>
+              <h2>Permissions-Policy と optional feature で XR 起動を守る</h2>
+              <p class="card-subtitle">Guarding XR launch with Permissions-Policy and optional features</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-29" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API、MDN の permissions/security と `xr-spatial-tracking`、`requestSession()`、Immersive Web の explainer / samples を確認し、今日は XR 起動前に policy、user activation、required/optional feature、fallback route を可視化する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Device API, MDN permissions/security docs, `xr-spatial-tracking`, `requestSession()`, and Immersive Web explainers/samples, today's original HTML sample visualizes policy, user activation, required/optional features, and fallback routes before launching XR.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-29.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-29_html_xr_permission_policy_launch_gate.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-07-28">
           <div class="card-top">
             <div>
@@ -515,75 +588,6 @@
           </div>
         </article>
       
-
-        <article class="card" data-slug="2026-07-19">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.07.19</p>
-              <h2>手関節入力の信頼度を compute pass 風に整える</h2>
-              <p class="card-subtitle">Filtering hand-joint confidence like a compute pass</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-07-19" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Hand Input Module、MDN XRJointSpace、Immersive Web の WebGPU samples、WebXR Layers API を確認し、今日は 25 joint の欠損・jitter・depth mismatch を HMD なしで観察できる自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Hand Input Module, MDN XRJointSpace, Immersive Web WebGPU samples, and the WebXR Layers API, today's original HTML sample visualizes 25-joint dropout, jitter, and depth mismatch without requiring a headset.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-07-19.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-07-19_html_hand_confidence_compute_filter.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-07-18">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.07.18</p>
-              <h2>WebXR と WebGPU の接続準備を一画面で測る</h2>
-              <p class="card-subtitle">Measuring WebXR and WebGPU binding readiness in one screen</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-07-18" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Device API の 2026-03-16 Candidate Recommendation Draft、WebXR Layers API Level 1 の 2026-06-12 Editor's Draft、Immersive Web の WebGPU samples を確認し、今日は XRGPUBinding と projection layer の導入準備を HMD なしで観察する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Device API Candidate Recommendation Draft dated 2026-03-16, the WebXR Layers API Level 1 Editor's Draft dated 2026-06-12, and the Immersive Web WebGPU samples, today's original HTML sample visualizes XRGPUBinding and projection-layer readiness without requiring a headset.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-07-18.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-07-18_html_xrgpu_binding_readiness_matrix.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-07-17">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.07.17</p>
-              <h2>補正された投影とライブ前景のズレを測る</h2>
-              <p class="card-subtitle">Measuring mismatch between warped projection and live foreground layers</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-07-17" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Layers API の depth sorting と Space Warp、Immersive Web の Input Selection Space Warp sample を確認し、今日は補正済み projection layer と未補正の前景 pointer/hand layer のスクリーン位置・奥行き判定のズレを観察する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing depth sorting and Space Warp in the WebXR Layers API plus the Immersive Web Input Selection Space Warp sample, today's original HTML sample visualizes screen-space and depth-order mismatch between a compensated projection layer and an uncompensated foreground pointer/hand layer.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-07-17.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-07-17_html_foreground_warp_mismatch_scope.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
     </section>
 
     
@@ -612,6 +616,10 @@
     
       <a class="pager-link" href="../pages/6.html">
         6
+      </a>
+    
+      <a class="pager-link" href="../pages/7.html">
+        7
       </a>
     </div>
       <a class="pager-nav" href="../pages/6.html">次のページ / Next</a>

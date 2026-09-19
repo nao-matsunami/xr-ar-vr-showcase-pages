@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ghost Replay IndexedDB Logger</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1d2730;
+      --muted: #61717f;
+      --paper: #fffdf8;
+      --bg: #eef3f2;
+      --line: #d5dfdf;
+      --green: #2d7c5f;
+      --blue: #2a759f;
+      --amber: #a56d23;
+      --red: #b04b47;
+      --violet: #655aa1;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(42, 117, 159, .13), transparent 310px),
+        linear-gradient(120deg, rgba(45, 124, 95, .12), transparent 45%),
+        var(--bg);
+    }
+    main { width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 36px; }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 8px; font-size: 2rem; line-height: 1.08; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .summary, .panel, .stage, .metric, .log {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(29, 39, 48, .07);
+    }
+    .summary { padding: 16px; }
+    .verdict { font-size: 1.18rem; font-weight: 900; margin-bottom: 8px; }
+    .ok { color: var(--green); }
+    .ghost { color: var(--blue); }
+    .hold { color: var(--amber); }
+    .bad { color: var(--red); }
+    .grid { display: grid; grid-template-columns: 320px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { padding: 16px; display: grid; gap: 14px; align-content: start; }
+    label { display: grid; gap: 6px; font-size: .86rem; font-weight: 760; color: #34434d; }
+    input[type="range"], select { width: 100%; accent-color: var(--blue); }
+    .switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .switch input { transform: scale(1.12); accent-color: var(--blue); }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    button {
+      min-height: 42px;
+      border: 1px solid #bac8cb;
+      background: #fbfcfb;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary { border-color: var(--blue); background: var(--blue); color: white; }
+    .stage {
+      min-height: 540px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      background:
+        linear-gradient(90deg, rgba(42, 117, 159, .08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(45, 124, 95, .08) 1px, transparent 1px),
+        #fffdf8;
+      background-size: 42px 42px;
+    }
+    .viewport {
+      min-height: 360px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #ffffff 0 46%, #e7eff0 46% 100%);
+    }
+    svg { width: 100%; height: 100%; min-height: 360px; display: block; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { min-height: 78px; padding: 11px; box-shadow: none; }
+    .metric strong { display: block; font-size: 1.08rem; margin-bottom: 4px; }
+    .log { margin-top: 14px; padding: 14px; display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 132px 1fr 124px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf8;
+      font-size: .88rem;
+    }
+    .tag { justify-self: start; border-radius: 999px; padding: 4px 8px; font-weight: 850; background: #e2f0f5; color: var(--blue); }
+    .tag.ok { background: #e1f1e9; color: var(--green); }
+    .tag.warn { background: #fff0d7; color: var(--amber); }
+    .tag.bad { background: #ffe5e2; color: var(--red); }
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #26333c;
+      background: #fbfcfb;
+    }
+    @media (max-width: 860px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Ghost Replay IndexedDB Logger</h1>
+        <p>ghost replay の anchor row をブラウザ IndexedDB に保存し、mesh / plane / depth の劣化を keep / ghost / hold / re-hit に再判定して JSON export する最小サンプル。</p>
+      </div>
+      <section class="summary">
+        <div id="verdict" class="verdict ok">KEEP SOLID</div>
+        <p id="summary">保存済み row は復元済みで、mesh / plane / depth の信用度がまだ十分です。</p>
+      </section>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <label>Anchor label
+          <select id="label">
+            <option value="table-top">table-top</option>
+            <option value="wall-poster">wall-poster</option>
+            <option value="floor-marker">floor-marker</option>
+            <option value="unknown-surface">unknown-surface</option>
+          </select>
+        </label>
+        <label>Mesh score now <span id="meshNowLabel">76%</span>
+          <input id="meshNow" type="range" min="0" max="100" value="76">
+        </label>
+        <label>Mesh score previous <span id="meshPrevLabel">82%</span>
+          <input id="meshPrev" type="range" min="0" max="100" value="82">
+        </label>
+        <label>Plane stability <span id="planeLabel">84%</span>
+          <input id="plane" type="range" min="0" max="100" value="84">
+        </label>
+        <label>Depth agreement <span id="depthLabel">78%</span>
+          <input id="depth" type="range" min="0" max="100" value="78">
+        </label>
+        <label>Tracked anchor match <span id="trackedLabel">90%</span>
+          <input id="tracked" type="range" min="0" max="100" value="90">
+        </label>
+        <label>Re-hit confidence <span id="rehitLabel">68%</span>
+          <input id="rehit" type="range" min="0" max="100" value="68">
+        </label>
+        <label>Anchor age <span id="ageLabel">22 h</span>
+          <input id="age" type="range" min="0" max="120" value="22">
+        </label>
+        <label class="switch">Persistent handle restored
+          <input id="restored" type="checkbox" checked>
+        </label>
+        <div class="buttons">
+          <button id="save" class="primary">Save Row</button>
+          <button id="decay">Mesh Decay</button>
+          <button id="export">Export JSON</button>
+          <button id="clear">Clear Rows</button>
+        </div>
+        <textarea id="jsonOut" spellcheck="false" aria-label="Exported JSON"></textarea>
+      </aside>
+
+      <section>
+        <div class="stage">
+          <div class="viewport">
+            <svg viewBox="0 0 720 390" role="img" aria-label="IndexedDB ghost replay visualization">
+              <rect width="720" height="390" fill="rgba(255,255,255,.45)"></rect>
+              <path id="planeShape" d="M88 270 L620 234 L676 286 L142 332 Z" fill="rgba(45,124,95,.15)" stroke="#2d7c5f" stroke-width="4"></path>
+              <g id="mesh"></g>
+              <g id="history"></g>
+              <path id="ray" d="M160 92 C246 146 304 194 360 258" fill="none" stroke="#b04b47" stroke-width="4" stroke-linecap="round" opacity=".45"></path>
+              <circle id="anchor" cx="360" cy="258" r="26" fill="#fffdf8" stroke="#2a759f" stroke-width="6"></circle>
+              <circle id="ghost" cx="360" cy="258" r="45" fill="none" stroke="#655aa1" stroke-width="4" stroke-dasharray="8 7" opacity=".32"></circle>
+              <text id="vizLabel" x="28" y="38" fill="#1d2730" font-size="18" font-weight="850">IndexedDB row logger</text>
+              <text x="28" y="64" fill="#61717f" font-size="13">save rows, export replay JSON, and route old anchors back to ghost state</text>
+            </svg>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="trust">83</strong><span>replay trust</span></div>
+            <div class="metric"><strong id="delta">-6</strong><span>mesh delta</span></div>
+            <div class="metric"><strong id="route">solid</strong><span>display route</span></div>
+            <div class="metric"><strong id="count">0</strong><span>stored rows</span></div>
+          </div>
+        </div>
+        <div id="log" class="log"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ids = ["label", "meshNow", "meshPrev", "plane", "depth", "tracked", "rehit", "age", "restored"];
+    let db;
+    let rows = [];
+
+    function openDb() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open("xr-ghost-replay-2026-09-17", 1);
+        req.onupgradeneeded = () => {
+          req.result.createObjectStore("rows", { keyPath: "id" });
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function txStore(mode) {
+      return db.transaction("rows", mode).objectStore("rows");
+    }
+
+    function readRows() {
+      return new Promise((resolve, reject) => {
+        const req = txStore("readonly").getAll();
+        req.onsuccess = () => resolve(req.result.sort((a, b) => a.savedAt.localeCompare(b.savedAt)));
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function putRow(row) {
+      return new Promise((resolve, reject) => {
+        const req = txStore("readwrite").put(row);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function clearRows() {
+      return new Promise((resolve, reject) => {
+        const req = txStore("readwrite").clear();
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function state() {
+      const meshNow = Number($("meshNow").value);
+      const meshPrev = Number($("meshPrev").value);
+      const plane = Number($("plane").value);
+      const depth = Number($("depth").value);
+      const tracked = Number($("tracked").value);
+      const rehit = Number($("rehit").value);
+      const age = Number($("age").value);
+      const restored = $("restored").checked;
+      const delta = meshNow - meshPrev;
+      const agePenalty = age > 96 ? 24 : age > 48 ? 14 : age > 24 ? 6 : 0;
+      const trust = Math.max(0, Math.min(100, Math.round(
+        meshNow * .25 + plane * .21 + depth * .2 + tracked * .2 + rehit * .1 + delta * .28 + (restored ? 8 : -26) - agePenalty
+      )));
+      let route = "KEEP SOLID";
+      let cls = "ok";
+      let summary = "保存済み row は復元済みで、mesh / plane / depth の信用度がまだ十分です。";
+      if (!restored) {
+        route = "RE-HIT REQUIRED";
+        cls = "bad";
+        summary = "persistent handle が復元できないため、row を残したまま re-hit 候補へ戻します。";
+      } else if (trust < 44 || delta < -34) {
+        route = "RETURN TO GHOST";
+        cls = "ghost";
+        summary = "mesh score の悪化が大きいため、solid 表示を ghost に戻して再確認します。";
+      } else if (trust < 64 || age > 72) {
+        route = "HOLD AND FADE";
+        cls = "hold";
+        summary = "復元はできていますが、古さや一致率に不安があるため薄く保持します。";
+      }
+      return { label: $("label").value, meshNow, meshPrev, plane, depth, tracked, rehit, age, restored, delta, trust, route, cls, summary };
+    }
+
+    function makeRow() {
+      const s = state();
+      return {
+        id: `anchor-${Date.now()}`,
+        day: "2026-09-17",
+        savedAt: new Date().toISOString(),
+        semanticHistory: [s.label, s.label.includes("unknown") ? "clutter" : s.label, s.trust < 55 ? "uncertain" : s.label],
+        ...s
+      };
+    }
+
+    function meshPath(score, delta) {
+      const wobble = (100 - score) * .32 + Math.max(0, -delta) * .28;
+      const pts = [];
+      for (let i = 0; i < 10; i += 1) {
+        const x = 140 + i * 52;
+        const y = 250 + Math.sin(i * 1.4) * wobble + (i % 2 ? 12 : -4);
+        pts.push(`${x},${y}`);
+      }
+      return pts.join(" ");
+    }
+
+    function render() {
+      const s = state();
+      ["meshNow", "meshPrev", "plane", "depth", "tracked", "rehit"].forEach((id) => {
+        $(`${id}Label`).textContent = `${$(id).value}%`;
+      });
+      $("ageLabel").textContent = `${s.age} h`;
+      $("verdict").textContent = s.route;
+      $("verdict").className = `verdict ${s.cls}`;
+      $("summary").textContent = s.summary;
+      $("trust").textContent = s.trust;
+      $("delta").textContent = s.delta;
+      $("route").textContent = s.route.replace("KEEP ", "").replace("RETURN TO ", "").toLowerCase();
+      $("count").textContent = rows.length;
+      $("anchor").setAttribute("stroke", s.cls === "ok" ? "#2d7c5f" : s.cls === "ghost" ? "#2a759f" : s.cls === "hold" ? "#a56d23" : "#b04b47");
+      $("ghost").setAttribute("opacity", s.cls === "ok" ? ".22" : s.cls === "ghost" ? ".85" : s.cls === "hold" ? ".55" : ".35");
+      $("ray").setAttribute("opacity", s.cls === "bad" ? ".9" : ".35");
+      $("mesh").innerHTML = `<polyline points="${meshPath(s.meshNow, s.delta)}" fill="none" stroke="#655aa1" stroke-width="5" stroke-linejoin="round"></polyline>`;
+      $("history").innerHTML = rows.slice(-6).map((row, index) => {
+        const x = 96 + index * 84;
+        const y = 104 + (100 - row.trust) * 1.05;
+        const color = row.cls === "ok" ? "#2d7c5f" : row.cls === "ghost" ? "#2a759f" : row.cls === "hold" ? "#a56d23" : "#b04b47";
+        return `<circle cx="${x}" cy="${y}" r="8" fill="${color}"><title>${row.label}: ${row.route}</title></circle>`;
+      }).join("");
+      $("log").innerHTML = rows.length ? rows.slice().reverse().slice(0, 6).map((row) => `
+        <div class="row">
+          <span>${row.label}</span>
+          <span>trust ${row.trust}, mesh ${row.meshNow}/${row.meshPrev}, plane ${row.plane}, depth ${row.depth}, age ${row.age}h</span>
+          <span class="tag ${row.cls === "ok" ? "ok" : row.cls === "bad" ? "bad" : "warn"}">${row.route}</span>
+        </div>
+      `).join("") : '<p>まだ保存 row はありません。Save Row で IndexedDB に現在の判定を追加します。</p>';
+    }
+
+    async function refresh() {
+      rows = await readRows();
+      render();
+    }
+
+    ids.forEach((id) => $(id).addEventListener("input", render));
+    $("decay").addEventListener("click", () => {
+      $("meshNow").value = 35;
+      $("meshPrev").value = 84;
+      $("plane").value = 55;
+      $("depth").value = 48;
+      render();
+    });
+    $("save").addEventListener("click", async () => {
+      await putRow(makeRow());
+      await refresh();
+    });
+    $("export").addEventListener("click", async () => {
+      rows = await readRows();
+      $("jsonOut").value = JSON.stringify({ exportedAt: new Date().toISOString(), rows }, null, 2);
+      render();
+    });
+    $("clear").addEventListener("click", async () => {
+      await clearRows();
+      $("jsonOut").value = "";
+      await refresh();
+    });
+
+    openDb().then((database) => {
+      db = database;
+      return refresh();
+    }).catch((error) => {
+      $("summary").textContent = `IndexedDB を開けませんでした: ${error.message}`;
+      render();
+    });
+  </script>
+</body>
+</html>

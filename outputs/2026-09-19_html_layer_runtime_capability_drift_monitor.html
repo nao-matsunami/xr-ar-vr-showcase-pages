@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Layer Runtime Capability Drift Monitor</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111315;
+      --panel: #1b2024;
+      --panel-2: #20272c;
+      --line: #354047;
+      --text: #f3f0e8;
+      --muted: #b5c0c0;
+      --cyan: #54c7d4;
+      --green: #8bd17c;
+      --yellow: #e7c667;
+      --red: #ed7b72;
+      --blue: #86aaf2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        linear-gradient(120deg, rgba(84, 199, 212, 0.10), transparent 34%),
+        linear-gradient(180deg, #15191c, #101214 58%, #151712);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(30px, 5vw, 58px);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    section, .hero, .meter {
+      background: color-mix(in srgb, var(--panel) 92%, black);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+    }
+
+    .hero {
+      padding: 24px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: 22px;
+      bottom: 20px;
+      width: 180px;
+      height: 110px;
+      border: 1px solid rgba(84, 199, 212, 0.35);
+      transform: perspective(400px) rotateX(58deg) rotateZ(-12deg);
+      background:
+        linear-gradient(90deg, rgba(84, 199, 212, 0.26) 1px, transparent 1px),
+        linear-gradient(rgba(84, 199, 212, 0.18) 1px, transparent 1px);
+      background-size: 20px 20px;
+      opacity: 0.55;
+    }
+
+    .meter {
+      padding: 18px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 14px;
+    }
+
+    .score {
+      font-size: 58px;
+      line-height: 1;
+      font-weight: 760;
+    }
+
+    .score strong { color: var(--cyan); }
+
+    .bar {
+      height: 14px;
+      border-radius: 999px;
+      background: #101416;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .bar > span {
+      display: block;
+      height: 100%;
+      width: 40%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--red), var(--yellow), var(--green), var(--cyan));
+      transition: width 240ms ease;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    select, button {
+      min-height: 42px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 720;
+    }
+
+    button.primary {
+      background: #1f5b64;
+      border-color: #3c9ba7;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .layer {
+      min-height: 176px;
+      padding: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 10px;
+    }
+
+    .layer h2 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    .tag {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 760;
+      background: #273038;
+      color: var(--muted);
+    }
+
+    .tag.good { color: #122316; background: var(--green); }
+    .tag.warn { color: #2a2108; background: var(--yellow); }
+    .tag.bad { color: #2c1010; background: var(--red); }
+    .tag.info { color: #071b22; background: var(--cyan); }
+
+    .layer p {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .mini {
+      height: 52px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, rgba(134, 170, 242, 0.25) var(--fill, 50%), transparent 0),
+        #131719;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mini::after {
+      content: "";
+      position: absolute;
+      inset: 11px;
+      border: 1px solid rgba(243, 240, 232, 0.26);
+      transform: skewX(var(--skew, -10deg));
+    }
+
+    section {
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 116px 1fr 116px;
+      gap: 10px;
+      align-items: center;
+      min-height: 44px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #151a1d;
+      border: 1px solid #2c363d;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .row strong { color: var(--text); }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      resize: vertical;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #101416;
+      color: var(--text);
+      padding: 12px;
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    @media (max-width: 900px) {
+      header, .controls, .grid { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; }
+      .hero::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="hero">
+        <h1>Layer Runtime Capability Drift Monitor</h1>
+        <p>WebXR Layers API を使う前に、`layers` feature、`XRWebGLBinding`、multiview、media layer、secure context をまとめて観測し、projection / quad / cylinder / equirect / media layer の劣化先を row として保存します。</p>
+      </div>
+      <div class="meter">
+        <p>Runtime readiness</p>
+        <div class="score"><strong id="score">0</strong><span style="font-size:24px;color:var(--muted)"> / 100</span></div>
+        <div class="bar" aria-hidden="true"><span id="bar"></span></div>
+        <p id="scoreNote">Probe を押すと、このブラウザで見える能力から route を再計算します。</p>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Session mode
+        <select id="mode">
+          <option value="immersive-vr">immersive-vr</option>
+          <option value="immersive-ar">immersive-ar</option>
+          <option value="inline">inline</option>
+        </select>
+      </label>
+      <label>Primary layer intent
+        <select id="intent">
+          <option value="readability">readability panel</option>
+          <option value="video">immersive video</option>
+          <option value="occlusion">depth occlusion</option>
+          <option value="reticle">reticle / cursor</option>
+        </select>
+      </label>
+      <label>Runtime pressure
+        <select id="pressure">
+          <option value="low">low GPU pressure</option>
+          <option value="medium">medium GPU pressure</option>
+          <option value="high">high GPU pressure</option>
+        </select>
+      </label>
+      <button class="primary" id="probe">Probe runtime</button>
+    </div>
+
+    <div class="grid" id="layers"></div>
+
+    <section>
+      <h2>Capability timeline</h2>
+      <div class="timeline" id="timeline"></div>
+    </section>
+
+    <section>
+      <h2>Export row</h2>
+      <textarea id="export" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const layerDefs = [
+      { id: "projection", label: "Projection", need: ["webxr", "binding"], fallback: "XRWebGLLayer full-frame", fit: ["occlusion"] },
+      { id: "quad", label: "Quad", need: ["webxr", "binding"], fallback: "projection texture panel", fit: ["readability", "reticle"] },
+      { id: "cylinder", label: "Cylinder", need: ["webxr", "binding"], fallback: "curved mesh in projection", fit: ["readability", "video"] },
+      { id: "equirect", label: "Equirect", need: ["webxr", "binding"], fallback: "sphere mesh video", fit: ["video"] },
+      { id: "media", label: "Media", need: ["webxr", "binding", "media"], fallback: "HTMLVideoElement texture", fit: ["video"] }
+    ];
+
+    const state = {
+      secure: window.isSecureContext,
+      webxr: Boolean(navigator.xr),
+      supported: null,
+      binding: "XRWebGLBinding" in window,
+      media: "XRMediaBinding" in window,
+      webgl2: false,
+      multiview: false,
+      rows: []
+    };
+
+    function makeGLProbe() {
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl2", { xrCompatible: true }) || canvas.getContext("webgl");
+      state.webgl2 = Boolean(gl && "texStorage3D" in gl);
+      state.multiview = Boolean(gl && (
+        gl.getExtension("OVR_multiview2") ||
+        gl.getExtension("OCULUS_multiview") ||
+        gl.getExtension("WEBGL_multiview")
+      ));
+    }
+
+    async function probeRuntime() {
+      state.rows = [];
+      makeGLProbe();
+      const mode = $("mode").value;
+      state.supported = null;
+      if (navigator.xr && navigator.xr.isSessionSupported) {
+        try {
+          state.supported = await navigator.xr.isSessionSupported(mode);
+          state.rows.push({ stage: "isSessionSupported", detail: `${mode}: ${state.supported}`, route: state.supported ? "candidate" : "fallback" });
+        } catch (error) {
+          state.supported = false;
+          state.rows.push({ stage: "isSessionSupported", detail: error.name || "rejected", route: "fallback" });
+        }
+      } else {
+        state.rows.push({ stage: "navigator.xr", detail: "not exposed", route: "screen fallback" });
+      }
+      render();
+    }
+
+    function readinessFor(def) {
+      let score = 0;
+      if (state.secure) score += 18;
+      if (state.webxr) score += 18;
+      if (state.supported) score += 18;
+      if (state.binding) score += 22;
+      if (state.webgl2) score += 12;
+      if (def.id === "projection" && state.multiview) score += 8;
+      if (def.id === "media" && state.media) score += 18;
+      if (def.fit.includes($("intent").value)) score += 10;
+      if ($("pressure").value === "high" && def.id !== "projection") score -= 12;
+      if ($("pressure").value === "medium" && def.id === "media") score -= 6;
+      return Math.max(0, Math.min(100, score));
+    }
+
+    function routeFor(score, def) {
+      if (score >= 82) return { label: "native layer", cls: "good", note: `${def.label} を compositor layer として使う` };
+      if (score >= 58) return { label: "guarded layer", cls: "info", note: `frame age と redraw を監視しつつ ${def.label} を使う` };
+      if (score >= 34) return { label: "projection fallback", cls: "warn", note: def.fallback };
+      return { label: "screen row", cls: "bad", note: "WebXR 外の説明 UI として row を保存" };
+    }
+
+    function renderLayers() {
+      const host = $("layers");
+      host.innerHTML = "";
+      layerDefs.forEach((def, index) => {
+        const score = readinessFor(def);
+        const route = routeFor(score, def);
+        const el = document.createElement("article");
+        el.className = "layer";
+        el.innerHTML = `
+          <h2>${def.label}</h2>
+          <span class="tag ${route.cls}">${route.label}</span>
+          <p>${route.note}</p>
+          <div class="mini" style="--fill:${score}%;--skew:${-14 + index * 7}deg"></div>
+        `;
+        host.appendChild(el);
+      });
+    }
+
+    function renderTimeline() {
+      const rows = [
+        { stage: "secure context", detail: state.secure ? "HTTPS / localhost ready" : "secure context required", route: state.secure ? "pass" : "block" },
+        { stage: "navigator.xr", detail: state.webxr ? "available" : "missing", route: state.webxr ? "probe" : "screen fallback" },
+        { stage: "XRWebGLBinding", detail: state.binding ? "constructor visible" : "not exposed", route: state.binding ? "layers candidate" : "XRWebGLLayer" },
+        { stage: "XRMediaBinding", detail: state.media ? "media layer visible" : "not exposed", route: state.media ? "media layer" : "video texture" },
+        { stage: "multiview", detail: state.multiview ? "extension found" : "extension missing", route: state.multiview ? "texture-array projection" : "per-eye draw" },
+        ...state.rows
+      ];
+      $("timeline").innerHTML = rows.map((row) => `
+        <div class="row">
+          <strong>${row.stage}</strong>
+          <span>${row.detail}</span>
+          <span>${row.route}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderExport(overall) {
+      const payload = {
+        date: "2026-09-19",
+        sample: "layer-runtime-capability-drift-monitor",
+        mode: $("mode").value,
+        intent: $("intent").value,
+        pressure: $("pressure").value,
+        observed: {
+          secureContext: state.secure,
+          navigatorXR: state.webxr,
+          sessionSupported: state.supported,
+          xrWebGLBinding: state.binding,
+          xrMediaBinding: state.media,
+          webgl2: state.webgl2,
+          multiview: state.multiview
+        },
+        layers: layerDefs.map((def) => {
+          const score = readinessFor(def);
+          return { id: def.id, score, route: routeFor(score, def).label, fallback: def.fallback };
+        }),
+        readiness: overall
+      };
+      $("export").value = JSON.stringify(payload, null, 2);
+    }
+
+    function render() {
+      const scores = layerDefs.map(readinessFor);
+      const overall = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      $("score").textContent = overall;
+      $("bar").style.width = `${overall}%`;
+      $("scoreNote").textContent = overall >= 70
+        ? "Native layer を試す価値があります。fallback row も一緒に保存します。"
+        : overall >= 40
+          ? "一部は projection fallback 前提で進めるのがよさそうです。"
+          : "今日は screen / projection row として記録し、実機で再計測するのが安全です。";
+      renderLayers();
+      renderTimeline();
+      renderExport(overall);
+    }
+
+    $("probe").addEventListener("click", probeRuntime);
+    ["mode", "intent", "pressure"].forEach((id) => $(id).addEventListener("change", render));
+    render();
+  </script>
+</body>
+</html>

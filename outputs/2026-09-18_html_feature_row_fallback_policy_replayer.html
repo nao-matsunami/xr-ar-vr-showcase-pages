@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feature Row Fallback Policy Replayer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202830;
+      --muted: #687580;
+      --paper: #fffefa;
+      --bg: #eff2ee;
+      --line: #d9dfd9;
+      --green: #2f7658;
+      --blue: #2b7399;
+      --amber: #a37023;
+      --red: #ad4c47;
+      --violet: #6a58a5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(47,118,88,.13), transparent 286px),
+        linear-gradient(115deg, rgba(43,115,153,.12), transparent 56%),
+        var(--bg);
+    }
+    main { width: min(1160px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 36px; }
+    header { display: grid; grid-template-columns: 1fr 360px; gap: 18px; align-items: end; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+    h1 { margin: 0 0 8px; font-size: 2rem; line-height: 1.08; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .summary, .panel, .stage, .metric, .row, textarea {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(32,40,48,.07);
+    }
+    .summary, .panel { padding: 16px; }
+    .verdict { font-size: 1.16rem; font-weight: 900; margin-bottom: 8px; color: var(--blue); }
+    .grid { display: grid; grid-template-columns: 360px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { display: grid; gap: 14px; align-content: start; }
+    label { display: grid; gap: 7px; font-size: .86rem; font-weight: 760; color: #34434d; }
+    input[type="range"], select { width: 100%; accent-color: var(--blue); }
+    textarea {
+      width: 100%;
+      min-height: 210px;
+      resize: vertical;
+      padding: 10px;
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #26333c;
+      box-shadow: none;
+    }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    button {
+      min-height: 42px;
+      border: 1px solid #bac8cb;
+      background: #fbfcfb;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary { border-color: var(--blue); background: var(--blue); color: white; }
+    .stage { min-height: 536px; padding: 18px; display: grid; gap: 14px; align-content: start; }
+    .policyMap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .policy {
+      min-height: 160px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px;
+      background: #fffefa;
+    }
+    .policy h2 { margin: 0 0 10px; font-size: 1rem; }
+    .bar { height: 12px; border-radius: 999px; background: #e5ece9; overflow: hidden; margin: 10px 0; }
+    .fill { height: 100%; width: 0%; background: var(--blue); transition: width .2s ease; }
+    .policy.ok .fill { background: var(--green); }
+    .policy.warn .fill { background: var(--amber); }
+    .policy.bad .fill { background: var(--red); }
+    .rows { display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 126px 1fr 122px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      box-shadow: none;
+      font-size: .88rem;
+    }
+    .tag { justify-self: start; border-radius: 999px; padding: 4px 8px; font-weight: 850; background: #e2f0f5; color: var(--blue); }
+    .tag.ok { background: #e1f1e9; color: var(--green); }
+    .tag.warn { background: #fff0d7; color: var(--amber); }
+    .tag.bad { background: #ffe5e2; color: var(--red); }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { min-height: 78px; padding: 11px; box-shadow: none; }
+    .metric strong { display: block; font-size: 1.08rem; margin-bottom: 4px; }
+    @media (max-width: 900px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .policyMap, .metrics { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Feature Row Fallback Policy Replayer</h1>
+        <p>feature negotiation logger の export JSON を読み込み、strict / balanced / forgiving の3つの fallback policy で AR 起動ログを再判定する派生サンプル。</p>
+      </div>
+      <section class="summary">
+        <div id="verdict" class="verdict">BALANCED POLICY</div>
+        <p id="summary">preset または import JSON から、required 欠落と optional 欠落を route に戻します。</p>
+      </section>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <label>Active policy
+          <select id="policy">
+            <option value="balanced">balanced</option>
+            <option value="strict">strict</option>
+            <option value="forgiving">forgiving</option>
+          </select>
+        </label>
+        <label>Required penalty <span id="requiredPenaltyLabel">34</span>
+          <input id="requiredPenalty" type="range" min="10" max="60" value="34">
+        </label>
+        <label>Optional penalty <span id="optionalPenaltyLabel">8</span>
+          <input id="optionalPenalty" type="range" min="0" max="24" value="8">
+        </label>
+        <label>Fallback floor <span id="floorLabel">46</span>
+          <input id="floor" type="range" min="0" max="80" value="46">
+        </label>
+        <textarea id="jsonIn" spellcheck="false" aria-label="Negotiation JSON input"></textarea>
+        <div class="buttons">
+          <button id="import" class="primary">Import JSON</button>
+          <button id="presetGood">Good Preset</button>
+          <button id="presetMixed">Mixed Preset</button>
+          <button id="presetBlocked">Blocked Preset</button>
+        </div>
+      </aside>
+
+      <section class="stage">
+        <div id="policyMap" class="policyMap"></div>
+        <div class="metrics">
+          <div class="metric"><strong id="rowCount">0</strong><span>rows</span></div>
+          <div class="metric"><strong id="launchable">0</strong><span>launchable</span></div>
+          <div class="metric"><strong id="fallbackOnly">0</strong><span>fallback only</span></div>
+          <div class="metric"><strong id="blocked">0</strong><span>blocked</span></div>
+        </div>
+        <div id="rows" class="rows"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let rows = [];
+    const presets = {
+      good: [
+        { id: "good-1", profile: "placement", modeSupported: true, sessionStarted: true, required: ["hit-test"], optional: ["anchors", "dom-overlay"], enabled: ["hit-test", "anchors", "dom-overlay"], requiredMissing: [], optionalMissing: [], fallbackConfidence: 88, reason: "session resolved" }
+      ],
+      mixed: [
+        { id: "mixed-1", profile: "world", modeSupported: true, sessionStarted: false, required: ["hit-test"], optional: ["plane-detection", "mesh-detection", "depth-sensing"], enabled: ["hit-test", "plane-detection"], requiredMissing: [], optionalMissing: ["mesh-detection", "depth-sensing"], fallbackConfidence: 62, reason: "optional world features missing" },
+        { id: "mixed-2", profile: "semantic", modeSupported: true, sessionStarted: false, required: ["anchors"], optional: ["plane-detection", "mesh-detection"], enabled: ["plane-detection"], requiredMissing: ["anchors"], optionalMissing: ["mesh-detection"], fallbackConfidence: 54, reason: "anchors rejected" }
+      ],
+      blocked: [
+        { id: "blocked-1", profile: "semantic", modeSupported: false, sessionStarted: false, required: ["hit-test", "anchors"], optional: ["plane-detection", "mesh-detection", "depth-sensing"], enabled: [], requiredMissing: ["hit-test", "anchors"], optionalMissing: ["plane-detection", "mesh-detection", "depth-sensing"], fallbackConfidence: 28, reason: "immersive-ar unsupported" }
+      ]
+    };
+
+    function thresholds(policyName) {
+      const required = Number($("requiredPenalty").value);
+      const optional = Number($("optionalPenalty").value);
+      const floor = Number($("floor").value);
+      if (policyName === "strict") return { required: required + 12, optional: optional + 6, floor: floor + 14 };
+      if (policyName === "forgiving") return { required: Math.max(8, required - 14), optional: Math.max(0, optional - 4), floor: Math.max(0, floor - 18) };
+      return { required, optional, floor };
+    }
+
+    function judge(row, policyName) {
+      const t = thresholds(policyName);
+      const total = Math.max(1, row.required.length + row.optional.length);
+      const grantScore = Math.round((row.enabled.length / total) * 100);
+      const penalty = row.requiredMissing.length * t.required + row.optionalMissing.length * t.optional;
+      const score = Math.max(0, Math.min(100, grantScore + (row.fallbackConfidence || 0) * 0.25 - penalty));
+      let route = "launch with full row";
+      let cls = "ok";
+      if (!row.modeSupported) {
+        route = "inline fallback only";
+        cls = "warn";
+      }
+      if (row.requiredMissing.length && score < t.floor) {
+        route = "block immersive route";
+        cls = "bad";
+      } else if (row.requiredMissing.length) {
+        route = "log fallback row";
+        cls = "warn";
+      } else if (row.optionalMissing.length) {
+        route = "launch with optional gaps";
+        cls = "warn";
+      }
+      if (row.sessionStarted && !row.requiredMissing.length) {
+        route = "launch confirmed";
+        cls = "ok";
+      }
+      return { score: Math.round(score), route, cls };
+    }
+
+    function importJson() {
+      try {
+        const parsed = JSON.parse($("jsonIn").value);
+        rows = Array.isArray(parsed) ? parsed : parsed.rows || [];
+      } catch {
+        rows = presets.mixed;
+      }
+      render();
+    }
+
+    function setPreset(name) {
+      rows = presets[name];
+      $("jsonIn").value = JSON.stringify({ exportedAt: new Date().toISOString(), rows }, null, 2);
+      render();
+    }
+
+    function renderPolicies() {
+      $("policyMap").innerHTML = ["strict", "balanced", "forgiving"].map((name) => {
+        const judgments = rows.map((row) => judge(row, name));
+        const avg = judgments.length ? Math.round(judgments.reduce((sum, item) => sum + item.score, 0) / judgments.length) : 0;
+        const worst = judgments.find((item) => item.cls === "bad") || judgments.find((item) => item.cls === "warn") || judgments[0] || { route: "waiting for rows", cls: "warn" };
+        return `<article class="policy ${worst.cls}"><h2>${name}</h2><p>${worst.route}</p><div class="bar"><div class="fill" style="width:${avg}%"></div></div><p>${avg} policy score</p></article>`;
+      }).join("");
+    }
+
+    function renderRows() {
+      const active = $("policy").value;
+      $("rows").innerHTML = rows.length ? rows.map((row) => {
+        const result = judge(row, active);
+        return `<div class="row"><span>${row.profile || row.id}</span><span>${row.reason || "imported row"}; missing required: ${(row.requiredMissing || []).join(", ") || "none"}</span><span class="tag ${result.cls}">${result.route}</span></div>`;
+      }).join("") : "<p>JSON を import するか preset を選ぶと、fallback route が表示されます。</p>";
+    }
+
+    function renderMetrics() {
+      const active = $("policy").value;
+      const judgments = rows.map((row) => judge(row, active));
+      $("rowCount").textContent = rows.length;
+      $("launchable").textContent = judgments.filter((item) => item.cls === "ok").length;
+      $("fallbackOnly").textContent = judgments.filter((item) => item.cls === "warn").length;
+      $("blocked").textContent = judgments.filter((item) => item.cls === "bad").length;
+      $("requiredPenaltyLabel").textContent = $("requiredPenalty").value;
+      $("optionalPenaltyLabel").textContent = $("optionalPenalty").value;
+      $("floorLabel").textContent = $("floor").value;
+      $("verdict").textContent = `${active.toUpperCase()} POLICY`;
+      $("summary").textContent = rows.length ? `${rows.length} row を ${active} policy で再判定中。` : "preset または import JSON から、required 欠落と optional 欠落を route に戻します。";
+    }
+
+    function render() {
+      renderPolicies();
+      renderRows();
+      renderMetrics();
+    }
+
+    $("import").addEventListener("click", importJson);
+    $("presetGood").addEventListener("click", () => setPreset("good"));
+    $("presetMixed").addEventListener("click", () => setPreset("mixed"));
+    $("presetBlocked").addEventListener("click", () => setPreset("blocked"));
+    ["policy", "requiredPenalty", "optionalPenalty", "floor"].forEach((id) => $(id).addEventListener("input", render));
+    setPreset("mixed");
+  </script>
+</body>
+</html>

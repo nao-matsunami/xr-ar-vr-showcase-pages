@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Layers API の runtime drift を fallback row に落とす | 2026-09-19</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.09.19</p>
+      <h1>Layers API の runtime drift を fallback row に落とす</h1>
+      <p class="hero-subtitle">Turning WebXR layer runtime drift into fallback rows</p>
+      <p>W3C WebXR Layers API Level 1、WebXR Device API、MDN XRWebGLBinding、Immersive Web Layers Samples を参照し、layer 利用前の runtime capability を測って projection / quad / cylinder / equirect / media layer の劣化先を記録する本命サンプルと、space 選択を安定性 route として試す派生サンプルを追加しました。</p>
+      <p class="en-copy">After checking the W3C WebXR Layers API Level 1, the WebXR Device API, MDN XRWebGLBinding, and Immersive Web Layers Samples, today's original work adds a main sample that records runtime capability and fallback routes for projection / quad / cylinder / equirect / media layers, plus a derivative sample that explores stable space routing.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-09-19_html_layer_runtime_capability_drift_monitor.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-18.html">← 2026.09.18</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Layer Runtime Capability Drift Monitor</h3>
+              <p>WebXR Layers API を使う前に、`layers` feature、`XRWebGLBinding`、multiview、media layer、secure context をまとめて観測し、projection / quad / cylinder / equirect / media layer の劣化先を row として保存します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-19_html_layer_runtime_capability_drift_monitor.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Layer Space Stability Route Sequencer</h3>
+              <p>Layers API の `viewer` / `local` / `local-floor` / `bounded-floor` / anchor space を、意図、頭部揺れ、距離、bounds、anchor confidence から選び直す派生試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-19_html_layer_space_stability_route_sequencer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Layers API Level 1 の 2026-08-11 Working Draft は `XRProjectionLayer`、`XRQuadLayer`、`XRCylinderLayer`、`XREquirectLayer`、media layer、`XRWebGLBinding` の作成流れを整理しています。</span>
+              <span class="en-copy">The 2026-08-11 Working Draft of WebXR Layers API Level 1 describes creation flows for `XRProjectionLayer`, `XRQuadLayer`, `XRCylinderLayer`, `XREquirectLayer`, media layers, and `XRWebGLBinding`.</span>
+            </li>
+          
+            <li>
+              <span>MDN の `XRWebGLBinding` は secure context かつ experimental / limited availability とされ、実装前に fallback を前提にする価値があります。</span>
+              <span class="en-copy">MDN marks `XRWebGLBinding` as secure-context, experimental, and limited availability, so fallback planning is useful before implementation.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web Layers Samples には projection、quad、cylinder、media、destroy、layer hit test、multiview、space warp などの公式サンプルがまとまっています。</span>
+              <span class="en-copy">The Immersive Web Layers Samples collect official examples for projection, quad, cylinder, media, destroy lifecycle, layer hit test, multiview, and space warp.</span>
+            </li>
+          
+            <li>
+              <span>Layers API では layer type だけでなく、`viewer`、`local`、`local-floor`、`bounded-floor`、anchor space の選択が安定性と再投影品質に直結します。</span>
+              <span class="en-copy">For Layers API work, stability depends not only on layer type but also on choosing `viewer`, `local`, `local-floor`, `bounded-floor`, or anchor spaces.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、このワークスペース内で作った runtime capability monitor と space route sequencer の2本です。</span>
+              <span class="en-copy">Today's public cards focus on the original workspace samples, the runtime capability monitor and the space route sequencer, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>9月18日は `immersive-ar` の feature negotiation を row 化し、required / optional feature の欠落を後続の fallback policy へ渡せるようにしました。今日は、その session が始まったあとに問題になりやすい layer runtime を扱います。Layers API は可読性、動画、occlusion、multiview の改善に効きますが、`XRWebGLBinding` や media binding が見えない環境では、同じ UI を projection layer 内の mesh や通常 canvas に落とす必要があります。この drift を先に row 化しておくと、表示品質の差を後から説明できます。</p>
+          <p class="en-copy">On September 18, feature negotiation for `immersive-ar` became rows that can feed later fallback policies for required / optional feature gaps. Today moves to layer runtime, the next failure point after session startup. Layers API can improve readability, video, occlusion, and multiview rendering, but when `XRWebGLBinding` or media binding is not exposed, the same UI needs to fall back to projection-layer meshes or ordinary canvas rendering. Capturing that drift first makes later display quality differences explainable.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLBinding" target="_blank" rel="noreferrer">MDN: XRWebGLBinding</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Layer Runtime Capability Drift Monitor` は secure context、`navigator.xr`、`isSessionSupported()`、`XRWebGLBinding`、`XRMediaBinding`、WebGL2、multiview extension を見て、projection / quad / cylinder / equirect / media layer ごとに native layer / guarded layer / projection fallback / screen row を判定します。派生サンプル `Layer Space Stability Route Sequencer` は layer type と intent、頭部揺れ、anchor confidence から `viewer`、`local`、`local-floor`、`bounded-floor`、anchor space を点数化し、選択 space と fallback 理由を短い timeline にします。</p>
+          <p class="en-copy">The main sample, `Layer Runtime Capability Drift Monitor`, checks secure context, `navigator.xr`, `isSessionSupported()`, `XRWebGLBinding`, `XRMediaBinding`, WebGL2, and multiview extensions, then routes projection / quad / cylinder / equirect / media layers to native layer, guarded layer, projection fallback, or screen row. The derivative `Layer Space Stability Route Sequencer` scores `viewer`, `local`, `local-floor`, `bounded-floor`, and anchor spaces from layer type, intent, head motion, and anchor confidence, then shows the selected space and fallback reason in a short timeline.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-19_html_layer_runtime_capability_drift_monitor.html" target="_blank" rel="noreferrer">Open main sample</a></li>
+          
+            <li><a href="../outputs/2026-09-19_html_layer_space_stability_route_sequencer.html" target="_blank" rel="noreferrer">Open derivative sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>`layers` を optional feature として session に渡し、session 開始後に `new XRWebGLBinding(session, gl)` が使えるかを確認する流れにすると、未対応端末でも session 自体は維持しやすくなります。quad / cylinder / equirect で世界固定 UI を作る時は、viewer space を便利な固定表示として使いすぎると位置・回転の再投影安定性を損ねるため、reticle 以外は local / local-floor / anchor space へ寄せる判定を持たせるのがよさそうです。</p>
+          <p class="en-copy">Passing `layers` as an optional session feature and checking whether `new XRWebGLBinding(session, gl)` works after startup helps keep the session alive on unsupported devices. When using quad / cylinder / equirect layers for world-locked UI, overusing viewer space as a convenient fixed display can hurt positional and rotational reprojection stability. For anything other than reticles, it is useful to route toward local / local-floor / anchor spaces.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の2本からは、secureContext、navigatorXR、sessionSupported、xrWebGLBinding、xrMediaBinding、webgl2、multiview、layer type、readiness score、route、fallback、intent、headMotion、anchorConfidence、selectedSpace が取れます。9月18日の feature negotiation row と結合すると、`layers feature は optional 成功したが media binding は欠けた`、`anchor はあるが space confidence が低い` といった説明を ghost replay / semantic history に添えられます。</p>
+          <p class="en-copy">The two samples produce secureContext, navigatorXR, sessionSupported, xrWebGLBinding, xrMediaBinding, webgl2, multiview, layer type, readiness score, route, fallback, intent, headMotion, anchorConfidence, and selectedSpace. Combined with the September 18 feature negotiation row, they can attach explanations such as `layers succeeded as an optional feature but media binding was missing` or `anchors exist but space confidence is low` to ghost replay / semantic history.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Layers API の Working Draft 更新、`XRWebGLBinding` の実装状況、Layers Samples の layer hit test / multiview / space warp、media layer の codec / readiness、Depth Sensing と projection layer occlusion の接続を見ます。次は、今日の layer readiness row を 9月18日の negotiation JSON に merge し、実 frame logger が開始する前の session context として IndexedDB に保存したいところです。</p>
+          <p class="en-copy">Watch updates to the WebXR Layers API Working Draft, implementation status for `XRWebGLBinding`, layer hit test / multiview / space warp in the Layers Samples, media layer codec and readiness behavior, and the connection between Depth Sensing and projection-layer occlusion. Next, merge today's layer readiness rows into the September 18 negotiation JSON and store them in IndexedDB as session context before the real frame logger starts.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Layer Runtime Capability Drift Monitor` で intent を immersive video にし、Probe runtime を押します。`XRMediaBinding` がない環境では media layer が video texture fallback へ落ちるので、Export row の `layers` を見ます。続けて `Layer Space Stability Route Sequencer` で layer type を equirect、intent を immersive video にし、head motion を上げると viewer space が避けられ、local / local-floor route へ寄る様子が見えます。</p>
+          <p class="en-copy">In `Layer Runtime Capability Drift Monitor`, set intent to immersive video and press Probe runtime. If `XRMediaBinding` is missing, the media layer falls back to a video texture route, visible in the exported `layers` row. Then open `Layer Space Stability Route Sequencer`, set layer type to equirect and intent to immersive video, and raise head motion to see viewer space avoided in favor of local / local-floor routes.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-19_html_layer_runtime_capability_drift_monitor.html" target="_blank" rel="noreferrer">Open Layer Runtime Capability Drift Monitor</a></li>
+          
+            <li><a href="../outputs/2026-09-19_html_layer_space_stability_route_sequencer.html" target="_blank" rel="noreferrer">Open Layer Space Stability Route Sequencer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR Layers API Level 1、WebXR Device API publication history、MDN XRWebGLBinding、Immersive Web Layers Samples / Working Group を確認。設計: 1本目は layer runtime capability と fallback row、2本目は space stability route。実装: `outputs/2026-09-19_html_layer_runtime_capability_drift_monitor.html` と `outputs/2026-09-19_html_layer_space_stability_route_sequencer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。</p>
+          <p class="en-copy">Research: checked W3C WebXR Layers API Level 1, WebXR Device API publication history, MDN XRWebGLBinding, and the Immersive Web Layers Samples / Working Group. Design: make the first sample layer runtime capability plus fallback rows, and the second space stability routing. Implementation: add `outputs/2026-09-19_html_layer_runtime_capability_drift_monitor.html` and `outputs/2026-09-19_html_layer_space_stability_route_sequencer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and verify publication.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月中旬は depth / plane / mesh / anchor / semantic history を `実空間 row` として蓄積してきました。9月18日の feature negotiation は `使える機能` の前提、今日の layer runtime は `どう表示できるか` の前提です。これで、認識 row と表示 row を分けて保存できるため、同じ fallback でもセンサー由来なのか compositor / layer 由来なのかを分離できます。</p>
+          <p class="en-copy">Mid-September has been accumulating depth / plane / mesh / anchor / semantic history as real-world rows. The September 18 feature negotiation row captures which features are available; today's layer runtime row captures how the result can be displayed. That separates recognition rows from display rows, making it possible to tell whether the same fallback came from sensors or compositor / layer capabilities.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Layer Runtime Capability Drift Monitor` です。何が動くか: runtime probe で WebXR / `XRWebGLBinding` / `XRMediaBinding` / multiview を確認し、projection / quad / cylinder / equirect / media layer の readiness と fallback route を JSON export できます。次に足すなら、9月18日の feature negotiation export を import し、`layers` optional 成功後の layer row として同じ session id に追記します。派生として `Layer Space Stability Route Sequencer` も実装しました。何が動くか: layer type、intent、head motion、anchor confidence から space 候補を点数化し、preview と timeline で route を見られます。次に足すなら、実 `XRReferenceSpace` / `XRAnchor.anchorSpace` の pose age を読み、今日の合成 score を実測に置き換えます。</p>
+          <p class="en-copy">The selected main prototype is `Layer Runtime Capability Drift Monitor`. What it does: probes WebXR / `XRWebGLBinding` / `XRMediaBinding` / multiview, then exports readiness and fallback routes for projection / quad / cylinder / equirect / media layers as JSON. Next addition: import the September 18 feature negotiation export and append the layer row to the same session id after optional `layers` succeeds. The derivative `Layer Space Stability Route Sequencer` was also implemented. What it does: scores space candidates from layer type, intent, head motion, and anchor confidence, then shows the route in a preview and timeline. Next addition: read real `XRReferenceSpace` / `XRAnchor.anchorSpace` pose age and replace the synthetic score with measured data.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-19_html_layer_runtime_capability_drift_monitor.html" target="_blank" rel="noreferrer">Today's main sample: Layer Runtime Capability Drift Monitor</a></li>
+          
+            <li><a href="../outputs/2026-09-19_html_layer_space_stability_route_sequencer.html" target="_blank" rel="noreferrer">Today's derivative sample: Layer Space Stability Route Sequencer</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://www.w3.org/standards/history/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API publication history</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLBinding" target="_blank" rel="noreferrer">MDN: XRWebGLBinding</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: Layers Samples</a></li>
+          
+            <li><a href="https://immersive-web.github.io/" target="_blank" rel="noreferrer">Immersive Web: Working Group / Community Group</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-09-19_html_layer_runtime_capability_drift_monitor.html" loading="lazy" title="Layer Runtime Capability Drift Monitor"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

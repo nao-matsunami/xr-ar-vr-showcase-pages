@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>immersive-ar の feature negotiation を fallback row として保存する | 2026-09-18</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.09.18</p>
+      <h1>immersive-ar の feature negotiation を fallback row として保存する</h1>
+      <p class="hero-subtitle">Saving immersive-ar feature negotiation as fallback rows</p>
+      <p>WebXR Device API、MDN の requestSession / enabledFeatures、Anchors Module、Plane Detection、Mesh Detection、Immersive Web Samples を参照し、実 `immersive-ar` の起動前後に required / optional feature を整理してログ化する本命サンプルと、その export JSON を fallback policy で再判定する派生サンプルを追加しました。</p>
+      <p class="en-copy">After checking the WebXR Device API, MDN requestSession / enabledFeatures, the Anchors Module, Plane Detection, Mesh Detection, and Immersive Web Samples, today's original work adds a main sample that logs required / optional feature negotiation around a real immersive-ar request and a derivative sample that replays the exported JSON through fallback policies.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-09-18_html_immersive_ar_feature_negotiation_logger.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-17.html">← 2026.09.17</a>
+      <a class="day-link" href="../days/2026-09-19.html">2026.09.19 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Immersive AR Feature Negotiation Logger</h3>
+              <p>WebXR の `immersive-ar` 起動前に required / optional feature を整理し、実プローブまたは合成結果を fallback row として保存・export する最小サンプル。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-18_html_immersive_ar_feature_negotiation_logger.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Feature Row Fallback Policy Replayer</h3>
+              <p>feature negotiation logger の export JSON を読み込み、strict / balanced / forgiving の3つの fallback policy で AR 起動ログを再判定する派生サンプル。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-18_html_feature_row_fallback_policy_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Device API 2026-06-09 CRD は `immersive-ar`、`requiredFeatures`、`optionalFeatures`、feature descriptor の解決手順を定義しています。</span>
+              <span class="en-copy">The WebXR Device API Candidate Recommendation Draft of 2026-06-09 defines `immersive-ar`, `requiredFeatures`, `optionalFeatures`, and the feature descriptor resolution flow.</span>
+            </li>
+          
+            <li>
+              <span>MDN の `XRSystem.requestSession()` と `XRSession.enabledFeatures` は、実際に付与された optional feature を session 開始後に確認する実装上の入口になります。</span>
+              <span class="en-copy">MDN's `XRSystem.requestSession()` and `XRSession.enabledFeatures` are practical entry points for checking which optional features were actually granted after session startup.</span>
+            </li>
+          
+            <li>
+              <span>Anchors Module は `anchors` feature、`frame.trackedAnchors`、persistent handle を扱い、前日までの ghost replay row と直結します。</span>
+              <span class="en-copy">The Anchors Module covers the `anchors` feature, `frame.trackedAnchors`, and persistent handles, connecting directly to the recent ghost replay rows.</span>
+            </li>
+          
+            <li>
+              <span>Plane Detection と Mesh Detection は `detectedPlanes` / `detectedMeshes` を frame active 中に読む API で、対応しない端末では fallback row を残す価値があります。</span>
+              <span class="en-copy">Plane Detection and Mesh Detection expose `detectedPlanes` / `detectedMeshes` during active frames, which makes fallback rows useful on devices that do not support them.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、このワークスペース内で作った feature negotiation logger と policy replayer の2本です。</span>
+              <span class="en-copy">Today's public cards focus on the original workspace samples, the feature negotiation logger and policy replayer, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>前日までは ghost replay row を IndexedDB に保存し、semantic history へ渡すところまで進めました。今日はその手前にある `そもそも実機でどの feature が使えるのか` を row 化しました。WebXR は required feature が欠けると session 作成自体が失敗し、optional feature は欠けても session が続く可能性があります。この差分をログに残すと、後続の anchor / mesh / plane / depth row が、実測 row なのか fallback row なのかを説明できます。</p>
+          <p class="en-copy">The previous day stored ghost replay rows in IndexedDB and handed them to semantic history. Today captures the step before that: which features can actually be negotiated on the device. WebXR can reject session creation when required features are missing, while optional features may be absent without blocking the session. Logging that difference explains whether later anchor / mesh / plane / depth rows are device-backed measurements or fallback rows.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession" target="_blank" rel="noreferrer">MDN: XRSystem.requestSession()</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Immersive AR Feature Negotiation Logger` は hit-test、anchors、dom-overlay、plane-detection、mesh-detection、depth-sensing を選び、strictness に応じて required / optional に分けます。Probe Support は `navigator.xr.isSessionSupported(&quot;immersive-ar&quot;)` を試し、Start AR Session は `requestSession()` と `enabledFeatures` を使える範囲で実行します。派生サンプル `Feature Row Fallback Policy Replayer` は export JSON を strict / balanced / forgiving policy で再判定し、launch confirmed / optional gaps / fallback row / block を比較します。</p>
+          <p class="en-copy">The main sample, `Immersive AR Feature Negotiation Logger`, selects hit-test, anchors, dom-overlay, plane-detection, mesh-detection, and depth-sensing, then splits them into required / optional features according to strictness. Probe Support calls `navigator.xr.isSessionSupported(&quot;immersive-ar&quot;)`, and Start AR Session uses `requestSession()` plus `enabledFeatures` where available. The derivative `Feature Row Fallback Policy Replayer` imports exported JSON and compares strict / balanced / forgiving policies across launch confirmed, optional gaps, fallback rows, and blocked routes.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-18_html_immersive_ar_feature_negotiation_logger.html" target="_blank" rel="noreferrer">Open main sample</a></li>
+          
+            <li><a href="../outputs/2026-09-18_html_feature_row_fallback_policy_replayer.html" target="_blank" rel="noreferrer">Open derivative sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では、`requiredFeatures` に入れる機能を最小化し、失敗しても体験を続けられる機能は `optionalFeatures` に寄せます。session が開始できた場合は `session.enabledFeatures` を読み、optional 欠落を row に保存します。depth-sensing は `depthSensing` 設定、dom-overlay は `domOverlay.root` が必要になるため、feature list だけでなく feature 固有の init も row に含めると後で再現しやすくなります。</p>
+          <p class="en-copy">In production, keep `requiredFeatures` minimal and move features that can gracefully degrade into `optionalFeatures`. If a session starts, read `session.enabledFeatures` and save optional gaps in the row. Because depth-sensing needs `depthSensing` preferences and dom-overlay needs `domOverlay.root`, it is useful to save feature-specific initialization details as well as the feature list.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の2本からは、profile、modeSupported、sessionStarted、required、optional、enabled、requiredMissing、optionalMissing、fallbackConfidence、reason、route が取れます。9月17日の ghost replay logger と接続すると、実 anchor / mesh / plane row の前に `この端末では mesh-detection が optional 欠落だった` といった前提を残せます。これにより、同じ ghost 判定でも実測劣化と feature 未対応を分けられます。</p>
+          <p class="en-copy">The two samples expose profile, modeSupported, sessionStarted, required, optional, enabled, requiredMissing, optionalMissing, fallbackConfidence, reason, and route. Connected to the September 17 ghost replay logger, this can preserve assumptions such as `mesh-detection was an optional gap on this device` before real anchor / mesh / plane rows are saved. That separates measured degradation from feature unavailability even when both lead to ghost display.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Device API の feature descriptor 解決、MDN の `enabledFeatures` 互換性、Anchors Module の persistent handle、Plane Detection / Mesh Detection の feature descriptor 名、Depth Sensing の init dictionary、Immersive Web Samples の proposals を続けて見ます。次は、この negotiation row を IndexedDB に保存し、実 frame logger が起動する前の session context として自動添付したいところです。</p>
+          <p class="en-copy">Keep watching WebXR Device API feature descriptor resolution, MDN compatibility for `enabledFeatures`, persistent handles in the Anchors Module, feature descriptor names in Plane Detection / Mesh Detection, the Depth Sensing init dictionary, and Immersive Web Samples proposals. The next step is saving this negotiation row into IndexedDB and automatically attaching it as session context before the real frame logger starts.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Immersive AR Feature Negotiation Logger` で profile を World understanding にし、plane / mesh / depth を含めたまま Probe Support を押します。対応端末がない環境でも fallback row が作られるので Export JSON を押し、`Feature Row Fallback Policy Replayer` に貼って Import JSON を押すと、strict / balanced / forgiving の route 差が見えます。</p>
+          <p class="en-copy">In `Immersive AR Feature Negotiation Logger`, switch the profile to World understanding, keep plane / mesh / depth selected, and press Probe Support. Even without a capable device, it creates a fallback row. Export JSON, paste it into `Feature Row Fallback Policy Replayer`, and import it to see route differences across strict / balanced / forgiving policies.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-18_html_immersive_ar_feature_negotiation_logger.html" target="_blank" rel="noreferrer">Open Immersive AR Feature Negotiation Logger</a></li>
+          
+            <li><a href="../outputs/2026-09-18_html_feature_row_fallback_policy_replayer.html" target="_blank" rel="noreferrer">Open Feature Row Fallback Policy Replayer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR Device API、MDN requestSession / enabledFeatures、Immersive Web Anchors / Plane / Mesh、Immersive Web Samples を確認。設計: 1本目は feature negotiation row の実プローブと export、2本目はその row の policy replay。実装: `outputs/2026-09-18_html_immersive_ar_feature_negotiation_logger.html` と `outputs/2026-09-18_html_feature_row_fallback_policy_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish 実行、公開反映を確認する。</p>
+          <p class="en-copy">Research: checked the W3C WebXR Device API, MDN requestSession / enabledFeatures, Immersive Web Anchors / Plane / Mesh, and Immersive Web Samples. Design: make the first sample a feature negotiation row probe and exporter, and the second a policy replayer for those rows. Implementation: add `outputs/2026-09-18_html_immersive_ar_feature_negotiation_logger.html` and `outputs/2026-09-18_html_feature_row_fallback_policy_replayer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, run publish, and verify publication.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月中旬の流れは、depth / plane / mesh / anchor / semantic history の実空間 row を作り、保存と replay に寄せてきました。今日の row はその土台です。XR 体験では `できなかったこと` も大事な観測で、feature がないから fallback したのか、feature はあるが認識が不安定だから ghost にしたのかを分けると、後から体験の品質を改善しやすくなります。</p>
+          <p class="en-copy">The mid-September sequence has been building real-world rows for depth / plane / mesh / anchor / semantic history, then moving toward storage and replay. Today's row is the foundation below them. In XR experiences, what could not be enabled is also important evidence. Separating feature unavailability from unstable recognition makes later quality improvements much clearer.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Immersive AR Feature Negotiation Logger` です。何が動くか: selected feature を required / optional に分け、`isSessionSupported` と `requestSession` を試し、`enabledFeatures` または fallback confidence から negotiation row を作って JSON export できます。次に足すなら、row を IndexedDB に保存し、9月17日の ghost replay logger が起動する時に session context として自動で読み込みます。派生として `Feature Row Fallback Policy Replayer` も実装しました。何が動くか: 1本目の export JSON または preset を読み込み、strict / balanced / forgiving policy で launch confirmed / optional gaps / fallback row / block を再判定します。次に足すなら、policy の結果を anchor / mesh / plane row の trust score 初期値へ渡します。</p>
+          <p class="en-copy">The selected main prototype is `Immersive AR Feature Negotiation Logger`. What it does: splits selected features into required / optional lists, tries `isSessionSupported` and `requestSession`, creates negotiation rows from `enabledFeatures` or fallback confidence, and exports JSON. Next addition: save rows to IndexedDB and let the September 17 ghost replay logger automatically load them as session context. The derivative `Feature Row Fallback Policy Replayer` was also implemented. What it does: imports the main sample's exported JSON or presets, then re-routes launch confirmed / optional gaps / fallback row / block with strict / balanced / forgiving policies. Next addition: feed policy results into initial trust scores for anchor / mesh / plane rows.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-18_html_immersive_ar_feature_negotiation_logger.html" target="_blank" rel="noreferrer">Today's main sample: Immersive AR Feature Negotiation Logger</a></li>
+          
+            <li><a href="../outputs/2026-09-18_html_feature_row_fallback_policy_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Feature Row Fallback Policy Replayer</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession" target="_blank" rel="noreferrer">MDN: XRSystem.requestSession()</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSession/enabledFeatures" target="_blank" rel="noreferrer">MDN: XRSession.enabledFeatures</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/plane-detection/" target="_blank" rel="noreferrer">Immersive Web: WebXR Plane Detection Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/real-world-meshing/" target="_blank" rel="noreferrer">Immersive Web: WebXR Mesh Detection Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-09-18_html_immersive_ar_feature_negotiation_logger.html" loading="lazy" title="Immersive AR Feature Negotiation Logger"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

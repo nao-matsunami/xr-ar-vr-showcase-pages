@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Immersive AR Feature Negotiation Logger</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202830;
+      --muted: #66747f;
+      --paper: #fffefa;
+      --bg: #eef3f1;
+      --line: #d7dfdc;
+      --green: #27765d;
+      --blue: #28759d;
+      --amber: #a36f22;
+      --red: #ad4b48;
+      --violet: #6658a6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(40,117,157,.14), transparent 290px),
+        linear-gradient(120deg, rgba(39,118,93,.12), transparent 52%),
+        var(--bg);
+    }
+    main { width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 36px; }
+    header {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 8px; font-size: 2rem; line-height: 1.08; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .summary, .panel, .stage, .metric, .log, .feature {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(32,40,48,.07);
+    }
+    .summary { padding: 16px; }
+    .verdict { font-size: 1.16rem; font-weight: 900; margin-bottom: 8px; }
+    .ok { color: var(--green); }
+    .warn { color: var(--amber); }
+    .bad { color: var(--red); }
+    .grid { display: grid; grid-template-columns: 330px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { padding: 16px; display: grid; gap: 14px; align-content: start; }
+    label { display: grid; gap: 7px; font-size: .86rem; font-weight: 760; color: #34434d; }
+    select, input[type="range"] { width: 100%; accent-color: var(--blue); }
+    .checks { display: grid; gap: 9px; }
+    .check { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .check input { transform: scale(1.1); accent-color: var(--blue); }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    button {
+      min-height: 42px;
+      border: 1px solid #bac8cb;
+      background: #fbfcfb;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 840;
+      cursor: pointer;
+    }
+    button.primary { border-color: var(--blue); background: var(--blue); color: white; }
+    .stage {
+      min-height: 538px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+      background:
+        linear-gradient(90deg, rgba(40,117,157,.08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(39,118,93,.08) 1px, transparent 1px),
+        #fffefa;
+      background-size: 42px 42px;
+    }
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-content: start; }
+    .feature { padding: 12px; min-height: 106px; box-shadow: none; position: relative; overflow: hidden; }
+    .feature strong { display: block; font-size: .98rem; margin-bottom: 6px; }
+    .feature span { color: var(--muted); font-size: .82rem; line-height: 1.4; }
+    .feature::after { content: ""; position: absolute; inset: auto 0 0; height: 5px; background: var(--blue); opacity: .45; }
+    .feature.required::after { background: var(--red); }
+    .feature.granted::after { background: var(--green); opacity: .85; }
+    .feature.missing::after { background: var(--amber); opacity: .85; }
+    .timeline { min-height: 224px; border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: rgba(255,255,255,.54); display: grid; gap: 10px; align-content: start; }
+    .event { display: grid; grid-template-columns: 118px 1fr 100px; gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: #fffefa; font-size: .88rem; }
+    .tag { justify-self: start; border-radius: 999px; padding: 4px 8px; font-weight: 850; background: #e2f0f5; color: var(--blue); }
+    .tag.ok { background: #e1f1e9; color: var(--green); }
+    .tag.warn { background: #fff0d7; color: var(--amber); }
+    .tag.bad { background: #ffe5e2; color: var(--red); }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { min-height: 78px; padding: 11px; box-shadow: none; }
+    .metric strong { display: block; font-size: 1.08rem; margin-bottom: 4px; }
+    textarea {
+      width: 100%;
+      min-height: 122px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #26333c;
+      background: #fbfcfb;
+    }
+    .log { margin-top: 14px; padding: 14px; display: grid; gap: 8px; }
+    @media (max-width: 900px) {
+      header, .grid { grid-template-columns: 1fr; }
+      .features, .metrics { grid-template-columns: repeat(2, 1fr); }
+      .event { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Immersive AR Feature Negotiation Logger</h1>
+        <p>WebXR の `immersive-ar` 起動前に required / optional feature を整理し、実プローブまたは合成結果を fallback row として保存・export する最小サンプル。</p>
+      </div>
+      <section class="summary">
+        <div id="verdict" class="verdict warn">READY TO PROBE</div>
+        <p id="summary">機能セットを選び、Probe Support または Start AR Session で negotiation row を作成します。</p>
+      </section>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <label>Profile
+          <select id="profile">
+            <option value="placement">Placement logger</option>
+            <option value="world">World understanding</option>
+            <option value="semantic">Semantic restore</option>
+          </select>
+        </label>
+        <div class="checks">
+          <label class="check">hit-test <input id="hit-test" data-feature="hit-test" type="checkbox" checked></label>
+          <label class="check">anchors <input id="anchors" data-feature="anchors" type="checkbox" checked></label>
+          <label class="check">dom-overlay <input id="dom-overlay" data-feature="dom-overlay" type="checkbox" checked></label>
+          <label class="check">plane-detection <input id="plane-detection" data-feature="plane-detection" type="checkbox"></label>
+          <label class="check">mesh-detection <input id="mesh-detection" data-feature="mesh-detection" type="checkbox"></label>
+          <label class="check">depth-sensing <input id="depth-sensing" data-feature="depth-sensing" type="checkbox"></label>
+        </div>
+        <label>Required feature strictness <span id="strictnessLabel">42%</span>
+          <input id="strictness" type="range" min="0" max="100" value="42">
+        </label>
+        <label>Fallback confidence <span id="fallbackLabel">72%</span>
+          <input id="fallback" type="range" min="0" max="100" value="72">
+        </label>
+        <div class="buttons">
+          <button id="probe" class="primary">Probe Support</button>
+          <button id="start">Start AR Session</button>
+          <button id="synthetic">Add Fallback Row</button>
+          <button id="export">Export JSON</button>
+        </div>
+        <textarea id="jsonOut" spellcheck="false" aria-label="Exported negotiation JSON"></textarea>
+      </aside>
+
+      <section>
+        <div class="stage">
+          <div>
+            <div id="features" class="features"></div>
+            <div id="timeline" class="timeline" aria-live="polite"></div>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="supportScore">0</strong><span>support score</span></div>
+            <div class="metric"><strong id="requiredCount">0</strong><span>required</span></div>
+            <div class="metric"><strong id="optionalCount">0</strong><span>optional</span></div>
+            <div class="metric"><strong id="rowCount">0</strong><span>logged rows</span></div>
+          </div>
+        </div>
+        <div id="log" class="log"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const featureInfo = {
+      "hit-test": "real-world ray intersections for reticles and placement",
+      "anchors": "persistent or emulated spatial attachment",
+      "dom-overlay": "HTML controls above immersive AR",
+      "plane-detection": "frame-scoped XRPlane set for surfaces",
+      "mesh-detection": "frame-scoped XRMesh geometry and labels",
+      "depth-sensing": "CPU or GPU depth for occlusion evidence"
+    };
+    const profileDefaults = {
+      placement: ["hit-test", "anchors", "dom-overlay"],
+      world: ["hit-test", "plane-detection", "mesh-detection", "depth-sensing"],
+      semantic: ["anchors", "plane-detection", "mesh-detection", "depth-sensing"]
+    };
+    const featureKeys = Object.keys(featureInfo);
+    const rows = [];
+    let lastSupport = { immersiveAr: false, available: false, reason: "not probed", enabled: [] };
+    const $ = (id) => document.getElementById(id);
+
+    function selectedFeatures() {
+      return featureKeys.filter((feature) => $(feature).checked);
+    }
+
+    function splitFeatures() {
+      const strictness = Number($("strictness").value);
+      const selected = selectedFeatures();
+      const required = selected.filter((feature) => {
+        if (feature === "hit-test") return strictness >= 35;
+        if (feature === "anchors") return strictness >= 55;
+        if (feature === "plane-detection" || feature === "mesh-detection") return strictness >= 72;
+        if (feature === "depth-sensing") return strictness >= 82;
+        return false;
+      });
+      const optional = selected.filter((feature) => !required.includes(feature));
+      return { required, optional };
+    }
+
+    function classifyRow(row) {
+      if (row.sessionStarted && row.enabled.length >= row.required.length) return ["SESSION STARTED", "ok"];
+      if (row.modeSupported && row.requiredMissing.length === 0) return ["OPTIONAL FALLBACK", "warn"];
+      if (row.modeSupported) return ["REQUIRED BLOCKED", "bad"];
+      return ["INLINE FALLBACK", "warn"];
+    }
+
+    function buildRow(type, detail = {}) {
+      const { required, optional } = splitFeatures();
+      const fallbackConfidence = Number($("fallback").value);
+      const supportedLikely = lastSupport.immersiveAr || detail.sessionStarted || fallbackConfidence > 66;
+      const enabled = detail.enabled || (supportedLikely ? required.concat(optional.filter((_, index) => index % 2 === 0)) : []);
+      const requiredMissing = required.filter((feature) => !enabled.includes(feature));
+      const optionalMissing = optional.filter((feature) => !enabled.includes(feature));
+      const row = {
+        id: `neg-${Date.now()}-${rows.length + 1}`,
+        savedAt: new Date().toISOString(),
+        type,
+        profile: $("profile").value,
+        mode: "immersive-ar",
+        modeSupported: Boolean(detail.modeSupported ?? lastSupport.immersiveAr),
+        sessionStarted: Boolean(detail.sessionStarted),
+        required,
+        optional,
+        enabled,
+        requiredMissing,
+        optionalMissing,
+        fallbackConfidence,
+        reason: detail.reason || lastSupport.reason,
+        route: ""
+      };
+      row.route = classifyRow(row)[0];
+      return row;
+    }
+
+    async function probeSupport() {
+      if (!("xr" in navigator)) {
+        lastSupport = { immersiveAr: false, available: false, reason: "navigator.xr missing", enabled: [] };
+        rows.unshift(buildRow("support-probe", { modeSupported: false, reason: "navigator.xr missing" }));
+        render();
+        return;
+      }
+      try {
+        const supported = await navigator.xr.isSessionSupported("immersive-ar");
+        lastSupport = { immersiveAr: supported, available: true, reason: supported ? "immersive-ar supported" : "immersive-ar not supported", enabled: [] };
+        rows.unshift(buildRow("support-probe", { modeSupported: supported, reason: lastSupport.reason }));
+      } catch (error) {
+        lastSupport = { immersiveAr: false, available: true, reason: error.name || "probe failed", enabled: [] };
+        rows.unshift(buildRow("support-probe", { modeSupported: false, reason: lastSupport.reason }));
+      }
+      render();
+    }
+
+    async function startSession() {
+      if (!("xr" in navigator)) {
+        rows.unshift(buildRow("session-request", { modeSupported: false, reason: "navigator.xr missing" }));
+        render();
+        return;
+      }
+      const { required, optional } = splitFeatures();
+      const init = { requiredFeatures: required, optionalFeatures: optional };
+      if (required.includes("dom-overlay") || optional.includes("dom-overlay")) {
+        init.domOverlay = { root: document.body };
+      }
+      if (required.includes("depth-sensing") || optional.includes("depth-sensing")) {
+        init.depthSensing = {
+          usagePreference: ["cpu-optimized", "gpu-optimized"],
+          dataFormatPreference: ["luminance-alpha", "float32"]
+        };
+      }
+      try {
+        const session = await navigator.xr.requestSession("immersive-ar", init);
+        const enabled = Array.from(session.enabledFeatures || required.concat(optional));
+        rows.unshift(buildRow("session-request", {
+          modeSupported: true,
+          sessionStarted: true,
+          enabled,
+          reason: "requestSession resolved"
+        }));
+        await session.end();
+      } catch (error) {
+        rows.unshift(buildRow("session-request", {
+          modeSupported: lastSupport.immersiveAr,
+          sessionStarted: false,
+          reason: error.name || "requestSession rejected"
+        }));
+      }
+      render();
+    }
+
+    function renderFeatures() {
+      const { required, optional } = splitFeatures();
+      const enabled = rows[0]?.enabled || [];
+      $("features").innerHTML = featureKeys.map((feature) => {
+        const picked = selectedFeatures().includes(feature);
+        const state = enabled.includes(feature) ? "granted" : required.includes(feature) ? "required" : optional.includes(feature) ? "missing" : "";
+        const role = required.includes(feature) ? "required" : optional.includes(feature) ? "optional" : "off";
+        return `<article class="feature ${picked ? state : ""}"><strong>${feature}</strong><span>${role} / ${featureInfo[feature]}</span></article>`;
+      }).join("");
+    }
+
+    function renderTimeline() {
+      const visible = rows.slice(0, 5);
+      $("timeline").innerHTML = visible.length ? visible.map((row) => {
+        const tagClass = row.route.includes("STARTED") ? "ok" : row.route.includes("BLOCKED") ? "bad" : "warn";
+        return `<div class="event"><span>${row.type}</span><span>${row.reason}; missing required: ${row.requiredMissing.join(", ") || "none"}</span><span class="tag ${tagClass}">${row.route}</span></div>`;
+      }).join("") : "<p>まだ negotiation row はありません。</p>";
+    }
+
+    function renderLog() {
+      $("log").innerHTML = rows.slice(0, 4).map((row) => {
+        const cls = row.route.includes("STARTED") ? "ok" : row.route.includes("BLOCKED") ? "bad" : "warn";
+        return `<div class="event"><span>${new Date(row.savedAt).toLocaleTimeString()}</span><span>${row.profile}: required ${row.required.length}, optional ${row.optional.length}, enabled ${row.enabled.length}</span><span class="tag ${cls}">${row.route}</span></div>`;
+      }).join("") || "<p>Probe Support で実行環境の行、Add Fallback Row で合成 fallback 行を追加できます。</p>";
+    }
+
+    function renderSummary() {
+      const row = rows[0];
+      const verdict = $("verdict");
+      if (!row) {
+        verdict.textContent = "READY TO PROBE";
+        verdict.className = "verdict warn";
+        $("summary").textContent = "機能セットを選び、Probe Support または Start AR Session で negotiation row を作成します。";
+        return;
+      }
+      const cls = row.route.includes("STARTED") ? "ok" : row.route.includes("BLOCKED") ? "bad" : "warn";
+      verdict.textContent = row.route;
+      verdict.className = `verdict ${cls}`;
+      $("summary").textContent = row.requiredMissing.length
+        ? `required feature が不足しています: ${row.requiredMissing.join(", ")}。fallback row として保存しました。`
+        : `required feature は通過。optional 欠落は ${row.optionalMissing.join(", ") || "なし"} です。`;
+    }
+
+    function renderMetrics() {
+      const row = rows[0];
+      const { required, optional } = splitFeatures();
+      const score = row ? Math.max(0, Math.round((row.enabled.length / Math.max(1, row.required.length + row.optional.length)) * 100)) : 0;
+      $("supportScore").textContent = score;
+      $("requiredCount").textContent = required.length;
+      $("optionalCount").textContent = optional.length;
+      $("rowCount").textContent = rows.length;
+      $("strictnessLabel").textContent = `${$("strictness").value}%`;
+      $("fallbackLabel").textContent = `${$("fallback").value}%`;
+    }
+
+    function render() {
+      renderFeatures();
+      renderTimeline();
+      renderLog();
+      renderSummary();
+      renderMetrics();
+    }
+
+    $("profile").addEventListener("change", () => {
+      const defaults = profileDefaults[$("profile").value];
+      featureKeys.forEach((feature) => { $(feature).checked = defaults.includes(feature); });
+      render();
+    });
+    featureKeys.forEach((feature) => $(feature).addEventListener("change", render));
+    ["strictness", "fallback"].forEach((id) => $(id).addEventListener("input", render));
+    $("probe").addEventListener("click", probeSupport);
+    $("start").addEventListener("click", startSession);
+    $("synthetic").addEventListener("click", () => { rows.unshift(buildRow("synthetic-fallback", { reason: "synthetic fallback row" })); render(); });
+    $("export").addEventListener("click", () => {
+      $("jsonOut").value = JSON.stringify({ exportedAt: new Date().toISOString(), rows }, null, 2);
+    });
+
+    render();
+  </script>
+</body>
+</html>
