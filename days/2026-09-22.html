@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XR bootstrap probe を context row と trust floor に渡す | 2026-09-22</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.09.22</p>
+      <h1>XR bootstrap probe を context row と trust floor に渡す</h1>
+      <p class="hero-subtitle">Passing an XR bootstrap probe into a context row and trust floor</p>
+      <p>W3C WebXR Device API、W3C WebXR standards index、MDN `XRSession.enabledFeatures`、Immersive Web samples / Layers samples を参照し、実 `navigator.xr` の軽い probe と手動の feature coverage を session context row にまとめる本命サンプルと、その context JSON を frame logger の最低 trust floor として注入する派生サンプルを追加しました。</p>
+      <p class="en-copy">After checking the W3C WebXR Device API, the W3C WebXR standards index, MDN `XRSession.enabledFeatures`, and Immersive Web samples / Layers samples, today's original work adds a main sample that combines a lightweight `navigator.xr` probe and manual feature coverage into a session context row, plus a derivative sample that injects that context JSON as a minimum trust floor for frame logger rows.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-09-22_html_xr_bootstrap_probe_context_recorder.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-21.html">← 2026.09.21</a>
+      <a class="day-link" href="../days/2026-09-23.html">2026.09.23 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>XR Bootstrap Probe Context Recorder</h3>
+              <p>session 開始前後の軽い probe、要求 feature、optional gap、privacy grain をまとめ、次の frame logger が読める context row として保存する小さな実験です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-22_html_xr_bootstrap_probe_context_recorder.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Trust Floor Injection Replayer</h3>
+              <p>前段の session context JSON を読み、input / hit / anchor / layer の frame row に最低 trust floor を注入して route がどう変わるかを見る派生試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-22_html_trust_floor_injection_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>W3C WebXR Device API の最新公開版は 2026-06-09 Candidate Recommendation Draft で、session lifecycle と feature negotiation の参照点になります。</span>
+              <span class="en-copy">The latest published W3C WebXR Device API is the 9 June 2026 Candidate Recommendation Draft, which anchors session lifecycle and feature negotiation work.</span>
+            </li>
+          
+            <li>
+              <span>W3C standards index では WebXR Layers API Level 1 が 2026-06-12 の Draft Standard として並び、Device API と表示 layer を別 row に分ける理由になります。</span>
+              <span class="en-copy">The W3C standards index lists WebXR Layers API Level 1 as a 12 June 2026 Draft Standard, supporting a split between Device API rows and display-layer rows.</span>
+            </li>
+          
+            <li>
+              <span>MDN `XRSession.enabledFeatures` は secure context / experimental / limited availability とされ、required / optional feature を保存する時に fallback と説明文を残す必要があります。</span>
+              <span class="en-copy">MDN marks `XRSession.enabledFeatures` as secure-context, experimental, and limited availability, so saved required / optional feature rows need fallback routes and explanation text.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web samples と Layers samples は anchors、input、framebuffer scale、projection layer などの公式サンプルを横断でき、今日の自作 probe / trust floor の検証観点になります。</span>
+              <span class="en-copy">Immersive Web samples and Layers samples span anchors, input, framebuffer scale, projection layers, and related official examples, giving validation angles for today's original probe and trust-floor samples.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、自作の `XR Bootstrap Probe Context Recorder` と `Trust Floor Injection Replayer` の2本です。</span>
+              <span class="en-copy">Today's public cards are the original workspace samples `XR Bootstrap Probe Context Recorder` and `Trust Floor Injection Replayer`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>9月21日は feature / layer / scene contract row を session context として保存しました。今日はその保存 row の前段に、実環境の `navigator.xr` probe を軽く当てる入口を足します。session 開始前に `isSessionSupported(&quot;inline&quot;)` と `isSessionSupported(&quot;immersive-ar&quot;)` を見て、手動の required / optional coverage と混ぜることで、後段の frame logger が `いきなり信じる` のではなく `この session はどの程度信じて開始したか` から動ける点が面白いところです。</p>
+          <p class="en-copy">September 21 stored feature / layer / scene-contract rows as session context. Today adds a lightweight real-environment `navigator.xr` probe before that storage row. By checking `isSessionSupported(&quot;inline&quot;)` and `isSessionSupported(&quot;immersive-ar&quot;)`, then mixing those results with manual required / optional coverage, a downstream frame logger can start from `how much this session was trusted at launch` instead of trusting the first frame blindly.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSession/enabledFeatures" target="_blank" rel="noreferrer">MDN: XRSession enabledFeatures</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `XR Bootstrap Probe Context Recorder` は intent、required coverage、optional coverage、probe confidence、privacy grain、TTL を操作し、`Run navigator.xr probe` で実ブラウザの XR 入口を確認して context row を作ります。派生サンプル `Trust Floor Injection Replayer` は、その JSON または seed context を読み、input / hit / anchor / layer row に最低 trust floor を注入して commit / guard / preview / drop を比較します。</p>
+          <p class="en-copy">The main sample, `XR Bootstrap Probe Context Recorder`, lets you adjust intent, required coverage, optional coverage, probe confidence, privacy grain, and TTL, then uses `Run navigator.xr probe` to check the browser's XR entry point and build a context row. The derivative sample, `Trust Floor Injection Replayer`, reads that JSON or a seed context and injects a minimum trust floor into input / hit / anchor / layer rows to compare commit / guard / preview / drop.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では `requestSession()` の結果だけを保存するより、`isSessionSupported()`、requested features、granted features、optional gaps、privacy grain、TTL を同じ row にしておく方が replay と説明に強くなります。`enabledFeatures` は対応ブラウザが限られるため、取得できる時だけ採用し、取れない時は requested / manual coverage / probe result から低めの contextScore を出す設計が扱いやすいです。</p>
+          <p class="en-copy">In production, saving only the `requestSession()` result is less useful than storing `isSessionSupported()`, requested features, granted features, optional gaps, privacy grain, and TTL in one row. Because `enabledFeatures` has limited browser support, it is practical to use it when available and otherwise calculate a conservative contextScore from requested features, manual coverage, and probe results.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の2本からは xrPresent、inlineSupported、immersiveArSupported、required coverage、optional gaps、privacyGrain、expiresInMinutes、contextScore、trustFloor、rowRoute が取れます。9月17日の ghost replay IndexedDB logger、9月20日の scene contract、9月21日の session context store とつなぐと、anchor が ghost に戻った理由を runtime drift だけでなく `開始時点の optional gap と trust floor が低かった` と説明できます。</p>
+          <p class="en-copy">The two samples expose xrPresent, inlineSupported, immersiveArSupported, required coverage, optional gaps, privacyGrain, expiresInMinutes, contextScore, trustFloor, and rowRoute. Combined with the September 17 ghost replay IndexedDB logger, September 20 scene contract, and September 21 session context store, an anchor returning to ghost state can be explained not only as runtime drift but also as `optional gaps and trust floor were weak at launch`.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Device API の session lifecycle、MDN の `enabledFeatures` 互換性、W3C の WebXR Layers API 更新、Immersive Web samples の anchors / input / layers を続けて見ます。次は、本日の context row を9月17日の IndexedDB logger と同じ database に保存し、最初の live frame row へ自動で trust floor を渡すところまで接続したいです。</p>
+          <p class="en-copy">Keep watching WebXR Device API session lifecycle, MDN compatibility notes for `enabledFeatures`, W3C WebXR Layers API updates, and anchors / input / layers in the Immersive Web samples. Next, connect today's context row to the same database as the September 17 IndexedDB logger and automatically pass the trust floor into the first live frame row.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`XR Bootstrap Probe Context Recorder` で `Run navigator.xr probe` を押し、`Load seed rows` と slider を動かして export JSON の `missingOptional` と `contextScore` を見ます。次にその JSON を `Trust Floor Injection Replayer` に貼り、policy を strict / balanced / demo で切り替えると、同じ frame row でも route が guard から preview / commit へ動く様子が見えます。</p>
+          <p class="en-copy">In `XR Bootstrap Probe Context Recorder`, press `Run navigator.xr probe`, then adjust `Load seed rows` and the sliders while watching `missingOptional` and `contextScore` in the exported JSON. Paste that JSON into `Trust Floor Injection Replayer` and switch policy between strict / balanced / demo to see the same frame row move between guard, preview, and commit.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-22_html_xr_bootstrap_probe_context_recorder.html" target="_blank" rel="noreferrer">Open XR Bootstrap Probe Context Recorder</a></li>
+          
+            <li><a href="../outputs/2026-09-22_html_trust_floor_injection_replayer.html" target="_blank" rel="noreferrer">Open Trust Floor Injection Replayer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR Device API、W3C WebXR standards index、MDN `XRSession.enabledFeatures`、Immersive Web WebXR Samples、Immersive Web Layers Samples を確認。設計: 1本目は bootstrap probe と feature coverage を context row にまとめる recorder、2本目は context JSON を trust floor として frame row に注入する replayer。実装: `outputs/2026-09-22_html_xr_bootstrap_probe_context_recorder.html` と `outputs/2026-09-22_html_trust_floor_injection_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish、公開反映を確認する。</p>
+          <p class="en-copy">Research: checked the W3C WebXR Device API, W3C WebXR standards index, MDN `XRSession.enabledFeatures`, Immersive Web WebXR Samples, and Immersive Web Layers Samples. Design: make the first sample a recorder that combines bootstrap probes and feature coverage into a context row, and the second a replayer that injects context JSON as a trust floor into frame rows. Implementation: add `outputs/2026-09-22_html_xr_bootstrap_probe_context_recorder.html` and `outputs/2026-09-22_html_trust_floor_injection_replayer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, publish, and confirm publication.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月中旬の流れは、認識 row、表示 row、保存 row から、起動時の trust と replay の説明可能性へ進んでいます。WebXR の UX は `API がある` だけでは決まらず、optional gap、privacy grain、session TTL、最初の frame の鮮度で揺れます。今日の2本は、その揺れを隠さず、後から読める信頼の床として持ち運ぶための部品です。</p>
+          <p class="en-copy">The mid-September thread is moving from recognition rows, display rows, and storage rows toward startup trust and replay explainability. WebXR UX is not determined only by `the API exists`; it shifts with optional gaps, privacy grain, session TTL, and the freshness of the first frame. Today's two samples are components for carrying that uncertainty as a readable trust floor instead of hiding it.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `XR Bootstrap Probe Context Recorder` です。何が動くか: `navigator.xr` probe、feature coverage、privacy grain、TTL から contextScore と route を作り、IndexedDB または localStorage に保存できる context JSON を出します。次に足すなら、実 `requestSession(&quot;immersive-ar&quot;)` 後の `enabledFeatures` を自動で row に合流します。派生として `Trust Floor Injection Replayer` も実装しました。何が動くか: context JSON を読み、input / hit / anchor / layer row に trust floor を注入して route を再判定します。次に足すなら、9月17日の live logger にこの route を渡し、最初の anchor commit を自動で guard します。</p>
+          <p class="en-copy">The selected main prototype is `XR Bootstrap Probe Context Recorder`. What it does: builds a contextScore and route from a `navigator.xr` probe, feature coverage, privacy grain, and TTL, then exports context JSON that can be saved to IndexedDB or localStorage. Next addition: automatically merge real `enabledFeatures` after `requestSession(&quot;immersive-ar&quot;)`. The derivative `Trust Floor Injection Replayer` was also implemented. What it does: reads context JSON, injects a trust floor into input / hit / anchor / layer rows, and reclassifies their routes. Next addition: pass this route into the September 17 live logger and automatically guard the first anchor commit.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-22_html_xr_bootstrap_probe_context_recorder.html" target="_blank" rel="noreferrer">Today's main sample: XR Bootstrap Probe Context Recorder</a></li>
+          
+            <li><a href="../outputs/2026-09-22_html_trust_floor_injection_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Trust Floor Injection Replayer</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/TR/?filter-tr-name=webxr" target="_blank" rel="noreferrer">W3C: WebXR standards and drafts</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSession/enabledFeatures" target="_blank" rel="noreferrer">MDN: XRSession enabledFeatures</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-09-22_html_xr_bootstrap_probe_context_recorder.html" loading="lazy" title="XR Bootstrap Probe Context Recorder"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

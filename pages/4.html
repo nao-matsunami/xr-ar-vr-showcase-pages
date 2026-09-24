@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 73</span>
+        <span>days: 78</span>
         <span>page: 4 / 7</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -313,6 +313,121 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-08-17">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.17</p>
+              <h2>Anchor の drift と locate 不能から再 hit-test 判断へつなぐ</h2>
+              <p class="card-subtitle">Route anchor drift and unlocatable frames into re-hit-test decisions</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-17" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Anchors Module、WebXR Hit Test Module、WebXR Device API、MDN の `XRFrame.getHitTestResults()`、Immersive Web の anchors / hit-test samples を確認し、配置済み anchor が drift した時に keep / warn / re-hit-test / hide + wait / delete を選ぶ自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Anchors Module, WebXR Hit Test Module, WebXR Device API, MDN `XRFrame.getHitTestResults()`, and Immersive Web anchors / hit-test samples, today's original HTML sample chooses keep / warn / re-hit-test / hide + wait / delete when a placed anchor drifts or becomes unlocatable.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-08-17.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-08-17_html_anchor_drift_rehit_planner.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-08-16">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.16</p>
+              <h2>Hit-test 結果を anchor 作成前に安定度でふるい分ける</h2>
+              <p class="card-subtitle">Gate hit-test results by stability before creating anchors</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-16" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Hit Test Module、WebXR Anchors Module、WebXR Device API、MDN の `getHitTestResults()`、Immersive Web の hit-test / anchors samples を確認し、疑似 hit-test 結果を距離・傾き・履歴安定度・触覚 cue で評価して anchor commit を許可/保留する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Hit Test Module, WebXR Anchors Module, WebXR Device API, MDN `getHitTestResults()`, and Immersive Web hit-test / anchors samples, today's original HTML sample evaluates simulated hit-test results by distance, tilt, history stability, and haptic cue before allowing or holding anchor commits.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-08-16.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-08-16_html_hit_test_anchor_commit_gate.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-08-15">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.15</p>
+              <h2>XR 入力から触覚 cue までを左右別 queue で制御する</h2>
+              <p class="card-subtitle">Control XR input-to-haptic cues with separate left/right queues</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-15" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">Gamepad API の haptic actuator、MDN の `pulse()`、WebXR Gamepads Module、Immersive Web Samples、WebXR Input Profiles を確認し、XR controller の連続入力を semantic action に変換して左右別 haptic queue に流す自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing Gamepad API haptic actuators, MDN `pulse()`, the WebXR Gamepads Module, Immersive Web Samples, and WebXR Input Profiles, today's original HTML sample converts XR controller continuous input into semantic actions and routes them through separate left/right haptic queues.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-08-15.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-08-15_html_xr_haptic_queue_sequencer.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-08-14">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.14</p>
+              <h2>XR controller の gamepad 状態を毎フレーム正規化する</h2>
+              <p class="card-subtitle">Normalize XR controller gamepad state every frame</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-14" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">XRInputSource.gamepad、WebXR Gamepads Module、Gamepad API、WebXR Input Profiles、Immersive Web Samples を確認し、左右コントローラの trigger / squeeze / axis / profile を frame loop で読み替える自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing XRInputSource.gamepad, the WebXR Gamepads Module, the Gamepad API, WebXR Input Profiles, and Immersive Web Samples, today's original HTML sample normalizes left/right controller trigger, squeeze, axis, and profile state in a frame loop.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-08-14.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-08-14_html_xr_gamepad_frame_poller.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-08-13">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.13</p>
+              <h2>同時イベントを短い触覚キューへ優先度付きで畳み込む</h2>
+              <p class="card-subtitle">Mix simultaneous XR events into prioritized haptic cues</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-13" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Gamepads Module、Gamepad API の haptic actuators、XRInputSource、Immersive Web Samples を確認し、保存成功・保存拒否・anchor drift・近接警告を 1 本の短い pulse queue に畳み込む自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Gamepads Module, Gamepad API haptic actuators, XRInputSource, and Immersive Web Samples, today's original HTML sample mixes save success, save rejection, anchor drift, and proximity warnings into a single prioritized pulse queue.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-08-13.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-08-13_html_xr_haptic_priority_mixer.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-08-12">
           <div class="card-top">
             <div>
@@ -470,121 +585,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-08-06.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-08-06_html_camera_access_consent_ladder.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-05">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.05</p>
-              <h2>Depth と Mesh で raw camera 前の環境理解を絞る</h2>
-              <p class="card-subtitle">Narrowing environment understanding with Depth and Mesh before raw camera access</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-05" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Depth Sensing Module、Mesh Detection Module、Raw Camera Access、Immersive Web proposal samples を確認し、raw camera pixels を読む前に Depth Sensing の点距離と Mesh Detection の粗い面情報で足りるかを比較する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Depth Sensing Module, Mesh Detection Module, Raw Camera Access, and Immersive Web proposal samples, today's original HTML sample compares whether point depth and coarse mesh surfaces are sufficient before reading raw camera pixels.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-05.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-05_html_depth_mesh_privacy_sampler.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-04">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.04</p>
-              <h2>Raw Camera Access を要求する前の露出 crop gate を試す</h2>
-              <p class="card-subtitle">Testing an exposure crop gate before requesting Raw Camera Access</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-04" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Raw Camera Access Module、Depth Sensing、DOM Overlays、Immersive Web の公式サンプルを確認し、`camera-access` を required / optional / fallback のどれで扱うか、raw pixels をどの範囲だけ露出するかを可視化する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Raw Camera Access Module, Depth Sensing, DOM Overlays, and Immersive Web sample pages, today's original HTML sample visualizes whether `camera-access` should be required, optional, or avoided, and how much of the raw pixel surface should be exposed.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-04.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-04_html_raw_camera_exposure_crop_gate.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-03">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.03</p>
-              <h2>全身トラッキングを公開する前の匿名化 gate を試す</h2>
-              <p class="card-subtitle">Testing an anonymization gate before publishing full-body tracking</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-03" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Body Tracking Module、WebXR Device API、Immersive Web の仕様一覧とサンプル群を確認し、全身 joint stream を consent、遮蔽、丸め、保持時間で publish / emulate / null に切り替える自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Body Tracking Module, WebXR Device API, Immersive Web specification index, and official sample pages, today's original HTML sample switches a simulated full-body joint stream between publish, emulate, and null based on consent, occlusion, rounding, and retention.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-03.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-03_html_body_tracking_privacy_pose_limiter.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-02">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.02</p>
-              <h2>左右入力と DOM Overlay の action 優先順位を見える化する</h2>
-              <p class="card-subtitle">Visualizing bimanual action priority with DOM Overlay suppression</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-02" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Gamepads Module、WebXR Device API、Input Profiles / Motion Controllers、DOM Overlays を確認し、左右 controller、hand pinch、thumbstick locomotion、overlay blocking が同時に来たときの action arbitration を観察する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Gamepads Module, WebXR Device API, Input Profiles / Motion Controllers, and DOM Overlays, today's original HTML sample visualizes action arbitration across left/right controllers, hand pinch, thumbstick locomotion, and overlay blocking.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-02.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-02_html_bimanual_action_priority_matrix.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-01">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.01</p>
-              <h2>XR コントローラーの profile 取得と action binding を監視する</h2>
-              <p class="card-subtitle">Watching XR controller profile fetch and action binding</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-01" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Device API の最新 CRD、WebXR Input Profiles、Motion Controllers、Input Profiles assets、公式 samples を確認し、実機なしで profile matching、asset loading、gamepad component、deadzone、action arbitration を観察する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the latest WebXR Device API CRD, WebXR Input Profiles, Motion Controllers, Input Profiles assets, and official samples, today's original HTML sample visualizes profile matching, asset loading, gamepad components, deadzones, and action arbitration without requiring XR hardware.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-01.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-01_html_motion_controller_binding_watch.html">代表サンプル / Sample</a>
           </div>
         </article>
       

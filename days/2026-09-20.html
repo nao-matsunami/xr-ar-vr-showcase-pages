@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XR scene contract を readiness row として選ぶ | 2026-09-20</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.09.20</p>
+      <h1>XR scene contract を readiness row として選ぶ</h1>
+      <p class="hero-subtitle">Selecting an XR scene contract as a readiness row</p>
+      <p>W3C WebXR Device API、WebXR Layers API、Immersive Web proposal samples、MDN XRWebGLBinding を参照し、depth / plane / anchor / layer の状態から表示 contract を選ぶ本命サンプルと、`passthroughFullyObscured` の安全側 budget を試す派生サンプルを追加しました。</p>
+      <p class="en-copy">After checking the W3C WebXR Device API, WebXR Layers API, Immersive Web proposal samples, and MDN XRWebGLBinding, today's original work adds a main sample that chooses a display contract from depth / plane / anchor / layer readiness, plus a derivative sample that experiments with a safety budget for `passthroughFullyObscured`.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-09-20_html_scene_contract_readiness_ledger.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-19.html">← 2026.09.19</a>
+      <a class="day-link" href="../days/2026-09-21.html">2026.09.21 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Scene Contract Readiness Ledger</h3>
+              <p>WebXR session が始まったあと、depth / plane / anchor / layer の状態から「この scene はどう表示してよいか」を contract row に落とす試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-20_html_scene_contract_readiness_ledger.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Passthrough Obscuration Budget Dial</h3>
+              <p>`XRRenderState.passthroughFullyObscured` を使う前に、virtual overlay が現実視界をどれだけ覆うかを safety budget として見る派生試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-20_html_passthrough_obscuration_budget_dial.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Device API の 2026-06-09 Candidate Recommendation Draft は session lifecycle、`XRRenderState.layers`、`passthroughFullyObscured` など、実行時の表示契約を考える手がかりになります。</span>
+              <span class="en-copy">The 2026-06-09 Candidate Recommendation Draft of the WebXR Device API gives useful hooks for runtime display contracts, including session lifecycle, `XRRenderState.layers`, and `passthroughFullyObscured`.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Layers API Level 1 は `XRProjectionLayer`、`XRQuadLayer`、`XRCylinderLayer`、`XREquirectLayer`、`XRWebGLBinding` の生成を整理しており、表示 fallback を contract として記録しやすい領域です。</span>
+              <span class="en-copy">WebXR Layers API Level 1 describes creation flows for `XRProjectionLayer`, `XRQuadLayer`, `XRCylinderLayer`, `XREquirectLayer`, and `XRWebGLBinding`, making display fallback suitable to record as a contract.</span>
+            </li>
+          
+            <li>
+              <span>MDN の `XRWebGLBinding` は secure context / experimental / limited availability とされ、layer を前提にしすぎず projection mesh や screen fallback を残す必要があります。</span>
+              <span class="en-copy">MDN marks `XRWebGLBinding` as secure-context, experimental, and limited availability, so layer-first designs still need projection mesh and screen fallback routes.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web proposal samples は depth sensing、plane detection、mesh detection などを扱っており、認識系 row と表示系 row を分けて保存する設計の参考になります。</span>
+              <span class="en-copy">The Immersive Web proposal samples cover depth sensing, plane detection, mesh detection, and related features, which helps separate recognition rows from display rows.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、自作の `Scene Contract Readiness Ledger` と `Passthrough Obscuration Budget Dial` の2本です。</span>
+              <span class="en-copy">Today's public cards are the original workspace samples `Scene Contract Readiness Ledger` and `Passthrough Obscuration Budget Dial`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>9月19日は layer runtime capability と space stability を分けて記録しました。今日はその続きとして、表示 layer だけでなく depth、plane、anchor の readiness をまとめ、最終的に `world-locked-layer`、`occlusion-aware-mesh`、`reticle-preview-only`、`screen-fallback-row` のどれで scene を扱うかを contract として選びます。WebXR の実装差は単なる対応/未対応ではなく、session は始まるが layer が弱い、anchor はあるが depth が薄い、といった混合状態になりやすいので、状態を contract row にしておくのが面白いところです。</p>
+          <p class="en-copy">September 19 split layer runtime capability from space stability. Today continues from there by combining not only display-layer readiness but also depth, plane, and anchor readiness, then selecting whether the scene should use `world-locked-layer`, `occlusion-aware-mesh`, `reticle-preview-only`, or `screen-fallback-row`. WebXR differences are rarely just supported versus unsupported; sessions may start while layers are weak, or anchors may exist while depth is thin. Turning that mixed state into a contract row is the interesting part.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Scene Contract Readiness Ledger` は intent、depth confidence、plane stability、anchor confidence、layer readiness、motion pressure を操作し、選ばれた scene contract と各 sensor row の理由を表示します。派生サンプル `Passthrough Obscuration Budget Dial` は overlay size、opacity、depth trust、real-world priority から視界遮蔽の debt を計算し、`passthroughFullyObscured` を true にしてよい場面か、薄い preview / feather mask に戻すべき場面かを試します。</p>
+          <p class="en-copy">The main sample, `Scene Contract Readiness Ledger`, lets you adjust intent, depth confidence, plane stability, anchor confidence, layer readiness, and motion pressure, then shows the selected scene contract and the reason for each sensor row. The derivative `Passthrough Obscuration Budget Dial` computes an obscuration debt from overlay size, opacity, depth trust, and real-world priority, then tests whether `passthroughFullyObscured` should be true or whether the UI should return to a thin preview / feathered mask.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-20_html_scene_contract_readiness_ledger.html" target="_blank" rel="noreferrer">Open main sample</a></li>
+          
+            <li><a href="../outputs/2026-09-20_html_passthrough_obscuration_budget_dial.html" target="_blank" rel="noreferrer">Open derivative sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>`navigator.xr.requestSession()` の feature negotiation と、session 開始後の `XRRenderState.layers` / `XRWebGLBinding` / depth / plane / anchor の実測を別 row に分けると、失敗時の説明がかなり楽になります。`passthroughFullyObscured` は強い hint なので、没入 video のように本当に現実視界を覆う場面だけ true にし、AR 配置や dashboard では depth trust と real-world priority を見て feather / hold に戻す判定を挟むのがよさそうです。</p>
+          <p class="en-copy">Separating `navigator.xr.requestSession()` feature negotiation from runtime measurements for `XRRenderState.layers`, `XRWebGLBinding`, depth, planes, and anchors makes failures easier to explain. `passthroughFullyObscured` is a strong hint, so it should only become true when content really covers the real world, such as immersive video. For AR placement or dashboards, it is better to inspect depth trust and real-world priority before falling back to feather or hold routes.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の2本からは intent、depth、plane、anchor、layer、motion pressure、selectedContract、contractScore、obscuration、safetyDebt、passthroughFullyObscured、route が取れます。9月18日の feature negotiation row、9月19日の layer capability row、9月11日以降の depth / plane / anchor row と結合すると、`機能は交渉できたが表示 contract は preview-only`、`depth は強いが遮蔽 debt が高いので feather にする` といった説明を日跨ぎ replay に添えられます。</p>
+          <p class="en-copy">The two samples produce intent, depth, plane, anchor, layer, motion pressure, selectedContract, contractScore, obscuration, safetyDebt, passthroughFullyObscured, and route. Combined with the September 18 feature negotiation row, the September 19 layer capability row, and the depth / plane / anchor rows from September 11 onward, a replay can explain cases such as `features negotiated successfully but the display contract is preview-only` or `depth is strong, but obscuration debt is high so feather the mask`.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Device API の `XRRenderState` まわり、Layers API の Working Draft 更新、MDN の `XRWebGLBinding` 互換性、Immersive Web proposal samples の depth / plane / mesh / anchors を継続して見ます。次は、今日の contract row を IndexedDB の session context に保存し、実 frame logger の前処理として feature negotiation row と layer readiness row を自動 merge したいところです。</p>
+          <p class="en-copy">Continue watching the `XRRenderState` portions of the WebXR Device API, updates to the Layers API Working Draft, MDN compatibility notes for `XRWebGLBinding`, and the depth / plane / mesh / anchors in the Immersive Web proposal samples. Next, store today's contract row in IndexedDB session context and automatically merge the feature negotiation row plus layer readiness row before starting the real frame logger.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Scene Contract Readiness Ledger` で intent を `Depth occlusion` にして depth confidence を高く、layer readiness を中くらいにすると `occlusion-aware-mesh` が選ばれやすくなります。続けて `Passthrough Obscuration Budget Dial` で content mode を `Full immersive veil`、real-world priority を低めにすると `passthroughFullyObscured` が true になる条件を確認できます。逆に real-world priority を上げると、同じ overlay でも preview / feather route に戻ります。</p>
+          <p class="en-copy">In `Scene Contract Readiness Ledger`, set intent to `Depth occlusion`, raise depth confidence, and keep layer readiness around the middle to make `occlusion-aware-mesh` likely. Then open `Passthrough Obscuration Budget Dial`, set content mode to `Full immersive veil`, and lower real-world priority to see when `passthroughFullyObscured` becomes true. Raising real-world priority brings the same overlay back to preview / feather routes.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-20_html_scene_contract_readiness_ledger.html" target="_blank" rel="noreferrer">Open Scene Contract Readiness Ledger</a></li>
+          
+            <li><a href="../outputs/2026-09-20_html_passthrough_obscuration_budget_dial.html" target="_blank" rel="noreferrer">Open Passthrough Obscuration Budget Dial</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR Device API、WebXR Layers API Level 1、MDN XRWebGLBinding、Immersive Web proposal samples、W3C publication history を確認。設計: 1本目は depth / plane / anchor / layer readiness から scene contract を選ぶ ledger、2本目は passthrough obscuration budget。実装: `outputs/2026-09-20_html_scene_contract_readiness_ledger.html` と `outputs/2026-09-20_html_passthrough_obscuration_budget_dial.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish、公開反映を確認する。</p>
+          <p class="en-copy">Research: checked the W3C WebXR Device API, WebXR Layers API Level 1, MDN XRWebGLBinding, Immersive Web proposal samples, and W3C publication history. Design: make the first sample a ledger that selects a scene contract from depth / plane / anchor / layer readiness, and the second a passthrough obscuration budget. Implementation: add `outputs/2026-09-20_html_scene_contract_readiness_ledger.html` and `outputs/2026-09-20_html_passthrough_obscuration_budget_dial.html`. Validation: parse JSON, check embedded HTML scripts, rebuild gallery, publish, and verify publication.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月中旬の流れは、実空間認識 row から表示 row へ進んでいます。depth / plane / mesh / anchor は「何が見えているか」、feature negotiation / layer runtime / scene contract は「どう出してよいか」です。今日の contract row を入れると、体験側の判断が `API対応状況` ではなく `この frame でユーザーに見せてよい表現` に近づきます。</p>
+          <p class="en-copy">The mid-September thread is moving from real-world recognition rows to display rows. Depth / plane / mesh / anchor describe what is visible; feature negotiation / layer runtime / scene contract describe how it may be shown. Adding today's contract row moves the experience decision away from plain API support and toward what expression is safe to show to the user in this frame.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Scene Contract Readiness Ledger` です。何が動くか: intent と depth / plane / anchor / layer / motion の slider から selected contract、route、sensor row、JSON export を更新します。次に足すなら、9月18日と9月19日の export JSON を import して、実 session id に紐づく contract history として保存します。派生として `Passthrough Obscuration Budget Dial` も実装しました。何が動くか: overlay size、opacity、depth trust、real-world priority から遮蔽 debt と `passthroughFullyObscured` hint を判定します。次に足すなら、実 `XRSession.updateRenderState()` の直前にこの budget を通し、AR placement では hint を false に戻す guard を入れます。</p>
+          <p class="en-copy">The selected main prototype is `Scene Contract Readiness Ledger`. What it does: updates the selected contract, route, sensor rows, and JSON export from intent plus depth / plane / anchor / layer / motion sliders. Next addition: import the September 18 and September 19 exported JSON and store it as contract history for the real session id. The derivative `Passthrough Obscuration Budget Dial` was also implemented. What it does: decides obscuration debt and the `passthroughFullyObscured` hint from overlay size, opacity, depth trust, and real-world priority. Next addition: run this budget immediately before real `XRSession.updateRenderState()` and force the hint back to false for AR placement guards.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-20_html_scene_contract_readiness_ledger.html" target="_blank" rel="noreferrer">Today's main sample: Scene Contract Readiness Ledger</a></li>
+          
+            <li><a href="../outputs/2026-09-20_html_passthrough_obscuration_budget_dial.html" target="_blank" rel="noreferrer">Today's derivative sample: Passthrough Obscuration Budget Dial</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLBinding" target="_blank" rel="noreferrer">MDN: XRWebGLBinding</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/proposals/" target="_blank" rel="noreferrer">Immersive Web: WebXR proposal samples</a></li>
+          
+            <li><a href="https://www.w3.org/standards/history/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API publication history</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-09-20_html_scene_contract_readiness_ledger.html" loading="lazy" title="Scene Contract Readiness Ledger"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

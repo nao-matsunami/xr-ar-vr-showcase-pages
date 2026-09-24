@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Passthrough Obscuration Budget Dial</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #131414;
+      --panel: #1d2224;
+      --line: #394143;
+      --text: #f4f0e7;
+      --muted: #bdc4bf;
+      --aqua: #6bcbd0;
+      --green: #8ad17d;
+      --amber: #e4b85d;
+      --red: #ef8176;
+      --violet: #aba1ef;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(145deg, rgba(107, 203, 208, 0.12), transparent 36%),
+        linear-gradient(32deg, transparent 46%, rgba(171, 161, 239, 0.10)),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1120px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .intro, .viewport, section {
+      background: rgba(29, 34, 36, 0.95);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 46px rgba(0, 0, 0, 0.24);
+    }
+
+    .intro { padding: 24px; }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 56px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .viewport {
+      min-height: 340px;
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+      background:
+        linear-gradient(180deg, rgba(74, 87, 86, 0.48), rgba(27, 34, 36, 0.94)),
+        repeating-linear-gradient(90deg, rgba(244, 240, 231, 0.06) 0 1px, transparent 1px 42px);
+    }
+
+    .room-line {
+      position: absolute;
+      left: 38px;
+      right: 38px;
+      bottom: 44px;
+      height: 130px;
+      border: 1px solid rgba(244, 240, 231, 0.20);
+      transform: perspective(500px) rotateX(58deg);
+      background:
+        linear-gradient(90deg, rgba(107, 203, 208, 0.12) 1px, transparent 1px),
+        linear-gradient(rgba(107, 203, 208, 0.10) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .overlay {
+      position: absolute;
+      left: 50%;
+      top: 45%;
+      width: var(--size, 210px);
+      height: calc(var(--size, 210px) * 0.58);
+      border-radius: 8px;
+      border: 1px solid rgba(244, 240, 231, 0.5);
+      background:
+        linear-gradient(135deg, rgba(107, 203, 208, var(--alpha, 0.55)), rgba(171, 161, 239, calc(var(--alpha, 0.55) * 0.7))),
+        rgba(12, 16, 17, 0.6);
+      transform: translate(-50%, -50%) rotate(var(--rot, -2deg));
+      box-shadow: 0 0 34px rgba(107, 203, 208, 0.22);
+      transition: width 220ms ease, height 220ms ease, background 220ms ease, transform 220ms ease;
+    }
+
+    .overlay::before {
+      content: attr(data-state);
+      position: absolute;
+      left: 12px;
+      top: 10px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .human-zone {
+      position: absolute;
+      left: calc(50% - 82px);
+      bottom: 70px;
+      width: 164px;
+      height: 74px;
+      border-radius: 50%;
+      border: 1px solid rgba(239, 129, 118, 0.62);
+      background: rgba(239, 129, 118, 0.10);
+    }
+
+    .readout {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .chip {
+      min-height: 58px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(18, 20, 20, 0.78);
+    }
+
+    .chip strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .chip span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    select, input, button {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #22282a;
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--aqua);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 760;
+      background: #2b5558;
+      border-color: #58abb0;
+    }
+
+    section {
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .routes {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .route {
+      min-height: 138px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #171b1c;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 9px;
+    }
+
+    .pill {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 800;
+      background: #303637;
+      color: var(--muted);
+    }
+
+    .pill.good { background: var(--green); color: #0d2011; }
+    .pill.warn { background: var(--amber); color: #251b07; }
+    .pill.bad { background: var(--red); color: #2d1010; }
+    .pill.info { background: var(--aqua); color: #061d21; }
+
+    .timeline {
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 120px 1fr 144px;
+      gap: 10px;
+      align-items: center;
+      min-height: 44px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #171b1c;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .row strong {
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: #111515;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      width: var(--w, 50%);
+      background: linear-gradient(90deg, var(--green), var(--amber), var(--red));
+    }
+
+    code {
+      display: block;
+      max-height: 190px;
+      overflow: auto;
+      white-space: pre-wrap;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #101313;
+      color: #d7eee7;
+      font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    @media (max-width: 900px) {
+      header { grid-template-columns: 1fr; }
+      .controls, .routes, .readout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      main { width: min(100vw - 18px, 1120px); padding-top: 12px; }
+      .controls, .routes, .readout { grid-template-columns: 1fr; }
+      .viewport { min-height: 430px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="intro">
+        <h1>Passthrough Obscuration Budget Dial</h1>
+        <p>`XRRenderState.passthroughFullyObscured` を使う前に、virtual overlay が現実視界をどれだけ覆うかを safety budget として見る派生試作です。</p>
+      </div>
+      <div class="viewport">
+        <div class="room-line"></div>
+        <div class="human-zone"></div>
+        <div id="overlay" class="overlay" data-state="balanced mask"></div>
+        <div class="readout">
+          <div class="chip"><strong>Obscuration</strong><span id="obscurationText">0%</span></div>
+          <div class="chip"><strong>Hint</strong><span id="hintText">false</span></div>
+          <div class="chip"><strong>Route</strong><span id="routeText">hold</span></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Content mode
+        <select id="mode">
+          <option value="hud">HUD panel</option>
+          <option value="portal">Portal window</option>
+          <option value="occluder">Depth occluder</option>
+          <option value="immersive">Full immersive veil</option>
+        </select>
+      </label>
+      <label>Overlay size
+        <input id="size" type="range" min="18" max="100" value="48">
+      </label>
+      <label>Opacity
+        <input id="opacity" type="range" min="10" max="100" value="62">
+      </label>
+      <label>Depth trust
+        <input id="depth" type="range" min="0" max="100" value="66">
+      </label>
+      <label>Real-world priority
+        <input id="world" type="range" min="0" max="100" value="58">
+      </label>
+    </div>
+
+    <section>
+      <h2>Budget routes</h2>
+      <div id="routes" class="routes"></div>
+    </section>
+
+    <section>
+      <h2>Frame hints</h2>
+      <div id="timeline" class="timeline"></div>
+    </section>
+
+    <section>
+      <h2>Export row</h2>
+      <code id="exportRow"></code>
+    </section>
+  </main>
+
+  <script>
+    const controls = {
+      mode: document.getElementById("mode"),
+      size: document.getElementById("size"),
+      opacity: document.getElementById("opacity"),
+      depth: document.getElementById("depth"),
+      world: document.getElementById("world")
+    };
+
+    const overlay = document.getElementById("overlay");
+    const routesEl = document.getElementById("routes");
+    const timelineEl = document.getElementById("timeline");
+    const exportRow = document.getElementById("exportRow");
+    const obscurationText = document.getElementById("obscurationText");
+    const hintText = document.getElementById("hintText");
+    const routeText = document.getElementById("routeText");
+
+    function val(id) {
+      return Number(controls[id].value);
+    }
+
+    function pill(score) {
+      if (score < 38) return "good";
+      if (score < 64) return "warn";
+      return "bad";
+    }
+
+    function compute() {
+      const state = {
+        mode: controls.mode.value,
+        size: val("size"),
+        opacity: val("opacity"),
+        depth: val("depth"),
+        worldPriority: val("world")
+      };
+
+      const modeBias = {
+        hud: 0.55,
+        portal: 0.82,
+        occluder: 0.92,
+        immersive: 1.24
+      }[state.mode];
+
+      const obscuration = Math.min(100, Math.round(state.size * 0.58 + state.opacity * 0.30 + modeBias * 18));
+      const safetyDebt = Math.round(obscuration * 0.46 + state.worldPriority * 0.34 + (100 - state.depth) * 0.20);
+      const fullyObscuredHint = state.mode === "immersive" && obscuration > 82 && state.worldPriority < 36;
+      const selectedRoute = fullyObscuredHint
+        ? "set passthroughFullyObscured"
+        : safetyDebt > 72
+          ? "thin overlay and restore passthrough"
+          : safetyDebt > 48
+            ? "feather mask, keep passthrough visible"
+            : "compose normally";
+
+      const visualSize = 120 + state.size * 2.2;
+      overlay.style.setProperty("--size", `${visualSize}px`);
+      overlay.style.setProperty("--alpha", `${state.opacity / 120}`);
+      overlay.style.setProperty("--rot", `${(state.worldPriority - 50) * -0.05}deg`);
+      overlay.dataset.state = selectedRoute;
+      obscurationText.textContent = `${obscuration}%`;
+      hintText.textContent = String(fullyObscuredHint);
+      routeText.textContent = selectedRoute;
+
+      const routes = [
+        {
+          name: "normal composition",
+          score: Math.max(0, 100 - safetyDebt),
+          tag: safetyDebt < 44 ? "good" : "warn",
+          body: "passthrough を維持し、layer / mesh を通常合成する。HUD と小型 panel 向け。"
+        },
+        {
+          name: "feathered depth mask",
+          score: Math.round(state.depth * 0.62 + (100 - obscuration) * 0.24),
+          tag: state.depth > 58 ? "info" : "warn",
+          body: "depth が信頼できる範囲だけ alpha を落とし、現実物体の輪郭を残す。"
+        },
+        {
+          name: "passthrough visible hold",
+          score: safetyDebt,
+          tag: safetyDebt > 64 ? "bad" : "warn",
+          body: "視界を覆いすぎる時は commit を保留し、薄い preview に戻す。"
+        },
+        {
+          name: "fully obscured hint",
+          score: fullyObscuredHint ? 88 : 22,
+          tag: fullyObscuredHint ? "good" : "info",
+          body: "全画面の仮想 content が明確な時だけ compositor へ fully obscured hint を渡す。"
+        }
+      ];
+
+      routesEl.innerHTML = routes.map((route) => `
+        <div class="route">
+          <strong>${route.name}</strong>
+          <span class="pill ${route.tag}">${route.score}</span>
+          <p>${route.body}</p>
+        </div>
+      `).join("");
+
+      const frames = [
+        ["frame 0", obscuration, obscuration > 80 ? "too much cover" : "cover measured"],
+        ["frame 1", state.depth, state.depth > 60 ? "depth can feather" : "depth weak"],
+        ["frame 2", state.worldPriority, state.worldPriority > 65 ? "real world priority high" : "content priority ok"],
+        ["render state", fullyObscuredHint ? 92 : safetyDebt, selectedRoute]
+      ];
+
+      timelineEl.innerHTML = frames.map(([name, value, note]) => `
+        <div class="row">
+          <strong>${name}</strong>
+          <div class="bar"><span style="width:${value}%"></span></div>
+          <span>${note}</span>
+        </div>
+      `).join("");
+
+      exportRow.textContent = JSON.stringify({
+        sample: "2026-09-20_passthrough_obscuration_budget_dial",
+        mode: state.mode,
+        obscuration,
+        safetyDebt,
+        passthroughFullyObscured: fullyObscuredHint,
+        route: selectedRoute,
+        inputs: state,
+        next: "Feed this budget into the scene contract ledger before calling XRSession.updateRenderState()."
+      }, null, 2);
+    }
+
+    Object.values(controls).forEach((control) => control.addEventListener("input", compute));
+    compute();
+  </script>
+</body>
+</html>

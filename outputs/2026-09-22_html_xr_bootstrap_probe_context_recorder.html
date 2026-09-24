@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XR Bootstrap Probe Context Recorder</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101414;
+      --panel: #1b2323;
+      --panel-2: #222b2b;
+      --line: #3a4646;
+      --text: #f4efe7;
+      --muted: #bdc6c3;
+      --cyan: #6acbd2;
+      --green: #8ed27c;
+      --amber: #e4bb62;
+      --red: #ec8378;
+      --ink: #0b1112;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(106, 203, 210, 0.15), transparent 28%),
+        linear-gradient(145deg, rgba(142, 210, 124, 0.10), transparent 44%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1160px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .intro, .stage, section {
+      background: rgba(27, 35, 35, 0.95);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+    }
+
+    .intro { padding: 24px; }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 55px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .stage {
+      min-height: 346px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .grid {
+      position: absolute;
+      inset: 88px 36px 66px;
+      border: 1px solid rgba(244, 239, 231, 0.18);
+      transform: perspective(680px) rotateX(58deg) rotateZ(-6deg);
+      background:
+        linear-gradient(90deg, rgba(106, 203, 210, 0.14) 1px, transparent 1px),
+        linear-gradient(rgba(106, 203, 210, 0.10) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .node {
+      position: absolute;
+      width: 136px;
+      min-height: 78px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(16, 20, 20, 0.88);
+      display: grid;
+      gap: 7px;
+      align-content: start;
+    }
+
+    .node strong { font-size: 13px; }
+    .node span { color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .probe { left: 24px; top: 42px; border-color: rgba(106, 203, 210, 0.78); }
+    .session { right: 28px; top: 56px; }
+    .context { left: calc(50% - 68px); top: 134px; border-color: rgba(228, 187, 98, 0.82); }
+    .store { left: calc(50% - 68px); bottom: 24px; border-color: rgba(142, 210, 124, 0.82); }
+
+    .beam {
+      position: absolute;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(106, 203, 210, 0.18), rgba(106, 203, 210, 0.75), rgba(142, 210, 124, 0.16));
+      transform-origin: left center;
+      opacity: var(--o, 0.75);
+    }
+
+    .beam.a { left: 160px; top: 102px; width: 280px; transform: rotate(12deg); }
+    .beam.b { right: 168px; top: 118px; width: 258px; transform: rotate(168deg); }
+    .beam.c { left: calc(50% - 1px); top: 210px; width: 110px; transform: rotate(90deg); }
+
+    .score {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      width: 132px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--green) 0 var(--score, 68%), rgba(255,255,255,0.08) var(--score, 68%) 100%);
+      box-shadow: inset 0 0 0 24px #101414;
+      font-size: 34px;
+      font-weight: 850;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--cyan);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 780;
+      background: #25585c;
+      border-color: #53aab1;
+    }
+
+    section {
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      min-height: 136px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #151b1b;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .pill {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 820;
+      color: var(--ink);
+      background: var(--cyan);
+    }
+
+    .pill.good { background: var(--green); }
+    .pill.warn { background: var(--amber); }
+    .pill.bad { background: var(--red); }
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    pre, textarea {
+      width: 100%;
+      min-height: 188px;
+      margin: 0;
+      padding: 14px;
+      white-space: pre-wrap;
+      color: #d8f4f3;
+      background: #111717;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: auto;
+    }
+
+    @media (max-width: 900px) {
+      header, .controls, .cards { grid-template-columns: 1fr; }
+      .stage { min-height: 430px; }
+      .score { left: 18px; right: auto; width: 112px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="intro">
+        <h1>XR Bootstrap Probe Context Recorder</h1>
+        <p>session 開始前後の軽い probe、要求 feature、optional gap、privacy grain をまとめ、次の frame logger が読める context row として保存する小さな実験です。</p>
+      </div>
+      <div class="stage" aria-label="Probe to context visualization">
+        <div class="grid"></div>
+        <div class="beam a"></div>
+        <div class="beam b"></div>
+        <div class="beam c"></div>
+        <div class="node probe"><strong>Probe</strong><span id="probeStatus">navigator.xr check pending</span></div>
+        <div class="node session"><strong>Session intent</strong><span id="sessionStatus">immersive-ar + inline fallback</span></div>
+        <div class="node context"><strong>Context row</strong><span id="contextStatus">waiting for controls</span></div>
+        <div class="node store"><strong>Store</strong><span id="storeStatus">IndexedDB preferred</span></div>
+        <div class="score" id="scoreDial">68</div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Intent
+        <select id="intent">
+          <option value="anchor-replay">Anchor replay</option>
+          <option value="depth-occlusion">Depth occlusion</option>
+          <option value="layer-dashboard">Layer dashboard</option>
+          <option value="room-capture">Room capture</option>
+        </select>
+      </label>
+      <label>Granted required
+        <input id="required" type="range" min="0" max="100" value="88">
+      </label>
+      <label>Granted optional
+        <input id="optional" type="range" min="0" max="100" value="62">
+      </label>
+      <label>Probe confidence
+        <input id="probe" type="range" min="0" max="100" value="72">
+      </label>
+      <label>Privacy grain
+        <select id="privacy">
+          <option value="coarse">Coarse</option>
+          <option value="balanced">Balanced</option>
+          <option value="precise">Precise</option>
+        </select>
+      </label>
+      <label>TTL minutes
+        <input id="ttl" type="range" min="5" max="180" value="45">
+      </label>
+    </div>
+
+    <section>
+      <h2>Bootstrap actions</h2>
+      <div class="controls">
+        <button id="runProbe">Run navigator.xr probe</button>
+        <button id="loadSeed">Load seed rows</button>
+        <button id="saveRow">Save context row</button>
+        <button id="copyJson">Refresh export JSON</button>
+      </div>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <section>
+      <h2>Export context row</h2>
+      <pre id="jsonOut"></pre>
+    </section>
+  </main>
+
+  <script>
+    const controls = {
+      intent: document.getElementById("intent"),
+      required: document.getElementById("required"),
+      optional: document.getElementById("optional"),
+      probe: document.getElementById("probe"),
+      privacy: document.getElementById("privacy"),
+      ttl: document.getElementById("ttl")
+    };
+
+    const probeState = {
+      xrPresent: "unknown",
+      inlineSupported: "unknown",
+      immersiveArSupported: "unknown",
+      enabledFeatures: [],
+      timestamp: new Date().toISOString()
+    };
+
+    const requiredFeatures = ["local-floor", "hit-test"];
+    const optionalFeatures = ["anchors", "depth-sensing", "plane-detection", "layers", "dom-overlay"];
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function routeFor(score, optionalGapCount) {
+      if (score >= 82 && optionalGapCount <= 1) return "commit logger";
+      if (score >= 66) return "guarded logger";
+      if (score >= 48) return "preview context";
+      return "block session row";
+    }
+
+    function colorClass(route) {
+      if (route === "commit logger") return "good";
+      if (route === "guarded logger" || route === "preview context") return "warn";
+      return "bad";
+    }
+
+    function buildContext() {
+      const req = Number(controls.required.value);
+      const opt = Number(controls.optional.value);
+      const probe = Number(controls.probe.value);
+      const privacyPenalty = { coarse: 0, balanced: 6, precise: 14 }[controls.privacy.value];
+      const optionalGapCount = Math.round((100 - opt) / 25);
+      const score = clamp(Math.round(req * 0.34 + opt * 0.24 + probe * 0.30 + Number(controls.ttl.value) * 0.07 - privacyPenalty), 0, 100);
+      const route = routeFor(score, optionalGapCount);
+      const grantedOptional = optionalFeatures.slice(0, clamp(Math.round(opt / 22), 0, optionalFeatures.length));
+      const missingOptional = optionalFeatures.filter((item) => !grantedOptional.includes(item));
+
+      return {
+        type: "xr-session-context",
+        date: "2026-09-22",
+        sessionIntent: controls.intent.value,
+        requiredFeatures,
+        optionalFeatures,
+        grantedRequiredPercent: req,
+        grantedOptionalPercent: opt,
+        grantedOptional,
+        missingOptional,
+        probeConfidence: probe,
+        privacyGrain: controls.privacy.value,
+        expiresInMinutes: Number(controls.ttl.value),
+        bootstrapProbe: { ...probeState },
+        contextScore: score,
+        route,
+        nextUse: "feed initial trust floor before input / hit / anchor frame rows",
+        savedAt: new Date().toISOString()
+      };
+    }
+
+    function render() {
+      const context = buildContext();
+      document.getElementById("scoreDial").textContent = context.contextScore;
+      document.getElementById("scoreDial").style.setProperty("--score", `${context.contextScore}%`);
+      document.getElementById("probeStatus").textContent = `xr: ${context.bootstrapProbe.xrPresent}, inline: ${context.bootstrapProbe.inlineSupported}`;
+      document.getElementById("contextStatus").textContent = `${context.route}, ${context.missingOptional.length} optional gaps`;
+      document.getElementById("sessionStatus").textContent = `${context.sessionIntent}, TTL ${context.expiresInMinutes}m`;
+      document.getElementById("storeStatus").textContent = context.privacyGrain === "precise" ? "precise rows need consent" : "coarse row ready";
+
+      const rows = [
+        ["Required", `${context.grantedRequiredPercent}%`, "requestSession hard gate"],
+        ["Optional gaps", `${context.missingOptional.length}`, context.missingOptional.join(", ") || "none"],
+        ["Probe", `${context.probeConfidence}%`, `navigator.xr ${context.bootstrapProbe.xrPresent}`],
+        ["Route", context.route, context.nextUse]
+      ];
+
+      document.getElementById("cards").innerHTML = rows.map(([title, value, note], index) => `
+        <article class="card">
+          <span class="pill ${index === 3 ? colorClass(context.route) : ""}">${value}</span>
+          <h3>${title}</h3>
+          <p>${note}</p>
+        </article>
+      `).join("");
+      document.getElementById("jsonOut").textContent = JSON.stringify(context, null, 2);
+    }
+
+    function openDb() {
+      return new Promise((resolve, reject) => {
+        if (!("indexedDB" in window)) {
+          reject(new Error("IndexedDB unavailable"));
+          return;
+        }
+        const request = indexedDB.open("xr-bootstrap-context-2026-09-22", 1);
+        request.onupgradeneeded = () => request.result.createObjectStore("contexts", { keyPath: "savedAt" });
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+    }
+
+    async function saveContext() {
+      const context = buildContext();
+      try {
+        const db = await openDb();
+        const tx = db.transaction("contexts", "readwrite");
+        tx.objectStore("contexts").put(context);
+        await new Promise((resolve, reject) => {
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        });
+        document.getElementById("storeStatus").textContent = "saved to IndexedDB";
+      } catch (error) {
+        localStorage.setItem("xr-bootstrap-context-2026-09-22", JSON.stringify(context));
+        document.getElementById("storeStatus").textContent = "saved to localStorage fallback";
+      }
+      render();
+    }
+
+    async function runProbe() {
+      probeState.timestamp = new Date().toISOString();
+      probeState.xrPresent = "xr" in navigator ? "present" : "missing";
+      probeState.enabledFeatures = [];
+      if (!("xr" in navigator)) {
+        probeState.inlineSupported = "unavailable";
+        probeState.immersiveArSupported = "unavailable";
+        controls.probe.value = 38;
+        render();
+        return;
+      }
+      try {
+        probeState.inlineSupported = await navigator.xr.isSessionSupported("inline") ? "supported" : "unsupported";
+      } catch (error) {
+        probeState.inlineSupported = "error";
+      }
+      try {
+        probeState.immersiveArSupported = await navigator.xr.isSessionSupported("immersive-ar") ? "supported" : "unsupported";
+      } catch (error) {
+        probeState.immersiveArSupported = "error";
+      }
+      controls.probe.value = probeState.immersiveArSupported === "supported" ? 88 : probeState.inlineSupported === "supported" ? 68 : 45;
+      render();
+    }
+
+    function loadSeed() {
+      controls.intent.value = "anchor-replay";
+      controls.required.value = 92;
+      controls.optional.value = 58;
+      controls.probe.value = 74;
+      controls.privacy.value = "coarse";
+      controls.ttl.value = 50;
+      probeState.xrPresent = "seeded";
+      probeState.inlineSupported = "assumed";
+      probeState.immersiveArSupported = "unknown until gesture";
+      probeState.enabledFeatures = ["local-floor", "hit-test", "anchors"];
+      probeState.timestamp = new Date().toISOString();
+      render();
+    }
+
+    Object.values(controls).forEach((control) => control.addEventListener("input", render));
+    document.getElementById("runProbe").addEventListener("click", runProbe);
+    document.getElementById("loadSeed").addEventListener("click", loadSeed);
+    document.getElementById("saveRow").addEventListener("click", saveContext);
+    document.getElementById("copyJson").addEventListener("click", render);
+    render();
+  </script>
+</body>
+</html>

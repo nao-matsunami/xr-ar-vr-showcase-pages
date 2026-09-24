@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pinch Gaze Intent Debounce Replayer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111418;
+      --panel: #1b2328;
+      --panel-2: #252d33;
+      --line: #41505b;
+      --text: #f4f1e9;
+      --muted: #bac4c5;
+      --blue: #82cfff;
+      --green: #8ee0ad;
+      --yellow: #e6c269;
+      --red: #ef8178;
+      --magenta: #f0a0d8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(130, 207, 255, 0.10), transparent 34%),
+        linear-gradient(315deg, rgba(240, 160, 216, 0.10), transparent 44%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 38px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .intro, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(27, 35, 40, 0.96);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .intro { padding: 24px; }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 5vw, 52px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .stage {
+      min-height: 390px;
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+    }
+
+    .field {
+      position: absolute;
+      inset: 44px;
+      border: 1px solid rgba(244, 241, 233, 0.18);
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at var(--gaze-x) var(--gaze-y), rgba(130, 207, 255, 0.22), transparent 12%),
+        linear-gradient(90deg, rgba(130, 207, 255, 0.10) 1px, transparent 1px),
+        linear-gradient(rgba(130, 207, 255, 0.08) 1px, transparent 1px);
+      background-size: auto, 42px 42px, 42px 42px;
+    }
+
+    .target {
+      position: absolute;
+      width: 104px;
+      height: 74px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: rgba(37, 45, 51, 0.92);
+      font-weight: 800;
+    }
+
+    .target.active {
+      border-color: var(--route-color);
+      box-shadow: 0 0 24px rgba(130, 207, 255, 0.24);
+    }
+
+    .target.a { left: 18%; top: 24%; }
+    .target.b { left: 46%; top: 18%; }
+    .target.c { left: 34%; top: 58%; }
+    .target.d { left: 68%; top: 48%; }
+
+    .hand {
+      position: absolute;
+      left: var(--hand-x);
+      top: var(--hand-y);
+      width: 74px;
+      height: 74px;
+      transform: translate(-50%, -50%);
+      border: 2px solid var(--green);
+      border-radius: 50%;
+      background: rgba(142, 224, 173, 0.12);
+      box-shadow: 0 0 22px rgba(142, 224, 173, 0.28);
+    }
+
+    .hand::before,
+    .hand::after {
+      content: "";
+      position: absolute;
+      top: 34px;
+      width: 28px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--green);
+    }
+
+    .hand::before {
+      left: 10px;
+      transform: rotate(var(--pinch-left));
+      transform-origin: right center;
+    }
+
+    .hand::after {
+      right: 10px;
+      transform: rotate(var(--pinch-right));
+      transform-origin: left center;
+    }
+
+    .gaze {
+      position: absolute;
+      left: var(--gaze-x);
+      top: var(--gaze-y);
+      width: 34px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 2px solid var(--blue);
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 24px rgba(130, 207, 255, 0.46);
+    }
+
+    .badge {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      width: 168px;
+      min-height: 108px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(17, 20, 24, 0.92);
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .badge strong {
+      color: var(--route-color);
+      font-size: 24px;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--blue);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 800;
+      background: #24556f;
+      border-color: #65b9e7;
+    }
+
+    section {
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .tick {
+      min-height: 118px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      display: grid;
+      gap: 8px;
+    }
+
+    .tick strong {
+      color: var(--tick-color);
+      font-size: 21px;
+      line-height: 1;
+    }
+
+    .ledger {
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 110px 1fr 92px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(37, 45, 51, 0.82);
+    }
+
+    .pill {
+      justify-self: start;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: var(--pill-bg);
+      color: #111418;
+      font-weight: 800;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 148px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      resize: vertical;
+    }
+
+    @media (max-width: 860px) {
+      header { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .timeline { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="intro">
+        <h1>Pinch Gaze Intent Debounce Replayer</h1>
+        <p>hand pinch、gaze dwell、DOM hover が数十 ms 以内に近づいた時、どの intent を commit し、どれを preview / suppress / hold にするかを replay します。</p>
+      </div>
+      <div class="stage">
+        <div class="field"></div>
+        <div class="target a" id="targetA">DOM</div>
+        <div class="target b">World</div>
+        <div class="target c">Menu</div>
+        <div class="target d">Anchor</div>
+        <div class="hand"></div>
+        <div class="gaze"></div>
+        <div class="badge">
+          <span>winner</span>
+          <strong id="winnerLabel">pinch-commit</strong>
+          <p id="badgeText">Pinch wins because closure and target match are strong.</p>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <h2>Replay controls</h2>
+      <div class="controls">
+        <label>
+          Dominant source
+          <select id="source">
+            <option value="pinch">hand pinch</option>
+            <option value="gaze">gaze dwell</option>
+            <option value="dom">DOM hover</option>
+            <option value="mixed">mixed</option>
+          </select>
+        </label>
+        <label>
+          Target overlap
+          <select id="overlap">
+            <option value="same">same target</option>
+            <option value="neighbor">neighbor target</option>
+            <option value="split">split targets</option>
+          </select>
+        </label>
+        <label>
+          Delta ms <span id="deltaValue">46</span>
+          <input id="delta" type="range" min="0" max="180" value="46">
+        </label>
+        <label>
+          Pinch closure <span id="closureValue">82</span>
+          <input id="closure" type="range" min="0" max="100" value="82">
+        </label>
+        <label>
+          Gaze dwell <span id="dwellValue">68</span>
+          <input id="dwell" type="range" min="0" max="100" value="68">
+        </label>
+        <label>
+          Jitter <span id="jitterValue">18</span>
+          <input id="jitter" type="range" min="0" max="100" value="18">
+        </label>
+      </div>
+      <button id="appendBtn" type="button">Append replay row</button>
+    </section>
+
+    <section>
+      <h2>Debounce timeline</h2>
+      <div class="timeline" id="timeline"></div>
+    </section>
+
+    <section>
+      <h2>Replay ledger</h2>
+      <div class="ledger" id="ledger"></div>
+    </section>
+
+    <section>
+      <h2>Export</h2>
+      <textarea id="exportBox" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const controls = {
+      source: document.querySelector("#source"),
+      overlap: document.querySelector("#overlap"),
+      delta: document.querySelector("#delta"),
+      closure: document.querySelector("#closure"),
+      dwell: document.querySelector("#dwell"),
+      jitter: document.querySelector("#jitter")
+    };
+
+    const labels = {
+      delta: document.querySelector("#deltaValue"),
+      closure: document.querySelector("#closureValue"),
+      dwell: document.querySelector("#dwellValue"),
+      jitter: document.querySelector("#jitterValue")
+    };
+
+    const timeline = document.querySelector("#timeline");
+    const ledger = document.querySelector("#ledger");
+    const exportBox = document.querySelector("#exportBox");
+    const winnerLabel = document.querySelector("#winnerLabel");
+    const badgeText = document.querySelector("#badgeText");
+    const targetA = document.querySelector("#targetA");
+    const rows = [];
+
+    function classify() {
+      const source = controls.source.value;
+      const overlap = controls.overlap.value;
+      const delta = Number(controls.delta.value);
+      const closure = Number(controls.closure.value);
+      const dwell = Number(controls.dwell.value);
+      const jitter = Number(controls.jitter.value);
+      let route = "preview-hold";
+      let color = "var(--yellow)";
+      let reason = "Intent is close but needs one more stable frame.";
+
+      const sameTarget = overlap === "same";
+      const clean = jitter < 42 && delta < 90;
+
+      if (source === "pinch" && closure > 72 && clean && sameTarget) {
+        route = "pinch-commit";
+        color = "var(--green)";
+        reason = "Pinch closure wins inside the debounce window.";
+      } else if (source === "gaze" && dwell > 76 && jitter < 34) {
+        route = "gaze-commit";
+        color = "var(--blue)";
+        reason = "Gaze dwell is stable enough to commit.";
+      } else if (source === "dom" && delta < 70 && overlap !== "split") {
+        route = "dom-suppress-xr";
+        color = "var(--magenta)";
+        reason = "DOM hover owns the row and suppresses XR select.";
+      } else if (!sameTarget && delta < 58) {
+        route = "split-guard";
+        color = "var(--red)";
+        reason = "Competing targets are too close in time; block duplicate commit.";
+      } else if (source === "mixed" && closure > 60 && dwell > 60 && clean) {
+        route = "intent-merge";
+        color = "var(--green)";
+        reason = "Pinch and gaze agree enough to merge into one action.";
+      }
+
+      const confidence = Math.max(0, Math.min(100, Math.round(
+        (closure * 0.34) + (dwell * 0.28) + ((100 - jitter) * 0.24) + ((180 - delta) * 0.08) + (sameTarget ? 8 : -10)
+      )));
+
+      return {
+        time: new Date().toISOString(),
+        source,
+        overlap,
+        delta,
+        closure,
+        dwell,
+        jitter,
+        route,
+        color,
+        reason,
+        confidence
+      };
+    }
+
+    function render() {
+      const row = classify();
+      labels.delta.textContent = row.delta;
+      labels.closure.textContent = row.closure;
+      labels.dwell.textContent = row.dwell;
+      labels.jitter.textContent = row.jitter;
+      winnerLabel.textContent = row.route;
+      winnerLabel.style.color = row.color;
+      badgeText.textContent = row.reason;
+      document.documentElement.style.setProperty("--route-color", row.color);
+      document.documentElement.style.setProperty("--gaze-x", row.overlap === "split" ? "72%" : row.overlap === "neighbor" ? "48%" : "27%");
+      document.documentElement.style.setProperty("--gaze-y", row.overlap === "split" ? "52%" : row.overlap === "neighbor" ? "30%" : "33%");
+      document.documentElement.style.setProperty("--hand-x", row.overlap === "split" ? "38%" : "26%");
+      document.documentElement.style.setProperty("--hand-y", row.overlap === "split" ? "64%" : "35%");
+      document.documentElement.style.setProperty("--pinch-left", `${Math.max(-28, -row.closure / 3)}deg`);
+      document.documentElement.style.setProperty("--pinch-right", `${Math.min(28, row.closure / 3)}deg`);
+      targetA.classList.toggle("active", row.overlap !== "split");
+
+      const ticks = [
+        ["t-48", "hover", row.source === "dom" ? row.color : "var(--yellow)", "DOM region starts claiming attention."],
+        ["t-16", "gaze", row.dwell, "Dwell grows while reticle is inside the target."],
+        ["t+0", "pinch", row.closure, "Pinch closure is sampled near select."],
+        [`+${row.delta}ms`, "debounce", row.route, "Merge, suppress, or hold the action."],
+        ["commit", row.confidence, row.color, row.reason]
+      ];
+
+      timeline.innerHTML = ticks.map(([time, name, value, text]) => `
+        <div class="tick" style="--tick-color:${typeof value === "string" && value.startsWith("var(") ? value : row.color}">
+          <h3>${time} / ${name}</h3>
+          <strong>${value}</strong>
+          <p>${text}</p>
+        </div>
+      `).join("");
+
+      exportBox.value = JSON.stringify(row, null, 2);
+    }
+
+    function appendRow() {
+      const row = classify();
+      rows.unshift(row);
+      if (rows.length > 6) rows.pop();
+      ledger.innerHTML = rows.map((item) => `
+        <div class="row">
+          <span class="pill" style="--pill-bg:${item.color}">${item.route}</span>
+          <p>${item.reason} source=${item.source}, overlap=${item.overlap}, delta=${item.delta}ms</p>
+          <strong>${item.confidence}/100</strong>
+        </div>
+      `).join("");
+      exportBox.value = JSON.stringify(rows, null, 2);
+    }
+
+    Object.values(controls).forEach((control) => control.addEventListener("input", render));
+    document.querySelector("#appendBtn").addEventListener("click", appendRow);
+    render();
+    appendRow();
+  </script>
+</body>
+</html>

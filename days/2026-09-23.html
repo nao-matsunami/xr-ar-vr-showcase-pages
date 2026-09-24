@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DOM Overlay の select 競合を arbitration row にする | 2026-09-23</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.09.23</p>
+      <h1>DOM Overlay の select 競合を arbitration row にする</h1>
+      <p class="hero-subtitle">Turning DOM Overlay select conflicts into arbitration rows</p>
+      <p>W3C WebXR DOM Overlays Module、MDN `beforexrselect`、MDN WebXR input guide、W3C WebXR Hand Input Module、Immersive Web samples を参照し、DOM UI と XR world select の二重発火を防ぐ本命サンプルと、hand joint / controller / gaze 入力を overlay 安全域へ割り振る派生サンプルを追加しました。</p>
+      <p class="en-copy">After checking the W3C WebXR DOM Overlays Module, MDN `beforexrselect`, the MDN WebXR input guide, the W3C WebXR Hand Input Module, and Immersive Web samples, today's original work adds a main sample that prevents duplicate DOM UI and XR world select actions, plus a derivative sample that routes hand joint / controller / gaze input into overlay-safe envelopes.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-09-23_html_dom_overlay_select_arbitration_logger.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-22.html">← 2026.09.22</a>
+      <a class="day-link" href="../days/2026-09-24.html">2026.09.24 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>DOM Overlay Select Arbitration Logger</h3>
+              <p>DOM Overlay の beforexrselect と WebXR の select を同じ入力列として扱い、DOM UI が消費すべき操作、XR world に渡す操作、二重発火を避ける guard をログ化します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-23_html_dom_overlay_select_arbitration_logger.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Hand Overlay Reach Envelope Router</h3>
+              <p>Hand Input の joint confidence、pinch distance、手の安定度、overlay 安全域をまとめ、DOM UI に渡す、world reticle に渡す、preview に落とす、入力を止める、の route を比較する派生サンプルです。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-23_html_hand_overlay_reach_envelope_router.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR DOM Overlays Module は `beforexrselect` を定義し、DOM overlay 上の操作が XR の `selectstart` / `select` / `selectend` に重複して流れるのを抑える入口になります。</span>
+              <span class="en-copy">The WebXR DOM Overlays Module defines `beforexrselect`, giving applications an entry point for suppressing duplicate `selectstart` / `select` / `selectend` events when a DOM overlay owns an action.</span>
+            </li>
+          
+            <li>
+              <span>MDN の `beforexrselect` ページは 2026年時点で実装上の使いどころを整理しており、overlay container で `preventDefault()` する基本パターンを確認できます。</span>
+              <span class="en-copy">MDN's `beforexrselect` page explains the practical pattern of calling `preventDefault()` on an overlay container.</span>
+            </li>
+          
+            <li>
+              <span>MDN WebXR input guide は `targetRaySpace`、`gripSpace`、input source、profile を分けて説明しており、DOM と world の所有権を行単位に分ける設計に向いています。</span>
+              <span class="en-copy">MDN's WebXR input guide separates `targetRaySpace`, `gripSpace`, input sources, and profiles, which supports row-level ownership between DOM and world interactions.</span>
+            </li>
+          
+            <li>
+              <span>W3C WebXR Hand Input Module は articulated hand poses を Device API に足す仕様で、hand pinch が DOM overlay と world reticle のどちらを触ったかを confidence 付きで扱う理由になります。</span>
+              <span class="en-copy">The W3C WebXR Hand Input Module adds articulated hand poses to the Device API, motivating confidence-based routing between hand pinch, DOM overlay, and world reticle targets.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、自作の `DOM Overlay Select Arbitration Logger` と `Hand Overlay Reach Envelope Router` の2本です。</span>
+              <span class="en-copy">Today's public cards are the original workspace samples `DOM Overlay Select Arbitration Logger` and `Hand Overlay Reach Envelope Router`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>9月22日は起動前後の `navigator.xr` probe を session context と trust floor にしました。今日はその次に、起動後の最初の UI 操作で起きやすい `DOM のボタンを押したつもりなのに XR world select も走る` 問題を扱います。DOM Overlay の `beforexrselect` は、DOM UI と XR world の所有権を入力シーケンスの前に分けられるので、frame logger に `なぜこの select を信じたか / 捨てたか` を残しやすいのが面白いところです。</p>
+          <p class="en-copy">September 22 turned the `navigator.xr` bootstrap probe into session context and a trust floor. Today moves to a common post-launch problem: the user intended to press a DOM button, but an XR world select may also fire. DOM Overlay's `beforexrselect` lets the app separate DOM UI and XR world ownership before the input sequence commits, which makes it easier for a frame logger to explain why a select was trusted or dropped.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">W3C: WebXR DOM Overlays Module</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Element/beforexrselect_event" target="_blank" rel="noreferrer">MDN: beforexrselect event</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `DOM Overlay Select Arbitration Logger` は input source、overlay hit、`beforexrselect` の状態、ray confidence、overlay opacity を操作し、`dom-consume`、`xr-select`、`dual-guard`、`drop` の arbitration row を出します。派生サンプル `Hand Overlay Reach Envelope Router` は hand joint confidence、pinch closure、pose jitter、intent zone を使い、hand pinch / controller / gaze を overlay UI、world reticle、preview、block に割り振ります。</p>
+          <p class="en-copy">The main sample, `DOM Overlay Select Arbitration Logger`, lets you adjust input source, overlay hit, `beforexrselect` state, ray confidence, and overlay opacity, then emits `dom-consume`, `xr-select`, `dual-guard`, or `drop` arbitration rows. The derivative sample, `Hand Overlay Reach Envelope Router`, uses hand joint confidence, pinch closure, pose jitter, and intent zone to route hand pinch / controller / gaze input into overlay UI, world reticle, preview, or block.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では、DOM overlay の touchable 領域だけで `beforexrselect.preventDefault()` し、非インタラクティブなラベルや透明余白は pass-through にする方が、AR 空間の world select を不必要に塞ぎません。hand input は `XRHand` が取れる時だけを前提にせず、controller ray、screen transient、gaze select を同じ route schema に入れておくと、端末差があっても replay と説明が崩れにくくなります。</p>
+          <p class="en-copy">In production, call `beforexrselect.preventDefault()` only in touchable DOM overlay regions, while allowing non-interactive labels and transparent margins to pass through so AR world selection is not blocked unnecessarily. For hand input, do not assume `XRHand` is always present; placing controller rays, screen transient input, and gaze select into the same route schema keeps replay and explanation stable across devices.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR DOM Overlays Module の `beforexrselect` と `:xr-overlay`、MDN の互換性情報、WebXR Hand Input Module の joint model、Immersive Web samples の input / hand tracking / DOM overlay 系サンプルを続けて見ます。次は、今日の arbitration row を9月17日の IndexedDB logger に保存し、9月22日の trust floor と一緒に最初の UI 操作の安全判定へ渡したいです。</p>
+          <p class="en-copy">Keep watching `beforexrselect` and `:xr-overlay` in the WebXR DOM Overlays Module, MDN compatibility notes, the joint model in the WebXR Hand Input Module, and Immersive Web samples for input, hand tracking, and DOM overlay behavior. Next, save today's arbitration rows into the September 17 IndexedDB logger and combine them with the September 22 trust floor for the first UI-action safety decision.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`DOM Overlay Select Arbitration Logger` で overlay hit を `button`、`beforexrselect` を `preventDefault` にして `Append event` を押すと、DOM が所有する select row が出ます。次に `beforexrselect` を `missing` に変えると `dual-guard` に落ち、同じ入力を DOM と XR world に二重 commit しないための guard が見えます。派生側では `edge between` と jitter 高めを試すと preview route に落ちます。</p>
+          <p class="en-copy">In `DOM Overlay Select Arbitration Logger`, set overlay hit to `button`, set `beforexrselect` to `preventDefault`, and press `Append event` to create a DOM-owned select row. Change `beforexrselect` to `missing` and it falls to `dual-guard`, showing how to avoid double-committing the same input to DOM and the XR world. In the derivative sample, try `edge between` with higher jitter to see the preview route.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-23_html_dom_overlay_select_arbitration_logger.html" target="_blank" rel="noreferrer">Open DOM Overlay Select Arbitration Logger</a></li>
+          
+            <li><a href="../outputs/2026-09-23_html_hand_overlay_reach_envelope_router.html" target="_blank" rel="noreferrer">Open Hand Overlay Reach Envelope Router</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR DOM Overlays Module、MDN `beforexrselect`、MDN WebXR input guide、W3C WebXR Hand Input Module、Immersive Web WebXR Samples を確認。設計: 1本目は DOM / XR select の所有権を決める arbitration logger、2本目は hand / controller / gaze を overlay reach envelope に割り振る router。実装: `outputs/2026-09-23_html_dom_overlay_select_arbitration_logger.html` と `outputs/2026-09-23_html_hand_overlay_reach_envelope_router.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish、公開反映を確認する。</p>
+          <p class="en-copy">Research: checked the W3C WebXR DOM Overlays Module, MDN `beforexrselect`, the MDN WebXR input guide, the W3C WebXR Hand Input Module, and Immersive Web WebXR Samples. Design: make the first sample an arbitration logger for DOM / XR select ownership, and the second a router that assigns hand / controller / gaze input to an overlay reach envelope. Implementation: add `outputs/2026-09-23_html_dom_overlay_select_arbitration_logger.html` and `outputs/2026-09-23_html_hand_overlay_reach_envelope_router.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, publish, and confirm publication.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月後半の流れは、session context と trust floor から、最初の live interaction の所有権へ進んでいます。WebXR の UI は `押せた / 押せない` よりも、DOM、world、hand、controller、screen transient が同じ primary action をどう共有するかが難所です。今日の2本は、その共有を明示的な row にして、後から replay できるようにする小さな部品です。</p>
+          <p class="en-copy">The late-September thread is moving from session context and trust floors into ownership of the first live interaction. WebXR UI is less about whether something can be pressed and more about how DOM, world, hand, controller, and screen transient input share the same primary action. Today's two samples turn that sharing into explicit rows that can be replayed later.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `DOM Overlay Select Arbitration Logger` です。何が動くか: overlay hit、`beforexrselect`、ray confidence、overlay opacity から DOM UI と XR world select の所有権を判定し、JSON row と event ledger を出します。次に足すなら、実 `beforexrselect` listener と `selectstart/select/selectend` listener を同じ ledger に接続します。派生として `Hand Overlay Reach Envelope Router` も実装しました。何が動くか: hand joint confidence、pinch closure、pose jitter から overlay UI / world reticle / preview / block を選びます。次に足すなら、`XRHand` の index-tip / thumb-tip pose を実測して envelope に流します。</p>
+          <p class="en-copy">The selected main prototype is `DOM Overlay Select Arbitration Logger`. What it does: judges ownership between DOM UI and XR world select from overlay hit, `beforexrselect`, ray confidence, and overlay opacity, then emits JSON rows and an event ledger. Next addition: connect real `beforexrselect` and `selectstart/select/selectend` listeners into the same ledger. The derivative `Hand Overlay Reach Envelope Router` was also implemented. What it does: chooses overlay UI / world reticle / preview / block from hand joint confidence, pinch closure, and pose jitter. Next addition: feed real `XRHand` index-tip / thumb-tip poses into the envelope.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-23_html_dom_overlay_select_arbitration_logger.html" target="_blank" rel="noreferrer">Today's main sample: DOM Overlay Select Arbitration Logger</a></li>
+          
+            <li><a href="../outputs/2026-09-23_html_hand_overlay_reach_envelope_router.html" target="_blank" rel="noreferrer">Today's derivative sample: Hand Overlay Reach Envelope Router</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">W3C: WebXR DOM Overlays Module</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Element/beforexrselect_event" target="_blank" rel="noreferrer">MDN: beforexrselect event</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Inputs" target="_blank" rel="noreferrer">MDN: WebXR inputs and input sources</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hand-input-1/" target="_blank" rel="noreferrer">W3C: WebXR Hand Input Module - Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-09-23_html_dom_overlay_select_arbitration_logger.html" loading="lazy" title="DOM Overlay Select Arbitration Logger"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

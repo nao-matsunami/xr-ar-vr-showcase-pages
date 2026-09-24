@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Initial Trust Score Replayer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #121413;
+      --panel: #1d2322;
+      --line: #394341;
+      --text: #f5f0e8;
+      --muted: #bec5bf;
+      --cyan: #68ccd4;
+      --green: #8bd47f;
+      --amber: #e5bb62;
+      --red: #ee8278;
+      --blue: #8fa9f1;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(128deg, rgba(143, 169, 241, 0.13), transparent 34%),
+        linear-gradient(36deg, transparent 45%, rgba(104, 204, 212, 0.11)),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1160px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .intro, .stage, section {
+      background: rgba(29, 35, 34, 0.95);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.25);
+    }
+
+    .intro { padding: 24px; }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 56px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .stage {
+      min-height: 344px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ring {
+      position: absolute;
+      left: 50%;
+      top: 48%;
+      width: min(260px, 58vw);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 1px solid rgba(245, 240, 232, 0.24);
+      transform: translate(-50%, -50%);
+      background:
+        conic-gradient(from -90deg, var(--green) 0 var(--trust, 68%), rgba(255, 255, 255, 0.08) var(--trust, 68%) 100%);
+      box-shadow: inset 0 0 0 34px rgba(18, 20, 19, 0.94), 0 0 42px rgba(104, 204, 212, 0.20);
+    }
+
+    .ring::after {
+      content: attr(data-score);
+      position: absolute;
+      inset: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: #121413;
+      color: var(--text);
+      font-size: 50px;
+      font-weight: 840;
+    }
+
+    .trace {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .trace div {
+      min-height: 58px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(18, 20, 19, 0.82);
+    }
+
+    .trace strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .trace span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #242a29;
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--cyan);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 760;
+      background: #2a5458;
+      border-color: #58abb1;
+    }
+
+    section {
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .routes {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .route {
+      min-height: 142px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #171b1a;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 9px;
+    }
+
+    .pill {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 800;
+      background: var(--cyan);
+      color: #092125;
+    }
+
+    .pill.good { background: var(--green); color: #0d2011; }
+    .pill.warn { background: var(--amber); color: #251b07; }
+    .pill.bad { background: var(--red); color: #2d1010; }
+    .pill.info { background: var(--blue); color: #101532; }
+
+    .route h3 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    .route p {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .io {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    textarea, pre {
+      width: 100%;
+      min-height: 230px;
+      margin: 0;
+      padding: 14px;
+      overflow: auto;
+      white-space: pre-wrap;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #121413;
+      color: #dce9e4;
+      font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 860px) {
+      header, .io { grid-template-columns: 1fr; }
+      .controls, .routes, .trace { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 560px) {
+      .controls, .routes, .trace { grid-template-columns: 1fr; }
+      .stage { min-height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="intro">
+        <h1>Initial Trust Score Replayer</h1>
+        <p>前段の session context JSON を、実 frame logger の起動前に replay し、初期 trust score と commit route を決める派生試作です。</p>
+      </div>
+      <div class="stage">
+        <div class="ring" id="ring" data-score="68" style="--trust: 68%"></div>
+        <div class="trace">
+          <div><strong>route</strong><span id="routeChip">guarded commit</span></div>
+          <div><strong>frame age</strong><span id="ageChip">34 ms</span></div>
+          <div><strong>drift</strong><span id="driftChip">18%</span></div>
+          <div><strong>context</strong><span id="contextChip">imported</span></div>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <h2>Replay controls</h2>
+      <div class="controls">
+        <label>Preset
+          <select id="preset">
+            <option value="imported">Imported context</option>
+            <option value="fallback">Fallback only</option>
+            <option value="stale">Stale context</option>
+            <option value="strong">Strong context</option>
+          </select>
+        </label>
+        <label>Context score <span id="contextValue">68</span>
+          <input id="contextScore" type="range" min="0" max="100" value="68">
+        </label>
+        <label>Frame age <span id="ageValue">34</span>
+          <input id="frameAge" type="range" min="0" max="180" value="34">
+        </label>
+        <label>Sensor drift <span id="driftValue">18</span>
+          <input id="sensorDrift" type="range" min="0" max="100" value="18">
+        </label>
+        <label>Optional gaps <span id="gapValue">2</span>
+          <input id="optionalGaps" type="range" min="0" max="7" value="2">
+        </label>
+        <label>Logger policy
+          <select id="policy">
+            <option value="balanced">Balanced</option>
+            <option value="strict">Strict</option>
+            <option value="forgiving">Forgiving</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions">
+        <button id="importButton">Parse JSON</button>
+        <button id="seedButton">Use sample export</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Route comparison</h2>
+      <div class="routes" id="routes"></div>
+    </section>
+
+    <section>
+      <h2>Import and replay JSON</h2>
+      <div class="io">
+        <textarea id="inputBox" spellcheck="false" aria-label="Import session context JSON"></textarea>
+        <pre id="outputBox"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const controls = ["preset", "contextScore", "frameAge", "sensorDrift", "optionalGaps", "policy"].map($);
+
+    const sampleExport = {
+      sessionContext: {
+        id: "ctx-seed-2026-09-21",
+        createdAt: "2026-09-21T00:00:00.000Z",
+        sessionIntent: "AR placement",
+        contextScore: 74,
+        route: "merge trusted context",
+        expiresInMinutes: 18,
+        privacyGrain: "coarse",
+        sourceRows: {
+          featureNegotiation: { coverage: 72, optionalGaps: ["mesh-detection", "depth-sensing"] },
+          layerReadiness: { readiness: 66, route: "projection-fallback" },
+          sceneContract: { score: 78, selectedContract: "world-locked-layer" }
+        },
+        nextFrameLoggerHint: { initialTrust: "guarded", attachBeforeXRFrame: true, stripPreciseGeometry: true }
+      }
+    };
+
+    function policyOffset(policy) {
+      if (policy === "strict") return -10;
+      if (policy === "forgiving") return 8;
+      return 0;
+    }
+
+    function classify(score) {
+      if (score >= 82) return ["commit solid", "high", "Start the frame logger with anchor, layer, and contract context attached."];
+      if (score >= 62) return ["guarded commit", "good", "Attach context, but require fresh pose and depth rows before persistent changes."];
+      if (score >= 42) return ["preview only", "warn", "Show reticle or ghost preview until new frame evidence improves trust."];
+      return ["block logger", "bad", "Discard imported assumptions and wait for a fresh session row."];
+    }
+
+    function compute(policy = $("policy").value) {
+      const context = Number($("contextScore").value);
+      const age = Number($("frameAge").value);
+      const drift = Number($("sensorDrift").value);
+      const gaps = Number($("optionalGaps").value);
+      const score = Math.round(context - age * 0.16 - drift * 0.25 - gaps * 3 + policyOffset(policy));
+      const clamped = Math.max(0, Math.min(100, score));
+      const [route, tone, body] = classify(clamped);
+      return { policy, score: clamped, route, tone, body, inputs: { context, age, drift, gaps } };
+    }
+
+    function renderRoutes() {
+      const rows = ["strict", "balanced", "forgiving", $("policy").value].map(compute);
+      $("routes").innerHTML = rows.map((row) => `
+        <article class="route">
+          <span class="pill ${row.tone}">${row.score}</span>
+          <h3>${row.policy}</h3>
+          <p><strong>${row.route}</strong><br>${row.body}</p>
+        </article>
+      `).join("");
+    }
+
+    function render() {
+      const current = compute();
+      $("contextValue").textContent = $("contextScore").value;
+      $("ageValue").textContent = $("frameAge").value;
+      $("driftValue").textContent = $("sensorDrift").value;
+      $("gapValue").textContent = $("optionalGaps").value;
+      $("ring").dataset.score = current.score;
+      $("ring").style.setProperty("--trust", `${current.score}%`);
+      $("routeChip").textContent = current.route;
+      $("ageChip").textContent = `${$("frameAge").value} ms`;
+      $("driftChip").textContent = `${$("sensorDrift").value}%`;
+      $("contextChip").textContent = $("preset").value;
+      $("outputBox").textContent = JSON.stringify({
+        replayedAt: new Date().toISOString(),
+        initialTrustScore: current.score,
+        route: current.route,
+        policy: current.policy,
+        attachContext: current.score >= 42,
+        requireFreshPoseBeforeCommit: current.score < 82,
+        explanation: current.body,
+        inputs: current.inputs
+      }, null, 2);
+      renderRoutes();
+    }
+
+    function applyPreset() {
+      const preset = $("preset").value;
+      const values = {
+        imported: [68, 34, 18, 2, "balanced"],
+        fallback: [48, 58, 22, 4, "balanced"],
+        stale: [62, 132, 48, 3, "strict"],
+        strong: [88, 18, 8, 0, "forgiving"]
+      }[preset];
+      $("contextScore").value = values[0];
+      $("frameAge").value = values[1];
+      $("sensorDrift").value = values[2];
+      $("optionalGaps").value = values[3];
+      $("policy").value = values[4];
+      render();
+    }
+
+    function parseImport() {
+      try {
+        const parsed = JSON.parse($("inputBox").value);
+        const ctx = parsed.sessionContext || parsed;
+        $("contextScore").value = Math.max(0, Math.min(100, Number(ctx.contextScore || 50)));
+        const gaps = ctx.sourceRows?.featureNegotiation?.optionalGaps?.length || 0;
+        $("optionalGaps").value = Math.max(0, Math.min(7, gaps));
+        $("preset").value = "imported";
+        $("frameAge").value = ctx.expiresInMinutes > 30 ? 70 : 34;
+        $("sensorDrift").value = ctx.nextFrameLoggerHint?.initialTrust === "high" ? 8 : 18;
+      } catch (error) {
+        $("outputBox").textContent = `JSON parse failed: ${error.message}`;
+        return;
+      }
+      render();
+    }
+
+    $("inputBox").value = JSON.stringify(sampleExport, null, 2);
+    controls.forEach((control) => control.addEventListener("input", control.id === "preset" ? applyPreset : render));
+    $("importButton").addEventListener("click", parseImport);
+    $("seedButton").addEventListener("click", () => {
+      $("inputBox").value = JSON.stringify(sampleExport, null, 2);
+      parseImport();
+    });
+    render();
+  </script>
+</body>
+</html>

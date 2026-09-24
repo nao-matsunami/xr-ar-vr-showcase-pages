@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XR session context を保存して初期 trust に渡す | 2026-09-21</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.09.21</p>
+      <h1>XR session context を保存して初期 trust に渡す</h1>
+      <p class="hero-subtitle">Saving XR session context and passing it into initial trust</p>
+      <p>WebXR Device API、MDN `enabledFeatures`、Immersive Web Anchors Module、WebXR Samples proposals、WebXR Layers API の一次情報を参照し、feature / layer / scene contract row を IndexedDB に保存する本命サンプルと、その JSON を初期 trust score として再判定する派生サンプルを追加しました。</p>
+      <p class="en-copy">After checking the WebXR Device API, MDN `enabledFeatures`, the Immersive Web Anchors Module, WebXR proposal samples, and the WebXR Layers API, today's original work adds a main sample that stores feature / layer / scene contract rows in IndexedDB, plus a derivative sample that replays that JSON as an initial trust score.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-09-21_html_session_context_merge_store.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-20.html">← 2026.09.20</a>
+      <a class="day-link" href="../days/2026-09-22.html">2026.09.22 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Session Context Merge Store</h3>
+              <p>feature negotiation、layer readiness、scene contract をひとつの session context にまとめ、IndexedDB 保存と JSON export までを小さく試す自作サンプルです。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-21_html_session_context_merge_store.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Initial Trust Score Replayer</h3>
+              <p>前段の session context JSON を、実 frame logger の起動前に replay し、初期 trust score と commit route を決める派生試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-21_html_initial_trust_score_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>MDN の `XRSession.enabledFeatures` は、`requiredFeatures` と許可された `optionalFeatures` を session row として保存する起点になります。</span>
+              <span class="en-copy">MDN's `XRSession.enabledFeatures` is a useful starting point for saving required features and granted optional features as a session row.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web Anchors Module は persistent handle、`restorePersistentAnchor()`、`trackedAnchors` を扱い、日跨ぎの context と frame logger をつなぐ重要な参照点です。</span>
+              <span class="en-copy">The Immersive Web Anchors Module covers persistent handles, `restorePersistentAnchor()`, and `trackedAnchors`, making it important for linking cross-day context with a frame logger.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の proposal samples は depth、plane、mesh、anchors を横断しており、認識 row と表示 row を別々に保存して後で merge する設計の参考になります。</span>
+              <span class="en-copy">The Immersive Web proposal samples span depth, planes, meshes, and anchors, which helps design separate recognition and display rows that can be merged later.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Layers API の更新履歴と `XRWebGLBinding` 周辺は、layer readiness row を session context に含める理由になります。</span>
+              <span class="en-copy">The WebXR Layers API publication history and `XRWebGLBinding` area explain why layer readiness belongs in session context.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、自作の `Session Context Merge Store` と `Initial Trust Score Replayer` の2本です。</span>
+              <span class="en-copy">Today's public cards are the original workspace samples `Session Context Merge Store` and `Initial Trust Score Replayer`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>9月18日は feature negotiation、9月19日は layer readiness、9月20日は scene contract を別々の row として扱いました。今日はそれらを session context として merge し、IndexedDB に保存してから frame logger の初期 trust に渡す流れを試します。WebXR の失敗は session 開始時だけでなく、開始後の layer、anchor、depth、plane の混合状態で起きるため、`開始できたか` だけではなく `どんな前提で開始したか` を保存するのが面白いところです。</p>
+          <p class="en-copy">September 18 treated feature negotiation, September 19 treated layer readiness, and September 20 treated scene contracts as separate rows. Today merges them as session context, stores the result in IndexedDB, and passes it into the frame logger as initial trust. WebXR failures do not only happen at session startup; they emerge from mixed runtime states across layers, anchors, depth, and planes. Saving not only whether startup succeeded but also what assumptions it started with is the interesting part.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSession/enabledFeatures" target="_blank" rel="noreferrer">MDN: XRSession enabledFeatures</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Session Context Merge Store` は、session intent、feature coverage、layer readiness、contract score、TTL、privacy grain を操作し、merge route、context score、IndexedDB 保存、JSON export を更新します。派生サンプル `Initial Trust Score Replayer` は、その JSON を貼り付けるか seed export を使い、frame age、sensor drift、optional gaps、policy から `commit solid`、`guarded commit`、`preview only`、`block logger` を比較します。</p>
+          <p class="en-copy">The main sample, `Session Context Merge Store`, lets you adjust session intent, feature coverage, layer readiness, contract score, TTL, and privacy grain, then updates the merge route, context score, IndexedDB storage, and JSON export. The derivative sample, `Initial Trust Score Replayer`, accepts that JSON or a seed export and compares `commit solid`, `guarded commit`, `preview only`, and `block logger` from frame age, sensor drift, optional gaps, and policy.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-21_html_session_context_merge_store.html" target="_blank" rel="noreferrer">Open main sample</a></li>
+          
+            <li><a href="../outputs/2026-09-21_html_initial_trust_score_replayer.html" target="_blank" rel="noreferrer">Open derivative sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では、`requestSession()` 直後に `enabledFeatures` と layer probe を保存し、最初の `XRFrame` が来る前に context を読み出すと、後段の anchor / plane / mesh row に初期 trust を渡しやすくなります。privacy grain はここで落としておくのが扱いやすく、precise geometry を保存するより、coarse score、optional gap、selected contract、TTL だけを保存する方が replay と説明に向いています。</p>
+          <p class="en-copy">In a production version, save `enabledFeatures` and layer probes right after `requestSession()`, then read the context before the first `XRFrame` so downstream anchor / plane / mesh rows can receive initial trust. Privacy grain is easiest to reduce at this boundary. For replay and explanation, coarse scores, optional gaps, selected contracts, and TTL are often more useful than saving precise geometry.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の2本からは sessionIntent、feature coverage、optionalGaps、layer readiness、selectedContract、contextScore、route、expiresInMinutes、privacyGrain、initialTrustScore、policy、frame age、sensor drift が取れます。9月17日の ghost replay IndexedDB logger と組み合わせると、同じ anchor が ghost へ戻った理由を `runtime drift` だけでなく `開始時点で depth-sensing が optional gap だった` と説明できます。</p>
+          <p class="en-copy">The two samples expose sessionIntent, feature coverage, optionalGaps, layer readiness, selectedContract, contextScore, route, expiresInMinutes, privacyGrain, initialTrustScore, policy, frame age, and sensor drift. Combined with the September 17 ghost replay IndexedDB logger, the reason an anchor returns to ghost state can be explained not only as runtime drift but also as `depth-sensing was an optional gap at startup`.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Device API の feature descriptor と session lifecycle、MDN の `enabledFeatures` 互換性、Anchors Module の persistent anchor、Layers API の Working Draft、Immersive Web proposal samples の depth / plane / mesh / anchor 実装を続けて見ます。次は、context row を実 `requestSession(&quot;immersive-ar&quot;)` の結果から自動生成し、9月17日の IndexedDB logger と同じ database に保存したいところです。</p>
+          <p class="en-copy">Keep watching feature descriptors and session lifecycle in the WebXR Device API, MDN compatibility notes for `enabledFeatures`, persistent anchors in the Anchors Module, Layers API Working Drafts, and the depth / plane / mesh / anchor implementations in Immersive Web proposal samples. The next step is generating the context row from a real `requestSession(&quot;immersive-ar&quot;)` result and saving it in the same database as the September 17 IndexedDB logger.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Session Context Merge Store` で `Load seed rows` を押し、`Save context row` で IndexedDB 保存を試します。次に export JSON を `Initial Trust Score Replayer` に貼り、`Parse JSON` を押します。frame age と sensor drift を上げると、同じ context でも `guarded commit` から `preview only` へ落ちる様子が見えます。</p>
+          <p class="en-copy">In `Session Context Merge Store`, press `Load seed rows`, then try `Save context row` to store it in IndexedDB. Next, paste the export JSON into `Initial Trust Score Replayer` and press `Parse JSON`. Raising frame age and sensor drift shows the same context falling from `guarded commit` to `preview only`.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-21_html_session_context_merge_store.html" target="_blank" rel="noreferrer">Open Session Context Merge Store</a></li>
+          
+            <li><a href="../outputs/2026-09-21_html_initial_trust_score_replayer.html" target="_blank" rel="noreferrer">Open Initial Trust Score Replayer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: MDN `XRSession.enabledFeatures`、Immersive Web Anchors Module、WebXR proposal samples、WebXR Layers API publication history、W3C WebXR standards list を確認。設計: 1本目は feature / layer / scene contract row の merge store、2本目は import JSON を初期 trust score に変換する replayer。実装: `outputs/2026-09-21_html_session_context_merge_store.html` と `outputs/2026-09-21_html_initial_trust_score_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish、公開反映を確認する。</p>
+          <p class="en-copy">Research: checked MDN `XRSession.enabledFeatures`, the Immersive Web Anchors Module, WebXR proposal samples, WebXR Layers API publication history, and the W3C WebXR standards list. Design: make the first sample a merge store for feature / layer / scene contract rows, and the second a replayer that turns imported JSON into initial trust. Implementation: add `outputs/2026-09-21_html_session_context_merge_store.html` and `outputs/2026-09-21_html_initial_trust_score_replayer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, publish, and confirm publication.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月中旬の蓄積は、認識 row、表示 row、保存 row の3層になってきました。今日の session context は、その3層をつなぐ小さな背骨です。WebXR では API 対応状況と体験の安全性が一致しないので、`どの条件でこの frame を信じたか` を後から読める形にしておくほど、デバッグにも UX 説明にも強くなります。</p>
+          <p class="en-copy">The mid-September archive is becoming three layers: recognition rows, display rows, and storage rows. Today's session context is a small backbone connecting those layers. In WebXR, API support and experiential safety do not always match, so keeping a readable record of `why this frame was trusted under these conditions` helps both debugging and UX explanation.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Session Context Merge Store` です。何が動くか: feature coverage、layer readiness、contract score、TTL、privacy grain から session context を作り、IndexedDB 保存と JSON export を行います。次に足すなら、実 `navigator.xr.requestSession(&quot;immersive-ar&quot;)` の `enabledFeatures` と layer probe を自動で sourceRows に入れます。派生として `Initial Trust Score Replayer` も実装しました。何が動くか: export JSON または seed JSON から contextScore と optional gaps を読み、frame age / drift / policy で初期 trust route を比較します。次に足すなら、9月17日の ghost replay logger へ route を渡し、最初の anchor row の trust floor として使います。</p>
+          <p class="en-copy">The selected main prototype is `Session Context Merge Store`. What it does: builds session context from feature coverage, layer readiness, contract score, TTL, and privacy grain, then saves it to IndexedDB and exports JSON. Next addition: automatically fill sourceRows from real `navigator.xr.requestSession(&quot;immersive-ar&quot;)` `enabledFeatures` and layer probes. The derivative `Initial Trust Score Replayer` was also implemented. What it does: reads contextScore and optional gaps from exported or seed JSON, then compares initial trust routes from frame age / drift / policy. Next addition: pass the route into the September 17 ghost replay logger as the trust floor for the first anchor row.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-21_html_session_context_merge_store.html" target="_blank" rel="noreferrer">Today's main sample: Session Context Merge Store</a></li>
+          
+            <li><a href="../outputs/2026-09-21_html_initial_trust_score_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Initial Trust Score Replayer</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSession/enabledFeatures" target="_blank" rel="noreferrer">MDN: XRSession enabledFeatures</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/proposals/" target="_blank" rel="noreferrer">Immersive Web: WebXR proposal samples</a></li>
+          
+            <li><a href="https://www.w3.org/standards/history/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1 publication history</a></li>
+          
+            <li><a href="https://www.w3.org/TR/?filter-tr-name=webxr" target="_blank" rel="noreferrer">W3C: WebXR standards and drafts</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-09-21_html_session_context_merge_store.html" loading="lazy" title="Session Context Merge Store"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

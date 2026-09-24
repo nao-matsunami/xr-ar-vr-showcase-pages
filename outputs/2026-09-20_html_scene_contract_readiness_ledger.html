@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scene Contract Readiness Ledger</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #121515;
+      --panel: #1b2222;
+      --panel-2: #202929;
+      --line: #354244;
+      --text: #f4f0e8;
+      --muted: #b8c1bd;
+      --mint: #7fd3a6;
+      --cyan: #64cbd8;
+      --amber: #e6bd62;
+      --rose: #ee8278;
+      --ink: #0e1111;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(130deg, rgba(127, 211, 166, 0.12), transparent 32%),
+        linear-gradient(38deg, transparent 46%, rgba(100, 203, 216, 0.10)),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .intro, .stage, section {
+      background: rgba(27, 34, 34, 0.95);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .intro { padding: 24px; }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 58px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .stage {
+      min-height: 340px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .floor {
+      position: absolute;
+      inset: 88px 42px 34px;
+      border: 1px solid rgba(244, 240, 232, 0.22);
+      transform: perspective(580px) rotateX(62deg) rotateZ(-8deg);
+      background:
+        linear-gradient(90deg, rgba(127, 211, 166, 0.20) 1px, transparent 1px),
+        linear-gradient(rgba(127, 211, 166, 0.13) 1px, transparent 1px);
+      background-size: 34px 34px;
+    }
+
+    .plane {
+      position: absolute;
+      width: 190px;
+      height: 76px;
+      left: calc(50% - 95px);
+      top: 178px;
+      border: 1px solid rgba(230, 189, 98, 0.78);
+      background: rgba(230, 189, 98, 0.10);
+      transform: skewX(-18deg);
+    }
+
+    .anchor {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: calc(50% - 11px);
+      top: 154px;
+      border: 2px solid var(--cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 24px rgba(100, 203, 216, 0.45);
+    }
+
+    .layer {
+      position: absolute;
+      width: 180px;
+      height: 94px;
+      left: calc(50% - 90px);
+      top: 72px;
+      border: 1px solid rgba(244, 240, 232, 0.46);
+      border-radius: 8px;
+      background:
+        linear-gradient(120deg, rgba(100, 203, 216, 0.42), rgba(127, 211, 166, 0.24)),
+        rgba(11, 16, 17, 0.82);
+      transform: translate(var(--dx, 0px), var(--dy, 0px)) rotate(var(--rot, -2deg));
+      transition: transform 240ms ease, border-color 240ms ease, opacity 240ms ease;
+    }
+
+    .layer::before {
+      content: attr(data-contract);
+      position: absolute;
+      left: 12px;
+      top: 10px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .sensor-stack {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .sensor {
+      min-height: 56px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(18, 21, 21, 0.78);
+    }
+
+    .sensor strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    .meter {
+      height: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+      background: #0f1414;
+    }
+
+    .meter span {
+      display: block;
+      height: 100%;
+      width: var(--w, 50%);
+      background: linear-gradient(90deg, var(--rose), var(--amber), var(--mint));
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    select, input, button {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--cyan);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 760;
+      background: #24575c;
+      border-color: #50a9b2;
+    }
+
+    section {
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: 0.72fr 1.28fr;
+      gap: 12px;
+    }
+
+    .score {
+      display: grid;
+      place-items: center;
+      min-height: 150px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #151a1a;
+      text-align: center;
+    }
+
+    .score strong {
+      display: block;
+      font-size: 58px;
+      line-height: 1;
+      color: var(--mint);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      min-height: 148px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #151a1a;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 9px;
+    }
+
+    .card strong { font-size: 15px; }
+
+    .pill {
+      width: fit-content;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      background: #2b3536;
+      color: var(--muted);
+    }
+
+    .pill.good { background: var(--mint); color: #082015; }
+    .pill.warn { background: var(--amber); color: #251c08; }
+    .pill.bad { background: var(--rose); color: #2c1010; }
+    .pill.info { background: var(--cyan); color: #061d22; }
+
+    .ledger {
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 130px 1fr 142px;
+      gap: 10px;
+      align-items: center;
+      min-height: 44px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #151a1a;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .row strong {
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    code {
+      display: block;
+      max-height: 190px;
+      overflow: auto;
+      white-space: pre-wrap;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #0f1313;
+      color: #d7eee4;
+      font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    @media (max-width: 900px) {
+      header, .summary { grid-template-columns: 1fr; }
+      .controls, .cards, .sensor-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      main { width: min(100vw - 18px, 1180px); padding-top: 12px; }
+      .controls, .cards, .sensor-stack { grid-template-columns: 1fr; }
+      .stage { min-height: 430px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="intro">
+        <h1>Scene Contract Readiness Ledger</h1>
+        <p>WebXR session が始まったあと、depth / plane / anchor / layer の状態から「この scene はどう表示してよいか」を contract row に落とす試作です。</p>
+      </div>
+      <div class="stage" aria-label="scene contract preview">
+        <div class="floor"></div>
+        <div class="plane"></div>
+        <div class="anchor"></div>
+        <div id="previewLayer" class="layer" data-contract="world-locked layer"></div>
+        <div class="sensor-stack">
+          <div class="sensor"><strong>Depth</strong><div class="meter"><span id="depthMeter"></span></div></div>
+          <div class="sensor"><strong>Plane</strong><div class="meter"><span id="planeMeter"></span></div></div>
+          <div class="sensor"><strong>Anchor</strong><div class="meter"><span id="anchorMeter"></span></div></div>
+          <div class="sensor"><strong>Layer</strong><div class="meter"><span id="layerMeter"></span></div></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Intent
+        <select id="intent">
+          <option value="placement">Object placement</option>
+          <option value="dashboard">World dashboard</option>
+          <option value="occlusion">Depth occlusion</option>
+          <option value="video">Immersive video</option>
+        </select>
+      </label>
+      <label>Depth confidence
+        <input id="depth" type="range" min="0" max="100" value="72">
+      </label>
+      <label>Plane stability
+        <input id="plane" type="range" min="0" max="100" value="68">
+      </label>
+      <label>Anchor confidence
+        <input id="anchor" type="range" min="0" max="100" value="64">
+      </label>
+      <label>Layer readiness
+        <input id="layerReady" type="range" min="0" max="100" value="76">
+      </label>
+      <label>Motion pressure
+        <input id="motion" type="range" min="0" max="100" value="28">
+      </label>
+    </div>
+
+    <section class="summary">
+      <div class="score">
+        <p><strong id="score">0</strong>contract score</p>
+      </div>
+      <div>
+        <h2>Selected scene contract</h2>
+        <div class="cards" id="cards"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Readiness ledger</h2>
+      <div class="ledger" id="ledger"></div>
+    </section>
+
+    <section>
+      <h2>Export row</h2>
+      <code id="exportRow"></code>
+    </section>
+  </main>
+
+  <script>
+    const controls = {
+      intent: document.getElementById("intent"),
+      depth: document.getElementById("depth"),
+      plane: document.getElementById("plane"),
+      anchor: document.getElementById("anchor"),
+      layerReady: document.getElementById("layerReady"),
+      motion: document.getElementById("motion")
+    };
+
+    const cards = document.getElementById("cards");
+    const ledger = document.getElementById("ledger");
+    const exportRow = document.getElementById("exportRow");
+    const scoreEl = document.getElementById("score");
+    const previewLayer = document.getElementById("previewLayer");
+
+    const meters = {
+      depth: document.getElementById("depthMeter"),
+      plane: document.getElementById("planeMeter"),
+      anchor: document.getElementById("anchorMeter"),
+      layer: document.getElementById("layerMeter")
+    };
+
+    function number(id) {
+      return Number(controls[id].value);
+    }
+
+    function pillClass(score) {
+      if (score >= 74) return "good";
+      if (score >= 50) return "warn";
+      return "bad";
+    }
+
+    function routeLabel(score) {
+      if (score >= 78) return "commit";
+      if (score >= 58) return "patch";
+      if (score >= 38) return "hold";
+      return "block";
+    }
+
+    function compute() {
+      const state = {
+        intent: controls.intent.value,
+        depth: number("depth"),
+        plane: number("plane"),
+        anchor: number("anchor"),
+        layer: number("layerReady"),
+        motion: number("motion")
+      };
+
+      const intentBias = {
+        placement: { depth: 0.18, plane: 0.28, anchor: 0.28, layer: 0.16, motion: 0.10 },
+        dashboard: { depth: 0.10, plane: 0.16, anchor: 0.30, layer: 0.32, motion: 0.12 },
+        occlusion: { depth: 0.38, plane: 0.16, anchor: 0.16, layer: 0.22, motion: 0.08 },
+        video: { depth: 0.08, plane: 0.10, anchor: 0.14, layer: 0.48, motion: 0.20 }
+      }[state.intent];
+
+      const motionStability = 100 - state.motion;
+      const score = Math.round(
+        state.depth * intentBias.depth +
+        state.plane * intentBias.plane +
+        state.anchor * intentBias.anchor +
+        state.layer * intentBias.layer +
+        motionStability * intentBias.motion
+      );
+
+      const contracts = [
+        {
+          name: "world-locked-layer",
+          score: Math.round(state.layer * 0.42 + state.anchor * 0.30 + motionStability * 0.18 + state.plane * 0.10),
+          body: "quad / cylinder layer を anchor or local-floor に固定する。読み物や操作盤向け。"
+        },
+        {
+          name: "occlusion-aware-mesh",
+          score: Math.round(state.depth * 0.48 + state.plane * 0.22 + state.layer * 0.18 + motionStability * 0.12),
+          body: "depth を mask として使い、projection 内 mesh で現実物体との前後関係を保つ。"
+        },
+        {
+          name: "reticle-preview-only",
+          score: Math.round(state.plane * 0.34 + motionStability * 0.28 + state.depth * 0.20 + state.anchor * 0.18),
+          body: "commit せず reticle と preview だけ出す。plane / depth が荒い時の安全側。"
+        },
+        {
+          name: "screen-fallback-row",
+          score: Math.round((100 - state.layer) * 0.35 + (100 - state.anchor) * 0.25 + state.motion * 0.25 + 20),
+          body: "XR scene に固定せず、通常 canvas / DOM に状態説明を退避する。"
+        }
+      ].sort((a, b) => b.score - a.score);
+
+      const selected = contracts[0];
+      const route = routeLabel(score);
+
+      meters.depth.style.setProperty("--w", `${state.depth}%`);
+      meters.plane.style.setProperty("--w", `${state.plane}%`);
+      meters.anchor.style.setProperty("--w", `${state.anchor}%`);
+      meters.layer.style.setProperty("--w", `${state.layer}%`);
+      scoreEl.textContent = score;
+      previewLayer.dataset.contract = selected.name;
+      previewLayer.style.setProperty("--dx", `${(state.anchor - 55) * 0.55}px`);
+      previewLayer.style.setProperty("--dy", `${(50 - state.layer) * 0.35}px`);
+      previewLayer.style.setProperty("--rot", `${(state.motion - 35) * 0.15}deg`);
+      previewLayer.style.opacity = selected.name === "screen-fallback-row" ? "0.45" : "1";
+
+      cards.innerHTML = contracts.map((item, index) => `
+        <div class="card">
+          <strong>${item.name}</strong>
+          <span class="pill ${index === 0 ? pillClass(score) : pillClass(item.score)}">${index === 0 ? route : item.score}</span>
+          <p>${item.body}</p>
+        </div>
+      `).join("");
+
+      const ledgerRows = [
+        ["depth row", state.depth, state.depth > 70 ? "shader occlusion ready" : state.depth > 45 ? "feather or patch" : "visual-only"],
+        ["plane row", state.plane, state.plane > 70 ? "placement surface ready" : state.plane > 45 ? "retarget before commit" : "reticle preview"],
+        ["anchor row", state.anchor, state.anchor > 70 ? "persistent space candidate" : state.anchor > 45 ? "local-floor fallback" : "no world lock"],
+        ["layer row", state.layer, state.layer > 70 ? "composition layer ready" : state.layer > 45 ? "projection mesh fallback" : "screen fallback"],
+        ["motion row", motionStability, motionStability > 70 ? "stable enough" : motionStability > 45 ? "short commit window" : "hold and re-sample"]
+      ];
+
+      ledger.innerHTML = ledgerRows.map(([name, value, note]) => `
+        <div class="row">
+          <strong>${name}</strong>
+          <div class="meter"><span style="width:${value}%"></span></div>
+          <span>${note}</span>
+        </div>
+      `).join("");
+
+      exportRow.textContent = JSON.stringify({
+        sample: "2026-09-20_scene_contract_readiness_ledger",
+        intent: state.intent,
+        contractScore: score,
+        selectedContract: selected.name,
+        route,
+        inputs: state,
+        contracts,
+        next: "Merge this row with feature negotiation and layer capability drift before starting the frame logger."
+      }, null, 2);
+    }
+
+    Object.values(controls).forEach((control) => control.addEventListener("input", compute));
+    compute();
+  </script>
+</body>
+</html>

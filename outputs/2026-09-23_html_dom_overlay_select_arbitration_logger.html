@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DOM Overlay Select Arbitration Logger</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111418;
+      --panel: #1b2228;
+      --panel-2: #242b31;
+      --line: #3c4850;
+      --text: #f4f1e9;
+      --muted: #b7c2c4;
+      --blue: #7cc7ff;
+      --mint: #86d9ad;
+      --amber: #e5bd68;
+      --red: #ef8178;
+      --ink: #101418;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(124, 199, 255, 0.10), transparent 36%),
+        linear-gradient(315deg, rgba(229, 189, 104, 0.08), transparent 42%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 38px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .intro, .stage, section {
+      background: rgba(27, 34, 40, 0.96);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .intro { padding: 24px; }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 5vw, 54px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .stage {
+      min-height: 360px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .world {
+      position: absolute;
+      inset: 70px 34px 38px;
+      border: 1px solid rgba(244, 241, 233, 0.18);
+      transform: perspective(760px) rotateX(56deg) rotateZ(-5deg);
+      background:
+        linear-gradient(90deg, rgba(124, 199, 255, 0.13) 1px, transparent 1px),
+        linear-gradient(rgba(124, 199, 255, 0.10) 1px, transparent 1px);
+      background-size: 34px 34px;
+    }
+
+    .overlay {
+      position: absolute;
+      left: 46px;
+      top: 46px;
+      width: min(380px, calc(100% - 92px));
+      min-height: 214px;
+      padding: 14px;
+      border: 2px solid rgba(134, 217, 173, 0.78);
+      border-radius: 8px;
+      background: rgba(17, 20, 24, 0.85);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .touch-zone {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-height: 76px;
+      padding: 10px;
+      display: grid;
+      align-content: center;
+      gap: 5px;
+      background: #20272d;
+    }
+
+    .touch-zone.active {
+      border-color: var(--mint);
+      background: rgba(134, 217, 173, 0.16);
+    }
+
+    .touch-zone.passive {
+      border-style: dashed;
+      border-color: rgba(229, 189, 104, 0.7);
+    }
+
+    .touch-zone strong { font-size: 13px; }
+    .touch-zone span { color: var(--muted); font-size: 12px; }
+
+    .ray {
+      position: absolute;
+      right: 78px;
+      top: 138px;
+      width: 420px;
+      height: 3px;
+      transform-origin: right center;
+      transform: rotate(170deg);
+      background: linear-gradient(90deg, rgba(239, 129, 120, 0), var(--ray-color), var(--ray-color));
+      box-shadow: 0 0 16px var(--ray-color);
+    }
+
+    .cursor {
+      position: absolute;
+      left: var(--cx);
+      top: var(--cy);
+      width: 24px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 2px solid var(--ray-color);
+      box-shadow: 0 0 22px var(--ray-color);
+      transform: translate(-50%, -50%);
+      background: rgba(17, 20, 24, 0.72);
+    }
+
+    .badge {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      width: 150px;
+      min-height: 96px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(17, 20, 24, 0.9);
+      padding: 12px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .badge strong {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--blue);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 800;
+      background: #22536f;
+      border-color: #5eaee7;
+    }
+
+    section {
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      min-height: 142px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #151a1f;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .pill {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 850;
+      color: var(--ink);
+      background: var(--blue);
+    }
+
+    .pill.good { background: var(--mint); }
+    .pill.warn { background: var(--amber); }
+    .pill.bad { background: var(--red); }
+
+    .log {
+      display: grid;
+      gap: 8px;
+      max-height: 220px;
+      overflow: auto;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 108px 1fr 116px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #14191e;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 178px;
+      padding: 12px;
+      line-height: 1.45;
+      resize: vertical;
+    }
+
+    .small { font-size: 12px; color: var(--muted); }
+
+    @media (max-width: 900px) {
+      header, .controls, .cards { grid-template-columns: 1fr; }
+      .stage { min-height: 430px; }
+      .overlay { left: 18px; right: 18px; width: auto; }
+      .ray { right: 28px; width: 300px; }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="intro">
+        <h1>DOM Overlay Select Arbitration Logger</h1>
+        <p>DOM Overlay の <code>beforexrselect</code> と WebXR の <code>select</code> を同じ入力列として扱い、DOM UI が消費すべき操作、XR world に渡す操作、二重発火を避ける guard をログ化します。</p>
+      </div>
+      <div class="stage" id="stage">
+        <div class="world"></div>
+        <div class="overlay" id="overlay">
+          <div class="touch-zone active" data-zone="button"><strong>Action button</strong><span>preventDefault zone</span></div>
+          <div class="touch-zone active" data-zone="slider"><strong>Slider rail</strong><span>DOM consumes select</span></div>
+          <div class="touch-zone passive" data-zone="label"><strong>Status label</strong><span>pass through</span></div>
+          <div class="touch-zone passive" data-zone="empty"><strong>Transparent pad</strong><span>guard margin only</span></div>
+        </div>
+        <div class="ray" id="ray"></div>
+        <div class="cursor" id="cursor"></div>
+        <div class="badge">
+          <span class="small">route</span>
+          <strong id="route">guard</strong>
+          <span id="scoreText">score 72</span>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <h2>Arbitration controls</h2>
+      <div class="controls">
+        <label>Input source
+          <select id="source">
+            <option value="controller">controller ray</option>
+            <option value="hand">tracked hand</option>
+            <option value="screen">screen transient</option>
+            <option value="gaze">gaze select</option>
+          </select>
+        </label>
+        <label>Overlay hit
+          <select id="hit">
+            <option value="button">button</option>
+            <option value="slider">slider</option>
+            <option value="label">label</option>
+            <option value="world">world only</option>
+          </select>
+        </label>
+        <label>beforexrselect
+          <select id="before">
+            <option value="prevented">preventDefault</option>
+            <option value="observed">observed only</option>
+            <option value="missing">not available</option>
+          </select>
+        </label>
+        <label>Ray confidence <span id="rayValue">82</span>
+          <input id="rayConfidence" type="range" min="0" max="100" value="82">
+        </label>
+        <label>Overlay opacity <span id="opacityValue">76</span>
+          <input id="overlayOpacity" type="range" min="0" max="100" value="76">
+        </label>
+        <button id="append" type="button">Append event</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Current arbitration row</h2>
+      <div class="cards">
+        <div class="card">
+          <span class="pill" id="domPill">DOM UI</span>
+          <h3 id="domTitle">DOM consumes primary action</h3>
+          <p id="domText">Touchable overlay region called preventDefault, so XR select should be suppressed.</p>
+        </div>
+        <div class="card">
+          <span class="pill" id="xrPill">XR world</span>
+          <h3 id="xrTitle">World select guarded</h3>
+          <p id="xrText">The world action is held until the input sequence ends.</p>
+        </div>
+        <div class="card">
+          <span class="pill warn" id="riskPill">duplicate risk</span>
+          <h3 id="riskTitle">Low</h3>
+          <p id="riskText">DOM and XR paths are separated for this row.</p>
+        </div>
+        <div class="card">
+          <span class="pill good" id="nextPill">next</span>
+          <h3 id="nextTitle">Commit UI action</h3>
+          <p id="nextText">Save DOM interaction and emit a compact arbitration row.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Event ledger</h2>
+      <div class="log" id="log"></div>
+    </section>
+
+    <section>
+      <h2>Export JSON</h2>
+      <textarea id="export" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      source: "controller",
+      hit: "button",
+      before: "prevented",
+      rayConfidence: 82,
+      overlayOpacity: 76,
+      rows: []
+    };
+
+    const els = {
+      source: document.getElementById("source"),
+      hit: document.getElementById("hit"),
+      before: document.getElementById("before"),
+      rayConfidence: document.getElementById("rayConfidence"),
+      overlayOpacity: document.getElementById("overlayOpacity"),
+      rayValue: document.getElementById("rayValue"),
+      opacityValue: document.getElementById("opacityValue"),
+      route: document.getElementById("route"),
+      scoreText: document.getElementById("scoreText"),
+      ray: document.getElementById("ray"),
+      cursor: document.getElementById("cursor"),
+      domPill: document.getElementById("domPill"),
+      domTitle: document.getElementById("domTitle"),
+      domText: document.getElementById("domText"),
+      xrPill: document.getElementById("xrPill"),
+      xrTitle: document.getElementById("xrTitle"),
+      xrText: document.getElementById("xrText"),
+      riskPill: document.getElementById("riskPill"),
+      riskTitle: document.getElementById("riskTitle"),
+      riskText: document.getElementById("riskText"),
+      nextPill: document.getElementById("nextPill"),
+      nextTitle: document.getElementById("nextTitle"),
+      nextText: document.getElementById("nextText"),
+      log: document.getElementById("log"),
+      export: document.getElementById("export"),
+      overlay: document.getElementById("overlay"),
+      cursor: document.getElementById("cursor")
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function compute() {
+      const overlayHit = state.hit !== "world";
+      const activeDom = state.hit === "button" || state.hit === "slider";
+      const beforeWorks = state.before === "prevented";
+      const opacityWeight = state.overlayOpacity / 100;
+      const rayWeight = state.rayConfidence / 100;
+      const domScore = overlayHit ? Math.round((activeDom ? 46 : 22) + opacityWeight * 28 + (beforeWorks ? 24 : 0)) : 0;
+      const xrScore = Math.round((overlayHit ? 28 : 74) + rayWeight * 24 - (beforeWorks && activeDom ? 32 : 0));
+      const duplicateRisk = clamp(Math.round((overlayHit ? 28 : 8) + (activeDom && !beforeWorks ? 38 : 0) + (state.before === "missing" ? 20 : 0) - opacityWeight * 12), 0, 100);
+
+      let route = "xr-select";
+      let color = "var(--blue)";
+      if (overlayHit && activeDom && beforeWorks) {
+        route = "dom-consume";
+        color = "var(--mint)";
+      } else if (overlayHit && duplicateRisk > 55) {
+        route = "dual-guard";
+        color = "var(--amber)";
+      } else if (state.rayConfidence < 34) {
+        route = "drop";
+        color = "var(--red)";
+      }
+
+      return {
+        timestamp: new Date().toISOString(),
+        source: state.source,
+        overlayHit: state.hit,
+        beforexrselect: state.before,
+        rayConfidence: state.rayConfidence,
+        overlayOpacity: state.overlayOpacity,
+        domScore,
+        xrScore,
+        duplicateRisk,
+        route,
+        next: route === "dom-consume" ? "commit-dom-action" : route === "xr-select" ? "commit-world-select" : route === "dual-guard" ? "hold-until-sequence-end" : "drop-low-confidence",
+        color
+      };
+    }
+
+    function setPill(el, label, kind) {
+      el.className = `pill ${kind || ""}`.trim();
+      el.textContent = label;
+    }
+
+    function render() {
+      const row = compute();
+      document.documentElement.style.setProperty("--ray-color", row.color);
+      els.rayValue.textContent = state.rayConfidence;
+      els.opacityValue.textContent = state.overlayOpacity;
+      els.route.textContent = row.route;
+      els.scoreText.textContent = `dom ${row.domScore} / xr ${row.xrScore}`;
+      els.overlay.style.opacity = String(0.45 + state.overlayOpacity / 180);
+      els.cursor.style.setProperty("--cx", state.hit === "world" ? "72%" : state.hit === "slider" ? "28%" : state.hit === "label" ? "18%" : "24%");
+      els.cursor.style.setProperty("--cy", state.hit === "world" ? "68%" : state.hit === "slider" ? "30%" : state.hit === "label" ? "55%" : "31%");
+
+      document.querySelectorAll(".touch-zone").forEach((zone) => {
+        zone.classList.toggle("active", zone.dataset.zone === state.hit && (state.hit === "button" || state.hit === "slider"));
+      });
+
+      if (row.route === "dom-consume") {
+        setPill(els.domPill, "DOM UI", "good");
+        els.domTitle.textContent = "DOM consumes primary action";
+        els.domText.textContent = "beforexrselect was cancelled, so selectstart/select/selectend should be suppressed for the XR world.";
+        setPill(els.xrPill, "XR world", "warn");
+        els.xrTitle.textContent = "World select suppressed";
+        els.xrText.textContent = "Keep pose polling if needed, but do not commit a duplicate world action.";
+        setPill(els.nextPill, "next", "good");
+        els.nextTitle.textContent = "Commit UI action";
+        els.nextText.textContent = "Persist a compact arbitration row with DOM as owner.";
+      } else if (row.route === "dual-guard") {
+        setPill(els.domPill, "DOM UI", "warn");
+        els.domTitle.textContent = "DOM hit is ambiguous";
+        els.domText.textContent = "The overlay was intersected, but suppression is missing or only observed.";
+        setPill(els.xrPill, "XR world", "warn");
+        els.xrTitle.textContent = "World select held";
+        els.xrText.textContent = "Delay the world commit until pointerup/selectend resolves ownership.";
+        setPill(els.nextPill, "next", "warn");
+        els.nextTitle.textContent = "Hold sequence";
+        els.nextText.textContent = "Prefer a guard over duplicate DOM and XR actions.";
+      } else if (row.route === "drop") {
+        setPill(els.domPill, "DOM UI", "bad");
+        els.domTitle.textContent = "Input confidence too low";
+        els.domText.textContent = "Do not treat this as an intentional overlay action.";
+        setPill(els.xrPill, "XR world", "bad");
+        els.xrTitle.textContent = "World select blocked";
+        els.xrText.textContent = "Ask for a cleaner ray, hand pose, or screen tap.";
+        setPill(els.nextPill, "next", "bad");
+        els.nextTitle.textContent = "Drop row";
+        els.nextText.textContent = "Record the failure but avoid app state changes.";
+      } else {
+        setPill(els.domPill, "DOM UI", "");
+        els.domTitle.textContent = "Overlay not consuming";
+        els.domText.textContent = "The interaction is outside a touchable overlay zone or intentionally passes through.";
+        setPill(els.xrPill, "XR world", "good");
+        els.xrTitle.textContent = "World select commits";
+        els.xrText.textContent = "Commit the XR selection with ray confidence attached.";
+        setPill(els.nextPill, "next", "good");
+        els.nextTitle.textContent = "Commit XR action";
+        els.nextText.textContent = "Attach overlay hit metadata for replay.";
+      }
+
+      setPill(els.riskPill, "duplicate risk", row.duplicateRisk > 65 ? "bad" : row.duplicateRisk > 36 ? "warn" : "good");
+      els.riskTitle.textContent = row.duplicateRisk > 65 ? "High" : row.duplicateRisk > 36 ? "Medium" : "Low";
+      els.riskText.textContent = `Estimated duplicate action risk is ${row.duplicateRisk}.`;
+
+      const rows = state.rows.length ? state.rows : [row];
+      els.log.innerHTML = rows.slice(-8).reverse().map((item) => `
+        <div class="row">
+          <strong>${item.route}</strong>
+          <span>${item.source} / hit ${item.overlayHit} / ${item.beforexrselect}</span>
+          <span class="small">risk ${item.duplicateRisk}</span>
+        </div>
+      `).join("");
+      els.export.value = JSON.stringify({ sample: "dom-overlay-select-arbitration", current: row, rows: state.rows }, null, 2);
+    }
+
+    function sync() {
+      state.source = els.source.value;
+      state.hit = els.hit.value;
+      state.before = els.before.value;
+      state.rayConfidence = Number(els.rayConfidence.value);
+      state.overlayOpacity = Number(els.overlayOpacity.value);
+      render();
+    }
+
+    ["source", "hit", "before", "rayConfidence", "overlayOpacity"].forEach((key) => {
+      els[key].addEventListener("input", sync);
+    });
+
+    document.getElementById("append").addEventListener("click", () => {
+      state.rows.push(compute());
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Session Context Merge Store</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101415;
+      --panel: #1a2224;
+      --panel-2: #222b2e;
+      --line: #354247;
+      --text: #f5f1e9;
+      --muted: #b9c3c1;
+      --cyan: #66cbd5;
+      --green: #8bd381;
+      --amber: #e5ba61;
+      --red: #ee8377;
+      --violet: #aaa0ee;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(132deg, rgba(102, 203, 213, 0.13), transparent 34%),
+        linear-gradient(42deg, transparent 42%, rgba(139, 211, 129, 0.10)),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1160px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 0.92fr 1.08fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .intro, .stage, section {
+      background: rgba(26, 34, 36, 0.95);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.25);
+    }
+
+    .intro { padding: 24px; }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 56px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .stage {
+      min-height: 342px;
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+    }
+
+    .space {
+      position: absolute;
+      inset: 74px 46px 42px;
+      border: 1px solid rgba(245, 241, 233, 0.20);
+      transform: perspective(620px) rotateX(60deg) rotateZ(-7deg);
+      background:
+        linear-gradient(90deg, rgba(102, 203, 213, 0.16) 1px, transparent 1px),
+        linear-gradient(rgba(102, 203, 213, 0.10) 1px, transparent 1px);
+      background-size: 34px 34px;
+    }
+
+    .context-node {
+      position: absolute;
+      width: 122px;
+      min-height: 72px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(16, 20, 21, 0.86);
+      display: grid;
+      gap: 7px;
+      align-content: start;
+    }
+
+    .context-node strong {
+      font-size: 13px;
+    }
+
+    .context-node span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .node-feature { left: 30px; top: 38px; }
+    .node-layer { right: 34px; top: 54px; }
+    .node-contract { left: calc(50% - 61px); top: 132px; border-color: rgba(229, 186, 97, 0.78); }
+    .node-store { left: calc(50% - 61px); bottom: 28px; border-color: rgba(139, 211, 129, 0.78); }
+
+    .beam {
+      position: absolute;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(102, 203, 213, 0.12), rgba(102, 203, 213, 0.72), rgba(139, 211, 129, 0.16));
+      transform-origin: left center;
+      opacity: var(--o, 0.7);
+    }
+
+    .beam.a { left: 150px; top: 98px; width: 300px; transform: rotate(12deg); }
+    .beam.b { right: 156px; top: 112px; width: 282px; transform: rotate(168deg); }
+    .beam.c { left: calc(50% - 1px); top: 204px; width: 118px; transform: rotate(90deg); }
+
+    .status-strip {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .chip {
+      min-height: 58px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(16, 20, 21, 0.82);
+    }
+
+    .chip strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .chip span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--cyan);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 760;
+      background: #24575c;
+      border-color: #50a9b2;
+    }
+
+    section {
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      min-height: 142px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #151b1d;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 9px;
+    }
+
+    .pill {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #082024;
+      background: var(--cyan);
+    }
+
+    .pill.good { background: var(--green); color: #0d2011; }
+    .pill.warn { background: var(--amber); color: #251b07; }
+    .pill.bad { background: var(--red); color: #2d1010; }
+    .pill.info { background: var(--violet); color: #171331; }
+
+    .card h3 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    .card p {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .ledger {
+      display: grid;
+      grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+      gap: 12px;
+    }
+
+    pre, textarea {
+      width: 100%;
+      min-height: 220px;
+      margin: 0;
+      padding: 14px;
+      overflow: auto;
+      white-space: pre-wrap;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #101415;
+      color: #dce9e5;
+      font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 860px) {
+      header, .ledger { grid-template-columns: 1fr; }
+      .controls, .cards, .status-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 560px) {
+      .controls, .cards, .status-strip { grid-template-columns: 1fr; }
+      .stage { min-height: 420px; }
+      .node-feature, .node-layer, .node-contract, .node-store {
+        position: relative;
+        left: auto;
+        right: auto;
+        top: auto;
+        bottom: auto;
+        width: 100%;
+        margin-bottom: 8px;
+      }
+      .beam, .space { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="intro">
+        <h1>Session Context Merge Store</h1>
+        <p>feature negotiation、layer readiness、scene contract をひとつの session context にまとめ、IndexedDB 保存と JSON export までを小さく試す自作サンプルです。</p>
+      </div>
+      <div class="stage" aria-label="Session context flow">
+        <div class="space"></div>
+        <div class="beam a"></div>
+        <div class="beam b"></div>
+        <div class="beam c"></div>
+        <div class="context-node node-feature"><strong>feature row</strong><span id="featureNode">coverage 72%</span></div>
+        <div class="context-node node-layer"><strong>layer row</strong><span id="layerNode">readiness 66%</span></div>
+        <div class="context-node node-contract"><strong>contract row</strong><span id="contractNode">world locked</span></div>
+        <div class="context-node node-store"><strong>context store</strong><span id="storeNode">ready to persist</span></div>
+        <div class="status-strip">
+          <div class="chip"><strong>merge route</strong><span id="routeChip">merge trusted context</span></div>
+          <div class="chip"><strong>context score</strong><span id="scoreChip">74</span></div>
+          <div class="chip"><strong>ttl</strong><span id="ttlChip">18 min</span></div>
+          <div class="chip"><strong>privacy</strong><span id="privacyChip">coarse</span></div>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <h2>Context inputs</h2>
+      <div class="controls">
+        <label>Session intent
+          <select id="intent">
+            <option value="placement">AR placement</option>
+            <option value="inspection">Spatial inspection</option>
+            <option value="dashboard">World dashboard</option>
+            <option value="immersive">Immersive veil</option>
+          </select>
+        </label>
+        <label>Feature coverage <span id="featureValue">72</span>
+          <input id="featureCoverage" type="range" min="0" max="100" value="72">
+        </label>
+        <label>Layer readiness <span id="layerValue">66</span>
+          <input id="layerReadiness" type="range" min="0" max="100" value="66">
+        </label>
+        <label>Contract score <span id="contractValue">78</span>
+          <input id="contractScore" type="range" min="0" max="100" value="78">
+        </label>
+        <label>Context TTL <span id="ttlValue">18</span>
+          <input id="ttl" type="range" min="1" max="60" value="18">
+        </label>
+        <label>Privacy grain
+          <select id="privacy">
+            <option value="coarse">Coarse rows</option>
+            <option value="semantic">Semantic labels</option>
+            <option value="precise">Precise geometry</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions">
+        <button id="saveButton">Save context row</button>
+        <button id="seedButton">Load seed rows</button>
+        <button id="copyButton">Copy export JSON</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Merge decision</h2>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <section>
+      <h2>Export</h2>
+      <div class="ledger">
+        <div>
+          <pre id="exportBox"></pre>
+        </div>
+        <div>
+          <textarea id="historyBox" spellcheck="false" aria-label="Saved session context rows"></textarea>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const controls = ["intent", "featureCoverage", "layerReadiness", "contractScore", "ttl", "privacy"].map($);
+    const dbName = "xr-session-context-2026-09-21";
+    let savedRows = [];
+
+    const seedRows = [
+      { kind: "feature-negotiation", date: "2026-09-18", score: 72, route: "optional gaps logged", rows: ["hit-test", "anchors", "dom-overlay", "plane-detection"] },
+      { kind: "layer-readiness", date: "2026-09-19", score: 66, route: "projection fallback guarded", rows: ["XRWebGLBinding", "quad-layer", "multiview"] },
+      { kind: "scene-contract", date: "2026-09-20", score: 78, route: "world-locked-layer", rows: ["depth", "plane", "anchor", "motion"] }
+    ];
+
+    function routeFor(score, privacy, intent) {
+      if (privacy === "precise" && intent !== "inspection") return "save coarse fallback only";
+      if (score >= 78) return "merge trusted context";
+      if (score >= 58) return "merge with caution";
+      if (score >= 40) return "attach as fallback row";
+      return "discard before frame logger";
+    }
+
+    function buildRow() {
+      const feature = Number($("featureCoverage").value);
+      const layer = Number($("layerReadiness").value);
+      const contract = Number($("contractScore").value);
+      const ttl = Number($("ttl").value);
+      const privacy = $("privacy").value;
+      const intent = $("intent").value;
+      const score = Math.round(feature * 0.34 + layer * 0.26 + contract * 0.30 + (privacy === "precise" ? -8 : privacy === "semantic" ? -2 : 4) + (ttl > 30 ? -4 : 3));
+      const clamped = Math.max(0, Math.min(100, score));
+      return {
+        id: `ctx-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        sessionIntent: intent,
+        contextScore: clamped,
+        route: routeFor(clamped, privacy, intent),
+        expiresInMinutes: ttl,
+        privacyGrain: privacy,
+        sourceRows: {
+          featureNegotiation: { date: "2026-09-18", coverage: feature, enabledFeatures: ["hit-test", "anchors", "dom-overlay"], optionalGaps: feature < 82 ? ["mesh-detection", "depth-sensing"] : [] },
+          layerReadiness: { date: "2026-09-19", readiness: layer, route: layer > 70 ? "native-layer" : "projection-fallback" },
+          sceneContract: { date: "2026-09-20", score: contract, selectedContract: contract > 74 ? "world-locked-layer" : "reticle-preview-only" }
+        },
+        nextFrameLoggerHint: {
+          initialTrust: clamped >= 78 ? "high" : clamped >= 58 ? "guarded" : "low",
+          attachBeforeXRFrame: clamped >= 40,
+          stripPreciseGeometry: privacy !== "precise" || intent !== "inspection"
+        }
+      };
+    }
+
+    function renderCards(row) {
+      const source = row.sourceRows;
+      const cards = [
+        ["feature row", `${source.featureNegotiation.coverage}%`, source.featureNegotiation.optionalGaps.length ? "optional gaps remain" : "required and optional aligned", source.featureNegotiation.coverage > 70 ? "good" : "warn"],
+        ["layer row", `${source.layerReadiness.readiness}%`, source.layerReadiness.route, source.layerReadiness.readiness > 72 ? "good" : "warn"],
+        ["contract row", `${source.sceneContract.score}%`, source.sceneContract.selectedContract, source.sceneContract.score > 74 ? "good" : "info"],
+        ["store policy", row.route, row.nextFrameLoggerHint.initialTrust, row.contextScore > 57 ? "good" : "bad"]
+      ];
+      $("cards").innerHTML = cards.map(([title, value, body, tone]) => `
+        <article class="card">
+          <span class="pill ${tone}">${value}</span>
+          <h3>${title}</h3>
+          <p>${body}</p>
+        </article>
+      `).join("");
+    }
+
+    function render() {
+      const row = buildRow();
+      $("featureValue").textContent = $("featureCoverage").value;
+      $("layerValue").textContent = $("layerReadiness").value;
+      $("contractValue").textContent = $("contractScore").value;
+      $("ttlValue").textContent = $("ttl").value;
+      $("featureNode").textContent = `coverage ${$("featureCoverage").value}%`;
+      $("layerNode").textContent = `readiness ${$("layerReadiness").value}%`;
+      $("contractNode").textContent = row.sourceRows.sceneContract.selectedContract;
+      $("storeNode").textContent = row.nextFrameLoggerHint.attachBeforeXRFrame ? "attach before XRFrame" : "keep local only";
+      $("routeChip").textContent = row.route;
+      $("scoreChip").textContent = row.contextScore;
+      $("ttlChip").textContent = `${row.expiresInMinutes} min`;
+      $("privacyChip").textContent = row.privacyGrain;
+      $("exportBox").textContent = JSON.stringify({ sessionContext: row, seedRows }, null, 2);
+      $("historyBox").value = JSON.stringify(savedRows, null, 2);
+      renderCards(row);
+    }
+
+    function openDb() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(dbName, 1);
+        request.onupgradeneeded = () => request.result.createObjectStore("contexts", { keyPath: "id" });
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function saveRow() {
+      const row = buildRow();
+      try {
+        const db = await openDb();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction("contexts", "readwrite");
+          tx.objectStore("contexts").put(row);
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        });
+        savedRows = [row, ...savedRows].slice(0, 8);
+      } catch (error) {
+        savedRows = [{ ...row, storageWarning: String(error.message || error) }, ...savedRows].slice(0, 8);
+      }
+      render();
+    }
+
+    function loadSeed() {
+      const avg = Math.round(seedRows.reduce((sum, row) => sum + row.score, 0) / seedRows.length);
+      $("featureCoverage").value = seedRows[0].score;
+      $("layerReadiness").value = seedRows[1].score;
+      $("contractScore").value = seedRows[2].score;
+      $("ttl").value = avg > 70 ? 18 : 8;
+      render();
+    }
+
+    async function copyExport() {
+      try {
+        await navigator.clipboard.writeText($("exportBox").textContent);
+        $("copyButton").textContent = "Copied";
+        setTimeout(() => $("copyButton").textContent = "Copy export JSON", 900);
+      } catch {
+        $("copyButton").textContent = "Select JSON manually";
+      }
+    }
+
+    controls.forEach((control) => control.addEventListener("input", render));
+    $("saveButton").addEventListener("click", saveRow);
+    $("seedButton").addEventListener("click", loadSeed);
+    $("copyButton").addEventListener("click", copyExport);
+    render();
+  </script>
+</body>
+</html>

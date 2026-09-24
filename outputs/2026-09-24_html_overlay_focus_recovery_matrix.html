@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Overlay Focus Recovery Matrix</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101317;
+      --panel: #1a2227;
+      --panel-2: #222c32;
+      --line: #41505a;
+      --text: #f5f2e9;
+      --muted: #b8c4c4;
+      --cyan: #7ed7ff;
+      --green: #8ee3b0;
+      --yellow: #e8bf68;
+      --red: #ee8077;
+      --violet: #bca7ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(126, 215, 255, 0.12), transparent 34%),
+        linear-gradient(315deg, rgba(142, 227, 176, 0.10), transparent 42%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 38px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 0.85fr 1.15fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .intro, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(26, 34, 39, 0.96);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .intro { padding: 24px; }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 5vw, 54px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .stage {
+      min-height: 390px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .world-grid {
+      position: absolute;
+      inset: 86px 34px 48px;
+      border: 1px solid rgba(245, 242, 233, 0.18);
+      transform: perspective(820px) rotateX(58deg) rotateZ(-7deg);
+      background:
+        linear-gradient(90deg, rgba(126, 215, 255, 0.12) 1px, transparent 1px),
+        linear-gradient(rgba(126, 215, 255, 0.09) 1px, transparent 1px);
+      background-size: 34px 34px;
+    }
+
+    .overlay-root {
+      position: absolute;
+      left: 44px;
+      top: 42px;
+      width: min(430px, calc(100% - 88px));
+      min-height: 230px;
+      border: 2px solid var(--green);
+      border-radius: 8px;
+      background: rgba(16, 19, 23, 0.87);
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .overlay-cell {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-height: 82px;
+      padding: 10px;
+      background: #222b31;
+      display: grid;
+      align-content: center;
+      gap: 5px;
+    }
+
+    .overlay-cell.active {
+      border-color: var(--green);
+      background: rgba(142, 227, 176, 0.16);
+    }
+
+    .overlay-cell.warn {
+      border-color: var(--yellow);
+      background: rgba(232, 191, 104, 0.14);
+    }
+
+    .overlay-cell span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .ray {
+      position: absolute;
+      right: 72px;
+      top: var(--ray-top);
+      width: 430px;
+      height: 3px;
+      transform-origin: right center;
+      transform: rotate(var(--ray-rot));
+      background: linear-gradient(90deg, transparent, var(--ray-color), var(--ray-color));
+      box-shadow: 0 0 18px var(--ray-color);
+    }
+
+    .reticle {
+      position: absolute;
+      left: var(--reticle-x);
+      top: var(--reticle-y);
+      width: 28px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 2px solid var(--ray-color);
+      box-shadow: 0 0 24px var(--ray-color);
+      transform: translate(-50%, -50%);
+      background: rgba(16, 19, 23, 0.74);
+    }
+
+    .badge {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      width: 178px;
+      min-height: 112px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(16, 19, 23, 0.92);
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .badge strong {
+      font-size: 24px;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--cyan);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 800;
+      background: #21566f;
+      border-color: #66bdea;
+    }
+
+    section {
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      min-height: 110px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      display: grid;
+      gap: 8px;
+    }
+
+    .card strong {
+      color: var(--card-color);
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .ledger {
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 120px 1fr 100px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(34, 44, 50, 0.8);
+    }
+
+    .pill {
+      justify-self: start;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: var(--pill-bg);
+      color: #101317;
+      font-weight: 800;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 156px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      resize: vertical;
+    }
+
+    @media (max-width: 860px) {
+      header { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .matrix { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .row { grid-template-columns: 1fr; }
+      .stage { min-height: 430px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="intro">
+        <h1>Overlay Focus Recovery Matrix</h1>
+        <p>DOM Overlay の focus、beforexrselect、visibility、keyboard intent を同じ行にして、XR world select へ戻すか、DOM 入力へ残すか、復帰待ちにするかを判定します。</p>
+      </div>
+      <div class="stage" id="stage">
+        <div class="world-grid"></div>
+        <div class="ray" id="ray"></div>
+        <div class="reticle" id="reticle"></div>
+        <div class="overlay-root">
+          <div class="overlay-cell active"><strong>Search field</strong><span>focus / keyboard / composition</span></div>
+          <div class="overlay-cell warn"><strong>Action button</strong><span>beforexrselect owner</span></div>
+          <div class="overlay-cell"><strong>Status label</strong><span>pass-through candidate</span></div>
+          <div class="overlay-cell"><strong>World handoff</strong><span>reticle can resume here</span></div>
+        </div>
+        <div class="badge">
+          <span>route</span>
+          <strong id="routeLabel">dom-focus</strong>
+          <p id="badgeText">DOM keeps ownership while text intent is active.</p>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <h2>Input row</h2>
+      <div class="controls">
+        <label>
+          Focus owner
+          <select id="focusOwner">
+            <option value="text">DOM text field</option>
+            <option value="button">DOM button</option>
+            <option value="world">XR world</option>
+            <option value="lost">Lost / blurred</option>
+          </select>
+        </label>
+        <label>
+          beforexrselect
+          <select id="beforeMode">
+            <option value="prevented">preventDefault</option>
+            <option value="passive">pass-through</option>
+            <option value="missing">missing</option>
+          </select>
+        </label>
+        <label>
+          domOverlayState
+          <select id="overlayState">
+            <option value="screen">screen</option>
+            <option value="floating">floating</option>
+            <option value="unknown">unknown</option>
+          </select>
+        </label>
+        <label>
+          visibility
+          <select id="visibility">
+            <option value="visible">visible</option>
+            <option value="blurred">visible-blurred</option>
+            <option value="hidden">hidden</option>
+          </select>
+        </label>
+        <label>
+          Keyboard intent <span id="keyboardValue">72</span>
+          <input id="keyboardIntent" type="range" min="0" max="100" value="72">
+        </label>
+        <label>
+          Ray confidence <span id="rayValue">84</span>
+          <input id="rayConfidence" type="range" min="0" max="100" value="84">
+        </label>
+      </div>
+      <button id="appendBtn" type="button">Append focus row</button>
+    </section>
+
+    <section>
+      <h2>Recovery matrix</h2>
+      <div class="matrix" id="matrix"></div>
+    </section>
+
+    <section>
+      <h2>Ledger</h2>
+      <div class="ledger" id="ledger"></div>
+    </section>
+
+    <section>
+      <h2>Export row</h2>
+      <textarea id="exportBox" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const controls = {
+      focusOwner: document.querySelector("#focusOwner"),
+      beforeMode: document.querySelector("#beforeMode"),
+      overlayState: document.querySelector("#overlayState"),
+      visibility: document.querySelector("#visibility"),
+      keyboardIntent: document.querySelector("#keyboardIntent"),
+      rayConfidence: document.querySelector("#rayConfidence")
+    };
+
+    const routeLabel = document.querySelector("#routeLabel");
+    const badgeText = document.querySelector("#badgeText");
+    const matrix = document.querySelector("#matrix");
+    const ledger = document.querySelector("#ledger");
+    const exportBox = document.querySelector("#exportBox");
+    const ray = document.querySelector("#ray");
+    const reticle = document.querySelector("#reticle");
+    const keyboardValue = document.querySelector("#keyboardValue");
+    const rayValue = document.querySelector("#rayValue");
+
+    const rows = [];
+
+    function scoreState() {
+      const keyboard = Number(controls.keyboardIntent.value);
+      const rayConfidence = Number(controls.rayConfidence.value);
+      const focusOwner = controls.focusOwner.value;
+      const beforeMode = controls.beforeMode.value;
+      const overlayState = controls.overlayState.value;
+      const visibility = controls.visibility.value;
+      const overlayKnown = overlayState !== "unknown";
+      const visible = visibility === "visible";
+
+      let route = "world-resume";
+      let color = "var(--cyan)";
+      let reason = "XR world can take the next select.";
+      let risk = Math.max(0, 100 - rayConfidence);
+
+      if (!visible) {
+        route = "hold-hidden";
+        color = "var(--red)";
+        reason = "Session visibility is not stable enough to commit.";
+        risk += 34;
+      } else if (focusOwner === "text" && keyboard > 48) {
+        route = "dom-focus";
+        color = "var(--green)";
+        reason = "Text input intent is still active in the overlay.";
+        risk += beforeMode === "missing" ? 18 : 4;
+      } else if (focusOwner === "button" && beforeMode === "prevented") {
+        route = "dom-action";
+        color = "var(--green)";
+        reason = "Interactive overlay target owns this primary action.";
+        risk += 7;
+      } else if (focusOwner === "lost" || !overlayKnown) {
+        route = "recover-focus";
+        color = "var(--yellow)";
+        reason = "Focus state is ambiguous; ask for a reticle or DOM heartbeat.";
+        risk += 26;
+      } else if (beforeMode === "missing" && focusOwner !== "world") {
+        route = "dual-guard";
+        color = "var(--yellow)";
+        reason = "Overlay target exists but beforexrselect did not arbitrate.";
+        risk += 30;
+      }
+
+      const handoffScore = Math.round((rayConfidence * 0.55) + ((100 - keyboard) * 0.25) + (visible ? 20 : 0) - (overlayKnown ? 0 : 14));
+      return {
+        time: new Date().toISOString(),
+        focusOwner,
+        beforeMode,
+        overlayState,
+        visibility,
+        keyboard,
+        rayConfidence,
+        route,
+        reason,
+        color,
+        risk: Math.max(0, Math.min(100, Math.round(risk))),
+        handoffScore: Math.max(0, Math.min(100, handoffScore))
+      };
+    }
+
+    function render() {
+      const row = scoreState();
+      keyboardValue.textContent = row.keyboard;
+      rayValue.textContent = row.rayConfidence;
+      routeLabel.textContent = row.route;
+      routeLabel.style.color = row.color;
+      badgeText.textContent = row.reason;
+      document.documentElement.style.setProperty("--ray-color", row.color);
+      document.documentElement.style.setProperty("--ray-top", row.focusOwner === "world" ? "236px" : "152px");
+      document.documentElement.style.setProperty("--ray-rot", row.focusOwner === "world" ? "188deg" : "170deg");
+      document.documentElement.style.setProperty("--reticle-x", row.focusOwner === "world" ? "58%" : "27%");
+      document.documentElement.style.setProperty("--reticle-y", row.focusOwner === "world" ? "70%" : "38%");
+
+      const cards = [
+        ["Route", row.route, row.color, row.reason],
+        ["Handoff score", row.handoffScore, "var(--cyan)", "Higher means the world reticle can safely resume."],
+        ["Duplicate risk", row.risk, row.risk > 55 ? "var(--red)" : "var(--yellow)", "Risk of DOM and XR world both receiving the action."],
+        ["Overlay state", row.overlayState, "var(--violet)", "Use domOverlayState when available; log unknowns."]
+      ];
+      matrix.innerHTML = cards.map(([title, value, color, text]) => `
+        <div class="card" style="--card-color:${color}">
+          <h3>${title}</h3>
+          <strong>${value}</strong>
+          <p>${text}</p>
+        </div>
+      `).join("");
+
+      exportBox.value = JSON.stringify(row, null, 2);
+    }
+
+    function appendRow() {
+      const row = scoreState();
+      rows.unshift(row);
+      if (rows.length > 6) rows.pop();
+      ledger.innerHTML = rows.map((item) => `
+        <div class="row">
+          <span class="pill" style="--pill-bg:${item.color}">${item.route}</span>
+          <p>${item.reason} focus=${item.focusOwner}, before=${item.beforeMode}, keyboard=${item.keyboard}, ray=${item.rayConfidence}</p>
+          <strong>${item.handoffScore}/100</strong>
+        </div>
+      `).join("");
+      exportBox.value = JSON.stringify(rows, null, 2);
+    }
+
+    Object.values(controls).forEach((control) => control.addEventListener("input", render));
+    document.querySelector("#appendBtn").addEventListener("click", appendRow);
+    render();
+    appendRow();
+  </script>
+</body>
+</html>

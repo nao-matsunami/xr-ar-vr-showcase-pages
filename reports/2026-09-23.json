@@ -1,0 +1,121 @@
+{
+  "date": "2026-09-23",
+  "headline": "DOM Overlay の select 競合を arbitration row にする",
+  "headlineEn": "Turning DOM Overlay select conflicts into arbitration rows",
+  "summary": "W3C WebXR DOM Overlays Module、MDN `beforexrselect`、MDN WebXR input guide、W3C WebXR Hand Input Module、Immersive Web samples を参照し、DOM UI と XR world select の二重発火を防ぐ本命サンプルと、hand joint / controller / gaze 入力を overlay 安全域へ割り振る派生サンプルを追加しました。",
+  "summaryEn": "After checking the W3C WebXR DOM Overlays Module, MDN `beforexrselect`, the MDN WebXR input guide, the W3C WebXR Hand Input Module, and Immersive Web samples, today's original work adds a main sample that prevents duplicate DOM UI and XR world select actions, plus a derivative sample that routes hand joint / controller / gaze input into overlay-safe envelopes.",
+  "keyTopics": [
+    "WebXR DOM Overlays Module は `beforexrselect` を定義し、DOM overlay 上の操作が XR の `selectstart` / `select` / `selectend` に重複して流れるのを抑える入口になります。",
+    "MDN の `beforexrselect` ページは 2026年時点で実装上の使いどころを整理しており、overlay container で `preventDefault()` する基本パターンを確認できます。",
+    "MDN WebXR input guide は `targetRaySpace`、`gripSpace`、input source、profile を分けて説明しており、DOM と world の所有権を行単位に分ける設計に向いています。",
+    "W3C WebXR Hand Input Module は articulated hand poses を Device API に足す仕様で、hand pinch が DOM overlay と world reticle のどちらを触ったかを confidence 付きで扱う理由になります。",
+    "今日の公開カードは外部デモではなく、自作の `DOM Overlay Select Arbitration Logger` と `Hand Overlay Reach Envelope Router` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR DOM Overlays Module defines `beforexrselect`, giving applications an entry point for suppressing duplicate `selectstart` / `select` / `selectend` events when a DOM overlay owns an action.",
+    "MDN's `beforexrselect` page explains the practical pattern of calling `preventDefault()` on an overlay container.",
+    "MDN's WebXR input guide separates `targetRaySpace`, `gripSpace`, input sources, and profiles, which supports row-level ownership between DOM and world interactions.",
+    "The W3C WebXR Hand Input Module adds articulated hand poses to the Device API, motivating confidence-based routing between hand pinch, DOM overlay, and world reticle targets.",
+    "Today's public cards are the original workspace samples `DOM Overlay Select Arbitration Logger` and `Hand Overlay Reach Envelope Router`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: DOM Overlay Select Arbitration Logger",
+      "url": "../outputs/2026-09-23_html_dom_overlay_select_arbitration_logger.html"
+    },
+    {
+      "label": "Today's derivative sample: Hand Overlay Reach Envelope Router",
+      "url": "../outputs/2026-09-23_html_hand_overlay_reach_envelope_router.html"
+    },
+    {
+      "label": "W3C: WebXR DOM Overlays Module",
+      "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+    },
+    {
+      "label": "MDN: beforexrselect event",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/Element/beforexrselect_event"
+    },
+    {
+      "label": "MDN: WebXR inputs and input sources",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Inputs"
+    },
+    {
+      "label": "W3C: WebXR Hand Input Module - Level 1",
+      "url": "https://www.w3.org/TR/webxr-hand-input-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "9月22日は起動前後の `navigator.xr` probe を session context と trust floor にしました。今日はその次に、起動後の最初の UI 操作で起きやすい `DOM のボタンを押したつもりなのに XR world select も走る` 問題を扱います。DOM Overlay の `beforexrselect` は、DOM UI と XR world の所有権を入力シーケンスの前に分けられるので、frame logger に `なぜこの select を信じたか / 捨てたか` を残しやすいのが面白いところです。",
+      "bodyEn": "September 22 turned the `navigator.xr` bootstrap probe into session context and a trust floor. Today moves to a common post-launch problem: the user intended to press a DOM button, but an XR world select may also fire. DOM Overlay's `beforexrselect` lets the app separate DOM UI and XR world ownership before the input sequence commits, which makes it easier for a frame logger to explain why a select was trusted or dropped.",
+      "links": [
+        {
+          "label": "W3C: WebXR DOM Overlays Module",
+          "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+        },
+        {
+          "label": "MDN: beforexrselect event",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/Element/beforexrselect_event"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `DOM Overlay Select Arbitration Logger` は input source、overlay hit、`beforexrselect` の状態、ray confidence、overlay opacity を操作し、`dom-consume`、`xr-select`、`dual-guard`、`drop` の arbitration row を出します。派生サンプル `Hand Overlay Reach Envelope Router` は hand joint confidence、pinch closure、pose jitter、intent zone を使い、hand pinch / controller / gaze を overlay UI、world reticle、preview、block に割り振ります。",
+      "bodyEn": "The main sample, `DOM Overlay Select Arbitration Logger`, lets you adjust input source, overlay hit, `beforexrselect` state, ray confidence, and overlay opacity, then emits `dom-consume`, `xr-select`, `dual-guard`, or `drop` arbitration rows. The derivative sample, `Hand Overlay Reach Envelope Router`, uses hand joint confidence, pinch closure, pose jitter, and intent zone to route hand pinch / controller / gaze input into overlay UI, world reticle, preview, or block."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では、DOM overlay の touchable 領域だけで `beforexrselect.preventDefault()` し、非インタラクティブなラベルや透明余白は pass-through にする方が、AR 空間の world select を不必要に塞ぎません。hand input は `XRHand` が取れる時だけを前提にせず、controller ray、screen transient、gaze select を同じ route schema に入れておくと、端末差があっても replay と説明が崩れにくくなります。",
+      "bodyEn": "In production, call `beforexrselect.preventDefault()` only in touchable DOM overlay regions, while allowing non-interactive labels and transparent margins to pass through so AR world selection is not blocked unnecessarily. For hand input, do not assume `XRHand` is always present; placing controller rays, screen transient input, and gaze select into the same route schema keeps replay and explanation stable across devices."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR DOM Overlays Module の `beforexrselect` と `:xr-overlay`、MDN の互換性情報、WebXR Hand Input Module の joint model、Immersive Web samples の input / hand tracking / DOM overlay 系サンプルを続けて見ます。次は、今日の arbitration row を9月17日の IndexedDB logger に保存し、9月22日の trust floor と一緒に最初の UI 操作の安全判定へ渡したいです。",
+      "bodyEn": "Keep watching `beforexrselect` and `:xr-overlay` in the WebXR DOM Overlays Module, MDN compatibility notes, the joint model in the WebXR Hand Input Module, and Immersive Web samples for input, hand tracking, and DOM overlay behavior. Next, save today's arbitration rows into the September 17 IndexedDB logger and combine them with the September 22 trust floor for the first UI-action safety decision."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`DOM Overlay Select Arbitration Logger` で overlay hit を `button`、`beforexrselect` を `preventDefault` にして `Append event` を押すと、DOM が所有する select row が出ます。次に `beforexrselect` を `missing` に変えると `dual-guard` に落ち、同じ入力を DOM と XR world に二重 commit しないための guard が見えます。派生側では `edge between` と jitter 高めを試すと preview route に落ちます。",
+      "bodyEn": "In `DOM Overlay Select Arbitration Logger`, set overlay hit to `button`, set `beforexrselect` to `preventDefault`, and press `Append event` to create a DOM-owned select row. Change `beforexrselect` to `missing` and it falls to `dual-guard`, showing how to avoid double-committing the same input to DOM and the XR world. In the derivative sample, try `edge between` with higher jitter to see the preview route.",
+      "links": [
+        {
+          "label": "Open DOM Overlay Select Arbitration Logger",
+          "url": "../outputs/2026-09-23_html_dom_overlay_select_arbitration_logger.html"
+        },
+        {
+          "label": "Open Hand Overlay Reach Envelope Router",
+          "url": "../outputs/2026-09-23_html_hand_overlay_reach_envelope_router.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR DOM Overlays Module、MDN `beforexrselect`、MDN WebXR input guide、W3C WebXR Hand Input Module、Immersive Web WebXR Samples を確認。設計: 1本目は DOM / XR select の所有権を決める arbitration logger、2本目は hand / controller / gaze を overlay reach envelope に割り振る router。実装: `outputs/2026-09-23_html_dom_overlay_select_arbitration_logger.html` と `outputs/2026-09-23_html_hand_overlay_reach_envelope_router.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish、公開反映を確認する。",
+      "bodyEn": "Research: checked the W3C WebXR DOM Overlays Module, MDN `beforexrselect`, the MDN WebXR input guide, the W3C WebXR Hand Input Module, and Immersive Web WebXR Samples. Design: make the first sample an arbitration logger for DOM / XR select ownership, and the second a router that assigns hand / controller / gaze input to an overlay reach envelope. Implementation: add `outputs/2026-09-23_html_dom_overlay_select_arbitration_logger.html` and `outputs/2026-09-23_html_hand_overlay_reach_envelope_router.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, publish, and confirm publication."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "9月後半の流れは、session context と trust floor から、最初の live interaction の所有権へ進んでいます。WebXR の UI は `押せた / 押せない` よりも、DOM、world、hand、controller、screen transient が同じ primary action をどう共有するかが難所です。今日の2本は、その共有を明示的な row にして、後から replay できるようにする小さな部品です。",
+      "bodyEn": "The late-September thread is moving from session context and trust floors into ownership of the first live interaction. WebXR UI is less about whether something can be pressed and more about how DOM, world, hand, controller, and screen transient input share the same primary action. Today's two samples turn that sharing into explicit rows that can be replayed later."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `DOM Overlay Select Arbitration Logger` です。何が動くか: overlay hit、`beforexrselect`、ray confidence、overlay opacity から DOM UI と XR world select の所有権を判定し、JSON row と event ledger を出します。次に足すなら、実 `beforexrselect` listener と `selectstart/select/selectend` listener を同じ ledger に接続します。派生として `Hand Overlay Reach Envelope Router` も実装しました。何が動くか: hand joint confidence、pinch closure、pose jitter から overlay UI / world reticle / preview / block を選びます。次に足すなら、`XRHand` の index-tip / thumb-tip pose を実測して envelope に流します。",
+      "bodyEn": "The selected main prototype is `DOM Overlay Select Arbitration Logger`. What it does: judges ownership between DOM UI and XR world select from overlay hit, `beforexrselect`, ray confidence, and overlay opacity, then emits JSON rows and an event ledger. Next addition: connect real `beforexrselect` and `selectstart/select/selectend` listeners into the same ledger. The derivative `Hand Overlay Reach Envelope Router` was also implemented. What it does: chooses overlay UI / world reticle / preview / block from hand joint confidence, pinch closure, and pose jitter. Next addition: feed real `XRHand` index-tip / thumb-tip poses into the envelope."
+    }
+  ]
+}
