@@ -269,8 +269,8 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 78</span>
-        <span>page: 1 / 7</span>
+        <span>days: 89</span>
+        <span>page: 1 / 8</span>
         <span>storage: localStorage likes</span>
       </div>
     </section>
@@ -306,6 +306,10 @@
       <a class="pager-link" href="pages/7.html">
         7
       </a>
+    
+      <a class="pager-link" href="pages/8.html">
+        8
+      </a>
     </div>
       <a class="pager-nav" href="pages/2.html">次のページ / Next</a>
     </nav>
@@ -313,6 +317,259 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-10-05">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.05</p>
+              <h2>Depth と motion vector を Space Warp 復帰 queue にする</h2>
+              <p class="card-subtitle">Turning depth and motion vectors into a Space Warp recovery queue</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-05" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">Meta Quest Browser の WebGPU foveation / space-warp layers / WebXR depth projection、W3C WebXR Device API、WebXR Depth Sensing、WebXR Layers、Immersive Web Samples を確認し、depth + motion vector の送信 budget と、外れた時の復帰 queue を扱う自作サンプル2本を追加しました。</p>
+          <p class="description en-copy">After checking Meta Quest Browser notes around WebGPU foveation, space-warp layers, and WebXR depth projection, plus W3C WebXR Device API, WebXR Depth Sensing, WebXR Layers, and Immersive Web Samples, today's original work adds two samples: a depth + motion-vector budget console and a recovery queue for misses.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">html-surface</span><span class="tag">xr</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-10-05.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-10-05_html_depth_motion_vector_budget_console.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-10-04">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.04</p>
+              <h2>可視マスクを予測 row と miss 復帰 timeline へ進める</h2>
+              <p class="card-subtitle">Advancing visibility masks into prediction rows and miss-recovery timelines</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-04" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">Chrome 144 の XRVisibilityMaskChange、W3C WebXR Device API、W3C WebXR Layers API、Immersive Web Samples を確認し、昨日の再投影 drift から次フレームの予測 mask と、外れた時の rollback / recovery を扱う自作サンプル2本を追加しました。</p>
+          <p class="description en-copy">After checking Chrome 144's XRVisibilityMaskChange, the W3C WebXR Device API, the W3C WebXR Layers API, and Immersive Web Samples, today's original work extends yesterday's reprojection drift into next-frame predictive masks and rollback / recovery when prediction misses.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">frequency-bands</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-10-04.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-10-04_html_predictive_visibility_mask_console.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-10-03">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.03</p>
+              <h2>可視マスク row を再投影 drift と復帰 timeline へつなぐ</h2>
+              <p class="card-subtitle">Connecting visibility-mask rows to reprojection drift and recovery timelines</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-03" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Device API、Immersive Web Layers Samples、Chrome 144 の XRVisibilityMaskChange、Immersive Web Samples を確認し、昨日の visibility mask row merge を再投影 drift と tiled rendering 復帰判断へ進める自作サンプル2本を追加しました。</p>
+          <p class="description en-copy">After checking the W3C WebXR Device API, Immersive Web Layers Samples, Chrome 144's XRVisibilityMaskChange, and Immersive Web Samples, today's original work extends yesterday's visibility-mask row merge into reprojection drift and tiled-rendering recovery decisions with two new samples.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-10-03.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-10-03_html_visibility_reprojection_drift_console.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-10-02">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.02</p>
+              <h2>可視マスク row を redraw / subimage row と合流して理由つき fallback にする</h2>
+              <p class="card-subtitle">Merging visibility-mask rows with redraw and subimage rows for explainable fallback</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-02" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">Chrome 144 の XRVisibilityMaskChange、W3C の WebXR Device API 履歴、WebXR Layers API Editor's Draft、Immersive Web Samples を確認し、昨日の visibility mask row を redraw timestamp / subimage viewport row と合流する本命サンプルと、fallback 理由を分解する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking Chrome 144's XRVisibilityMaskChange, the W3C WebXR Device API history, the WebXR Layers API Editor's Draft, and Immersive Web Samples, today's original work adds a main sample that merges yesterday's visibility-mask row with redraw-timestamp and subimage-viewport rows plus a derivative sample that explains fallback reasons.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-10-02.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-10-02_html_visibility_mask_row_merge_console.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-10-01">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.01</p>
+              <h2>XR 可視マスク変更を row 化してタイル描画予算へ戻す</h2>
+              <p class="card-subtitle">Turning XR visibility mask changes into rows for tile rendering budgets</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-01" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">Chrome 144 の XRVisibilityMaskChange、WebXR Device API の CRD、WebXR Layers API Editor's Draft、Immersive Web Samples を参照し、可視領域 mesh を保存する本命サンプルと、その row を tile rendering budget に戻す派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking Chrome 144 XRVisibilityMaskChange, the WebXR Device API CRD, the WebXR Layers API Editor's Draft, and Immersive Web Samples, today's original work adds a main sample that records visible-viewport mesh rows plus a derivative sample that replays those rows into a tile rendering budget.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-10-01.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-10-01_html_visibility_mask_change_ledger.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-09-30">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.30</p>
+              <h2>XR subimage と viewport row を保存して attachment/crop 判定へ戻す</h2>
+              <p class="card-subtitle">Saving XR subimage and viewport rows back into attachment/crop policy</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-30" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Layers API の getViewSubImage、MDN の fixedFoveation と XRWebGLLayer.getViewport、Immersive Web Layers samples を参照し、subimage / viewport / foveation / attachment を IndexedDB row として保存する本命サンプルと、その row を attachment/crop policy へ戻す派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking WebXR Layers API getViewSubImage, MDN fixedFoveation and XRWebGLLayer.getViewport, plus Immersive Web Layers samples, today's original work adds a main sample that saves subimage / viewport / foveation / attachment as IndexedDB rows, plus a derivative sample that replays those rows into attachment/crop policy.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-09-30.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-09-30_html_subimage_viewport_indexeddb_bridge.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-09-29">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.29</p>
+              <h2>XR viewport の crop guard を frame row として保存する</h2>
+              <p class="card-subtitle">Saving XR viewport crop guards as frame rows</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-29" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Device API、WebXR Layers API Level 1、MDN の WebXR rendering guide、XRWebGLLayer.getViewport、Immersive Web Layers samples を参照し、viewport / texture rect / foveation を crop guard row として保存する本命サンプルと、その row を tile foveation policy へ戻す派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking the W3C WebXR Device API, WebXR Layers API Level 1, MDN's WebXR rendering guide and XRWebGLLayer.getViewport, plus Immersive Web Layers samples, today's original work adds a main sample that stores viewport / texture rect / foveation as crop-guard rows, plus a derivative sample that replays those rows into tile foveation policy.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span><span class="tag">frequency-bands</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-09-29.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-09-29_html_viewport_crop_guard_logger.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-09-28">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.28</p>
+              <h2>DOM Overlay の frame owner と beforexrselect を台帳化する</h2>
+              <p class="card-subtitle">Ledgering DOM Overlay frame owners and beforexrselect</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-28" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR DOM Overlays Module、MDN の `beforexrselect`、Immersive Web DOM Overlay explainer、WebXR Test API、Web Platform Tests の DOM Overlay 更新を参照し、overlay / iframe / cross-origin 領域で XR select を止めるべきかを記録する本命サンプルと、DOM event と XR input event の非同期順序を再生して重複 commit を検出する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking the W3C WebXR DOM Overlays Module, MDN `beforexrselect`, the Immersive Web DOM Overlay explainer, the WebXR Test API, and recent Web Platform Tests work around DOM Overlay, today's original work adds a main sample that records whether XR select should be suppressed for overlay / iframe / cross-origin regions, plus a derivative sample that replays asynchronous DOM and XR input ordering to detect duplicate commits.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-09-28.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-09-28_html_dom_overlay_frame_owner_guard.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-09-27">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.27</p>
+              <h2>XRWebGLSubImage の attachment サイズを warp 前に監査する</h2>
+              <p class="card-subtitle">Auditing XRWebGLSubImage attachment sizes before warp</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-27" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Layers API Level 1、WebXR Device API、MDN の WebXR rendering / needsRedraw、Immersive Web Layers samples を参照し、`XRWebGLSubImage` の color / depth-stencil / motion-vector attachment のサイズ差と欠落を監査する本命サンプルと、その row を tile coverage に変換して warp 継続可否を再判定する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking W3C WebXR Layers API Level 1, the WebXR Device API, MDN WebXR rendering and needsRedraw notes, and Immersive Web Layers samples, today's original work adds a main sample that audits color / depth-stencil / motion-vector attachment size differences and missing data on `XRWebGLSubImage`, plus a derivative sample that turns those rows into tile coverage for warp routing.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-09-27.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-09-27_html_subimage_attachment_size_auditor.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-09-26">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.26</p>
+              <h2>XRLayer redraw を timestamp 付きの復帰行として保存する</h2>
+              <p class="card-subtitle">Saving XRLayer redraw as timestamped recovery rows</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-26" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Layers API Level 1、W3C WebXR Device API、MDN XRLayerEvent、Immersive Web Layers samples、Meta の WebXR Space Warp 資料を参照し、`redraw` と frame timestamp、depth / motion vector attachment を同じ JSON row にまとめる本命サンプルと、その row を strict / balanced / forgiving policy で再判定する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking the W3C WebXR Layers API Level 1, W3C WebXR Device API, MDN XRLayerEvent, Immersive Web Layers samples, and Meta's WebXR Space Warp documentation, today's original work adds a main sample that stores `redraw`, frame timestamps, and depth / motion vector attachments in one JSON row, plus a derivative replay sample that compares strict / balanced / forgiving recovery policies.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-09-26.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-09-26_html_xrlayer_redraw_timestamp_logger.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-09-25">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.25</p>
+              <h2>Space Warp の layer 復帰を attachment 行で判定する</h2>
+              <p class="card-subtitle">Judging Space Warp layer recovery by attachment rows</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-25" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Device API、WebXR Layers API Level 1、W3C の WebXR 関連標準一覧、Immersive Web samples、Meta Horizon OS の WebXR overview を参照し、Layer redraw / resource loss / depth-sorted-layers / space-warp attachment を同じ復帰行として扱う本命サンプルと、motion vector の穴を heatmap で補修判定する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking the W3C WebXR Device API, WebXR Layers API Level 1, W3C's WebXR standards index, Immersive Web samples, and Meta Horizon OS WebXR overview, today's original work adds a main sample that treats layer redraw / resource loss / depth-sorted-layers / space-warp attachments as one recovery row, plus a derivative heatmap for patching motion vector gaps.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-09-25.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-09-25_html_space_warp_layer_recovery_console.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-09-24">
           <div class="card-top">
             <div>
@@ -332,259 +589,6 @@
           <div class="actions">
             <a class="primary" href="days/2026-09-24.html">その日のページ / Day</a>
             <a class="secondary-link" href="outputs/2026-09-24_html_overlay_focus_recovery_matrix.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-23">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.23</p>
-              <h2>DOM Overlay の select 競合を arbitration row にする</h2>
-              <p class="card-subtitle">Turning DOM Overlay select conflicts into arbitration rows</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-23" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR DOM Overlays Module、MDN `beforexrselect`、MDN WebXR input guide、W3C WebXR Hand Input Module、Immersive Web samples を参照し、DOM UI と XR world select の二重発火を防ぐ本命サンプルと、hand joint / controller / gaze 入力を overlay 安全域へ割り振る派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking the W3C WebXR DOM Overlays Module, MDN `beforexrselect`, the MDN WebXR input guide, the W3C WebXR Hand Input Module, and Immersive Web samples, today's original work adds a main sample that prevents duplicate DOM UI and XR world select actions, plus a derivative sample that routes hand joint / controller / gaze input into overlay-safe envelopes.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">html-surface</span><span class="tag">xr</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-23.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-23_html_dom_overlay_select_arbitration_logger.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-22">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.22</p>
-              <h2>XR bootstrap probe を context row と trust floor に渡す</h2>
-              <p class="card-subtitle">Passing an XR bootstrap probe into a context row and trust floor</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-22" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR Device API、W3C WebXR standards index、MDN `XRSession.enabledFeatures`、Immersive Web samples / Layers samples を参照し、実 `navigator.xr` の軽い probe と手動の feature coverage を session context row にまとめる本命サンプルと、その context JSON を frame logger の最低 trust floor として注入する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking the W3C WebXR Device API, the W3C WebXR standards index, MDN `XRSession.enabledFeatures`, and Immersive Web samples / Layers samples, today's original work adds a main sample that combines a lightweight `navigator.xr` probe and manual feature coverage into a session context row, plus a derivative sample that injects that context JSON as a minimum trust floor for frame logger rows.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-22.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-22_html_xr_bootstrap_probe_context_recorder.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-21">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.21</p>
-              <h2>XR session context を保存して初期 trust に渡す</h2>
-              <p class="card-subtitle">Saving XR session context and passing it into initial trust</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-21" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Device API、MDN `enabledFeatures`、Immersive Web Anchors Module、WebXR Samples proposals、WebXR Layers API の一次情報を参照し、feature / layer / scene contract row を IndexedDB に保存する本命サンプルと、その JSON を初期 trust score として再判定する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking the WebXR Device API, MDN `enabledFeatures`, the Immersive Web Anchors Module, WebXR proposal samples, and the WebXR Layers API, today's original work adds a main sample that stores feature / layer / scene contract rows in IndexedDB, plus a derivative sample that replays that JSON as an initial trust score.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-21.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-21_html_session_context_merge_store.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-20">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.20</p>
-              <h2>XR scene contract を readiness row として選ぶ</h2>
-              <p class="card-subtitle">Selecting an XR scene contract as a readiness row</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-20" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR Device API、WebXR Layers API、Immersive Web proposal samples、MDN XRWebGLBinding を参照し、depth / plane / anchor / layer の状態から表示 contract を選ぶ本命サンプルと、`passthroughFullyObscured` の安全側 budget を試す派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking the W3C WebXR Device API, WebXR Layers API, Immersive Web proposal samples, and MDN XRWebGLBinding, today's original work adds a main sample that chooses a display contract from depth / plane / anchor / layer readiness, plus a derivative sample that experiments with a safety budget for `passthroughFullyObscured`.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-20.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-20_html_scene_contract_readiness_ledger.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-19">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.19</p>
-              <h2>Layers API の runtime drift を fallback row に落とす</h2>
-              <p class="card-subtitle">Turning WebXR layer runtime drift into fallback rows</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-19" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR Layers API Level 1、WebXR Device API、MDN XRWebGLBinding、Immersive Web Layers Samples を参照し、layer 利用前の runtime capability を測って projection / quad / cylinder / equirect / media layer の劣化先を記録する本命サンプルと、space 選択を安定性 route として試す派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking the W3C WebXR Layers API Level 1, the WebXR Device API, MDN XRWebGLBinding, and Immersive Web Layers Samples, today's original work adds a main sample that records runtime capability and fallback routes for projection / quad / cylinder / equirect / media layers, plus a derivative sample that explores stable space routing.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">html-surface</span><span class="tag">xr</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-19.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-19_html_layer_runtime_capability_drift_monitor.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-18">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.18</p>
-              <h2>immersive-ar の feature negotiation を fallback row として保存する</h2>
-              <p class="card-subtitle">Saving immersive-ar feature negotiation as fallback rows</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-18" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Device API、MDN の requestSession / enabledFeatures、Anchors Module、Plane Detection、Mesh Detection、Immersive Web Samples を参照し、実 `immersive-ar` の起動前後に required / optional feature を整理してログ化する本命サンプルと、その export JSON を fallback policy で再判定する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking the WebXR Device API, MDN requestSession / enabledFeatures, the Anchors Module, Plane Detection, Mesh Detection, and Immersive Web Samples, today's original work adds a main sample that logs required / optional feature negotiation around a real immersive-ar request and a derivative sample that replays the exported JSON through fallback policies.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-18.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-18_html_immersive_ar_feature_negotiation_logger.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-17">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.17</p>
-              <h2>ghost replay row を IndexedDB に保存して semantic history へ渡す</h2>
-              <p class="card-subtitle">Saving ghost replay rows into IndexedDB and handing them to semantic history</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-17" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Device API、Anchors Module、Mesh Detection Module、Plane Detection Module、Depth Sensing Module、Immersive Web Samples、MDN の XRAnchor / IndexedDB 情報を参照し、ghost replay row を実ブラウザ保存する本命サンプルと、その export JSON を semantic history として再判定する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking the WebXR Device API, Anchors Module, Mesh Detection Module, Plane Detection Module, Depth Sensing Module, Immersive Web Samples, and MDN references for XRAnchor / IndexedDB, today's original work adds a main sample that stores ghost replay rows in browser IndexedDB and a derivative sample that replays the exported JSON as semantic history.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-17.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-17_html_ghost_replay_indexeddb_logger.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-16">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.16</p>
-              <h2>mesh が悪化した anchor を ghost replay に戻す</h2>
-              <p class="card-subtitle">Replaying anchors back to ghost state when mesh quality worsens</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-16" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Anchors Module、Mesh Detection Module、Plane Detection Module、Depth Sensing Module、Immersive Web Samples を参照し、昨日の mesh anchor ledger を日跨ぎで再生して ghost 表示へ戻す本命サンプルと、semantic label の履歴安定度を見る派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking the WebXR Anchors Module, Mesh Detection Module, Plane Detection Module, Depth Sensing Module, and Immersive Web Samples, today's original work adds a main sample that replays yesterday's mesh anchor ledger across days and returns weak anchors to ghost display, plus a derivative sample that stabilizes semantic labels over a history window.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-16.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-16_html_anchor_mesh_ghost_replay.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-15">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.15</p>
-              <h2>mesh score を anchor handoff と semantic gate に戻す</h2>
-              <p class="card-subtitle">Feeding mesh scores back into anchor handoff and semantic gates</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-15" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Device API 2026-06-09 CRD、W3C の WebXR 公開一覧、WebXR Mesh Detection Module、Plane Detection Module、Anchors Module、Depth Sensing Module を参照し、昨日の mesh triangle budget を anchor handoff queue に戻す本命サンプルと、mesh / plane semantic label の矛盾を判定する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking the WebXR Device API 9 June 2026 CRD, W3C's WebXR publication list, the WebXR Mesh Detection Module, Plane Detection Module, Anchors Module, and Depth Sensing Module, today's original work adds a main sample that feeds yesterday's mesh triangle budget back into an anchor handoff queue plus a derivative sample that gates conflicts between mesh and plane semantic labels.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-15.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-15_html_mesh_anchor_stability_ledger.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-14">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.14</p>
-              <h2>検出 mesh を三角形 budget と plane 融合で使い分ける</h2>
-              <p class="card-subtitle">Routing detected meshes by triangle budget and plane fusion</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-14" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Device API 2026-06-09 CRD、WebXR Mesh Detection Module、Depth Sensing Module、Plane Detection explainer、公式 Mesh Detection proposal sample を参照し、`XRFrame.detectedMeshes` の頂点・三角形・更新時刻から mesh 利用可否を判定する本命サンプルと、plane と mesh を分担して anchor / occlusion に回す派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Device API 2026-06-09 CRD, WebXR Mesh Detection Module, Depth Sensing Module, Plane Detection explainer, and official Mesh Detection proposal sample, today's original work adds a main sample that routes `XRFrame.detectedMeshes` by vertices, triangles, and update age, plus a derivative sample that splits plane and mesh responsibilities for anchors and occlusion.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">html-surface</span><span class="tag">xr</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-14.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-14_html_mesh_detection_triangle_budget_router.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-13">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.13</p>
-              <h2>検出平面を Anchor 作成へ渡す前に queue で判定する</h2>
-              <p class="card-subtitle">Queueing detected planes before handing them to anchor creation</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-13" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Device API 2026-06-09 CRD、Immersive Web の Plane Detection / Anchors / Hit Test 仕様、公式 WebXR Samples を参照し、検出平面から anchor 作成へ進む条件を queue 化する本命サンプルと、`XRPlane.polygon` の frame-to-frame jitter を見る派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Device API 2026-06-09 CRD, Immersive Web Plane Detection / Anchors / Hit Test specifications, and official WebXR Samples, today's original work adds a main sample that queues detected planes before anchor creation plus a derivative sample that visualizes frame-to-frame `XRPlane.polygon` jitter.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-13.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-13_html_plane_anchor_handoff_queue.html">代表サンプル / Sample</a>
           </div>
         </article>
       
@@ -620,6 +624,10 @@
     
       <a class="pager-link" href="pages/7.html">
         7
+      </a>
+    
+      <a class="pager-link" href="pages/8.html">
+        8
       </a>
     </div>
       <a class="pager-nav" href="pages/2.html">次のページ / Next</a>

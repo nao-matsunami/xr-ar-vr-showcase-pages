@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Space Warp Recovery Queue</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111316;
+      --panel: #1a2227;
+      --panel2: #263137;
+      --line: #5a666d;
+      --text: #f4f0e7;
+      --muted: #c6cbc7;
+      --blue: #7ab9ee;
+      --green: #9fd987;
+      --gold: #e4bd65;
+      --red: #ef827d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(140deg, rgba(122, 185, 238, 0.13), transparent 36%),
+        linear-gradient(315deg, rgba(228, 189, 101, 0.11), transparent 54%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1160px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .timeline, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(26, 34, 39, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+    }
+    .panel, section { padding: 18px; }
+    .timeline { padding: 16px; display: grid; gap: 10px; align-content: start; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 50px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(8, 10, 12, 0.62); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+    .frame-list { display: grid; gap: 7px; }
+    .frame {
+      display: grid;
+      grid-template-columns: 74px 1fr 80px;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px;
+      background: rgba(8, 10, 12, 0.56);
+      color: var(--muted);
+    }
+    .pill { border-radius: 999px; padding: 5px 8px; text-align: center; background: var(--panel2); color: var(--text); font-size: 12px; }
+    .track { height: 14px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.05); overflow: hidden; }
+    .fill { height: 100%; width: 0; background: var(--blue); }
+    .fill.warn { background: var(--gold); }
+    .fill.good { background: var(--green); }
+    .fill.bad { background: var(--red); }
+    .controls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    input, select, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--blue); }
+    textarea { width: 100%; min-height: 170px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .queue, .ledger { display: grid; gap: 8px; }
+    .task { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(8, 10, 12, 0.62); color: var(--muted); }
+    @media (max-width: 900px) {
+      header, .controls, .metrics, .frame { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Space Warp Recovery Queue</h1>
+        <p>1本目の budget row が崩れた時の戻り方を、短い frame queue として再生します。depth、motion vector、projection lead のどれを落とし、何フレームで full render から warp に復帰するかを比べます。</p>
+      </div>
+      <div class="timeline">
+        <div class="metrics">
+          <div class="metric"><span>policy</span><strong id="policyMetric">-</strong></div>
+          <div class="metric"><span>recovery</span><strong id="recoveryMetric">0f</strong></div>
+          <div class="metric"><span>risk debt</span><strong id="riskMetric">0</strong></div>
+          <div class="metric"><span>final</span><strong id="finalMetric">-</strong></div>
+        </div>
+        <div id="frames" class="frame-list"></div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Policy
+        <select id="policySelect">
+          <option value="balanced">balanced</option>
+          <option value="comfort-first">comfort-first</option>
+          <option value="performance-first">performance-first</option>
+        </select>
+      </label>
+      <label>Budget
+        <input id="budgetRange" type="range" min="12" max="92" value="58">
+      </label>
+      <label>Depth age
+        <input id="ageRange" type="range" min="8" max="160" value="54">
+      </label>
+      <label>Motion miss
+        <input id="missRange" type="range" min="0" max="110" value="34">
+      </label>
+      <label>Payload
+        <input id="payloadRange" type="range" min="42" max="220" value="94">
+      </label>
+    </div>
+
+    <section>
+      <h2>Recovery queue</h2>
+      <div id="queue" class="queue"></div>
+    </section>
+
+    <section>
+      <h2>Export row</h2>
+      <textarea id="rowBox" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function compute() {
+      const policy = $("policySelect").value;
+      const compositorBudget = Number($("budgetRange").value) / 100;
+      const depthAgeMs = Number($("ageRange").value);
+      const motionMissPx = Number($("missRange").value);
+      const payloadKb = Number($("payloadRange").value);
+      const policyBias = policy === "comfort-first" ? 0.16 : policy === "performance-first" ? -0.1 : 0.04;
+      const riskDebt = clamp((1 - compositorBudget) * 48 + depthAgeMs * 0.16 + motionMissPx * 0.28 + payloadKb * 0.08 + policyBias * 40, 0, 100);
+      const recoveryFrames = Math.max(2, Math.round(2 + riskDebt / (policy === "performance-first" ? 18 : policy === "comfort-first" ? 11 : 14)));
+      const finalRoute = riskDebt > 72 ? "stay-full-render" : riskDebt > 44 ? "depth-only-warp" : "resume-space-warp";
+      const steps = [
+        ["f0", "detect-miss", 1],
+        ["f1", riskDebt > 44 ? "disable-motion-vector" : "clamp-motion-vector", 0.82],
+        ["f2", depthAgeMs > 92 ? "refresh-depth" : "keep-depth-with-guard", 0.66],
+        ["f3", payloadKb > 150 ? "trim-payload" : "verify-payload", 0.54],
+        ["f4", finalRoute === "resume-space-warp" ? "resume-space-warp" : "hold-full-render", 0.38],
+        ["f5", finalRoute === "stay-full-render" ? "watch-next-mask" : "recover-tiled-layer", 0.22]
+      ];
+      return {
+        type: "space-warp-recovery-queue-row",
+        date: "2026-10-05",
+        policy,
+        compositorBudget: Number(compositorBudget.toFixed(3)),
+        depthAgeMs,
+        motionMissPx,
+        payloadKb,
+        riskDebt: Number(riskDebt.toFixed(1)),
+        recoveryFrames,
+        finalRoute,
+        queue: steps.map(([frame, action, weight], index) => ({
+          frame,
+          action,
+          pressure: Number(clamp(riskDebt * weight - index * 4, 0, 100).toFixed(1))
+        })),
+        next: "Import the main sample row directly, then compare comfort-first and performance-first recovery over real frame timestamps."
+      };
+    }
+
+    function render() {
+      const row = compute();
+      $("policyMetric").textContent = row.policy;
+      $("recoveryMetric").textContent = `${row.recoveryFrames}f`;
+      $("riskMetric").textContent = row.riskDebt;
+      $("finalMetric").textContent = row.finalRoute;
+      $("rowBox").value = JSON.stringify(row, null, 2);
+      $("frames").innerHTML = row.queue.map((item) => {
+        const kind = item.pressure > 68 ? "bad" : item.pressure > 40 ? "warn" : "good";
+        return `
+          <div class="frame">
+            <span class="pill">${item.frame}</span>
+            <div class="track"><div class="fill ${kind}" style="width:${item.pressure}%"></div></div>
+            <span>${Math.round(item.pressure)}%</span>
+          </div>
+        `;
+      }).join("");
+      $("queue").innerHTML = row.queue.map((item) => `
+        <div class="task">${item.frame}: ${item.action} / pressure ${item.pressure}%</div>
+      `).join("");
+    }
+
+    document.querySelectorAll("input, select").forEach((el) => el.addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>

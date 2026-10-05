@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Depth Motion Vector Budget Console</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0e1214;
+      --panel: #172124;
+      --panel2: #213033;
+      --line: #556368;
+      --text: #f5f3ea;
+      --muted: #c4cbc6;
+      --cyan: #6ed3df;
+      --lime: #a8d46f;
+      --gold: #e5bc67;
+      --red: #ec7f7b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(110, 211, 223, 0.12), transparent 40%),
+        linear-gradient(315deg, rgba(168, 212, 111, 0.10), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(23, 33, 36, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(8, 12, 14, 0.64); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+    .preview {
+      position: relative;
+      min-height: 340px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 72% 34%, rgba(229, 188, 103, 0.18), transparent 18%),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+        #0a0f11;
+      background-size: auto, 12.5% 20%, 12.5% 20%;
+    }
+    .depth-plane, .motion-plane, .reproject-plane {
+      position: absolute;
+      border-radius: 6px;
+      transition: all 0.22s ease;
+    }
+    .depth-plane { border: 2px solid var(--cyan); background: rgba(110, 211, 223, 0.16); }
+    .motion-plane { border: 2px dashed var(--gold); background: rgba(229, 188, 103, 0.12); }
+    .reproject-plane { border: 2px solid var(--red); background: rgba(236, 127, 123, 0.08); }
+    .vector {
+      position: absolute;
+      left: 48%;
+      top: 50%;
+      height: 4px;
+      width: 90px;
+      background: var(--lime);
+      transform-origin: left center;
+      transition: transform 0.22s ease, width 0.22s ease;
+    }
+    .label {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(8, 12, 14, 0.84);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .controls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    input, select, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--cyan); }
+    textarea { width: 100%; min-height: 170px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .bars, .ledger { display: grid; gap: 8px; }
+    .bar { display: grid; grid-template-columns: 154px 1fr 70px; gap: 8px; align-items: center; color: var(--muted); }
+    .track { height: 16px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.05); }
+    .fill { height: 100%; width: 0; background: var(--cyan); transition: width 0.22s ease; }
+    .row { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(8, 12, 14, 0.62); color: var(--muted); }
+    @media (max-width: 900px) {
+      header, .controls, .metrics { grid-template-columns: 1fr; }
+      .bar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Depth Motion Vector Budget Console</h1>
+        <p>Quest Browser の WebXR depth projection / WebGPU / space-warp 周辺の流れを、画像ではなく軽量 row に分解します。depth frame、motion vector、reprojection lead を合わせ、送るべき補助情報と fallback を判定します。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>route</span><strong id="routeMetric">-</strong></div>
+          <div class="metric"><span>budget</span><strong id="budgetMetric">0%</strong></div>
+          <div class="metric"><span>stability</span><strong id="stabilityMetric">0%</strong></div>
+          <div class="metric"><span>payload</span><strong id="payloadMetric">0 kb</strong></div>
+        </div>
+        <div class="preview" aria-label="depth motion vector preview">
+          <div id="reprojectPlane" class="reproject-plane"></div>
+          <div id="motionPlane" class="motion-plane"></div>
+          <div id="depthPlane" class="depth-plane"></div>
+          <div id="vector" class="vector"></div>
+          <div id="label" class="label">gpu-optimized / smooth</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Depth usage
+        <select id="usageSelect">
+          <option value="gpu-optimized">gpu-optimized</option>
+          <option value="cpu-optimized">cpu-optimized</option>
+        </select>
+      </label>
+      <label>Depth age
+        <input id="ageRange" type="range" min="4" max="150" value="38">
+      </label>
+      <label>Motion px
+        <input id="motionRange" type="range" min="0" max="90" value="26">
+      </label>
+      <label>Projection lead
+        <input id="leadRange" type="range" min="6" max="90" value="28">
+      </label>
+      <label>Hole ratio
+        <input id="holeRange" type="range" min="0" max="45" value="11">
+      </label>
+    </div>
+
+    <section>
+      <h2>Budget weights</h2>
+      <div id="bars" class="bars"></div>
+    </section>
+
+    <section>
+      <h2>Export row</h2>
+      <textarea id="rowBox" spellcheck="false"></textarea>
+    </section>
+
+    <section>
+      <h2>Ledger</h2>
+      <div id="ledger" class="ledger"></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ledger = [];
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function compute() {
+      const depthUsage = $("usageSelect").value;
+      const depthAgeMs = Number($("ageRange").value);
+      const motionPx = Number($("motionRange").value);
+      const projectionLeadMs = Number($("leadRange").value);
+      const holeRatio = Number($("holeRange").value) / 100;
+      const gpuBias = depthUsage === "gpu-optimized" ? 1 : 0.78;
+      const freshness = clamp(1 - depthAgeMs / 165, 0, 1);
+      const motionFit = clamp(1 - motionPx / 112, 0, 1);
+      const leadFit = clamp(1 - Math.abs(projectionLeadMs - 30) / 92, 0, 1);
+      const depthCoverage = clamp(1 - holeRatio * 1.55, 0, 1);
+      const stability = clamp(freshness * 0.35 + motionFit * 0.25 + leadFit * 0.18 + depthCoverage * 0.22, 0, 1);
+      const motionVectorQuality = clamp((motionFit * 0.46 + leadFit * 0.28 + gpuBias * 0.26) - holeRatio * 0.2, 0, 1);
+      const payloadKb = Math.round((depthUsage === "gpu-optimized" ? 48 : 78) + motionPx * 0.8 + holeRatio * 140);
+      const compositorBudget = clamp(stability * 0.58 + motionVectorQuality * 0.34 + gpuBias * 0.08 - payloadKb / 420, 0, 0.98);
+      const route = !depthCoverage ? "depth-disabled-fallback" :
+        compositorBudget > 0.66 ? "submit-depth-motion-row" :
+        stability > 0.46 ? "submit-depth-only-with-guard" :
+        freshness > 0.38 ? "hold-space-warp-layer" :
+        "full-render-no-projection";
+      return {
+        type: "depth-motion-vector-budget-row",
+        date: "2026-10-05",
+        depthUsage,
+        depthAgeMs,
+        motionPx,
+        projectionLeadMs,
+        holeRatio: Number(holeRatio.toFixed(2)),
+        freshness: Number(freshness.toFixed(3)),
+        depthCoverage: Number(depthCoverage.toFixed(3)),
+        motionVectorQuality: Number(motionVectorQuality.toFixed(3)),
+        stability: Number(stability.toFixed(3)),
+        compositorBudget: Number(compositorBudget.toFixed(3)),
+        payloadKb,
+        route,
+        sources: ["WebXR Depth Sensing", "WebXR Layers", "WebGPU space-warp layer budget"],
+        next: "Feed this row into a recovery queue when depth, motion vectors, or projection lead exceed the comfort budget."
+      };
+    }
+
+    function place(row) {
+      const baseW = 50;
+      const baseH = 58;
+      const left = 24;
+      const top = 20;
+      const shift = clamp(row.motionPx * 0.16, 0, 15);
+      const lead = clamp(row.projectionLeadMs * 0.08, 0, 8);
+      const guard = clamp((1 - row.stability) * 12 + row.holeRatio * 12, 2, 15);
+      $("depthPlane").style.cssText = `left:${left}%;top:${top}%;width:${baseW}%;height:${baseH}%;`;
+      $("motionPlane").style.cssText = `left:${left + shift}%;top:${top + lead}%;width:${baseW}%;height:${baseH}%;`;
+      $("reprojectPlane").style.cssText = `left:${left + shift - guard}%;top:${top + lead - guard}%;width:${baseW + guard * 2}%;height:${baseH + guard * 2}%;`;
+      $("vector").style.width = `${Math.max(42, row.motionPx * 2.1)}px`;
+      $("vector").style.transform = `rotate(${6 + row.projectionLeadMs * 0.45}deg)`;
+      $("label").textContent = `${row.depthUsage} / ${row.route}`;
+    }
+
+    function renderBars(row) {
+      const items = [
+        ["freshness", row.freshness],
+        ["depth coverage", row.depthCoverage],
+        ["motion vectors", row.motionVectorQuality],
+        ["stability", row.stability],
+        ["compositor budget", row.compositorBudget]
+      ];
+      $("bars").innerHTML = items.map(([label, value]) => `
+        <div class="bar">
+          <span>${label}</span>
+          <div class="track"><div class="fill" style="width:${Math.round(value * 100)}%"></div></div>
+          <strong>${Math.round(value * 100)}%</strong>
+        </div>
+      `).join("");
+    }
+
+    function render() {
+      const row = compute();
+      $("routeMetric").textContent = row.route;
+      $("budgetMetric").textContent = `${Math.round(row.compositorBudget * 100)}%`;
+      $("stabilityMetric").textContent = `${Math.round(row.stability * 100)}%`;
+      $("payloadMetric").textContent = `${row.payloadKb} kb`;
+      $("rowBox").value = JSON.stringify(row, null, 2);
+      place(row);
+      renderBars(row);
+      ledger.unshift(row);
+      if (ledger.length > 5) ledger.pop();
+      $("ledger").innerHTML = ledger.map((item) => `
+        <div class="row">${item.depthUsage}: ${item.route} / motion ${item.motionPx}px / depth age ${item.depthAgeMs}ms / budget ${Math.round(item.compositorBudget * 100)}%</div>
+      `).join("");
+    }
+
+    document.querySelectorAll("input, select").forEach((el) => el.addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>

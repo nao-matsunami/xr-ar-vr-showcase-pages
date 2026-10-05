@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>可視マスクを予測 row と miss 復帰 timeline へ進める | 2026-10-04</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.04</p>
+      <h1>可視マスクを予測 row と miss 復帰 timeline へ進める</h1>
+      <p class="hero-subtitle">Advancing visibility masks into prediction rows and miss-recovery timelines</p>
+      <p>Chrome 144 の XRVisibilityMaskChange、W3C WebXR Device API、W3C WebXR Layers API、Immersive Web Samples を確認し、昨日の再投影 drift から次フレームの予測 mask と、外れた時の rollback / recovery を扱う自作サンプル2本を追加しました。</p>
+      <p class="en-copy">After checking Chrome 144's XRVisibilityMaskChange, the W3C WebXR Device API, the W3C WebXR Layers API, and Immersive Web Samples, today's original work extends yesterday's reprojection drift into next-frame predictive masks and rollback / recovery when prediction misses.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-04_html_predictive_visibility_mask_console.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-10-03.html">← 2026.10.03</a>
+      <a class="day-link" href="../days/2026-10-05.html">2026.10.05 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Predictive Visibility Mask Console</h3>
+              <p>昨日の再投影 drift を、次フレームの予測 mask に進めます。`XRVisibilityMaskChange` が届く前に、pose velocity と mask age から guard band を見積もり、tile を続けるか full viewport に戻すかを判定します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-04_html_predictive_visibility_mask_console.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Prediction Miss Recovery Replayer</h3>
+              <p>1本目の予測 mask row を貼り付けると、次に届いた実 mask との差分を合成し、hold、patch、rollback、recover の流れを再生します。予測が外れた時に何フレームで tiled rendering に戻せるかを見る派生試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-04_html_prediction_miss_recovery_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>Chrome 144 の `XRVisibilityMaskChange` は可視 viewport mesh と `XRView` の識別子を扱えるため、mask row を view ごとに予測・検証する流れへ拡張しやすいです。</span>
+              <span class="en-copy">Chrome 144's `XRVisibilityMaskChange` exposes visible viewport meshes and `XRView` identifiers, which makes per-view mask prediction and verification practical.</span>
+            </li>
+          
+            <li>
+              <span>W3C WebXR Device API 2026-06-09 CRD は frame、view、pose、privacy / comfort の基礎参照として、予測 mask の安全側判定に使えます。</span>
+              <span class="en-copy">The W3C WebXR Device API 2026-06-09 CRD remains the baseline reference for frames, views, pose, privacy, and comfort when making conservative predictive-mask decisions.</span>
+            </li>
+          
+            <li>
+              <span>W3C WebXR Layers API Level 1 は projection / quad / media layer と redraw、subimage、描画品質の文脈を整理する参照になります。</span>
+              <span class="en-copy">W3C WebXR Layers API Level 1 provides useful context for projection / quad / media layers, redraw, subimages, and rendering quality.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の WebXR Samples / Layers Samples は外部カードにはせず、今日の自作サンプルで使う判断材料として参照しました。</span>
+              <span class="en-copy">Immersive Web WebXR Samples / Layers Samples were used as references for today's original samples, not as public archive cards.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは `Predictive Visibility Mask Console` と `Prediction Miss Recovery Replayer` の2本です。</span>
+              <span class="en-copy">Today's public cards are the two original samples `Predictive Visibility Mask Console` and `Prediction Miss Recovery Replayer`.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>Chrome 144 の `XRVisibilityMaskChange` は、可視 viewport の mesh を vertices / indices として扱い、`XRView` の一意識別子で mask と view を対応付けやすくします。昨日は現在 mask と history mask の再投影 drift を見ました。今日はさらに半歩進めて、次の mask event が来る前に pose velocity、prediction lead、mask age から安全側の guard band を作ります。面白い点は、mask が `届いた後` の評価だけでなく、mask が `まだ届かない間` の描画判断も row 化できることです。</p>
+          <p class="en-copy">Chrome 144's `XRVisibilityMaskChange` represents the visible viewport mesh as vertices / indices and makes it easier to pair masks with views through unique `XRView` identifiers. Yesterday looked at reprojection drift between the current mask and a history mask. Today moves one half step further: before the next mask event arrives, it builds a conservative guard band from pose velocity, prediction lead, and mask age. The interesting part is turning not only post-arrival mask validation but also the in-between rendering decision into rows.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developer.chrome.com/release-notes/144" target="_blank" rel="noreferrer">Chrome 144 release notes</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">WebXR Device API</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Predictive Visibility Mask Console` は view、mask age、prediction lead、pose velocity、acceleration を操作し、現在 mask、予測 mask、guard band、移動ベクトルを重ねます。派生サンプル `Prediction Miss Recovery Replayer` は、本命 row と実 mask miss の差分から、rollback full viewport、patch-and-hold、verify-mask-change、recover-tiled-rendering の流れを frame ごとに再生します。体験としては、XR 描画の省略を `攻める` よりも、予測が外れた時の戻り方まで含めて `失敗しても説明できる` 方向へ寄せています。</p>
+          <p class="en-copy">The main sample, `Predictive Visibility Mask Console`, lets you change view, mask age, prediction lead, pose velocity, and acceleration, then overlays the current mask, predicted mask, guard band, and motion vector. The derivative sample, `Prediction Miss Recovery Replayer`, uses the main row plus an actual mask-miss delta to replay rollback full viewport, patch-and-hold, verify-mask-change, and recover-tiled-rendering frame by frame. As an experience, it favors explainable recovery when prediction misses over aggressively reducing XR rendering.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では texture や camera frame ではなく、`viewId`、maskAgeMs、predictionLeadMs、poseVelocityDeg、accelerationDeg、predictedShiftPx、guardBandPx、confidence、tileSavings、route だけを保存します。予測 confidence が高ければ predicted mask を submit、guardBand が広い場合は guard-band-expanded-mask、lead が長すぎる時は hold-until-mask-change、confidence が低い時は full-viewport-refresh に戻す、という小さな ladder にしました。実機では次の `XRVisibilityMaskChange` と突き合わせ、missPx を派生 replayer へ渡すと運用ログになります。</p>
+          <p class="en-copy">The implementation stores lightweight derived fields instead of textures or camera frames: `viewId`, maskAgeMs, predictionLeadMs, poseVelocityDeg, accelerationDeg, predictedShiftPx, guardBandPx, confidence, tileSavings, and route. The small ladder is: submit the predicted mask when confidence is high, expand the guard band when needed, hold until the next mask change when lead is too long, and return to full-viewport refresh when confidence is low. On device, compare the row with the next `XRVisibilityMaskChange` and send missPx into the derivative replayer for operational logging.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の row は、遠隔支援、展示 UI、XR 作業手順、酔いにくさ QA、WebXR パフォーマンス検証に使いやすいです。視界画像を保存せず、予測 shift、guard band、confidence、miss、rollback debt だけを残すため、セッション後に `なぜ full viewport に戻ったか`、`何フレームで tiled rendering に復帰したか` を説明できます。AI と組み合わせるなら、画像ではなく row の時系列を要約し、復帰遅延の主因を `mask age`、`pose velocity`、`prediction miss` へ分解させるのが相性よさそうです。</p>
+          <p class="en-copy">Today's rows fit remote assistance, installation UI, XR work instructions, comfort QA, and WebXR performance validation. Because they store predicted shift, guard band, confidence, miss, and rollback debt instead of view imagery, they can later explain why the app returned to full viewport and how many frames it took to recover tiled rendering. With AI, summarize row timelines rather than images and break recovery delay into mask age, pose velocity, and prediction miss.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>`XRVisibilityMaskChange` の仕様反映、ChromeStatus / Blink-dev の実装状況、WebXR Layers API の subimage / redraw / space warp 周辺、Immersive Web Samples の Layers / Proposals 更新を継続します。自作側では、9月26日の redraw timestamp、9月27日の attachment size、9月30日の subimage viewport、10月3日の reprojection drift を今日の prediction miss replayer に同時 import し、復帰遅延の主因を比較したいです。</p>
+          <p class="en-copy">Keep watching spec integration for `XRVisibilityMaskChange`, ChromeStatus / Blink-dev implementation state, WebXR Layers API around subimages / redraw / space warp, and Immersive Web Samples Layers / Proposals updates. On the original-sample side, import the September 26 redraw timestamp, September 27 attachment size, September 30 subimage viewport, and October 3 reprojection drift rows into today's prediction-miss replayer and compare the dominant cause of delayed recovery.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Predictive Visibility Mask Console` で pose velocity と acceleration を上げると guardBandPx が広がり、route が `submit-predicted-mask` から `guard-band-expanded-mask` や `full-viewport-refresh` に落ちます。その JSON を `Prediction Miss Recovery Replayer` に貼り、Actual mask miss と policy を変えると、何フレーム後に `recover-tiled-rendering` に戻れるかを確認できます。</p>
+          <p class="en-copy">In `Predictive Visibility Mask Console`, raising pose velocity and acceleration widens guardBandPx and can move the route from `submit-predicted-mask` toward `guard-band-expanded-mask` or `full-viewport-refresh`. Paste that JSON into `Prediction Miss Recovery Replayer`, then change Actual mask miss and policy to see after how many frames it can return to `recover-tiled-rendering`.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-04_html_predictive_visibility_mask_console.html" target="_blank" rel="noreferrer">Open Predictive Visibility Mask Console</a></li>
+          
+            <li><a href="../outputs/2026-10-04_html_prediction_miss_recovery_replayer.html" target="_blank" rel="noreferrer">Open Prediction Miss Recovery Replayer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Chrome 144 release notes、W3C WebXR Device API、W3C WebXR Layers API、Immersive Web Layers Samples、WebXR Samples repository を確認。設計: 1本目は next-frame predictive mask console、2本目は actual mask miss を受けた recovery replayer。実装: `outputs/2026-10-04_html_predictive_visibility_mask_console.html` と `outputs/2026-10-04_html_prediction_miss_recovery_replayer.html` を追加。検証: report JSON parse、HTML 内 script 構文、gallery / day page 再生成、publish を確認する。</p>
+          <p class="en-copy">Research: checked Chrome 144 release notes, the W3C WebXR Device API, the W3C WebXR Layers API, Immersive Web Layers Samples, and the WebXR Samples repository. Design: make the first sample a next-frame predictive-mask console and the second a recovery replayer fed by actual mask miss. Implementation: add `outputs/2026-10-04_html_predictive_visibility_mask_console.html` and `outputs/2026-10-04_html_prediction_miss_recovery_replayer.html`. Validation: parse the report JSON, check embedded HTML scripts, regenerate the gallery / day page, and try publishing.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月末からの流れは、space warp、redraw、attachment size、viewport crop、subimage、visibility mask を軽量 row に分解し、10月に入ってそれらを説明可能な fallback と復帰判断へ戻す方向です。今日は `再投影できたか` から `次フレームを予測して、外れたらどう戻すか` へ進めました。次は、個別 row を増やすよりも、複数 row の import と原因ランキングに寄せるのが良さそうです。</p>
+          <p class="en-copy">Since late September, the work has decomposed space warp, redraw, attachment size, viewport crop, subimage, and visibility mask into lightweight rows, then started bringing them back into explainable fallback and recovery decisions in October. Today moves from whether reprojection worked to predicting the next frame and recovering when it misses. Next, it is probably better to import multiple rows and rank causes than to add another isolated row type.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Predictive Visibility Mask Console` です。何が動くか: view、mask age、prediction lead、pose velocity、acceleration から predictedShiftPx、guardBandPx、confidence、tileSavings、route を計算し、現在 mask、予測 mask、guard band を重ねます。次に足すなら、実 `XRVisibilityMaskChange` の timestamp と viewer pose history を IndexedDB から読み込みます。派生として `Prediction Miss Recovery Replayer` も実装しました。何が動くか: 本命 row と actual mask miss から frame ごとの rollback / patch / recover を policy 別に再生します。次に足すなら、9月後半からの redraw / attachment / subimage row を同時 import して復帰遅延の主因を比較します。</p>
+          <p class="en-copy">The selected main prototype is `Predictive Visibility Mask Console`. What it does: computes predictedShiftPx, guardBandPx, confidence, tileSavings, and route from view, mask age, prediction lead, pose velocity, and acceleration, then overlays the current mask, predicted mask, and guard band. Next addition: load real `XRVisibilityMaskChange` timestamps and viewer-pose history from IndexedDB. The derivative `Prediction Miss Recovery Replayer` was also implemented. What it does: replays rollback / patch / recover per frame from the main row and actual mask miss under different policies. Next addition: import late-September redraw / attachment / subimage rows together and compare the dominant cause of delayed recovery.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-04_html_predictive_visibility_mask_console.html" target="_blank" rel="noreferrer">Today's main sample: Predictive Visibility Mask Console</a></li>
+          
+            <li><a href="../outputs/2026-10-04_html_prediction_miss_recovery_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Prediction Miss Recovery Replayer</a></li>
+          
+            <li><a href="https://developer.chrome.com/release-notes/144" target="_blank" rel="noreferrer">Chrome 144 release notes: XRVisibilityMaskChange</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers Samples</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples repository</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-04_html_predictive_visibility_mask_console.html" loading="lazy" title="Predictive Visibility Mask Console"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

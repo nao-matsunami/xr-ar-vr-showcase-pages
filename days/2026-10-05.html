@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Depth と motion vector を Space Warp 復帰 queue にする | 2026-10-05</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.05</p>
+      <h1>Depth と motion vector を Space Warp 復帰 queue にする</h1>
+      <p class="hero-subtitle">Turning depth and motion vectors into a Space Warp recovery queue</p>
+      <p>Meta Quest Browser の WebGPU foveation / space-warp layers / WebXR depth projection、W3C WebXR Device API、WebXR Depth Sensing、WebXR Layers、Immersive Web Samples を確認し、depth + motion vector の送信 budget と、外れた時の復帰 queue を扱う自作サンプル2本を追加しました。</p>
+      <p class="en-copy">After checking Meta Quest Browser notes around WebGPU foveation, space-warp layers, and WebXR depth projection, plus W3C WebXR Device API, WebXR Depth Sensing, WebXR Layers, and Immersive Web Samples, today's original work adds two samples: a depth + motion-vector budget console and a recovery queue for misses.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-05_html_depth_motion_vector_budget_console.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-10-04.html">← 2026.10.04</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Depth Motion Vector Budget Console</h3>
+              <p>Quest Browser の WebXR depth projection / WebGPU / space-warp 周辺の流れを、画像ではなく軽量 row に分解します。depth frame、motion vector、reprojection lead を合わせ、送るべき補助情報と fallback を判定します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-05_html_depth_motion_vector_budget_console.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Space Warp Recovery Queue</h3>
+              <p>1本目の budget row が崩れた時の戻り方を、短い frame queue として再生します。depth、motion vector、projection lead のどれを落とし、何フレームで full render から warp に復帰するかを比べます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-05_html_space_warp_recovery_queue.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>Meta Quest Browser 150.1 は Experimental WebGPU foveation support と MV-HEVC video playback を示しており、WebGPU 経由の XR 描画品質と動画系 layer の接点を追う価値があります。</span>
+              <span class="en-copy">Meta Quest Browser 150.1 mentions experimental WebGPU foveation support and MV-HEVC video playback, making XR render quality and video-layer integration worth watching.</span>
+            </li>
+          
+            <li>
+              <span>Meta Quest Browser 149.1 は WebGPU support for space-warp layers を明記しており、depth / motion vector / projection lead を lightweight row として扱う題材になります。</span>
+              <span class="en-copy">Meta Quest Browser 149.1 calls out WebGPU support for space-warp layers, which is a good prompt for treating depth, motion vectors, and projection lead as lightweight rows.</span>
+            </li>
+          
+            <li>
+              <span>Meta Quest Browser 146.0 は Experimental WebGPU and WebXR depth projection support を出しており、Depth Sensing の `gpu-optimized` 経路と相性がよいです。</span>
+              <span class="en-copy">Meta Quest Browser 146.0 added experimental WebGPU and WebXR depth projection support, pairing naturally with Depth Sensing's `gpu-optimized` route.</span>
+            </li>
+          
+            <li>
+              <span>W3C WebXR Depth Sensing Module 2026-08-25 WD は `depth-sensing` feature、usagePreference、dataFormatPreference、matchDepthView、depthActive を確認する一次情報です。</span>
+              <span class="en-copy">The W3C WebXR Depth Sensing Module 2026-08-25 WD is the primary reference for `depth-sensing`, usagePreference, dataFormatPreference, matchDepthView, and depthActive.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは `Depth Motion Vector Budget Console` と `Space Warp Recovery Queue` の2本です。</span>
+              <span class="en-copy">Today's public cards are the two original samples `Depth Motion Vector Budget Console` and `Space Warp Recovery Queue`.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>Meta の Browser release notes では、146.0 で Experimental WebGPU and WebXR depth projection support、149.1 で WebGPU support for space-warp layers、150.1 で Experimental WebGPU foveation support が並んでいます。これは、単に WebXR が表示できるかではなく、深度、motion vector、foveation、layer を compositor にどう渡し、外れた時にどう戻すかが実装テーマになっているということです。昨日までの visibility mask / prediction miss の流れから、今日は depth + motion vector の送信 budget と recovery queue に進めました。</p>
+          <p class="en-copy">Meta's Browser release notes line up experimental WebGPU and WebXR depth projection support in 146.0, WebGPU support for space-warp layers in 149.1, and experimental WebGPU foveation support in 150.1. The implementation topic is no longer just whether WebXR can display content; it is how depth, motion vectors, foveation, and layers are handed to the compositor and how the app recovers when that handoff misses. Following the recent visibility-mask and prediction-miss thread, today's work moves into depth + motion-vector budget and recovery queues.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developers.meta.com/vr/release-notes/?search_key=browser" target="_blank" rel="noreferrer">Meta Horizon OS release notes</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-depth-sensing-1/" target="_blank" rel="noreferrer">WebXR Depth Sensing Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Depth Motion Vector Budget Console` は depth usage、depth age、motion px、projection lead、hole ratio を操作し、depth plane、motion plane、reprojection guard を重ねます。派生サンプル `Space Warp Recovery Queue` は、本命 row が崩れた時に、detect-miss、disable / clamp motion vector、refresh depth、trim payload、resume / hold の frame queue を再生します。体験としては、XR の滑らかさを `魔法の補間` として隠すのではなく、どの補助データを信じて、どこから full render に戻すかを操作できるようにしています。</p>
+          <p class="en-copy">The main sample, `Depth Motion Vector Budget Console`, lets you manipulate depth usage, depth age, motion pixels, projection lead, and hole ratio while overlaying a depth plane, motion plane, and reprojection guard. The derivative sample, `Space Warp Recovery Queue`, replays a frame queue when the main row breaks down: detect miss, disable / clamp motion vectors, refresh depth, trim payload, then resume or hold. As an experience, it makes smooth XR less like hidden interpolation magic and more like an inspectable choice about which auxiliary data to trust and when to fall back to full rendering.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>保存する row は画像・深度 texture そのものではなく、`depthUsage`、`depthAgeMs`、`motionPx`、`projectionLeadMs`、`holeRatio`、`depthCoverage`、`motionVectorQuality`、`stability`、`compositorBudget`、`payloadKb`、`route` に絞りました。W3C Depth Sensing では `gpu-optimized` / `cpu-optimized`、data format、`matchDepthView`、`depthActive` の扱いが重要なので、実機版では `depthActive === false`、古い depth frame、`matchDepthView` false の時に queue 側へ落とすのが良さそうです。</p>
+          <p class="en-copy">The row stores derived values rather than images or depth textures: `depthUsage`, `depthAgeMs`, `motionPx`, `projectionLeadMs`, `holeRatio`, `depthCoverage`, `motionVectorQuality`, `stability`, `compositorBudget`, `payloadKb`, and `route`. In the W3C Depth Sensing spec, `gpu-optimized` / `cpu-optimized`, data formats, `matchDepthView`, and `depthActive` matter. On-device, it should drop into the queue when `depthActive === false`, the depth frame is stale, or `matchDepthView` is false.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の row は、Quest Browser / WebXR 実機検証で `なぜ Space Warp を止めたか`、`何フレームで復帰したか`、`depth と motion vector のどちらが原因か` を説明するログに向いています。映像や深度画像を保存しないため、デバッグ用にも展示 QA 用にも軽いです。AI と組み合わせるなら、session 後に row の時系列を読ませ、risk debt の上位要因、comfort-first と performance-first の差、payload を削るべき frame を要約させると便利です。</p>
+          <p class="en-copy">Today's rows are well suited for Quest Browser / WebXR device testing logs that explain why Space Warp was stopped, how many frames recovery took, and whether depth or motion vectors caused the issue. Because they avoid saving video or depth imagery, they stay lightweight for debugging and installation QA. With AI, summarize the row timeline after a session and ask for the largest risk-debt factors, differences between comfort-first and performance-first policies, and the frames where payload should be trimmed.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>Meta Browser の WebGPU foveation / space-warp layers の続報、W3C WebXR Depth Sensing の GPU depth 情報、WebXR Layers の projection layer / media layer / redraw、Immersive Web Samples の WebGPU / Layers / Proposals を継続します。自作側では、10月3日の reprojection drift、10月4日の prediction miss、今日の space-warp recovery を同じ import 形式にして、1つの原因ランキング画面へまとめたいです。</p>
+          <p class="en-copy">Keep watching Meta Browser updates around WebGPU foveation and space-warp layers, W3C WebXR Depth Sensing GPU depth information, WebXR Layers projection / media / redraw behavior, and Immersive Web Samples for WebGPU / Layers / Proposals. On the original side, unify the October 3 reprojection drift, October 4 prediction miss, and today's space-warp recovery rows into one import format and one cause-ranking view.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Depth Motion Vector Budget Console` で depth age、motion px、hole ratio を上げると `submit-depth-motion-row` から `submit-depth-only-with-guard`、`hold-space-warp-layer`、`full-render-no-projection` へ落ちます。その状態を見ながら `Space Warp Recovery Queue` で policy を comfort-first / performance-first に切り替えると、同じ miss でも復帰 frame と final route が変わることを確認できます。</p>
+          <p class="en-copy">In `Depth Motion Vector Budget Console`, raising depth age, motion pixels, and hole ratio moves the route from `submit-depth-motion-row` to `submit-depth-only-with-guard`, `hold-space-warp-layer`, or `full-render-no-projection`. Then switch `Space Warp Recovery Queue` between comfort-first and performance-first to see how the same miss changes recovery frames and the final route.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-05_html_depth_motion_vector_budget_console.html" target="_blank" rel="noreferrer">Open Depth Motion Vector Budget Console</a></li>
+          
+            <li><a href="../outputs/2026-10-05_html_space_warp_recovery_queue.html" target="_blank" rel="noreferrer">Open Space Warp Recovery Queue</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Meta Horizon OS release notes、W3C WebXR Device API、W3C WebXR Depth Sensing Module、W3C WebXR Layers API、Immersive Web Samples / Layers Samples を確認。設計: 1本目は depth + motion vector budget console、2本目は miss 時の recovery queue。実装: `outputs/2026-10-05_html_depth_motion_vector_budget_console.html` と `outputs/2026-10-05_html_space_warp_recovery_queue.html` を追加。検証: report JSON parse、HTML 内 script 構文、gallery / day page 再生成、publish を確認する。</p>
+          <p class="en-copy">Research: checked Meta Horizon OS release notes, the W3C WebXR Device API, W3C WebXR Depth Sensing Module, W3C WebXR Layers API, and Immersive Web Samples / Layers Samples. Design: make the first sample a depth + motion-vector budget console and the second a recovery queue for misses. Implementation: add `outputs/2026-10-05_html_depth_motion_vector_budget_console.html` and `outputs/2026-10-05_html_space_warp_recovery_queue.html`. Validation: parse the report JSON, check embedded HTML scripts, regenerate the gallery / day page, and publish.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月末から 10月頭の流れは、layer redraw、attachment size、subimage viewport、visibility mask、prediction miss を `描画を省くための材料` として分解する段階でした。今日はそこに depth projection と space-warp layer を足し、`省けるか` だけでなく `省略が崩れた時に何を切って戻すか` に重心を移しました。次は個別サンプルを増やすより、過去 row を import して recovery 原因をランキングする方が収穫が大きそうです。</p>
+          <p class="en-copy">The late-September to early-October thread decomposed layer redraw, attachment size, subimage viewport, visibility masks, and prediction misses as inputs for render reduction. Today adds depth projection and space-warp layers, shifting the center of gravity from whether work can be skipped to what gets disabled when that shortcut breaks. Next, importing previous rows and ranking recovery causes is likely more valuable than adding another isolated sample.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Depth Motion Vector Budget Console` です。何が動くか: depth usage、depth age、motion px、projection lead、hole ratio から depthCoverage、motionVectorQuality、stability、compositorBudget、payloadKb、route を計算し、depth / motion / reprojection guard を重ねます。次に足すなら、実 `XRWebGLDepthInformation` / `XRGPUDepthInformation` の depth timestamp と motion-vector row を IndexedDB へ保存します。派生として `Space Warp Recovery Queue` も実装しました。何が動くか: budget、depth age、motion miss、payload、policy から frame ごとの detect / clamp / refresh / trim / resume を再生します。次に足すなら、1本目の export row を直接 import し、comfort-first と performance-first の差を実 frame timestamp で比較します。</p>
+          <p class="en-copy">The selected main prototype is `Depth Motion Vector Budget Console`. What it does: computes depthCoverage, motionVectorQuality, stability, compositorBudget, payloadKb, and route from depth usage, depth age, motion pixels, projection lead, and hole ratio, then overlays depth / motion / reprojection guards. Next addition: save real `XRWebGLDepthInformation` / `XRGPUDepthInformation` depth timestamps and motion-vector rows into IndexedDB. The derivative `Space Warp Recovery Queue` was also implemented. What it does: replays detect / clamp / refresh / trim / resume per frame from budget, depth age, motion miss, payload, and policy. Next addition: import the first sample's export row directly and compare comfort-first and performance-first policies over real frame timestamps.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-05_html_depth_motion_vector_budget_console.html" target="_blank" rel="noreferrer">Today's main sample: Depth Motion Vector Budget Console</a></li>
+          
+            <li><a href="../outputs/2026-10-05_html_space_warp_recovery_queue.html" target="_blank" rel="noreferrer">Today's derivative sample: Space Warp Recovery Queue</a></li>
+          
+            <li><a href="https://developers.meta.com/vr/release-notes/?search_key=browser" target="_blank" rel="noreferrer">Meta Horizon OS release notes: Browser WebGPU / WebXR notes</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-depth-sensing-1/" target="_blank" rel="noreferrer">W3C: WebXR Depth Sensing Module</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-05_html_depth_motion_vector_budget_console.html" loading="lazy" title="Depth Motion Vector Budget Console"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
