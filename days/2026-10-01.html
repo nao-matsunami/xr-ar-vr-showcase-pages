@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XR 可視マスク変更を row 化してタイル描画予算へ戻す | 2026-10-01</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.01</p>
+      <h1>XR 可視マスク変更を row 化してタイル描画予算へ戻す</h1>
+      <p class="hero-subtitle">Turning XR visibility mask changes into rows for tile rendering budgets</p>
+      <p>Chrome 144 の XRVisibilityMaskChange、WebXR Device API の CRD、WebXR Layers API Editor's Draft、Immersive Web Samples を参照し、可視領域 mesh を保存する本命サンプルと、その row を tile rendering budget に戻す派生サンプルを追加しました。</p>
+      <p class="en-copy">After checking Chrome 144 XRVisibilityMaskChange, the WebXR Device API CRD, the WebXR Layers API Editor's Draft, and Immersive Web Samples, today's original work adds a main sample that records visible-viewport mesh rows plus a derivative sample that replays those rows into a tile rendering budget.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-01_html_visibility_mask_change_ledger.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-30.html">← 2026.09.30</a>
+      <a class="day-link" href="../days/2026-10-02.html">2026.10.02 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Visibility Mask Change Ledger</h3>
+              <p>XRVisibilityMaskChange 相当の viewId、vertices、indices、coverage を小さな frame row にして、描画範囲の節約と信頼度を見ます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-01_html_visibility_mask_change_ledger.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Visibility Mask Tile Budget Replayer</h3>
+              <p>1本目の visibility mask row を貼り付け、8 x 5 tile の描画予算へ戻します。mask 内は native、境界は patch、外側は skip として再判定します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-01_html_visibility_mask_tile_budget_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>Chrome 144 は `XRVisibilityMaskChange` を追加し、ユーザー viewport の可視部分を表す vertices と indices を渡せるようにしたと説明しています。</span>
+              <span class="en-copy">Chrome 144 describes `XRVisibilityMaskChange` as providing vertices and indices for the visible portion of the user's viewport.</span>
+            </li>
+          
+            <li>
+              <span>同じ更新で `XRView` に unique identifier が与えられ、左右目や view ごとの mask と描画行を対応付けやすくなります。</span>
+              <span class="en-copy">The same update gives `XRView` objects unique identifiers, making it easier to pair masks with per-eye or per-view rendering rows.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Device API は 2026-06-09 の Candidate Recommendation Draft が最新履歴にあり、XRSession / XRView / frame loop の基礎はここを参照します。</span>
+              <span class="en-copy">The WebXR Device API history lists the 2026-06-09 Candidate Recommendation Draft as the latest entry, which is the base reference for XRSession, XRView, and the frame loop.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Layers API Editor's Draft は compositor 管理の layer が performance / judder 対策になることを説明しており、mask row は layer budget と相性が良いです。</span>
+              <span class="en-copy">The WebXR Layers API Editor's Draft explains compositor-managed layers as a performance and judder tool, which makes mask rows a good fit for layer budgeting.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、自作の `Visibility Mask Change Ledger` と `Visibility Mask Tile Budget Replayer` の2本です。</span>
+              <span class="en-copy">Today's public cards are the original workspace samples `Visibility Mask Change Ledger` and `Visibility Mask Tile Budget Replayer`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>Chrome 144 の `XRVisibilityMaskChange` は、可視 viewport を mesh として受け取り、描画しなくてよい領域を減らすための手がかりになります。9月後半に扱った space warp、attachment、viewport crop、subimage row は texture / viewport の粒度でしたが、今日はさらに一段前の `そもそもどこを描くか` を viewId 単位の row にします。左右目で mask がずれる時にも、unique view identifier があれば再生・診断しやすくなります。</p>
+          <p class="en-copy">Chrome 144's `XRVisibilityMaskChange` gives a mesh for the visible viewport, providing a hint for reducing areas that do not need to be rendered. Late September covered space warp, attachments, viewport crop, and subimage rows at the texture / viewport level; today moves one step earlier and records `what should be drawn at all` as per-viewId rows. When masks differ between eyes, unique view identifiers make replay and diagnosis easier.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developer.chrome.com/release-notes/144" target="_blank" rel="noreferrer">Chrome 144 release notes</a></li>
+          
+            <li><a href="https://www.w3.org/standards/history/webxr/" target="_blank" rel="noreferrer">WebXR Device API publication history</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Visibility Mask Change Ledger` は mask shape、inset、jitter、mask age、view を動かし、coverage、triangle count、saved pixels、route を ledger row として出します。派生サンプル `Visibility Mask Tile Budget Replayer` はその JSON row を貼り付け、8 x 5 の tile を `native`、`patch`、`skip`、`fallback` に分けます。可視マスクが変わった瞬間に全画面を描き直すのではなく、境界だけ安全側に patch する UI の下地です。</p>
+          <p class="en-copy">The main sample, `Visibility Mask Change Ledger`, lets you adjust mask shape, inset, jitter, mask age, and view, then emits coverage, triangle count, saved pixels, and route as a ledger row. The derivative `Visibility Mask Tile Budget Replayer` accepts that JSON row and classifies an 8 x 5 tile grid into `native`, `patch`, `skip`, and `fallback`. It sketches a UI where visibility-mask changes do not force a full redraw, but patch only the border conservatively.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では `XRVisibilityMaskChange` 相当の event から vertices / indices / viewId / timestamp を保存し、実 texture や framebuffer を保存対象にしません。後段では mask coverage、三角形数、mask age、head motion、layer redraw age をまとめて budget verdict に変換します。`mask が古い時は full viewport fallback`、`coverage が十分狭い時は visible tiles だけ submit`、`境界が怪しい時は patch band を太くする` という3段階にすると運用 UI にしやすいです。</p>
+          <p class="en-copy">In production, save vertices / indices / viewId / timestamp from an `XRVisibilityMaskChange`-like event, not textures or framebuffers. Downstream, combine mask coverage, triangle count, mask age, head motion, and layer redraw age into a budget verdict. A practical three-step policy is: use full-viewport fallback when the mask is stale, submit only visible tiles when coverage is narrow enough, and widen the patch band when the boundary is uncertain.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の mask row は、9月26日の redraw timestamp logger、9月29日の viewport crop guard、9月30日の subimage viewport row と結合できます。たとえば遠隔支援や展示 UI では、`視界外 tile を skip したことで何 ms 節約できたか`、`mask が古くなったので full viewport に戻したか` を後から説明できます。AI や業務ログと組み合わせるなら、ユーザーが見ていた範囲だけを要約対象にする privacy-aware replay にも発展します。</p>
+          <p class="en-copy">Today's mask rows can be combined with the September 26 redraw timestamp logger, September 29 viewport crop guard, and September 30 subimage viewport row. In remote assistance or installation UI, this can explain later how many milliseconds were saved by skipping outside-view tiles, or why the system returned to full viewport when the mask became stale. Combined with AI or operational logs, it can evolve into privacy-aware replay that summarizes only the region the user could see.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>次は `XRVisibilityMaskChange` の spec 側の更新、ChromeStatus の実装状況、WebXR Layers API の compositor layer 更新、Immersive Web Samples の Layers / Proposals を継続して見ます。自作側では、今日の tile budget に9月30日の subimage row と9月26日の redraw row を自動 import し、mask と layer redraw のどちらが fallback 原因かを分けたいです。</p>
+          <p class="en-copy">Next, keep watching spec-side updates for `XRVisibilityMaskChange`, ChromeStatus implementation state, compositor-layer updates in WebXR Layers API, and Immersive Web Samples for Layers / Proposals. On the original-sample side, automatically import the September 30 subimage rows and September 26 redraw rows into today's tile budget, separating mask-caused fallback from layer-redraw-caused fallback.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Visibility Mask Change Ledger` で shape を `notched passthrough`、jitter を低め、mask age を 20ms 台にすると `submit-mask-row` になります。jitter や age を上げると `hold-mask-row` に落ちます。派生側ではその JSON を貼り付け、policy を `strict` にして head motion を上げると、境界 patch や full viewport fallback が増える様子を見られます。</p>
+          <p class="en-copy">In `Visibility Mask Change Ledger`, choose `notched passthrough`, low jitter, and mask age around the 20ms range to get `submit-mask-row`. Increase jitter or age and it falls into `hold-mask-row`. In the derivative sample, paste that JSON, switch policy to `strict`, and raise head motion to see border patches and full-viewport fallback increase.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-01_html_visibility_mask_change_ledger.html" target="_blank" rel="noreferrer">Open Visibility Mask Change Ledger</a></li>
+          
+            <li><a href="../outputs/2026-10-01_html_visibility_mask_tile_budget_replayer.html" target="_blank" rel="noreferrer">Open Visibility Mask Tile Budget Replayer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Chrome 144 release notes、W3C WebXR Device API publication history、WebXR Device API、WebXR Layers API Editor's Draft、Immersive Web Samples を確認。設計: 1本目は visibility mask change ledger、2本目は tile budget replayer。実装: `outputs/2026-10-01_html_visibility_mask_change_ledger.html` と `outputs/2026-10-01_html_visibility_mask_tile_budget_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish を確認する。</p>
+          <p class="en-copy">Research: checked Chrome 144 release notes, W3C WebXR Device API publication history, the WebXR Device API, the WebXR Layers API Editor's Draft, and Immersive Web Samples. Design: make the first sample a visibility-mask change ledger and the second a tile-budget replayer. Implementation: add `outputs/2026-10-01_html_visibility_mask_change_ledger.html` and `outputs/2026-10-01_html_visibility_mask_tile_budget_replayer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, and publish.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月後半の layer 系は `motion vector gap`、`redraw timestamp`、`attachment size`、`viewport crop`、`subimage row` へ進みました。10月初日はそこに `visibility mask` を足し、GPU へ渡す前に描画対象領域を絞る段階を row 化しました。これで `入力 / tracking / layer / attachment / viewport / subimage / visibility mask` の診断 row がそろい、次は統合 replay に進めます。</p>
+          <p class="en-copy">The late-September layer thread moved through `motion vector gap`, `redraw timestamp`, `attachment size`, `viewport crop`, and `subimage row`. October starts by adding `visibility mask`, turning the region-selection stage before GPU submission into rows. We now have diagnostic rows for input / tracking / layer / attachment / viewport / subimage / visibility mask, setting up an integrated replay next.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Visibility Mask Change Ledger` です。何が動くか: mask shape、inset、jitter、mask age、viewId から coverage、triangles、saved pixels、route を計算し、JSON row と ledger にします。次に足すなら、実 `XRVisibilityMaskChange` event を受けて左右目ごとの row を IndexedDB に保存します。派生として `Visibility Mask Tile Budget Replayer` も実装しました。何が動くか: 本命 row または preset を読み込み、8 x 5 tile の native / patch / skip / fallback を policy 別に可視化します。次に足すなら、9月30日の subimage row と9月26日の redraw row を自動 import します。</p>
+          <p class="en-copy">The selected main prototype is `Visibility Mask Change Ledger`. What it does: computes coverage, triangles, saved pixels, and route from mask shape, inset, jitter, mask age, and viewId, then outputs a JSON row and ledger. Next addition: listen to real `XRVisibilityMaskChange` events and store per-eye rows in IndexedDB. The derivative `Visibility Mask Tile Budget Replayer` was also implemented. What it does: reads the main row or a preset and visualizes native / patch / skip / fallback for an 8 x 5 tile grid under different policies. Next addition: automatically import the September 30 subimage row and September 26 redraw row.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-01_html_visibility_mask_change_ledger.html" target="_blank" rel="noreferrer">Today's main sample: Visibility Mask Change Ledger</a></li>
+          
+            <li><a href="../outputs/2026-10-01_html_visibility_mask_tile_budget_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Visibility Mask Tile Budget Replayer</a></li>
+          
+            <li><a href="https://developer.chrome.com/release-notes/144" target="_blank" rel="noreferrer">Chrome 144 release notes: XRVisibilityMaskChange</a></li>
+          
+            <li><a href="https://www.w3.org/standards/history/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API publication history</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers API Editor's Draft</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-01_html_visibility_mask_change_ledger.html" loading="lazy" title="Visibility Mask Change Ledger"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

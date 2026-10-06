@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Subimage Viewport IndexedDB Bridge</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f1413;
+      --panel: #172221;
+      --panel2: #22302f;
+      --line: #465957;
+      --text: #f6f1e8;
+      --muted: #b4c2bf;
+      --cyan: #81d8e8;
+      --green: #a9df91;
+      --gold: #e8bf70;
+      --red: #ef8378;
+      --ink: #07100f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(145deg, rgba(129, 216, 232, 0.10), transparent 44%),
+        linear-gradient(315deg, rgba(169, 223, 145, 0.08), transparent 54%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 40px; }
+    header { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 16px; margin-bottom: 16px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(23, 34, 33, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+    }
+    .panel { padding: 24px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    code { color: var(--cyan); }
+    .stage { min-height: 426px; padding: 16px; display: grid; grid-template-rows: auto 1fr auto; gap: 12px; overflow: hidden; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(7, 16, 15, 0.72); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 21px; overflow-wrap: anywhere; }
+    .surface {
+      position: relative;
+      min-height: 264px;
+      border: 1px solid rgba(246, 241, 232, 0.18);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(129, 216, 232, 0.08) 1px, transparent 1px),
+        linear-gradient(rgba(129, 216, 232, 0.08) 1px, transparent 1px),
+        #121918;
+      background-size: 32px 32px;
+    }
+    .rect {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      font-weight: 800;
+      transition: all 0.2s ease;
+    }
+    #textureRect { border: 2px solid var(--cyan); background: rgba(129, 216, 232, 0.12); }
+    #subimageRect { border: 2px solid var(--green); background: rgba(169, 223, 145, 0.16); }
+    #viewportRect { border: 2px dashed var(--gold); background: rgba(232, 191, 112, 0.12); }
+    .controls { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--cyan); }
+    button { cursor: pointer; font-weight: 800; background: var(--cyan); color: var(--ink); border-color: transparent; }
+    section { padding: 16px; margin-top: 16px; }
+    .ledger { display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 0.8fr 0.8fr 0.8fr 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(7, 16, 15, 0.58);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .row strong { color: var(--text); }
+    .chip { justify-self: start; border-radius: 999px; padding: 5px 9px; background: rgba(129, 216, 232, 0.14); color: var(--cyan); font-weight: 800; }
+    textarea { width: 100%; min-height: 150px; padding: 12px; resize: vertical; line-height: 1.45; }
+    @media (max-width: 860px) {
+      header, .controls { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Subimage Viewport IndexedDB Bridge</h1>
+        <p><code>XRWebGLBinding.getViewSubImage()</code> と <code>XRWebGLLayer.getViewport()</code> 相当の値を、同じ frame row として IndexedDB / JSON に橋渡しする最小ロガーです。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>Route</span><strong id="routeLabel">ready</strong></div>
+          <div class="metric"><span>Trust</span><strong id="trustLabel">0</strong></div>
+          <div class="metric"><span>Drift</span><strong id="driftLabel">0px</strong></div>
+          <div class="metric"><span>Rows</span><strong id="countLabel">0</strong></div>
+        </div>
+        <div class="surface">
+          <div class="rect" id="textureRect">opaque texture</div>
+          <div class="rect" id="subimageRect">sub image</div>
+          <div class="rect" id="viewportRect">viewport</div>
+        </div>
+        <p id="hint">viewport と sub image のずれ、foveation、attachment availability を1つの軽い row にします。</p>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Subimage scale
+        <input id="subScale" type="range" min="58" max="100" value="86">
+      </label>
+      <label>Viewport scale
+        <input id="viewportScale" type="range" min="48" max="98" value="74">
+      </label>
+      <label>Viewport drift
+        <input id="viewportDrift" type="range" min="0" max="34" value="10">
+      </label>
+      <label>Foveation
+        <select id="foveation">
+          <option value="none">none</option>
+          <option value="low" selected>low</option>
+          <option value="medium">medium</option>
+          <option value="high">high</option>
+        </select>
+      </label>
+      <label>Attachment
+        <select id="attachment">
+          <option value="color-depth-motion">color + depth + motion</option>
+          <option value="color-depth">color + depth</option>
+          <option value="color-only">color only</option>
+        </select>
+      </label>
+      <label>Action
+        <button id="logButton" type="button">log frame row</button>
+      </label>
+    </div>
+
+    <section>
+      <h2>Frame Row Ledger</h2>
+      <div class="ledger" id="ledger"></div>
+    </section>
+
+    <section>
+      <h2>Export JSON</h2>
+      <textarea id="jsonOut" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const els = {
+      subScale: document.querySelector("#subScale"),
+      viewportScale: document.querySelector("#viewportScale"),
+      viewportDrift: document.querySelector("#viewportDrift"),
+      foveation: document.querySelector("#foveation"),
+      attachment: document.querySelector("#attachment"),
+      routeLabel: document.querySelector("#routeLabel"),
+      trustLabel: document.querySelector("#trustLabel"),
+      driftLabel: document.querySelector("#driftLabel"),
+      countLabel: document.querySelector("#countLabel"),
+      textureRect: document.querySelector("#textureRect"),
+      subimageRect: document.querySelector("#subimageRect"),
+      viewportRect: document.querySelector("#viewportRect"),
+      hint: document.querySelector("#hint"),
+      ledger: document.querySelector("#ledger"),
+      jsonOut: document.querySelector("#jsonOut"),
+      logButton: document.querySelector("#logButton")
+    };
+
+    const rows = [];
+    let db = null;
+
+    function openDb() {
+      return new Promise((resolve) => {
+        if (!("indexedDB" in window)) {
+          resolve(null);
+          return;
+        }
+        const req = indexedDB.open("xr-subimage-viewport-bridge", 1);
+        req.onupgradeneeded = () => req.result.createObjectStore("rows", { keyPath: "id" });
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    function current() {
+      const subScale = Number(els.subScale.value);
+      const viewportScale = Number(els.viewportScale.value);
+      const drift = Number(els.viewportDrift.value);
+      const foveation = els.foveation.value;
+      const attachment = els.attachment.value;
+      const attachmentScore = { "color-depth-motion": 100, "color-depth": 78, "color-only": 46 }[attachment];
+      const foveationDebt = { none: 0, low: 6, medium: 14, high: 26 }[foveation];
+      const cropDebt = Math.max(0, subScale - viewportScale) + drift * 0.8;
+      const trust = Math.max(0, Math.min(100, Math.round(attachmentScore - foveationDebt - cropDebt * 0.55)));
+      let route = "record-subimage-row";
+      if (attachment === "color-only" || trust < 48) route = "projection-fallback-row";
+      else if (drift > 24 || foveation === "high") route = "guarded-viewport-row";
+      else if (attachment === "color-depth") route = "depth-only-row";
+      return {
+        id: `subimage-${Date.now()}-${Math.round(Math.random() * 9999)}`,
+        timestamp: new Date().toISOString(),
+        texture: { width: 2400, height: 1800 },
+        subImage: { x: 7, y: 8, widthPercent: subScale, heightPercent: Math.max(52, subScale - 8), imageIndex: 0 },
+        viewport: { x: 7 + drift * 0.36, y: 8 + drift * 0.26, widthPercent: viewportScale, heightPercent: Math.max(42, viewportScale - 10) },
+        foveation,
+        attachment,
+        driftPx: Math.round(drift * 8.4),
+        trust,
+        route
+      };
+    }
+
+    function render() {
+      const row = current();
+      els.routeLabel.textContent = row.route;
+      els.trustLabel.textContent = row.trust;
+      els.driftLabel.textContent = `${row.driftPx}px`;
+      els.countLabel.textContent = rows.length;
+      els.textureRect.style.left = "5%";
+      els.textureRect.style.top = "7%";
+      els.textureRect.style.width = "90%";
+      els.textureRect.style.height = "84%";
+      els.subimageRect.style.left = `${row.subImage.x}%`;
+      els.subimageRect.style.top = `${row.subImage.y}%`;
+      els.subimageRect.style.width = `${row.subImage.widthPercent}%`;
+      els.subimageRect.style.height = `${row.subImage.heightPercent}%`;
+      els.viewportRect.style.left = `${row.viewport.x}%`;
+      els.viewportRect.style.top = `${row.viewport.y}%`;
+      els.viewportRect.style.width = `${row.viewport.widthPercent}%`;
+      els.viewportRect.style.height = `${row.viewport.heightPercent}%`;
+      els.hint.textContent = `${row.attachment} / ${row.foveation} foveation / ${row.route}`;
+      els.jsonOut.value = JSON.stringify(rows.length ? rows : [row], null, 2);
+    }
+
+    function paintLedger() {
+      els.ledger.innerHTML = rows.slice().reverse().map((row) => `
+        <div class="row">
+          <strong>${row.timestamp.split("T")[1].slice(0, 8)}</strong>
+          <span>${row.attachment}</span>
+          <span>${row.foveation}</span>
+          <span>${row.driftPx}px drift</span>
+          <span class="chip">${row.route}</span>
+        </div>
+      `).join("");
+      els.countLabel.textContent = rows.length;
+    }
+
+    async function saveRow(row) {
+      if (!db) return;
+      const tx = db.transaction("rows", "readwrite");
+      tx.objectStore("rows").put(row);
+    }
+
+    els.logButton.addEventListener("click", async () => {
+      const row = current();
+      rows.push(row);
+      await saveRow(row);
+      paintLedger();
+      render();
+    });
+
+    ["input", "change"].forEach((eventName) => {
+      [els.subScale, els.viewportScale, els.viewportDrift, els.foveation, els.attachment].forEach((el) => {
+        el.addEventListener(eventName, render);
+      });
+    });
+
+    openDb().then((opened) => {
+      db = opened;
+      render();
+    });
+  </script>
+</body>
+</html>

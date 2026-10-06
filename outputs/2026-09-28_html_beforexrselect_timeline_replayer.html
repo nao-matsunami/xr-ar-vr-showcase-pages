@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BeforeXRSelect Timeline Replayer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111315;
+      --panel: #1a2125;
+      --panel2: #242c31;
+      --line: #3f4d53;
+      --text: #f7f0e6;
+      --muted: #b6c1c2;
+      --blue: #87c9ff;
+      --green: #90dc9f;
+      --amber: #e7bd65;
+      --red: #ef7f76;
+      --ink: #091014;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(150deg, rgba(135, 201, 255, 0.11), transparent 40%),
+        linear-gradient(35deg, rgba(231, 189, 101, 0.08), transparent 54%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 40px; }
+    header { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 16px; margin-bottom: 16px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(26, 33, 37, 0.96);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.25);
+    }
+    .panel { padding: 24px; }
+    h1 { margin: 0 0 12px; font-size: clamp(31px, 5vw, 54px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    code { color: var(--blue); }
+    .stage { min-height: 414px; padding: 16px; display: grid; grid-template-rows: auto 1fr auto; gap: 12px; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(9, 16, 20, 0.72); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 20px; overflow-wrap: anywhere; }
+    .timeline {
+      position: relative;
+      min-height: 260px;
+      border: 1px solid rgba(247, 240, 230, 0.18);
+      border-radius: 8px;
+      padding: 18px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(135, 201, 255, 0.08) 1px, transparent 1px),
+        #12191c;
+      background-size: 42px 42px;
+    }
+    .track { position: relative; height: 56px; margin: 15px 0; border-top: 1px solid rgba(247, 240, 230, 0.16); }
+    .track span { position: absolute; left: 0; top: -12px; width: 112px; color: var(--muted); font-size: 12px; }
+    .event {
+      position: absolute;
+      top: 14px;
+      width: 18px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--c);
+      box-shadow: 0 0 18px var(--c);
+      transform: translateX(-50%);
+    }
+    .event label {
+      position: absolute;
+      left: 50%;
+      top: 23px;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .controls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--blue); }
+    button { cursor: pointer; font-weight: 800; background: var(--blue); color: var(--ink); border-color: transparent; }
+    section { padding: 16px; margin-top: 16px; }
+    textarea { width: 100%; min-height: 160px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .rows { display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 0.75fr 0.9fr 1fr 1fr 1fr;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(9, 16, 20, 0.58);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .row strong { color: var(--text); }
+    .chip { justify-self: start; border-radius: 999px; padding: 5px 9px; background: rgba(135, 201, 255, 0.14); color: var(--blue); font-weight: 800; }
+    @media (max-width: 860px) {
+      header, .controls { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>BeforeXRSelect Timeline Replayer</h1>
+        <p>DOM の pointer / click と <code>beforexrselect</code>、XR の selectstart / select / selectend が前後して届くケースを再生し、重複操作の危険度を見ます。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>Decision</span><strong id="decisionLabel">hold</strong></div>
+          <div class="metric"><span>Duplicate risk</span><strong id="riskLabel">0%</strong></div>
+          <div class="metric"><span>DOM lead</span><strong id="leadLabel">0ms</strong></div>
+          <div class="metric"><span>Rows</span><strong id="countLabel">0</strong></div>
+        </div>
+        <div class="timeline" id="timeline"></div>
+        <p id="hint">DOM event と XR input event は同期されないため、同じ操作を二重に commit しないための window を調整します。</p>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Preset
+        <select id="preset">
+          <option value="blocked-button">blocked button</option>
+          <option value="transparent-pass">transparent pass-through</option>
+          <option value="cross-origin-drag">cross-origin drag exit</option>
+          <option value="missing-handler">missing handler</option>
+        </select>
+      </label>
+      <label>DOM timing
+        <select id="domOrder">
+          <option value="before">DOM before XR</option>
+          <option value="after">DOM after XR</option>
+          <option value="interleave">interleave</option>
+        </select>
+      </label>
+      <label>Commit window
+        <input id="windowMs" type="range" min="24" max="220" value="96">
+      </label>
+      <label>Policy
+        <select id="policy">
+          <option value="balanced">balanced</option>
+          <option value="strict">strict</option>
+          <option value="forgiving">forgiving</option>
+        </select>
+      </label>
+      <label>Action
+        <button id="logButton" type="button">replay row</button>
+      </label>
+    </div>
+
+    <section>
+      <h2>Import Owner Rows</h2>
+      <textarea id="importBox" spellcheck="false"></textarea>
+    </section>
+
+    <section>
+      <h2>Replay Ledger</h2>
+      <div class="rows" id="rows"></div>
+    </section>
+  </main>
+
+  <script>
+    const els = {
+      preset: document.querySelector("#preset"),
+      domOrder: document.querySelector("#domOrder"),
+      windowMs: document.querySelector("#windowMs"),
+      policy: document.querySelector("#policy"),
+      decisionLabel: document.querySelector("#decisionLabel"),
+      riskLabel: document.querySelector("#riskLabel"),
+      leadLabel: document.querySelector("#leadLabel"),
+      countLabel: document.querySelector("#countLabel"),
+      timeline: document.querySelector("#timeline"),
+      hint: document.querySelector("#hint"),
+      importBox: document.querySelector("#importBox"),
+      rows: document.querySelector("#rows"),
+      logButton: document.querySelector("#logButton")
+    };
+
+    const presets = {
+      "blocked-button": { target: "button", prevented: true, route: "dom-only", xrEvents: 0, crossOrigin: false },
+      "transparent-pass": { target: "transparent", prevented: false, route: "pass-through", xrEvents: 3, crossOrigin: false },
+      "cross-origin-drag": { target: "cross-frame", prevented: true, route: "delay-input-source", xrEvents: 1, crossOrigin: true },
+      "missing-handler": { target: "button", prevented: false, route: "duplicate-risk", xrEvents: 3, crossOrigin: false }
+    };
+    const ledger = [];
+
+    function importedSeed() {
+      try {
+        const parsed = JSON.parse(els.importBox.value || "[]");
+        if (Array.isArray(parsed) && parsed.length) return parsed[parsed.length - 1];
+      } catch {}
+      return null;
+    }
+
+    function makeEvents(seed) {
+      const order = els.domOrder.value;
+      const prevented = Boolean(seed.prevented);
+      const xrEvents = Number(seed.xrEvents ?? (prevented ? 0 : 3));
+      let domStart = order === "before" ? 18 : order === "after" ? 96 : 42;
+      let beforeXR = order === "after" ? 54 : order === "interleave" ? 68 : 74;
+      const events = [
+        { lane: "DOM", label: "pointerdown", t: domStart, color: "var(--blue)" },
+        { lane: "DOM", label: "click", t: domStart + 42, color: "var(--blue)" },
+        { lane: "beforexrselect", label: prevented ? "prevent" : "pass", t: beforeXR, color: prevented ? "var(--green)" : "var(--amber)" }
+      ];
+      if (xrEvents > 0) {
+        events.push({ lane: "XR", label: "selectstart", t: beforeXR + 24, color: "var(--amber)" });
+        if (xrEvents > 1) events.push({ lane: "XR", label: "select", t: beforeXR + 62, color: "var(--amber)" });
+        if (xrEvents > 2) events.push({ lane: "XR", label: "selectend", t: beforeXR + 96, color: "var(--amber)" });
+      }
+      return events;
+    }
+
+    function classify() {
+      const seed = importedSeed() || presets[els.preset.value];
+      const events = makeEvents(seed);
+      const windowMs = Number(els.windowMs.value);
+      const firstDom = Math.min(...events.filter((event) => event.lane === "DOM").map((event) => event.t));
+      const firstXr = Math.min(...events.filter((event) => event.lane === "XR").map((event) => event.t).concat([999]));
+      const lead = firstXr === 999 ? 0 : firstXr - firstDom;
+      let risk = seed.route === "duplicate-risk" ? 82 : seed.prevented ? 8 : 32;
+      if (Math.abs(lead) < windowMs && firstXr !== 999) risk += 18;
+      if (seed.crossOrigin) risk += els.policy.value === "strict" ? 4 : 16;
+      if (els.policy.value === "strict") risk -= 12;
+      if (els.policy.value === "forgiving") risk += 10;
+      risk = Math.max(0, Math.min(100, risk));
+      let decision = "commit-xr";
+      if (seed.prevented) decision = seed.crossOrigin ? "auxiliary-or-delay" : "dom-only";
+      else if (risk > 70) decision = "dedupe-hold";
+      else if (seed.route === "pass-through") decision = "commit-xr";
+      return { id: `replay-${String(ledger.length + 1).padStart(2, "0")}`, seed, events, windowMs, lead, risk, decision };
+    }
+
+    function renderTimeline(row) {
+      const lanes = ["DOM", "beforexrselect", "XR"];
+      els.timeline.innerHTML = lanes.map((lane) => {
+        const dots = row.events.filter((event) => event.lane === lane).map((event) => `
+          <div class="event" style="left:${Math.min(94, event.t / 2.2)}%; --c:${event.color}">
+            <label>${event.label}</label>
+          </div>
+        `).join("");
+        return `<div class="track"><span>${lane}</span>${dots}</div>`;
+      }).join("");
+    }
+
+    function render() {
+      const row = classify();
+      renderTimeline(row);
+      els.decisionLabel.textContent = row.decision;
+      els.riskLabel.textContent = `${row.risk}%`;
+      els.leadLabel.textContent = `${row.lead}ms`;
+      els.countLabel.textContent = String(ledger.length);
+      els.hint.textContent = row.decision === "dedupe-hold"
+        ? "DOM と XR の commit window が重なっています。XR 側は一旦 hold して DOM action の完了を待つ設定です。"
+        : row.decision === "dom-only"
+          ? "beforexrselect が preventDefault 済みなので、DOM 操作だけを commit し XR select を捨てます。"
+          : "pass-through または world 操作として XR select を commit できます。";
+    }
+
+    function paintRows() {
+      els.rows.innerHTML = ledger.slice(-6).reverse().map((row) => `
+        <div class="row">
+          <strong>${row.id}</strong>
+          <span>${row.seed.target}</span>
+          <span>window ${row.windowMs}ms</span>
+          <span>risk ${row.risk}%</span>
+          <span class="chip">${row.decision}</span>
+        </div>
+      `).join("");
+    }
+
+    function logRow() {
+      const row = classify();
+      ledger.push(row);
+      paintRows();
+      render();
+    }
+
+    els.importBox.value = JSON.stringify([presets["blocked-button"], presets["transparent-pass"]], null, 2);
+    [els.preset, els.domOrder, els.windowMs, els.policy, els.importBox].forEach((el) => el.addEventListener("input", render));
+    els.logButton.addEventListener("click", logRow);
+    logRow();
+  </script>
+</body>
+</html>

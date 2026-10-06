@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visibility Mask Row Merge Console</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101214;
+      --panel: #1b2224;
+      --panel2: #263235;
+      --line: #536468;
+      --text: #f2f5ef;
+      --muted: #bcc8c5;
+      --cyan: #7ad8ee;
+      --green: #9dde8b;
+      --gold: #e8c468;
+      --red: #ee817d;
+      --violet: #b8a3ff;
+      --ink: #0c1011;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(122, 216, 238, 0.10), transparent 38%),
+        linear-gradient(315deg, rgba(232, 196, 104, 0.08), transparent 54%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1200px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 44px; }
+    header { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(27, 34, 36, 0.96);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(31px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(12, 16, 17, 0.62); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 20px; overflow-wrap: anywhere; }
+    .viewport {
+      position: relative;
+      min-height: 310px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+        #0c1011;
+      background-size: 12.5% 20%;
+    }
+    .mask, .crop {
+      position: absolute;
+      border: 2px solid var(--cyan);
+      background: rgba(122, 216, 238, 0.16);
+      transition: all 0.2s ease;
+    }
+    .crop { border-color: var(--gold); background: rgba(232, 196, 104, 0.13); }
+    .patch {
+      position: absolute;
+      inset: auto;
+      border: 2px dashed var(--violet);
+      pointer-events: none;
+      transition: all 0.2s ease;
+    }
+    .label {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(12, 16, 17, 0.82);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .controls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    input, select, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--cyan); }
+    button { cursor: pointer; font-weight: 800; color: var(--ink); background: var(--green); border-color: transparent; }
+    textarea { width: 100%; min-height: 170px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .rows { display: grid; gap: 8px; }
+    .row { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(12, 16, 17, 0.62); color: var(--muted); }
+    .bars { display: grid; gap: 8px; }
+    .bar { display: grid; grid-template-columns: 148px 1fr 66px; gap: 8px; align-items: center; color: var(--muted); }
+    .track { height: 16px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.05); }
+    .fill { height: 100%; width: 0; background: var(--cyan); transition: width 0.2s ease; }
+    @media (max-width: 900px) {
+      header, .controls { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .bar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Visibility Mask Row Merge Console</h1>
+        <p>昨日の visibility mask row を、subimage viewport row と redraw timestamp row に合流させます。viewId ごとの mask、crop、redraw age、head motion をひとつの submit / patch / hold / fallback row にまとめます。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>merged route</span><strong id="routeMetric">-</strong></div>
+          <div class="metric"><span>saved pixels</span><strong id="savedMetric">0%</strong></div>
+          <div class="metric"><span>risk score</span><strong id="riskMetric">0</strong></div>
+          <div class="metric"><span>patch band</span><strong id="patchMetric">0 px</strong></div>
+        </div>
+        <div class="viewport" aria-label="merged viewport preview">
+          <div id="maskBox" class="mask"></div>
+          <div id="cropBox" class="crop"></div>
+          <div id="patchBox" class="patch"></div>
+          <div id="viewLabel" class="label">left-eye</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>View
+        <select id="viewSelect">
+          <option value="left-eye">left-eye</option>
+          <option value="right-eye">right-eye</option>
+          <option value="mono">mono</option>
+        </select>
+      </label>
+      <label>Mask age
+        <input id="maskAgeRange" type="range" min="4" max="120" value="28">
+      </label>
+      <label>Redraw age
+        <input id="redrawAgeRange" type="range" min="4" max="140" value="34">
+      </label>
+      <label>Crop inset
+        <input id="cropRange" type="range" min="0" max="22" value="8">
+      </label>
+      <label>Head motion
+        <input id="motionRange" type="range" min="0" max="32" value="9">
+      </label>
+    </div>
+
+    <section>
+      <h2>Merge weights</h2>
+      <div id="bars" class="bars"></div>
+    </section>
+
+    <section>
+      <h2>Export row</h2>
+      <textarea id="rowBox" spellcheck="false"></textarea>
+    </section>
+
+    <section>
+      <h2>Ledger</h2>
+      <div id="ledger" class="rows"></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ledger = [];
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function compute() {
+      const viewId = $("viewSelect").value;
+      const maskAgeMs = Number($("maskAgeRange").value);
+      const redrawAgeMs = Number($("redrawAgeRange").value);
+      const cropInsetPct = Number($("cropRange").value);
+      const headMotionDeg = Number($("motionRange").value);
+      const eyeBias = viewId === "right-eye" ? 1.04 : viewId === "mono" ? 0.94 : 1;
+      const maskCoverage = clamp((0.78 - cropInsetPct * 0.012 - headMotionDeg * 0.003) * eyeBias, 0.42, 0.9);
+      const cropCoverage = clamp(1 - cropInsetPct * 0.018, 0.55, 1);
+      const freshness = clamp(1 - (maskAgeMs + redrawAgeMs * 0.65) / 150, 0, 1);
+      const motionRisk = clamp(headMotionDeg / 32, 0, 1);
+      const ageRisk = clamp((maskAgeMs - 36) / 84, 0, 1) * 0.55 + clamp((redrawAgeMs - 44) / 96, 0, 1) * 0.45;
+      const cropMismatch = Math.abs(maskCoverage - cropCoverage);
+      const riskScore = clamp(Math.round((ageRisk * 42 + motionRisk * 34 + cropMismatch * 55)), 0, 100);
+      const savedPixels = clamp(1 - maskCoverage * cropCoverage, 0, 0.58);
+      const patchBandPx = Math.round(8 + headMotionDeg * 1.4 + cropMismatch * 80 + ageRisk * 22);
+      const route = riskScore > 68 ? "full-viewport-fallback" : riskScore > 45 ? "hold-merged-row" : patchBandPx > 42 ? "patch-visible-border" : "submit-merged-row";
+      const confidence = clamp(1 - riskScore / 100, 0, 1);
+      return {
+        type: "visibility-mask-row-merge",
+        date: "2026-10-02",
+        viewId,
+        maskAgeMs,
+        redrawAgeMs,
+        cropInsetPct,
+        headMotionDeg,
+        maskCoverage: Number(maskCoverage.toFixed(3)),
+        cropCoverage: Number(cropCoverage.toFixed(3)),
+        savedPixels: Number(savedPixels.toFixed(3)),
+        patchBandPx,
+        riskScore,
+        confidence: Number(confidence.toFixed(3)),
+        route,
+        sources: ["visibility-mask-change", "subimage-viewport-row", "layer-redraw-timestamp"],
+        next: "Import real XRVisibilityMaskChange rows and pair them with XRWebGLSubImage viewport rows by viewId."
+      };
+    }
+
+    function setRect(el, left, top, width, height) {
+      el.style.left = `${left}%`;
+      el.style.top = `${top}%`;
+      el.style.width = `${width}%`;
+      el.style.height = `${height}%`;
+    }
+
+    function renderBars(row) {
+      const items = [
+        ["mask coverage", row.maskCoverage, "var(--cyan)"],
+        ["crop coverage", row.cropCoverage, "var(--gold)"],
+        ["freshness", row.confidence, "var(--green)"],
+        ["risk", row.riskScore / 100, "var(--red)"]
+      ];
+      $("bars").innerHTML = items.map(([label, value, color]) => `
+        <div class="bar">
+          <span>${label}</span>
+          <div class="track"><div class="fill" style="width:${Math.round(value * 100)}%; background:${color}"></div></div>
+          <strong>${Math.round(value * 100)}%</strong>
+        </div>
+      `).join("");
+    }
+
+    function render() {
+      const row = compute();
+      const maskInset = Math.round((1 - row.maskCoverage) * 28);
+      const cropInset = row.cropInsetPct;
+      const patchInset = clamp(cropInset - row.patchBandPx / 9, 1, 26);
+      setRect($("maskBox"), 10 + maskInset, 9 + maskInset * 0.7, 80 - maskInset * 2, 82 - maskInset * 1.4);
+      setRect($("cropBox"), 8 + cropInset, 8 + cropInset * 0.6, 84 - cropInset * 2, 84 - cropInset * 1.2);
+      setRect($("patchBox"), patchInset, patchInset * 0.65, 100 - patchInset * 2, 100 - patchInset * 1.3);
+      $("viewLabel").textContent = `${row.viewId} / ${row.route}`;
+      $("routeMetric").textContent = row.route;
+      $("savedMetric").textContent = `${Math.round(row.savedPixels * 100)}%`;
+      $("riskMetric").textContent = row.riskScore;
+      $("patchMetric").textContent = `${row.patchBandPx} px`;
+      $("rowBox").value = JSON.stringify(row, null, 2);
+      renderBars(row);
+      ledger.unshift(row);
+      if (ledger.length > 5) ledger.pop();
+      $("ledger").innerHTML = ledger.map((item) => `
+        <div class="row">${item.viewId}: ${item.route} / risk ${item.riskScore} / saved ${Math.round(item.savedPixels * 100)}% / patch ${item.patchBandPx}px</div>
+      `).join("");
+    }
+
+    for (const id of ["viewSelect", "maskAgeRange", "redrawAgeRange", "cropRange", "motionRange"]) {
+      $(id).addEventListener("input", render);
+    }
+    render();
+  </script>
+</body>
+</html>

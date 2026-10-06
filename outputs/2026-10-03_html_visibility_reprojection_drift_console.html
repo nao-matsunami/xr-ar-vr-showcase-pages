@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visibility Reprojection Drift Console</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111417;
+      --panel: #1c2528;
+      --panel2: #26343a;
+      --line: #59696e;
+      --text: #f4f4ee;
+      --muted: #c1cbc8;
+      --cyan: #7fd9e8;
+      --lime: #a8dc82;
+      --gold: #e7c66e;
+      --red: #ed817d;
+      --ink: #0c1011;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(140deg, rgba(127, 217, 232, 0.12), transparent 36%),
+        linear-gradient(320deg, rgba(231, 198, 110, 0.09), transparent 56%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 44px; }
+    header { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(28, 37, 40, 0.96);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(12, 16, 17, 0.62); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 20px; overflow-wrap: anywhere; }
+    .viewport {
+      position: relative;
+      min-height: 320px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+        #0c1011;
+      background-size: 12.5% 20%;
+    }
+    .mask, .history, .patch {
+      position: absolute;
+      border: 2px solid var(--cyan);
+      border-radius: 3px;
+      transition: all 0.2s ease;
+    }
+    .mask { background: rgba(127, 217, 232, 0.16); }
+    .history { border-color: var(--gold); background: rgba(231, 198, 110, 0.12); }
+    .patch { border-style: dashed; border-color: var(--red); background: rgba(237, 129, 125, 0.08); }
+    .vector {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      height: 3px;
+      width: 80px;
+      background: var(--lime);
+      transform-origin: left center;
+      transition: transform 0.2s ease, width 0.2s ease;
+    }
+    .label {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(12, 16, 17, 0.82);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .controls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    input, select, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--cyan); }
+    textarea { width: 100%; min-height: 168px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .bars, .ledger { display: grid; gap: 8px; }
+    .bar { display: grid; grid-template-columns: 150px 1fr 64px; gap: 8px; align-items: center; color: var(--muted); }
+    .track { height: 16px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.05); }
+    .fill { height: 100%; width: 0; background: var(--cyan); transition: width 0.2s ease; }
+    .row { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(12, 16, 17, 0.62); color: var(--muted); }
+    @media (max-width: 900px) {
+      header, .controls, .metrics { grid-template-columns: 1fr; }
+      .bar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Visibility Reprojection Drift Console</h1>
+        <p>10/02 の visibility mask merged row を一歩進め、現在の可視マスクと過去フレームの再投影マスクのずれを診断します。mask が新しくても history drift が大きければ、patch か full viewport に戻す判断が必要になります。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>route</span><strong id="routeMetric">-</strong></div>
+          <div class="metric"><span>drift</span><strong id="driftMetric">0 px</strong></div>
+          <div class="metric"><span>reuse</span><strong id="reuseMetric">0%</strong></div>
+          <div class="metric"><span>comfort risk</span><strong id="riskMetric">0</strong></div>
+        </div>
+        <div class="viewport" aria-label="visibility reprojection preview">
+          <div id="historyBox" class="history"></div>
+          <div id="maskBox" class="mask"></div>
+          <div id="patchBox" class="patch"></div>
+          <div id="vector" class="vector"></div>
+          <div id="viewLabel" class="label">left-eye</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>View
+        <select id="viewSelect">
+          <option value="left-eye">left-eye</option>
+          <option value="right-eye">right-eye</option>
+          <option value="mono">mono</option>
+        </select>
+      </label>
+      <label>Mask age
+        <input id="maskAgeRange" type="range" min="4" max="120" value="24">
+      </label>
+      <label>History age
+        <input id="historyAgeRange" type="range" min="8" max="180" value="58">
+      </label>
+      <label>Pose delta
+        <input id="poseDeltaRange" type="range" min="0" max="42" value="13">
+      </label>
+      <label>Velocity
+        <input id="velocityRange" type="range" min="0" max="44" value="12">
+      </label>
+    </div>
+
+    <section>
+      <h2>Decision weights</h2>
+      <div id="bars" class="bars"></div>
+    </section>
+
+    <section>
+      <h2>Export row</h2>
+      <textarea id="rowBox" spellcheck="false"></textarea>
+    </section>
+
+    <section>
+      <h2>Ledger</h2>
+      <div id="ledger" class="ledger"></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ledger = [];
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function compute() {
+      const viewId = $("viewSelect").value;
+      const maskAgeMs = Number($("maskAgeRange").value);
+      const historyAgeMs = Number($("historyAgeRange").value);
+      const poseDeltaPx = Number($("poseDeltaRange").value);
+      const velocityDeg = Number($("velocityRange").value);
+      const viewBias = viewId === "right-eye" ? 1.07 : viewId === "mono" ? 0.92 : 1;
+      const driftPx = Math.round((poseDeltaPx * 1.7 + historyAgeMs * 0.11 + velocityDeg * 1.25) * viewBias);
+      const freshness = clamp(1 - (maskAgeMs * 0.55 + historyAgeMs * 0.45) / 132, 0, 1);
+      const overlap = clamp(1 - driftPx / 104, 0.18, 0.96);
+      const reuse = clamp(overlap * freshness, 0, 0.92);
+      const latencyRisk = clamp((maskAgeMs - 34) / 86, 0, 1) * 0.38 + clamp((historyAgeMs - 72) / 108, 0, 1) * 0.62;
+      const driftRisk = clamp(driftPx / 92, 0, 1);
+      const comfortRisk = clamp(Math.round((latencyRisk * 44 + driftRisk * 48 + velocityDeg * 0.65)), 0, 100);
+      const patchBandPx = Math.round(10 + driftPx * 0.52 + velocityDeg * 0.85);
+      const route = comfortRisk > 70 ? "full-viewport-refresh" : reuse < 0.34 ? "hold-history-row" : patchBandPx > 48 ? "patch-reprojected-border" : "reuse-reprojected-mask";
+      return {
+        type: "visibility-reprojection-drift-row",
+        date: "2026-10-03",
+        viewId,
+        maskAgeMs,
+        historyAgeMs,
+        poseDeltaPx,
+        velocityDeg,
+        driftPx,
+        overlap: Number(overlap.toFixed(3)),
+        reuse: Number(reuse.toFixed(3)),
+        patchBandPx,
+        comfortRisk,
+        route,
+        sources: ["visibility-mask-change", "viewer-pose-history", "subimage-viewport-row"],
+        next: "Import multiple frame rows and detect the first frame where reprojection can safely return to tiled rendering."
+      };
+    }
+
+    function renderPreview(row) {
+      const base = 58 - Math.min(row.poseDeltaPx, 30) * 0.2;
+      const shift = clamp(row.driftPx / 3, 0, 32);
+      $("maskBox").style.left = "18%";
+      $("maskBox").style.top = "17%";
+      $("maskBox").style.width = `${base}%`;
+      $("maskBox").style.height = "58%";
+      $("historyBox").style.left = `${18 + shift * 0.28}%`;
+      $("historyBox").style.top = `${17 + shift * 0.12}%`;
+      $("historyBox").style.width = `${base}%`;
+      $("historyBox").style.height = "58%";
+      $("patchBox").style.left = `${16 + shift * 0.12}%`;
+      $("patchBox").style.top = "14%";
+      $("patchBox").style.width = `${base + 6}%`;
+      $("patchBox").style.height = "64%";
+      $("vector").style.width = `${Math.max(36, row.driftPx * 1.15)}px`;
+      $("vector").style.transform = `rotate(${row.velocityDeg * 1.7}deg)`;
+      $("viewLabel").textContent = row.viewId;
+    }
+
+    function render() {
+      const row = compute();
+      renderPreview(row);
+      $("routeMetric").textContent = row.route;
+      $("driftMetric").textContent = `${row.driftPx} px`;
+      $("reuseMetric").textContent = `${Math.round(row.reuse * 100)}%`;
+      $("riskMetric").textContent = row.comfortRisk;
+      $("rowBox").value = JSON.stringify(row, null, 2);
+      const weights = [
+        ["freshness", 1 - (row.maskAgeMs * 0.55 + row.historyAgeMs * 0.45) / 132],
+        ["overlap", row.overlap],
+        ["velocity", row.velocityDeg / 44],
+        ["comfort risk", row.comfortRisk / 100]
+      ];
+      $("bars").innerHTML = weights.map(([label, value]) => {
+        const pct = Math.round(clamp(value, 0, 1) * 100);
+        return `<div class="bar"><span>${label}</span><div class="track"><div class="fill" style="width:${pct}%"></div></div><strong>${pct}%</strong></div>`;
+      }).join("");
+      ledger.unshift(`${row.viewId}: ${row.route} / drift ${row.driftPx}px / reuse ${Math.round(row.reuse * 100)}%`);
+      $("ledger").innerHTML = ledger.slice(0, 5).map((item) => `<div class="row">${item}</div>`).join("");
+    }
+
+    document.querySelectorAll("input, select").forEach((control) => control.addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>

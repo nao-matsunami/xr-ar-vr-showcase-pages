@@ -1,0 +1,131 @@
+{
+  "date": "2026-09-30",
+  "headline": "XR subimage と viewport row を保存して attachment/crop 判定へ戻す",
+  "headlineEn": "Saving XR subimage and viewport rows back into attachment/crop policy",
+  "summary": "WebXR Layers API の getViewSubImage、MDN の fixedFoveation と XRWebGLLayer.getViewport、Immersive Web Layers samples を参照し、subimage / viewport / foveation / attachment を IndexedDB row として保存する本命サンプルと、その row を attachment/crop policy へ戻す派生サンプルを追加しました。",
+  "summaryEn": "After checking WebXR Layers API getViewSubImage, MDN fixedFoveation and XRWebGLLayer.getViewport, plus Immersive Web Layers samples, today's original work adds a main sample that saves subimage / viewport / foveation / attachment as IndexedDB rows, plus a derivative sample that replays those rows into attachment/crop policy.",
+  "keyTopics": [
+    "WebXR Layers API では getViewSubImage() が view ごとの XRWebGLSubImage を返し、opaque texture、viewport、imageIndex を描画単位にします。",
+    "Layers の explainer は getSubImage() / getViewSubImage() が XR frame 中だけ有効な texture を返すことを示しており、保存すべきなのは texture 本体ではなく寸法や route の row です。",
+    "MDN の fixedFoveation は 0 から 1 の範囲で compositor 側 foveation を扱い、端の解像度低下と GPU 負荷の tradeoff を説明します。",
+    "昨日の viewport crop guard と9月27日の attachment size audit をつなぐには、subimage row を同じ粒度で IndexedDB / JSON 化するのが扱いやすいです。",
+    "今日の公開カードは外部デモではなく、自作の `Subimage Viewport IndexedDB Bridge` と `Attachment Crop Merge Policy Replayer` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "In WebXR Layers API, getViewSubImage() returns a per-view XRWebGLSubImage, making opaque textures, viewport, and imageIndex the rendering unit.",
+    "The Layers explainer shows that getSubImage() / getViewSubImage() return textures that are only valid during the XR frame, so the persisted data should be dimensions and routes, not the texture itself.",
+    "MDN fixedFoveation describes compositor-side foveation in a 0 to 1 range, framing the tradeoff between lower edge resolution and GPU load.",
+    "To connect yesterday's viewport crop guard with the September 27 attachment-size audit, subimage rows should be saved at the same IndexedDB / JSON granularity.",
+    "Today's public cards are the original workspace samples `Subimage Viewport IndexedDB Bridge` and `Attachment Crop Merge Policy Replayer`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Subimage Viewport IndexedDB Bridge",
+      "url": "../outputs/2026-09-30_html_subimage_viewport_indexeddb_bridge.html"
+    },
+    {
+      "label": "Today's derivative sample: Attachment Crop Merge Policy Replayer",
+      "url": "../outputs/2026-09-30_html_attachment_crop_merge_policy_replayer.html"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers API Editor's Draft",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "Immersive Web Layers explainer",
+      "url": "https://github.com/immersive-web/layers/blob/main/explainer.md"
+    },
+    {
+      "label": "MDN: XRWebGLLayer.fixedFoveation",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLLayer/fixedFoveation"
+    },
+    {
+      "label": "MDN: XRWebGLLayer.getViewport",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLLayer/getViewport"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "9月27日は attachment size、9月29日は viewport crop guard を扱いました。今日はその間をつなぎ、`getViewSubImage()` で得る sub image、従来 baseLayer の `getViewport()` 相当、foveation、attachment availability を同じ frame row として保存します。実 texture は XR frame 内だけのものとして扱い、後から検証できるのは寸法、ずれ、route、trust の小さな記録に絞るのがポイントです。",
+      "bodyEn": "September 27 covered attachment sizes, and September 29 covered viewport crop guards. Today bridges those by saving the sub image from `getViewSubImage()`, the traditional base-layer `getViewport()` equivalent, foveation, and attachment availability as one frame row. The texture itself belongs inside the XR frame; the useful persisted artifact is the small record of dimensions, drift, route, and trust.",
+      "links": [
+        {
+          "label": "Immersive Web Layers explainer",
+          "url": "https://github.com/immersive-web/layers/blob/main/explainer.md"
+        },
+        {
+          "label": "W3C: WebXR Layers API Level 1",
+          "url": "https://www.w3.org/TR/webxrlayers-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Subimage Viewport IndexedDB Bridge` は subimage scale、viewport scale、drift、foveation、attachment を動かし、`record-subimage-row`、`guarded-viewport-row`、`depth-only-row`、`projection-fallback-row` を出します。派生サンプル `Attachment Crop Merge Policy Replayer` はその JSON row を貼り付け、tile ごとに `native-submit`、`patch-crop`、`hold-depth`、`projection-fallback` を再判定します。",
+      "bodyEn": "The main sample, `Subimage Viewport IndexedDB Bridge`, lets you change subimage scale, viewport scale, drift, foveation, and attachment availability, then emits `record-subimage-row`, `guarded-viewport-row`, `depth-only-row`, or `projection-fallback-row`. The derivative `Attachment Crop Merge Policy Replayer` accepts that JSON row and reclassifies each tile into `native-submit`, `patch-crop`, `hold-depth`, or `projection-fallback`."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装するなら XR frame callback 内で `getViewSubImage(layer, view)` または `baseLayer.getViewport(view)` の直後に、viewport、texture size、imageIndex、depth / motion attachment の有無、foveation、frame timestamp だけを保存します。opaque texture の pixel data を読もうとせず、後段の policy replay に必要な軽量 row へ変換する設計が安全です。",
+      "bodyEn": "In production, save only viewport, texture size, imageIndex, depth / motion attachment presence, foveation, and frame timestamp immediately after `getViewSubImage(layer, view)` or `baseLayer.getViewport(view)` inside the XR frame callback. Do not try to read opaque texture pixel data; convert the result into lightweight rows needed by later policy replay."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の subimage row は、9月25日の motion vector gap heatmap、9月26日の redraw timestamp logger、9月27日の attachment size auditor、9月29日の crop guard logger と結合できます。展示・遠隔支援・業務UIでは、`なぜ projection fallback になったか` を attachment 欠落、crop drift、foveation、head motion の順に説明する診断 UI へ発展できます。",
+      "bodyEn": "Today's subimage rows can be combined with the September 25 motion-vector gap heatmap, September 26 redraw timestamp logger, September 27 attachment-size auditor, and September 29 crop-guard logger. For installations, remote support, and operational UI, this can become a diagnostic interface that explains projection fallback through attachment gaps, crop drift, foveation, and head motion."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Layers API の `getViewSubImage()`、`getSubImage()`、opaque texture の lifecycle、MDN の fixed foveation、Immersive Web Layers samples を継続して見ます。次は今日の row を9月27日の attachment row と自動 merge し、実 frame timestamp と `XRLayer` redraw row までつなぎたいです。",
+      "bodyEn": "Keep watching WebXR Layers API `getViewSubImage()`, `getSubImage()`, opaque texture lifecycle, MDN fixed foveation, and Immersive Web Layers samples. Next, automatically merge today's row with the September 27 attachment row and connect it to real frame timestamps and `XRLayer` redraw rows."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Subimage Viewport IndexedDB Bridge` で attachment を `color + depth + motion`、foveation を low、drift を小さくすると `record-subimage-row` になります。drift や foveation を上げると `guarded-viewport-row`、color only にすると `projection-fallback-row` へ落ちます。派生側では JSON を貼り付け、policy と head motion を変えて route の崩れ方を見られます。",
+      "bodyEn": "In `Subimage Viewport IndexedDB Bridge`, choose `color + depth + motion`, low foveation, and low drift to get `record-subimage-row`. Increase drift or foveation to get `guarded-viewport-row`; switch to color only to fall into `projection-fallback-row`. In the derivative sample, paste the JSON and change policy plus head motion to see how routes degrade.",
+      "links": [
+        {
+          "label": "Open Subimage Viewport IndexedDB Bridge",
+          "url": "../outputs/2026-09-30_html_subimage_viewport_indexeddb_bridge.html"
+        },
+        {
+          "label": "Open Attachment Crop Merge Policy Replayer",
+          "url": "../outputs/2026-09-30_html_attachment_crop_merge_policy_replayer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Layers API、Layers explainer、MDN fixedFoveation、MDN XRWebGLLayer.getViewport、Immersive Web Layers samples を確認。設計: 1本目は subimage / viewport row の IndexedDB bridge、2本目は attachment/crop merge policy replayer。実装: `outputs/2026-09-30_html_subimage_viewport_indexeddb_bridge.html` と `outputs/2026-09-30_html_attachment_crop_merge_policy_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish を確認する。",
+      "bodyEn": "Research: checked WebXR Layers API, the Layers explainer, MDN fixedFoveation, MDN XRWebGLLayer.getViewport, and Immersive Web Layers samples. Design: make the first sample an IndexedDB bridge for subimage / viewport rows, and the second an attachment/crop merge policy replayer. Implementation: add `outputs/2026-09-30_html_subimage_viewport_indexeddb_bridge.html` and `outputs/2026-09-30_html_attachment_crop_merge_policy_replayer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "9月後半の layer 系の流れは、space warp recovery、redraw、attachment size、viewport crop、subimage row へ進みました。これで `入力 / tracking / layer / attachment / crop / subimage` の row がほぼ同じ粒度にそろい、後続の replay UI で品質劣化の理由を分解しやすくなっています。",
+      "bodyEn": "The late-September layer thread has moved through space-warp recovery, redraw, attachment size, viewport crop, and now subimage rows. Input / tracking / layer / attachment / crop / subimage rows are now nearly aligned in granularity, making later replay UI better at explaining why visual quality degraded."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Subimage Viewport IndexedDB Bridge` です。何が動くか: subimage scale、viewport scale、drift、foveation、attachment から trust と route を判定し、IndexedDB と JSON row に保存します。次に足すなら、実 `getViewSubImage()` / `getViewport()` の値を live row として取り込みます。派生として `Attachment Crop Merge Policy Replayer` も実装しました。何が動くか: 本命 row または preset を読み込み、tile ごとの native submit / crop patch / depth hold / fallback を policy 別に可視化します。次に足すなら、9月27日の attachment size row と9月26日の redraw row を自動 import します。",
+      "bodyEn": "The selected main prototype is `Subimage Viewport IndexedDB Bridge`. What it does: judges trust and route from subimage scale, viewport scale, drift, foveation, and attachment availability, then stores IndexedDB and JSON rows. Next addition: ingest real `getViewSubImage()` / `getViewport()` values as live rows. The derivative `Attachment Crop Merge Policy Replayer` was also implemented. What it does: reads the main row or a preset and visualizes per-tile native submit / crop patch / depth hold / fallback under different policies. Next addition: automatically import the September 27 attachment-size rows and September 26 redraw rows."
+    }
+  ]
+}

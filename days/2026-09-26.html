@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XRLayer redraw を timestamp 付きの復帰行として保存する | 2026-09-26</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.09.26</p>
+      <h1>XRLayer redraw を timestamp 付きの復帰行として保存する</h1>
+      <p class="hero-subtitle">Saving XRLayer redraw as timestamped recovery rows</p>
+      <p>W3C WebXR Layers API Level 1、W3C WebXR Device API、MDN XRLayerEvent、Immersive Web Layers samples、Meta の WebXR Space Warp 資料を参照し、`redraw` と frame timestamp、depth / motion vector attachment を同じ JSON row にまとめる本命サンプルと、その row を strict / balanced / forgiving policy で再判定する派生サンプルを追加しました。</p>
+      <p class="en-copy">After checking the W3C WebXR Layers API Level 1, W3C WebXR Device API, MDN XRLayerEvent, Immersive Web Layers samples, and Meta's WebXR Space Warp documentation, today's original work adds a main sample that stores `redraw`, frame timestamps, and depth / motion vector attachments in one JSON row, plus a derivative replay sample that compares strict / balanced / forgiving recovery policies.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-09-26_html_xrlayer_redraw_timestamp_logger.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-25.html">← 2026.09.25</a>
+      <a class="day-link" href="../days/2026-09-27.html">2026.09.27 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>XRLayer Redraw Timestamp Logger</h3>
+              <p>WebXR Layers の redraw、resource loss、XR frame timestamp、depth / motion vector attachment の状態を同じ行にまとめ、IndexedDB に保存できる recovery row として出します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-26_html_xrlayer_redraw_timestamp_logger.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Redraw Row Policy Replayer</h3>
+              <p>1本目の redraw row JSON を貼り付けると、strict / balanced / forgiving の3つの復帰ポリシーで `redraw-next-frame`、`projection-fallback`、`disable-space-warp`、`rebuild-layer` を再判定します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-26_html_redraw_row_policy_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Layers API Level 1 は `XRLayer` の `redraw` event を定義し、layer resource loss や compositor が再投影できない場合に次の XR animation frame で描き直す流れを示しています。</span>
+              <span class="en-copy">WebXR Layers API Level 1 defines the `XRLayer` `redraw` event and describes the next-XR-animation-frame redraw path when layer resources are lost or the compositor can no longer reproject the layer.</span>
+            </li>
+          
+            <li>
+              <span>`space-warp` では motion vector texture または depth-stencil texture が処理対象 frame で提出されない場合、その frame は space warp が無効だったように処理されます。</span>
+              <span class="en-copy">For `space-warp`, if either the motion vector texture or depth-stencil texture is not submitted for a frame, that frame is processed as if space warp were not enabled.</span>
+            </li>
+          
+            <li>
+              <span>MDN の `XRLayerEvent` は `redraw` が layer 状態変化を表す event 型であり、resource loss / reprojection failure の合図として扱えることを整理しています。</span>
+              <span class="en-copy">MDN's `XRLayerEvent` page frames `redraw` as the event type for layer state changes, useful for resource loss and reprojection failure signals.</span>
+            </li>
+          
+            <li>
+              <span>Meta の WebXR Space Warp 資料は、app が motion vector と depth buffer を供給し、projection layer と texture-array を使う前提、さらに attachment サイズが color texture と異なる点を強調しています。</span>
+              <span class="en-copy">Meta's WebXR Space Warp documentation emphasizes app-provided motion vectors and depth buffers, projection layers with texture arrays, and attachment sizes that differ from the color texture.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、自作の `XRLayer Redraw Timestamp Logger` と `Redraw Row Policy Replayer` の2本です。</span>
+              <span class="en-copy">Today's public cards are the original workspace samples `XRLayer Redraw Timestamp Logger` and `Redraw Row Policy Replayer`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>昨日は Space Warp layer recovery と motion vector gap heatmap を扱いました。今日はその次段として、復帰判断を一度だけ画面に出すのではなく、`redraw` event、frame timestamp、depth / motion vector attachment、head motion、fallback route を同じ row として保存するところに寄せます。Layers API の `redraw` と Space Warp の attachment 条件は、実機で問題が起きた時に `なぜ warp を止めたのか` を説明するための監査ログに変換できます。</p>
+          <p class="en-copy">Yesterday covered Space Warp layer recovery and motion-vector gap heatmaps. Today moves one step further: instead of showing a recovery decision once, it stores `redraw` events, frame timestamps, depth / motion vector attachments, head motion, and fallback route as one row. The Layers API `redraw` event and Space Warp attachment rules can become an audit log that explains why warp was disabled on a real device.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://developers.meta.com/horizon/documentation/web/webxr-space-warp/" target="_blank" rel="noreferrer">Meta Horizon OS: WebXR Space Warp</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `XRLayer Redraw Timestamp Logger` は layer event、depth attachment、motion vector attachment、frame timestamp gap、head motion から `redraw-next-frame`、`projection-fallback`、`disable-space-warp`、`rebuild-layer`、`hidden-hold`、`space-warp-continue` を出し、IndexedDB に保存できる JSON row を作ります。派生サンプル `Redraw Row Policy Replayer` はその row を貼り付け、strict / balanced / forgiving の3つの policy で再判定します。</p>
+          <p class="en-copy">The main sample, `XRLayer Redraw Timestamp Logger`, emits `redraw-next-frame`, `projection-fallback`, `disable-space-warp`, `rebuild-layer`, `hidden-hold`, or `space-warp-continue` from layer event, depth attachment, motion vector attachment, frame timestamp gap, and head motion, then creates JSON rows that can be stored in IndexedDB. The derivative `Redraw Row Policy Replayer` accepts those rows and reclassifies them with strict / balanced / forgiving policies.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装時は `XRLayer` に `redraw` listener を付け、次の XR animation frame timestamp と attachment availability を同じ row に入れると後から比較できます。`motionVectorTexture` と `depthStencilTexture` が揃っていない frame は warp 前提にしない、resource loss は描画 policy ではなく layer rebuild policy に寄せる、visibility hidden は route 判定を止めて hold する、という3つの分岐を先に作ると安全です。</p>
+          <p class="en-copy">In production, attach a `redraw` listener to `XRLayer` and store it with the next XR animation-frame timestamp and attachment availability. It is safer to make three early branches: frames without both `motionVectorTexture` and `depthStencilTexture` should not assume warp, resource loss should route to layer rebuild rather than visual policy, and hidden visibility should hold rather than continue route classification.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の row は、9月21日の session context merge store、9月22日の trust floor、9月24日の overlay focus recovery、9月25日の motion vector gap heatmap と組み合わせやすいです。入力、overlay、layer、warp attachment を同じ時系列に置けば、遠隔支援や展示運用で `入力の問題か、compositor 復帰の問題か` を説明できます。</p>
+          <p class="en-copy">Today's rows combine well with the September 21 session context merge store, September 22 trust floor, September 24 overlay focus recovery, and September 25 motion vector gap heatmap. Putting input, overlay, layer, and warp attachments on the same timeline helps remote-support and installation teams explain whether a failure came from input or compositor recovery.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>引き続き WebXR Layers API の `redraw`、`depth-sorted-layers`、`space-warp`、recommended motion vector texture resolution、Meta の WebXR Space Warp / Layers 資料、Immersive Web samples の Space Warp source を見ます。次は実 `XRWebGLSubImage.motionVectorTexture` / `depthStencilTexture` の size と availability を row に足し、昨日の heatmap へ tile coverage を渡すところまで進めたいです。</p>
+          <p class="en-copy">Keep watching `redraw`, `depth-sorted-layers`, `space-warp`, recommended motion-vector texture resolution in WebXR Layers API, Meta's WebXR Space Warp / Layers materials, and the Immersive Web Space Warp sample source. Next, add real `XRWebGLSubImage.motionVectorTexture` / `depthStencilTexture` size and availability to the row, then pass tile coverage into yesterday's heatmap.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`XRLayer Redraw Timestamp Logger` で layer event を `redraw`、depth / motion を `fresh`、frame gap を短めにして `log row` を押すと `redraw-next-frame` になります。motion vector を `missing` にすると `disable-space-warp`、event を `resource-lost` にすると `rebuild-layer` へ落ちます。派生側では mixed preset を replay して、strict と forgiving の差を確認できます。</p>
+          <p class="en-copy">In `XRLayer Redraw Timestamp Logger`, set layer event to `redraw`, both depth / motion to `fresh`, keep the frame gap short, and press `log row` to get `redraw-next-frame`. Set motion vector to `missing` to get `disable-space-warp`; set event to `resource-lost` to get `rebuild-layer`. In the derivative sample, replay the mixed preset to see the difference between strict and forgiving policies.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-26_html_xrlayer_redraw_timestamp_logger.html" target="_blank" rel="noreferrer">Open XRLayer Redraw Timestamp Logger</a></li>
+          
+            <li><a href="../outputs/2026-09-26_html_redraw_row_policy_replayer.html" target="_blank" rel="noreferrer">Open Redraw Row Policy Replayer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR Layers API Level 1、W3C WebXR Device API、MDN XRLayerEvent、Immersive Web Layers samples、Meta Horizon OS WebXR Space Warp / Layers を確認。設計: 1本目は timestamp 付き redraw logger、2本目は redraw row policy replayer。実装: `outputs/2026-09-26_html_xrlayer_redraw_timestamp_logger.html` と `outputs/2026-09-26_html_redraw_row_policy_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish を確認する。</p>
+          <p class="en-copy">Research: checked W3C WebXR Layers API Level 1, W3C WebXR Device API, MDN XRLayerEvent, Immersive Web Layers samples, and Meta Horizon OS WebXR Space Warp / Layers. Design: make the first sample a timestamped redraw logger, and the second a redraw-row policy replayer. Implementation: add `outputs/2026-09-26_html_xrlayer_redraw_timestamp_logger.html` and `outputs/2026-09-26_html_redraw_row_policy_replayer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, and publish.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月後半の流れは、session context、trust floor、overlay arbitration、focus recovery、layer recovery へ進んできました。今日の2本は、描画側の問題を `あとで replay できる row` に変える部品です。XR ではユーザーが不快に感じた瞬間の理由が一つとは限らないため、入力 row と compositor row を同じ構造で保存しておくと、後続の policy 比較や説明 UI が作りやすくなります。</p>
+          <p class="en-copy">The late-September thread has moved through session context, trust floor, overlay arbitration, focus recovery, and layer recovery. Today's two samples turn rendering-side failures into rows that can be replayed later. In XR, discomfort rarely has a single cause, so storing input rows and compositor rows with the same structure makes later policy comparison and explanation UI easier.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `XRLayer Redraw Timestamp Logger` です。何が動くか: layer event、depth / motion vector attachment、frame timestamp gap、head motion から復帰 route を判定し、ledger と export JSON、IndexedDB row を作ります。次に足すなら、実 `XRLayer` の `redraw` listener と `XRWebGLSubImage` の attachment size を保存します。派生として `Redraw Row Policy Replayer` も実装しました。何が動くか: 本命サンプルの row JSON または preset を読み込み、strict / balanced / forgiving policy で復帰判断の差を可視化します。次に足すなら、9月25日の motion vector gap heatmap から tile coverage を読み込んで policy に反映します。</p>
+          <p class="en-copy">The selected main prototype is `XRLayer Redraw Timestamp Logger`. What it does: judges a recovery route from layer event, depth / motion vector attachment, frame timestamp gap, and head motion, then creates a ledger, export JSON, and IndexedDB row. Next addition: save real `XRLayer` `redraw` listeners and `XRWebGLSubImage` attachment sizes. The derivative `Redraw Row Policy Replayer` was also implemented. What it does: reads the main sample's row JSON or presets and visualizes recovery differences across strict / balanced / forgiving policies. Next addition: import tile coverage from the September 25 motion-vector heatmap and feed it into the policy.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-26_html_xrlayer_redraw_timestamp_logger.html" target="_blank" rel="noreferrer">Today's main sample: XRLayer Redraw Timestamp Logger</a></li>
+          
+            <li><a href="../outputs/2026-09-26_html_redraw_row_policy_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Redraw Row Policy Replayer</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRLayerEvent" target="_blank" rel="noreferrer">MDN: XRLayerEvent</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers Samples</a></li>
+          
+            <li><a href="https://developers.meta.com/horizon/documentation/web/webxr-space-warp/" target="_blank" rel="noreferrer">Meta Horizon OS: WebXR Space Warp</a></li>
+          
+            <li><a href="https://developers.meta.com/horizon/documentation/web/webxr-layers/" target="_blank" rel="noreferrer">Meta Horizon OS: WebXR Layers</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-09-26_html_xrlayer_redraw_timestamp_logger.html" loading="lazy" title="XRLayer Redraw Timestamp Logger"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Predictive Visibility Mask Console</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101317;
+      --panel: #1a2228;
+      --panel2: #243039;
+      --line: #586671;
+      --text: #f5f1e8;
+      --muted: #c5ccc8;
+      --cyan: #7bd7e5;
+      --green: #9fda86;
+      --gold: #ecc46a;
+      --red: #ed827f;
+      --ink: #0b0f12;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(123, 215, 229, 0.13), transparent 35%),
+        linear-gradient(315deg, rgba(236, 196, 106, 0.10), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 44px; }
+    header { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(26, 34, 40, 0.96);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(11, 15, 18, 0.62); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 20px; overflow-wrap: anywhere; }
+    .viewport {
+      position: relative;
+      min-height: 330px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+        #0b0f12;
+      background-size: 12.5% 20%;
+    }
+    .mask, .predicted, .guard {
+      position: absolute;
+      border-radius: 4px;
+      transition: all 0.22s ease;
+    }
+    .mask {
+      border: 2px solid var(--cyan);
+      background: rgba(123, 215, 229, 0.16);
+    }
+    .predicted {
+      border: 2px dashed var(--gold);
+      background: rgba(236, 196, 106, 0.11);
+    }
+    .guard {
+      border: 2px solid rgba(237, 130, 127, 0.92);
+      background: rgba(237, 130, 127, 0.08);
+    }
+    .arrow {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      height: 3px;
+      width: 80px;
+      background: var(--green);
+      transform-origin: left center;
+      transition: transform 0.22s ease, width 0.22s ease;
+    }
+    .label {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(11, 15, 18, 0.82);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .controls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    input, select, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--cyan); }
+    textarea { width: 100%; min-height: 170px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .bars, .ledger { display: grid; gap: 8px; }
+    .bar { display: grid; grid-template-columns: 154px 1fr 64px; gap: 8px; align-items: center; color: var(--muted); }
+    .track { height: 16px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.05); }
+    .fill { height: 100%; width: 0; background: var(--cyan); transition: width 0.22s ease; }
+    .row { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(11, 15, 18, 0.62); color: var(--muted); }
+    @media (max-width: 900px) {
+      header, .controls, .metrics { grid-template-columns: 1fr; }
+      .bar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Predictive Visibility Mask Console</h1>
+        <p>昨日の再投影 drift を、次フレームの予測 mask に進めます。`XRVisibilityMaskChange` が届く前に、pose velocity と mask age から guard band を見積もり、tile を続けるか full viewport に戻すかを判定します。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>route</span><strong id="routeMetric">-</strong></div>
+          <div class="metric"><span>lead</span><strong id="leadMetric">0 ms</strong></div>
+          <div class="metric"><span>guard</span><strong id="guardMetric">0 px</strong></div>
+          <div class="metric"><span>confidence</span><strong id="confidenceMetric">0%</strong></div>
+        </div>
+        <div class="viewport" aria-label="predictive visibility mask preview">
+          <div id="guardBox" class="guard"></div>
+          <div id="predictedBox" class="predicted"></div>
+          <div id="maskBox" class="mask"></div>
+          <div id="arrow" class="arrow"></div>
+          <div id="viewLabel" class="label">left-eye</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>View
+        <select id="viewSelect">
+          <option value="left-eye">left-eye</option>
+          <option value="right-eye">right-eye</option>
+          <option value="mono">mono</option>
+        </select>
+      </label>
+      <label>Mask age
+        <input id="maskAgeRange" type="range" min="4" max="140" value="31">
+      </label>
+      <label>Prediction lead
+        <input id="leadRange" type="range" min="8" max="96" value="34">
+      </label>
+      <label>Pose velocity
+        <input id="velocityRange" type="range" min="0" max="48" value="15">
+      </label>
+      <label>Acceleration
+        <input id="accelRange" type="range" min="0" max="36" value="7">
+      </label>
+    </div>
+
+    <section>
+      <h2>Prediction weights</h2>
+      <div id="bars" class="bars"></div>
+    </section>
+
+    <section>
+      <h2>Export row</h2>
+      <textarea id="rowBox" spellcheck="false"></textarea>
+    </section>
+
+    <section>
+      <h2>Ledger</h2>
+      <div id="ledger" class="ledger"></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ledger = [];
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function compute() {
+      const viewId = $("viewSelect").value;
+      const maskAgeMs = Number($("maskAgeRange").value);
+      const predictionLeadMs = Number($("leadRange").value);
+      const poseVelocityDeg = Number($("velocityRange").value);
+      const accelerationDeg = Number($("accelRange").value);
+      const viewBias = viewId === "right-eye" ? 1.06 : viewId === "mono" ? 0.9 : 1;
+      const predictedShiftPx = Math.round((predictionLeadMs * 0.22 + poseVelocityDeg * 1.35 + accelerationDeg * 1.1) * viewBias);
+      const uncertaintyPx = Math.round(8 + maskAgeMs * 0.2 + predictionLeadMs * 0.18 + accelerationDeg * 0.9);
+      const guardBandPx = Math.round(predictedShiftPx * 0.45 + uncertaintyPx);
+      const freshness = clamp(1 - maskAgeMs / 150, 0, 1);
+      const stability = clamp(1 - (poseVelocityDeg * 0.012 + accelerationDeg * 0.018), 0, 1);
+      const leadFit = clamp(1 - Math.abs(predictionLeadMs - 33) / 90, 0, 1);
+      const confidence = clamp((freshness * 0.38 + stability * 0.42 + leadFit * 0.2) - guardBandPx / 260, 0, 0.98);
+      const tileSavings = clamp(0.76 - guardBandPx / 220 + confidence * 0.18, 0.08, 0.84);
+      const route = confidence < 0.38 ? "full-viewport-refresh" : guardBandPx > 54 ? "guard-band-expanded-mask" : predictionLeadMs > 70 ? "hold-until-mask-change" : "submit-predicted-mask";
+      return {
+        type: "predictive-visibility-mask-row",
+        date: "2026-10-04",
+        viewId,
+        maskAgeMs,
+        predictionLeadMs,
+        poseVelocityDeg,
+        accelerationDeg,
+        predictedShiftPx,
+        uncertaintyPx,
+        guardBandPx,
+        confidence: Number(confidence.toFixed(3)),
+        tileSavings: Number(tileSavings.toFixed(3)),
+        route,
+        sources: ["XRVisibilityMaskChange", "XRView viewId", "viewer-pose-history"],
+        next: "Compare predicted mask rows with the next actual mask event and feed the miss delta into recovery policy."
+      };
+    }
+
+    function place(row) {
+      const baseW = 52;
+      const baseH = 58;
+      const left = 24 + (row.viewId === "right-eye" ? 6 : row.viewId === "mono" ? 1 : 0);
+      const top = 21;
+      const shiftX = clamp(row.predictedShiftPx * 0.18, 0, 16);
+      const shiftY = clamp(row.accelerationDeg * 0.2, 0, 8);
+      const guard = clamp(row.guardBandPx * 0.11, 2, 12);
+      $("maskBox").style.cssText = `left:${left}%;top:${top}%;width:${baseW}%;height:${baseH}%;`;
+      $("predictedBox").style.cssText = `left:${left + shiftX}%;top:${top + shiftY}%;width:${baseW}%;height:${baseH}%;`;
+      $("guardBox").style.cssText = `left:${left + shiftX - guard}%;top:${top + shiftY - guard}%;width:${baseW + guard * 2}%;height:${baseH + guard * 2}%;`;
+      $("arrow").style.width = `${Math.max(46, row.predictedShiftPx * 2.2)}px`;
+      $("arrow").style.transform = `rotate(${8 + row.accelerationDeg * 1.4}deg)`;
+      $("viewLabel").textContent = `${row.viewId} / ${row.route}`;
+    }
+
+    function renderBars(row) {
+      const items = [
+        ["freshness", clamp(1 - row.maskAgeMs / 150, 0, 1)],
+        ["pose stability", clamp(1 - (row.poseVelocityDeg * 0.012 + row.accelerationDeg * 0.018), 0, 1)],
+        ["lead fit", clamp(1 - Math.abs(row.predictionLeadMs - 33) / 90, 0, 1)],
+        ["tile savings", row.tileSavings],
+        ["risk pressure", clamp(row.guardBandPx / 90, 0, 1)]
+      ];
+      $("bars").innerHTML = items.map(([label, value]) => `
+        <div class="bar">
+          <span>${label}</span>
+          <div class="track"><div class="fill" style="width:${Math.round(value * 100)}%"></div></div>
+          <strong>${Math.round(value * 100)}%</strong>
+        </div>
+      `).join("");
+    }
+
+    function render() {
+      const row = compute();
+      $("routeMetric").textContent = row.route;
+      $("leadMetric").textContent = `${row.predictionLeadMs} ms`;
+      $("guardMetric").textContent = `${row.guardBandPx} px`;
+      $("confidenceMetric").textContent = `${Math.round(row.confidence * 100)}%`;
+      $("rowBox").value = JSON.stringify(row, null, 2);
+      place(row);
+      renderBars(row);
+      ledger.unshift(row);
+      if (ledger.length > 5) ledger.pop();
+      $("ledger").innerHTML = ledger.map((item) => `
+        <div class="row">${item.viewId}: ${item.route} / shift ${item.predictedShiftPx}px / guard ${item.guardBandPx}px / confidence ${Math.round(item.confidence * 100)}%</div>
+      `).join("");
+    }
+
+    document.querySelectorAll("input, select").forEach((el) => el.addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>

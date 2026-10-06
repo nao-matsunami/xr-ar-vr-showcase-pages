@@ -1,0 +1,127 @@
+{
+  "date": "2026-09-28",
+  "headline": "DOM Overlay の frame owner と beforexrselect を台帳化する",
+  "headlineEn": "Ledgering DOM Overlay frame owners and beforexrselect",
+  "summary": "W3C WebXR DOM Overlays Module、MDN の `beforexrselect`、Immersive Web DOM Overlay explainer、WebXR Test API、Web Platform Tests の DOM Overlay 更新を参照し、overlay / iframe / cross-origin 領域で XR select を止めるべきかを記録する本命サンプルと、DOM event と XR input event の非同期順序を再生して重複 commit を検出する派生サンプルを追加しました。",
+  "summaryEn": "After checking the W3C WebXR DOM Overlays Module, MDN `beforexrselect`, the Immersive Web DOM Overlay explainer, the WebXR Test API, and recent Web Platform Tests work around DOM Overlay, today's original work adds a main sample that records whether XR select should be suppressed for overlay / iframe / cross-origin regions, plus a derivative sample that replays asynchronous DOM and XR input ordering to detect duplicate commits.",
+  "keyTopics": [
+    "WebXR DOM Overlays Module は `dom-overlay` feature descriptor と `domOverlay.root` を定義し、session 中に単一の DOM 要素を透明背景の overlay として表示します。",
+    "`beforexrselect` は overlay に target ray が交差した primary action の前に dispatch され、`preventDefault()` で `selectstart` / `selectend` / `select` の発火を抑止できます。",
+    "DOM event と `beforexrselect` / XR input event は同期されないため、pointer / click と XR select の順序が前後しても二重 commit しない replay window が必要です。",
+    "cross-origin content 上の primary action では pose や gamepad data の観測が制限され、入力終了の扱いも通常の overlay button と分けて記録する価値があります。",
+    "今日の公開カードは外部デモではなく、自作の `DOM Overlay Frame Owner Guard` と `BeforeXRSelect Timeline Replayer` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR DOM Overlays Module defines the `dom-overlay` feature descriptor and `domOverlay.root`, displaying a single DOM element as a transparent overlay during a session.",
+    "`beforexrselect` is dispatched before primary actions that intersect the overlay with the target ray, and `preventDefault()` can suppress `selectstart`, `selectend`, and `select`.",
+    "DOM events and `beforexrselect` / XR input events are not synchronized, so a replay window is needed to avoid duplicate commits when pointer / click and XR select arrive in different orders.",
+    "For primary actions over cross-origin content, pose and gamepad observation are limited, and action-ending behavior should be recorded separately from normal overlay buttons.",
+    "Today's public cards are the original workspace samples `DOM Overlay Frame Owner Guard` and `BeforeXRSelect Timeline Replayer`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: DOM Overlay Frame Owner Guard",
+      "url": "../outputs/2026-09-28_html_dom_overlay_frame_owner_guard.html"
+    },
+    {
+      "label": "Today's derivative sample: BeforeXRSelect Timeline Replayer",
+      "url": "../outputs/2026-09-28_html_beforexrselect_timeline_replayer.html"
+    },
+    {
+      "label": "W3C: WebXR DOM Overlays Module",
+      "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+    },
+    {
+      "label": "MDN: Element beforexrselect event",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/Element/beforexrselect_event"
+    },
+    {
+      "label": "Immersive Web: DOM Overlays explainer",
+      "url": "https://github.com/immersive-web/dom-overlays/blob/main/explainer.md"
+    },
+    {
+      "label": "Immersive Web: WebXR Test API",
+      "url": "https://immersive-web.github.io/webxr-test-api/"
+    },
+    {
+      "label": "Web Platform Tests change: Detect all frame owners in DOM Overlay",
+      "url": "https://chromium.googlesource.com/external/w3c/web-platform-tests/+/refs/tags/merge_pr_61430"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "9月23日の DOM Overlay select arbitration と9月24日の overlay focus recovery では、overlay 上の操作を XR world の操作と混ぜないことを扱いました。今日はその粒度を一段下げ、どの frame owner に ray が当たったのか、`beforexrselect` が queued されたのか、`preventDefault()` で select が消えたのか、cross-origin content で pose / gamepad が制限されるのかを row として残します。WPT 側でも DOM Overlay の frame owner 検出が更新されており、overlay 内の iframe を曖昧にしないことが実装・検証の焦点になっています。",
+      "bodyEn": "The September 23 DOM Overlay select arbitration and September 24 overlay focus recovery samples separated overlay actions from XR world actions. Today lowers the granularity: which frame owner was hit by the ray, whether `beforexrselect` was queued, whether `preventDefault()` suppressed select, and whether cross-origin content limited pose / gamepad data are all stored as rows. Web Platform Tests have also been updated around detecting DOM Overlay frame owners, which makes iframe ownership a practical implementation and validation concern.",
+      "links": [
+        {
+          "label": "W3C: WebXR DOM Overlays Module",
+          "url": "https://www.w3.org/TR/webxr-dom-overlays-1/"
+        },
+        {
+          "label": "Web Platform Tests change: Detect all frame owners in DOM Overlay",
+          "url": "https://chromium.googlesource.com/external/w3c/web-platform-tests/+/refs/tags/merge_pr_61430"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `DOM Overlay Frame Owner Guard` は overlay type、target 領域、input mode、DOM handler、frame policy を切り替え、`dom-only`、`pass-through`、`duplicate-risk`、`delay-input-source`、`cancel-on-exit` へ分類します。派生サンプル `BeforeXRSelect Timeline Replayer` は本命 row か preset を読み、DOM pointer / click、`beforexrselect`、XR selectstart / select / selectend の到着順を timeline に並べ、commit window 内の重複危険度を出します。",
+      "bodyEn": "The main sample, `DOM Overlay Frame Owner Guard`, switches overlay type, target region, input mode, DOM handler, and frame policy, then classifies interactions as `dom-only`, `pass-through`, `duplicate-risk`, `delay-input-source`, or `cancel-on-exit`. The derivative `BeforeXRSelect Timeline Replayer` reads the main row or a preset, lays out DOM pointer / click, `beforexrselect`, and XR selectstart / select / selectend in a timeline, and reports duplicate risk inside a commit window."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では overlay root の capture / bubble で `beforexrselect` を1行にまとめ、target element、owner frame、cross-origin 推定、`defaultPrevented`、近傍の pointer event id、XR input source id を保存します。DOM event と XR event は同期しないため、DOM handler 側で即 commit するのではなく、短い commit window に入れて二重実行を抑止するのが扱いやすいです。cross-origin content では pose / gamepad の制限を正常な privacy route として扱い、欠落やバグと混ぜないようにします。",
+      "bodyEn": "In production, collect `beforexrselect` at the overlay root during capture / bubble and store the target element, owner frame, cross-origin estimate, `defaultPrevented`, nearby pointer event id, and XR input source id in one row. Because DOM and XR events are not synchronized, it is easier to place DOM actions into a short commit window instead of committing immediately. For cross-origin content, treat pose / gamepad limitations as a normal privacy route rather than mixing them with missing data or bugs."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の owner row は9月23日の select arbitration、9月24日の focus recovery、9月26日の redraw timestamp logger と接続できます。overlay が入力を止めた直後に layer の redraw が必要になったのか、あるいは world select を通した後に focus recovery が走ったのかを同じ timeline に置くと、HUD / remote assist / editor overlay の品質説明に使えます。",
+      "bodyEn": "Today's owner rows can connect to the September 23 select arbitration, September 24 focus recovery, and September 26 redraw timestamp logger samples. Putting overlay suppression, layer redraw, and focus recovery on one timeline helps explain quality in HUDs, remote assist tools, and editor overlays."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "引き続き WebXR DOM Overlays Module、MDN `beforexrselect`、Immersive Web DOM Overlay explainer、WebXR Test API の DOM Overlay 拡張、WPT の DOM Overlay tests を見ます。次は実ページで overlay root に listener を張り、pointer event と `beforexrselect` の実 timestamp を IndexedDB に保存し、今日の timeline replayer へ直接 import したいです。",
+      "bodyEn": "Keep watching the WebXR DOM Overlays Module, MDN `beforexrselect`, the Immersive Web DOM Overlay explainer, DOM Overlay extensions in the WebXR Test API, and WPT DOM Overlay tests. Next, attach listeners to a real overlay root, store pointer event and `beforexrselect` timestamps in IndexedDB, and import them directly into today's timeline replayer."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`DOM Overlay Frame Owner Guard` で target を `cross-origin iframe`、input を `screen transient touch`、handler を `preventDefault` にすると `delay-input-source` へ落ちます。次に派生側へ row JSON を貼り、DOM timing を `DOM after XR` にすると、DOM / XR の順序差が commit decision にどう効くかを見られます。",
+      "bodyEn": "In `DOM Overlay Frame Owner Guard`, set target to `cross-origin iframe`, input to `screen transient touch`, and handler to `preventDefault` to route into `delay-input-source`. Then paste the row JSON into the derivative sample and set DOM timing to `DOM after XR` to see how DOM / XR ordering changes the commit decision.",
+      "links": [
+        {
+          "label": "Open DOM Overlay Frame Owner Guard",
+          "url": "../outputs/2026-09-28_html_dom_overlay_frame_owner_guard.html"
+        },
+        {
+          "label": "Open BeforeXRSelect Timeline Replayer",
+          "url": "../outputs/2026-09-28_html_beforexrselect_timeline_replayer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR DOM Overlays Module、MDN beforexrselect、Immersive Web DOM Overlay explainer、WebXR Test API、WPT の DOM Overlay frame owner 更新を確認。設計: 1本目は frame owner guard、2本目は beforexrselect timeline replayer。実装: `outputs/2026-09-28_html_dom_overlay_frame_owner_guard.html` と `outputs/2026-09-28_html_beforexrselect_timeline_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish を確認する。",
+      "bodyEn": "Research: checked the W3C WebXR DOM Overlays Module, MDN beforexrselect, the Immersive Web DOM Overlay explainer, the WebXR Test API, and WPT DOM Overlay frame-owner updates. Design: make the first sample a frame owner guard and the second a beforexrselect timeline replayer. Implementation: add `outputs/2026-09-28_html_dom_overlay_frame_owner_guard.html` and `outputs/2026-09-28_html_beforexrselect_timeline_replayer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "9月後半の流れは、session trust、overlay recovery、space-warp recovery、attachment audit と続きました。今日の2本は描画ではなく入力の境界を揃える小さな部品です。XR 体験の失敗理由を説明するには、`ユーザーはDOMを触った`、`XR worldを選んだ`、`cross-origin内でprivacy routeに入った` を同じ粒度で保存する必要があります。",
+      "bodyEn": "The late-September thread has moved through session trust, overlay recovery, space-warp recovery, and attachment audit. Today's two samples align the input boundary rather than rendering. To explain XR experience failures, `the user touched DOM`, `the user selected the XR world`, and `the action entered a privacy route inside cross-origin content` need to be stored at comparable granularity."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `DOM Overlay Frame Owner Guard` です。何が動くか: overlay / iframe / world target と handler policy から `beforexrselect` の抑止結果、XR event 数、pose feed 制限、route を row 化します。次に足すなら、実 overlay root に listener を張り、`event.target` と iframe 所有情報を保存します。派生として `BeforeXRSelect Timeline Replayer` も実装しました。何が動くか: 本命 row または preset を読み、DOM event と XR input event の到着順から duplicate risk と commit decision を再判定します。次に足すなら、IndexedDB の実 timestamp row を import して9月23日の arbitration logger と接続します。",
+      "bodyEn": "The selected main prototype is `DOM Overlay Frame Owner Guard`. What it does: records `beforexrselect` suppression, XR event count, pose-feed limits, and route from overlay / iframe / world targets plus handler policy. Next addition: attach a real listener to the overlay root and store `event.target` plus iframe ownership. The derivative `BeforeXRSelect Timeline Replayer` was also implemented. What it does: reads the main row or a preset and reclassifies duplicate risk and commit decision from DOM and XR input event ordering. Next addition: import real timestamp rows from IndexedDB and connect them to the September 23 arbitration logger."
+    }
+  ]
+}

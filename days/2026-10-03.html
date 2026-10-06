@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>可視マスク row を再投影 drift と復帰 timeline へつなぐ | 2026-10-03</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.03</p>
+      <h1>可視マスク row を再投影 drift と復帰 timeline へつなぐ</h1>
+      <p class="hero-subtitle">Connecting visibility-mask rows to reprojection drift and recovery timelines</p>
+      <p>W3C WebXR Device API、Immersive Web Layers Samples、Chrome 144 の XRVisibilityMaskChange、Immersive Web Samples を確認し、昨日の visibility mask row merge を再投影 drift と tiled rendering 復帰判断へ進める自作サンプル2本を追加しました。</p>
+      <p class="en-copy">After checking the W3C WebXR Device API, Immersive Web Layers Samples, Chrome 144's XRVisibilityMaskChange, and Immersive Web Samples, today's original work extends yesterday's visibility-mask row merge into reprojection drift and tiled-rendering recovery decisions with two new samples.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-03_html_visibility_reprojection_drift_console.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-10-02.html">← 2026.10.02</a>
+      <a class="day-link" href="../days/2026-10-04.html">2026.10.04 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Visibility Reprojection Drift Console</h3>
+              <p>10/02 の visibility mask merged row を一歩進め、現在の可視マスクと過去フレームの再投影マスクのずれを診断します。mask が新しくても history drift が大きければ、patch か full viewport に戻す判断が必要になります。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-03_html_visibility_reprojection_drift_console.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Reprojection Recovery Timeline Replayer</h3>
+              <p>1本目の reprojection row を複数フレームへ展開し、いつ tiled rendering に戻せるかを再生します。drift、reuse、comfort risk の推移から、hold、patch、recover の境目を見ます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-03_html_reprojection_recovery_timeline_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>Chrome 144 の `XRVisibilityMaskChange` は可視 viewport mesh と `XRView` の一意識別子を扱いやすくし、viewId ごとの mask row 管理に向きます。</span>
+              <span class="en-copy">Chrome 144's `XRVisibilityMaskChange` makes visible viewport meshes and unique `XRView` identifiers easier to pair, which fits per-view mask-row management.</span>
+            </li>
+          
+            <li>
+              <span>W3C WebXR Device API 2026-06-09 CRD は frame loop、view、event、privacy / comfort の基本参照として継続して使えます。</span>
+              <span class="en-copy">The W3C WebXR Device API 2026-06-09 CRD remains the baseline reference for frame loops, views, events, privacy, and comfort.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web Layers Samples は projection layer、subimage、space warp、motion vector、depth など、9月後半から作っている row 群と接続しやすい参照です。</span>
+              <span class="en-copy">Immersive Web Layers Samples connect well to the row series built since late September: projection layers, subimages, space warp, motion vectors, and depth.</span>
+            </li>
+          
+            <li>
+              <span>昨日の merge row は fallback 理由の説明に寄っていたため、今日は history pose と再投影 drift を足して「いつ復帰できるか」を見る方向へ進めます。</span>
+              <span class="en-copy">Yesterday's merged rows explained fallback causes; today adds history pose and reprojection drift to ask when tiled rendering can safely recover.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、自作の `Visibility Reprojection Drift Console` と `Reprojection Recovery Timeline Replayer` の2本です。</span>
+              <span class="en-copy">Today's public cards are the original workspace samples `Visibility Reprojection Drift Console` and `Reprojection Recovery Timeline Replayer`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>Chrome 144 の `XRVisibilityMaskChange` は、可視 viewport の mesh を vertices / indices として渡し、`XRView` の一意識別子で mask と view を対応付けやすくします。昨日は mask row、redraw row、subimage viewport row を合流しました。今日はそこに viewer pose history を足し、現在 mask と過去フレームを再投影した mask がどれだけずれるかを見ます。面白い点は、mask が新しくても history drift が大きい場合は省略描画を続けるほうが危険になるところです。</p>
+          <p class="en-copy">Chrome 144's `XRVisibilityMaskChange` provides a visible-viewport mesh as vertices / indices and uses unique `XRView` identifiers to pair masks and views. Yesterday merged mask rows, redraw rows, and subimage viewport rows. Today adds viewer-pose history and checks how far the current mask drifts from a reprojected previous-frame mask. The interesting part is that even a fresh mask can be unsafe for reduced rendering when history drift is high.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developer.chrome.com/release-notes/144" target="_blank" rel="noreferrer">Chrome 144 release notes</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">WebXR Device API</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Visibility Reprojection Drift Console` は view、mask age、history age、pose delta、velocity を動かし、現在 mask、history mask、patch band、drift vector を同じ viewport に重ねます。派生サンプル `Reprojection Recovery Timeline Replayer` はその row を複数フレームへ展開し、hold、patch、recover、full viewport のどこへ進むかを時系列で再生します。体験としては、XR 描画の復帰判断を `重いから戻す` ではなく `何フレーム後に安全に戻せる` と読める診断盤です。</p>
+          <p class="en-copy">The main sample, `Visibility Reprojection Drift Console`, exposes view, mask age, history age, pose delta, and velocity, then overlays the current mask, history mask, patch band, and drift vector in one viewport. The derivative sample, `Reprojection Recovery Timeline Replayer`, expands that row across multiple frames and replays whether each step should hold, patch, recover, or refresh the full viewport. As an experience, it reframes XR rendering recovery from `it's heavy, go back` to `recover safely in N frames`.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では `viewId`、mask timestamp、history pose timestamp、subimage viewport を同じ軽量 row として保存します。実 texture や camera frame は保存せず、driftPx、reuse、overlap、comfortRisk、route のような二次値だけを残すと privacy-aware な運用ログにできます。history drift が小さい場合は reprojected mask を再利用し、drift が中程度なら patch band を広げ、drift と速度が大きい場合は full viewport refresh に戻す、という段階処理が扱いやすそうです。</p>
+          <p class="en-copy">In production, store `viewId`, mask timestamp, history-pose timestamp, and subimage viewport as lightweight rows. Avoid storing textures or camera frames; keep derived values such as driftPx, reuse, overlap, comfortRisk, and route for privacy-aware operational logs. A practical ladder is: reuse the reprojected mask when history drift is small, widen the patch band for moderate drift, and return to full-viewport refresh when drift and velocity are high.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の row は、展示 UI、遠隔支援、XR 業務手順の QA、WebXR パフォーマンス検証に使いやすいです。ユーザーの視野そのものではなく、mask age、history age、drift、reuse、route だけを保存するため、後から `どの瞬間に省略描画を止めたか`、`何フレームで tiled rendering に復帰したか` を説明できます。AI 要約と組み合わせるなら、画像ではなく row の時系列を読ませ、セッション後に `復帰が遅れた主因` を出す形が相性よさそうです。</p>
+          <p class="en-copy">Today's rows fit installation UI, remote assistance, XR procedure QA, and WebXR performance validation. Because they store mask age, history age, drift, reuse, and route rather than the user's view itself, they can explain later when reduced rendering stopped and how many frames it took to recover tiled rendering. With AI summaries, feed the row timeline instead of images and produce a post-session explanation of the main recovery delay.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>`XRVisibilityMaskChange` の仕様反映、ChromeStatus / Blink-dev の実装状況、Immersive Web Layers API の subimage / space warp / motion vector 周辺、WebXR Samples の Layers / Proposals 更新を継続します。自作側では、今日の recovery timeline に 9月25日の motion vector gap、9月26日の redraw timestamp、9月27日の attachment size row を読み込ませ、復帰遅延の主因を横断比較したいです。</p>
+          <p class="en-copy">Keep watching spec integration for `XRVisibilityMaskChange`, ChromeStatus / Blink-dev implementation state, Immersive Web Layers API around subimages / space warp / motion vectors, and WebXR Samples Layers / Proposals updates. On the original-sample side, feed today's recovery timeline with the September 25 motion-vector gap, September 26 redraw timestamp, and September 27 attachment-size rows, then compare causes of delayed recovery across them.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Visibility Reprojection Drift Console` で history age と pose delta を低めにすると `reuse-reprojected-mask`、pose delta や velocity を上げると `patch-reprojected-border`、さらに上げると `full-viewport-refresh` に落ちます。その JSON を `Reprojection Recovery Timeline Replayer` に貼ると、何フレーム後に `recover-tiled-rendering` へ戻るかを policy 別に確認できます。</p>
+          <p class="en-copy">In `Visibility Reprojection Drift Console`, low history age and pose delta produce `reuse-reprojected-mask`; raising pose delta or velocity moves toward `patch-reprojected-border`; higher values fall back to `full-viewport-refresh`. Paste that JSON into `Reprojection Recovery Timeline Replayer` to check, by policy, after how many frames it can return to `recover-tiled-rendering`.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-03_html_visibility_reprojection_drift_console.html" target="_blank" rel="noreferrer">Open Visibility Reprojection Drift Console</a></li>
+          
+            <li><a href="../outputs/2026-10-03_html_reprojection_recovery_timeline_replayer.html" target="_blank" rel="noreferrer">Open Reprojection Recovery Timeline Replayer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR Device API、W3C Immersive Web publications、Chrome 144 release notes、Immersive Web Layers Samples、WebXR Samples repository を確認。設計: 1本目は visibility mask と history pose の reprojection drift console、2本目は drift row の recovery timeline replayer。実装: `outputs/2026-10-03_html_visibility_reprojection_drift_console.html` と `outputs/2026-10-03_html_reprojection_recovery_timeline_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish を確認する。</p>
+          <p class="en-copy">Research: checked the W3C WebXR Device API, W3C Immersive Web publications, Chrome 144 release notes, Immersive Web Layers Samples, and the WebXR Samples repository. Design: make the first sample a visibility-mask and history-pose reprojection drift console, and the second a recovery timeline replayer for drift rows. Implementation: add `outputs/2026-10-03_html_visibility_reprojection_drift_console.html` and `outputs/2026-10-03_html_reprojection_recovery_timeline_replayer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, and publish.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月末からの流れは、space warp、redraw、attachment size、viewport crop、subimage、visibility mask を row 化し、10月に入ってそれらを説明可能な fallback へまとめる方向です。今日は `原因を説明する` から `安全に復帰する` へ半歩進めました。次は個別 row の追加より、複数 row をまたいだ復帰 playbook を作るほうが価値が高そうです。</p>
+          <p class="en-copy">Since late September, the work has turned space warp, redraw, attachment size, viewport crop, subimage, and visibility mask into rows, then started merging them into explainable fallback in October. Today moves half a step from explaining causes to recovering safely. Next, it may be more valuable to build a cross-row recovery playbook than to add another isolated row type.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Visibility Reprojection Drift Console` です。何が動くか: view、mask age、history age、pose delta、velocity から driftPx、reuse、patchBand、comfortRisk、route を計算し、現在 mask と history mask を重ねます。次に足すなら、実 `XRVisibilityMaskChange` と viewer pose history row を IndexedDB から読み込みます。派生として `Reprojection Recovery Timeline Replayer` も実装しました。何が動くか: 本命 row を複数フレームへ展開し、何フレーム後に tiled rendering へ復帰できるかを policy 別に再生します。次に足すなら、9月後半の motion vector / redraw / attachment row を同時 import して復帰遅延の主因を比較します。</p>
+          <p class="en-copy">The selected main prototype is `Visibility Reprojection Drift Console`. What it does: computes driftPx, reuse, patchBand, comfortRisk, and route from view, mask age, history age, pose delta, and velocity, then overlays the current mask and history mask. Next addition: load real `XRVisibilityMaskChange` and viewer-pose history rows from IndexedDB. The derivative `Reprojection Recovery Timeline Replayer` was also implemented. What it does: expands the main row across multiple frames and replays when tiled rendering can recover under different policies. Next addition: import late-September motion-vector / redraw / attachment rows together and compare the dominant cause of delayed recovery.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-03_html_visibility_reprojection_drift_console.html" target="_blank" rel="noreferrer">Today's main sample: Visibility Reprojection Drift Console</a></li>
+          
+            <li><a href="../outputs/2026-10-03_html_reprojection_recovery_timeline_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Reprojection Recovery Timeline Replayer</a></li>
+          
+            <li><a href="https://developer.chrome.com/release-notes/144" target="_blank" rel="noreferrer">Chrome 144 release notes: XRVisibilityMaskChange</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/groups/wg/immersive-web/publications/" target="_blank" rel="noreferrer">W3C: Immersive Web publications</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers Samples</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples repository</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-03_html_visibility_reprojection_drift_console.html" loading="lazy" title="Visibility Reprojection Drift Console"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

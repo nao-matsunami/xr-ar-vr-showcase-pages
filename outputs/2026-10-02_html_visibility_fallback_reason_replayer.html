@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visibility Fallback Reason Replayer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111315;
+      --panel: #1c2228;
+      --panel2: #27323a;
+      --line: #53616a;
+      --text: #f4f2eb;
+      --muted: #c4c4ba;
+      --blue: #83bfff;
+      --green: #a4dc88;
+      --gold: #e8c66c;
+      --red: #ef817b;
+      --ink: #0c0f11;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(145deg, rgba(131, 191, 255, 0.10), transparent 36%),
+        linear-gradient(320deg, rgba(164, 220, 136, 0.08), transparent 56%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(28, 34, 40, 0.96);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(31px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--blue); }
+    button { cursor: pointer; font-weight: 800; background: var(--gold); color: var(--ink); border-color: transparent; }
+    textarea { width: 100%; min-height: 176px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .matrix { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .reason {
+      min-height: 112px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(12, 15, 17, 0.62);
+      display: grid;
+      align-content: space-between;
+      gap: 8px;
+    }
+    .reason strong { display: block; font-size: 22px; }
+    .reason span { color: var(--muted); line-height: 1.45; }
+    .meter { height: 14px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+    .fill { height: 100%; width: 0; transition: width 0.2s ease; }
+    .timeline { display: grid; gap: 8px; }
+    .tick { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(12, 15, 17, 0.62); color: var(--muted); }
+    .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(12, 15, 17, 0.62); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 21px; overflow-wrap: anywhere; }
+    @media (max-width: 860px) {
+      header, .controls, .matrix, .metrics { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Visibility Fallback Reason Replayer</h1>
+        <p>1本目の merged row を貼り付け、fallback が mask、redraw、crop、motion のどこから来たかを分けます。運用時に「なぜ全画面描画へ戻ったか」を説明するための小さな派生試作です。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>dominant reason</span><strong id="dominantMetric">-</strong></div>
+          <div class="metric"><span>action</span><strong id="actionMetric">-</strong></div>
+          <div class="metric"><span>confidence</span><strong id="confidenceMetric">0%</strong></div>
+        </div>
+        <div id="matrix" class="matrix"></div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Replay policy
+        <select id="policySelect">
+          <option value="balanced">balanced</option>
+          <option value="strict">strict</option>
+          <option value="latency-first">latency-first</option>
+        </select>
+      </label>
+      <label>Operator tolerance
+        <input id="toleranceRange" type="range" min="0" max="30" value="10">
+      </label>
+      <label>Action
+        <button id="presetBtn" type="button">Load merged preset</button>
+      </label>
+    </div>
+
+    <section>
+      <h2>Merged row input</h2>
+      <textarea id="inputBox" spellcheck="false"></textarea>
+    </section>
+
+    <section>
+      <h2>Replay timeline</h2>
+      <div id="timeline" class="timeline"></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const preset = {
+      type: "visibility-mask-row-merge",
+      date: "2026-10-02",
+      viewId: "left-eye",
+      maskAgeMs: 28,
+      redrawAgeMs: 34,
+      cropInsetPct: 8,
+      headMotionDeg: 9,
+      maskCoverage: 0.657,
+      cropCoverage: 0.856,
+      savedPixels: 0.438,
+      patchBandPx: 29,
+      riskScore: 18,
+      confidence: 0.82,
+      route: "submit-merged-row",
+      sources: ["visibility-mask-change", "subimage-viewport-row", "layer-redraw-timestamp"]
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function readRow() {
+      try {
+        const row = JSON.parse($("inputBox").value);
+        if (!row.type || !row.route) throw new Error("not a row");
+        return row;
+      } catch {
+        return preset;
+      }
+    }
+
+    function score(row) {
+      const policy = $("policySelect").value;
+      const tolerance = Number($("toleranceRange").value);
+      const policyBias = policy === "strict" ? 1.16 : policy === "latency-first" ? 0.92 : 1;
+      const mask = clamp((row.maskAgeMs - 24) / 76 + Math.max(0, 0.62 - row.maskCoverage), 0, 1) * policyBias;
+      const redraw = clamp((row.redrawAgeMs - 28) / 92, 0, 1) * (policy === "latency-first" ? 1.28 : 1);
+      const crop = clamp(Math.abs(row.maskCoverage - row.cropCoverage) * 2.8 + row.cropInsetPct / 60, 0, 1) * policyBias;
+      const motion = clamp((row.headMotionDeg - tolerance * 0.45) / 32, 0, 1) * (policy === "strict" ? 1.22 : 1);
+      return {
+        mask: clamp(mask, 0, 1),
+        redraw: clamp(redraw, 0, 1),
+        crop: clamp(crop, 0, 1),
+        motion: clamp(motion, 0, 1)
+      };
+    }
+
+    function decide(scores, row) {
+      const entries = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const [dominant, value] = entries[0];
+      const total = entries.reduce((sum, item) => sum + item[1], 0);
+      const confidence = clamp(1 - total / 3.2, 0, 1);
+      let action = "submit-row";
+      if (value > 0.72 || row.route === "full-viewport-fallback") action = "full-viewport-fallback";
+      else if (total > 1.34) action = "patch-and-hold";
+      else if (value > 0.44) action = "widen-patch-band";
+      return { dominant, action, confidence };
+    }
+
+    function render() {
+      const row = readRow();
+      const scores = score(row);
+      const decision = decide(scores, row);
+      const labels = {
+        mask: "mask age / coverage",
+        redraw: "layer redraw age",
+        crop: "subimage crop mismatch",
+        motion: "head motion"
+      };
+      const colors = {
+        mask: "var(--blue)",
+        redraw: "var(--red)",
+        crop: "var(--gold)",
+        motion: "var(--green)"
+      };
+      $("matrix").innerHTML = Object.entries(scores).map(([key, value]) => `
+        <div class="reason">
+          <div>
+            <strong>${Math.round(value * 100)}%</strong>
+            <span>${labels[key]}</span>
+          </div>
+          <div class="meter"><div class="fill" style="width:${Math.round(value * 100)}%; background:${colors[key]}"></div></div>
+        </div>
+      `).join("");
+      $("dominantMetric").textContent = decision.dominant;
+      $("actionMetric").textContent = decision.action;
+      $("confidenceMetric").textContent = `${Math.round(decision.confidence * 100)}%`;
+      const steps = [
+        `input ${row.viewId}: ${row.route}, risk ${row.riskScore}`,
+        `mask row: ${row.maskAgeMs}ms / coverage ${Math.round(row.maskCoverage * 100)}%`,
+        `subimage row: crop inset ${row.cropInsetPct}% / crop coverage ${Math.round(row.cropCoverage * 100)}%`,
+        `redraw row: ${row.redrawAgeMs}ms / patch band ${row.patchBandPx}px`,
+        `replay verdict: ${decision.action} because ${decision.dominant} dominates`
+      ];
+      $("timeline").innerHTML = steps.map((step) => `<div class="tick">${step}</div>`).join("");
+    }
+
+    $("presetBtn").addEventListener("click", () => {
+      $("inputBox").value = JSON.stringify(preset, null, 2);
+      render();
+    });
+    for (const id of ["policySelect", "toleranceRange", "inputBox"]) {
+      $(id).addEventListener("input", render);
+    }
+    $("inputBox").value = JSON.stringify(preset, null, 2);
+    render();
+  </script>
+</body>
+</html>

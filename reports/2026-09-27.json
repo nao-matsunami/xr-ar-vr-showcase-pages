@@ -1,0 +1,127 @@
+{
+  "date": "2026-09-27",
+  "headline": "XRWebGLSubImage の attachment サイズを warp 前に監査する",
+  "headlineEn": "Auditing XRWebGLSubImage attachment sizes before warp",
+  "summary": "W3C WebXR Layers API Level 1、WebXR Device API、MDN の WebXR rendering / needsRedraw、Immersive Web Layers samples を参照し、`XRWebGLSubImage` の color / depth-stencil / motion-vector attachment のサイズ差と欠落を監査する本命サンプルと、その row を tile coverage に変換して warp 継続可否を再判定する派生サンプルを追加しました。",
+  "summaryEn": "After checking W3C WebXR Layers API Level 1, the WebXR Device API, MDN WebXR rendering and needsRedraw notes, and Immersive Web Layers samples, today's original work adds a main sample that audits color / depth-stencil / motion-vector attachment size differences and missing data on `XRWebGLSubImage`, plus a derivative sample that turns those rows into tile coverage for warp routing.",
+  "keyTopics": [
+    "WebXR Layers API Level 1 は `XRWebGLSubImage` に color texture、depth-stencil texture、motion vector texture を結び、`getSubImage()` / `getViewSubImage()` のタイミングと opaque texture の扱いを定義しています。",
+    "`space-warp` では depth-stencil と motion-vector texture が同じ寸法を持つ一方、color texture とは異なる寸法になり得るため、row にサイズを残す価値があります。",
+    "motion vector texture または depth-stencil texture が frame 処理中に提出されない場合、その frame は space warp が無効だったように処理されるため、欠落は即座に route へ反映します。",
+    "MDN の WebXR rendering 解説は XR frame callback の時間予算と dropped frame の問題を整理しており、attachment audit を frame pressure と合わせて見る根拠になります。",
+    "今日の公開カードは外部デモではなく、自作の `XRWebGLSubImage Attachment Size Auditor` と `Warp Tile Coverage Import Mixer` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "WebXR Layers API Level 1 connects color texture, depth-stencil texture, and motion-vector texture to `XRWebGLSubImage`, and defines `getSubImage()` / `getViewSubImage()` timing plus opaque texture handling.",
+    "For `space-warp`, depth-stencil and motion-vector textures have the same dimensions, while those dimensions may differ from the color texture, so preserving sizes in a row is useful.",
+    "If either the motion-vector texture or depth-stencil texture is not submitted during frame processing, that frame is processed as if space warp were disabled, so missing data should immediately affect routing.",
+    "MDN's WebXR rendering guide explains XR frame callback budgets and dropped frames, which makes it useful to combine attachment audit rows with frame pressure.",
+    "Today's public cards are the original workspace samples `XRWebGLSubImage Attachment Size Auditor` and `Warp Tile Coverage Import Mixer`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: XRWebGLSubImage Attachment Size Auditor",
+      "url": "../outputs/2026-09-27_html_subimage_attachment_size_auditor.html"
+    },
+    {
+      "label": "Today's derivative sample: Warp Tile Coverage Import Mixer",
+      "url": "../outputs/2026-09-27_html_warp_tile_coverage_import_mixer.html"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "MDN: Rendering and the WebXR frame animation callback",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Rendering"
+    },
+    {
+      "label": "MDN: XRCompositionLayer needsRedraw",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRCompositionLayer/needsRedraw"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "昨日は `redraw` event と XR frame timestamp を recovery row として保存しました。今日はその row に、実装で詰まりやすい `XRWebGLSubImage` の texture 寸法を足します。Layers API の space-warp では depth-stencil と motion-vector texture が同じ寸法で、color texture と違ってよいという重要な条件があります。ここを監査できると、warp を止めた理由が `イベント` だけでなく `提出した attachment の形` として説明できます。",
+      "bodyEn": "Yesterday stored `redraw` events and XR frame timestamps as recovery rows. Today adds one of the implementation details that often causes trouble: `XRWebGLSubImage` texture dimensions. In the Layers API space-warp path, depth-stencil and motion-vector textures share dimensions, and those dimensions may differ from the color texture. Auditing that shape explains warp fallback not only as an event, but as the actual attachment contract submitted for a frame.",
+      "links": [
+        {
+          "label": "W3C: WebXR Layers API Level 1",
+          "url": "https://www.w3.org/TR/webxrlayers-1/"
+        },
+        {
+          "label": "MDN: WebXR rendering",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Rendering"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `XRWebGLSubImage Attachment Size Auditor` は color texture の幅と高さ、attachment scale、depth / motion vector の鮮度を操作し、`warp-ready`、`patch-then-submit`、`coarse-vector-warning`、`disable-space-warp` を出します。派生サンプル `Warp Tile Coverage Import Mixer` はその row JSON を貼り付け、32個の tile に coverage を分配して `use-vector`、`patch-vector`、`hold-depth`、`disable-warp` の混合を見ます。",
+      "bodyEn": "The main sample, `XRWebGLSubImage Attachment Size Auditor`, lets you change color texture width and height, attachment scale, and depth / motion-vector freshness, then emits `warp-ready`, `patch-then-submit`, `coarse-vector-warning`, or `disable-space-warp`. The derivative `Warp Tile Coverage Import Mixer` accepts that row JSON, distributes coverage across 32 tiles, and shows the mix of `use-vector`, `patch-vector`, `hold-depth`, and `disable-warp`."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では `getViewSubImage()` の直後に color width / height と depth-stencil width / height を row に入れ、motion vector が取れる場合は同じ frame id で availability を保存します。depth と motion の片方だけ欠けた frame は warp を継続せず、tile coverage の patch 判定へ渡すか、projection fallback に落とします。XR frame callback は時間予算が短いため、監査 row は最小フィールドで作り、後段の replay 側で詳細分類するのが扱いやすいです。",
+      "bodyEn": "In production, store color width / height and depth-stencil width / height immediately after `getViewSubImage()`, and attach motion-vector availability to the same frame id when available. If either depth or motion is missing, do not continue warp; pass the row to tile coverage patching or fall back to projection. Because XR frame callbacks have a tight budget, keep audit rows minimal and perform detailed classification in a replay stage."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の attachment row は、9月25日の motion vector gap heatmap、9月26日の redraw timestamp logger、9月21日の session context store と合わせられます。展示や遠隔支援で `ユーザーが揺れた`、`layer が redraw を要求した`、`attachment coverage が足りなかった` を同じ時系列に並べると、体験品質の説明 UI と自動 fallback policy の両方に使えます。",
+      "bodyEn": "Today's attachment rows combine with the September 25 motion-vector gap heatmap, September 26 redraw timestamp logger, and September 21 session context store. In installations or remote support, putting user motion, layer redraw requests, and attachment coverage on one timeline supports both explanation UI and automatic fallback policy."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "引き続き WebXR Layers API の space-warp、`getSubImage()` / `getViewSubImage()`、opaque texture、`needsRedraw`、`redraw` event、MDN の XR frame rendering guide、Immersive Web Layers samples を見ます。次は実機で `getViewSubImage()` から得た寸法 row を IndexedDB に保存し、9月25日の heatmap と今日の mixer を自動接続するところまで進めたいです。",
+      "bodyEn": "Keep watching WebXR Layers API space-warp, `getSubImage()` / `getViewSubImage()`, opaque textures, `needsRedraw`, the `redraw` event, MDN's XR frame rendering guide, and Immersive Web Layers samples. Next, store real `getViewSubImage()` dimension rows in IndexedDB and connect them automatically to the September 25 heatmap and today's mixer."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`XRWebGLSubImage Attachment Size Auditor` で depth と motion vector を `fresh`、attachment scale を 0.5 前後にして `log audit` を押すと `warp-ready` row が出ます。motion を `missing` にすると `disable-space-warp`、`patchy` にすると `patch-then-submit` へ落ちます。派生側ではその JSON を貼り付け、policy を strict / balanced / forgiving に切り替えて tile ごとの差を確認できます。",
+      "bodyEn": "In `XRWebGLSubImage Attachment Size Auditor`, set depth and motion vector to `fresh`, keep attachment scale around 0.5, and press `log audit` to emit a `warp-ready` row. Set motion to `missing` to get `disable-space-warp`, or `patchy` to get `patch-then-submit`. In the derivative sample, paste that JSON and switch strict / balanced / forgiving policies to compare tile-level routing.",
+      "links": [
+        {
+          "label": "Open XRWebGLSubImage Attachment Size Auditor",
+          "url": "../outputs/2026-09-27_html_subimage_attachment_size_auditor.html"
+        },
+        {
+          "label": "Open Warp Tile Coverage Import Mixer",
+          "url": "../outputs/2026-09-27_html_warp_tile_coverage_import_mixer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Layers API Level 1、W3C WebXR Device API、MDN WebXR rendering、MDN needsRedraw、Immersive Web Layers samples を確認。設計: 1本目は attachment size auditor、2本目は tile coverage import mixer。実装: `outputs/2026-09-27_html_subimage_attachment_size_auditor.html` と `outputs/2026-09-27_html_warp_tile_coverage_import_mixer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish を確認する。",
+      "bodyEn": "Research: checked W3C WebXR Layers API Level 1, W3C WebXR Device API, MDN WebXR rendering, MDN needsRedraw, and Immersive Web Layers samples. Design: make the first sample an attachment size auditor and the second a tile coverage import mixer. Implementation: add `outputs/2026-09-27_html_subimage_attachment_size_auditor.html` and `outputs/2026-09-27_html_warp_tile_coverage_import_mixer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "9月後半の流れは、session context、trust floor、overlay recovery、space-warp recovery、redraw logging から、今日は attachment contract の監査へ移りました。XR の失敗を体感品質へ戻すには、`入力が悪い`、`追跡が悪い`、`描画 attachment が悪い` を同じ粒度で保存する必要があります。今日の2本は描画側の粒度を揃える小さな部品です。",
+      "bodyEn": "The late-September thread has moved from session context, trust floor, overlay recovery, space-warp recovery, and redraw logging into attachment-contract auditing. To map XR failures back to experienced quality, input problems, tracking problems, and rendering attachment problems need to be stored at a comparable granularity. Today's two samples are small parts for aligning the rendering side."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `XRWebGLSubImage Attachment Size Auditor` です。何が動くか: color texture と depth / motion attachment のサイズ、鮮度、coverage から warp route を判定し、JSON row を作ります。次に足すなら、実 `XRWebGLSubImage` から width / height と attachment availability を読みます。派生として `Warp Tile Coverage Import Mixer` も実装しました。何が動くか: 本命 row または preset を読み込み、tile 単位で vector 利用、patch、depth hold、warp 無効を分類します。次に足すなら、9月25日の heatmap から tile 値を import して実 row と合流します。",
+      "bodyEn": "The selected main prototype is `XRWebGLSubImage Attachment Size Auditor`. What it does: judges a warp route from color texture size, depth / motion attachment size, freshness, and coverage, then emits JSON rows. Next addition: read width / height and attachment availability from real `XRWebGLSubImage` objects. The derivative `Warp Tile Coverage Import Mixer` was also implemented. What it does: reads the main row or a preset and classifies tiles into vector use, patching, depth hold, or warp disabled. Next addition: import tile values from the September 25 heatmap and merge them with real rows."
+    }
+  ]
+}

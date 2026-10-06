@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DOM Overlay の frame owner と beforexrselect を台帳化する | 2026-09-28</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.09.28</p>
+      <h1>DOM Overlay の frame owner と beforexrselect を台帳化する</h1>
+      <p class="hero-subtitle">Ledgering DOM Overlay frame owners and beforexrselect</p>
+      <p>W3C WebXR DOM Overlays Module、MDN の `beforexrselect`、Immersive Web DOM Overlay explainer、WebXR Test API、Web Platform Tests の DOM Overlay 更新を参照し、overlay / iframe / cross-origin 領域で XR select を止めるべきかを記録する本命サンプルと、DOM event と XR input event の非同期順序を再生して重複 commit を検出する派生サンプルを追加しました。</p>
+      <p class="en-copy">After checking the W3C WebXR DOM Overlays Module, MDN `beforexrselect`, the Immersive Web DOM Overlay explainer, the WebXR Test API, and recent Web Platform Tests work around DOM Overlay, today's original work adds a main sample that records whether XR select should be suppressed for overlay / iframe / cross-origin regions, plus a derivative sample that replays asynchronous DOM and XR input ordering to detect duplicate commits.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-09-28_html_dom_overlay_frame_owner_guard.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-27.html">← 2026.09.27</a>
+      <a class="day-link" href="../days/2026-09-29.html">2026.09.29 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>DOM Overlay Frame Owner Guard</h3>
+              <p>beforexrselect がどの overlay / iframe 領域で XR select を止めるべきかを、frame owner、cross-origin、transient input の観点で台帳化します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-28_html_dom_overlay_frame_owner_guard.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>BeforeXRSelect Timeline Replayer</h3>
+              <p>DOM の pointer / click と beforexrselect、XR の selectstart / select / selectend が前後して届くケースを再生し、重複操作の危険度を見ます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-28_html_beforexrselect_timeline_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR DOM Overlays Module は `dom-overlay` feature descriptor と `domOverlay.root` を定義し、session 中に単一の DOM 要素を透明背景の overlay として表示します。</span>
+              <span class="en-copy">The WebXR DOM Overlays Module defines the `dom-overlay` feature descriptor and `domOverlay.root`, displaying a single DOM element as a transparent overlay during a session.</span>
+            </li>
+          
+            <li>
+              <span>`beforexrselect` は overlay に target ray が交差した primary action の前に dispatch され、`preventDefault()` で `selectstart` / `selectend` / `select` の発火を抑止できます。</span>
+              <span class="en-copy">`beforexrselect` is dispatched before primary actions that intersect the overlay with the target ray, and `preventDefault()` can suppress `selectstart`, `selectend`, and `select`.</span>
+            </li>
+          
+            <li>
+              <span>DOM event と `beforexrselect` / XR input event は同期されないため、pointer / click と XR select の順序が前後しても二重 commit しない replay window が必要です。</span>
+              <span class="en-copy">DOM events and `beforexrselect` / XR input events are not synchronized, so a replay window is needed to avoid duplicate commits when pointer / click and XR select arrive in different orders.</span>
+            </li>
+          
+            <li>
+              <span>cross-origin content 上の primary action では pose や gamepad data の観測が制限され、入力終了の扱いも通常の overlay button と分けて記録する価値があります。</span>
+              <span class="en-copy">For primary actions over cross-origin content, pose and gamepad observation are limited, and action-ending behavior should be recorded separately from normal overlay buttons.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、自作の `DOM Overlay Frame Owner Guard` と `BeforeXRSelect Timeline Replayer` の2本です。</span>
+              <span class="en-copy">Today's public cards are the original workspace samples `DOM Overlay Frame Owner Guard` and `BeforeXRSelect Timeline Replayer`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>9月23日の DOM Overlay select arbitration と9月24日の overlay focus recovery では、overlay 上の操作を XR world の操作と混ぜないことを扱いました。今日はその粒度を一段下げ、どの frame owner に ray が当たったのか、`beforexrselect` が queued されたのか、`preventDefault()` で select が消えたのか、cross-origin content で pose / gamepad が制限されるのかを row として残します。WPT 側でも DOM Overlay の frame owner 検出が更新されており、overlay 内の iframe を曖昧にしないことが実装・検証の焦点になっています。</p>
+          <p class="en-copy">The September 23 DOM Overlay select arbitration and September 24 overlay focus recovery samples separated overlay actions from XR world actions. Today lowers the granularity: which frame owner was hit by the ray, whether `beforexrselect` was queued, whether `preventDefault()` suppressed select, and whether cross-origin content limited pose / gamepad data are all stored as rows. Web Platform Tests have also been updated around detecting DOM Overlay frame owners, which makes iframe ownership a practical implementation and validation concern.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">W3C: WebXR DOM Overlays Module</a></li>
+          
+            <li><a href="https://chromium.googlesource.com/external/w3c/web-platform-tests/+/refs/tags/merge_pr_61430" target="_blank" rel="noreferrer">Web Platform Tests change: Detect all frame owners in DOM Overlay</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `DOM Overlay Frame Owner Guard` は overlay type、target 領域、input mode、DOM handler、frame policy を切り替え、`dom-only`、`pass-through`、`duplicate-risk`、`delay-input-source`、`cancel-on-exit` へ分類します。派生サンプル `BeforeXRSelect Timeline Replayer` は本命 row か preset を読み、DOM pointer / click、`beforexrselect`、XR selectstart / select / selectend の到着順を timeline に並べ、commit window 内の重複危険度を出します。</p>
+          <p class="en-copy">The main sample, `DOM Overlay Frame Owner Guard`, switches overlay type, target region, input mode, DOM handler, and frame policy, then classifies interactions as `dom-only`, `pass-through`, `duplicate-risk`, `delay-input-source`, or `cancel-on-exit`. The derivative `BeforeXRSelect Timeline Replayer` reads the main row or a preset, lays out DOM pointer / click, `beforexrselect`, and XR selectstart / select / selectend in a timeline, and reports duplicate risk inside a commit window.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では overlay root の capture / bubble で `beforexrselect` を1行にまとめ、target element、owner frame、cross-origin 推定、`defaultPrevented`、近傍の pointer event id、XR input source id を保存します。DOM event と XR event は同期しないため、DOM handler 側で即 commit するのではなく、短い commit window に入れて二重実行を抑止するのが扱いやすいです。cross-origin content では pose / gamepad の制限を正常な privacy route として扱い、欠落やバグと混ぜないようにします。</p>
+          <p class="en-copy">In production, collect `beforexrselect` at the overlay root during capture / bubble and store the target element, owner frame, cross-origin estimate, `defaultPrevented`, nearby pointer event id, and XR input source id in one row. Because DOM and XR events are not synchronized, it is easier to place DOM actions into a short commit window instead of committing immediately. For cross-origin content, treat pose / gamepad limitations as a normal privacy route rather than mixing them with missing data or bugs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の owner row は9月23日の select arbitration、9月24日の focus recovery、9月26日の redraw timestamp logger と接続できます。overlay が入力を止めた直後に layer の redraw が必要になったのか、あるいは world select を通した後に focus recovery が走ったのかを同じ timeline に置くと、HUD / remote assist / editor overlay の品質説明に使えます。</p>
+          <p class="en-copy">Today's owner rows can connect to the September 23 select arbitration, September 24 focus recovery, and September 26 redraw timestamp logger samples. Putting overlay suppression, layer redraw, and focus recovery on one timeline helps explain quality in HUDs, remote assist tools, and editor overlays.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>引き続き WebXR DOM Overlays Module、MDN `beforexrselect`、Immersive Web DOM Overlay explainer、WebXR Test API の DOM Overlay 拡張、WPT の DOM Overlay tests を見ます。次は実ページで overlay root に listener を張り、pointer event と `beforexrselect` の実 timestamp を IndexedDB に保存し、今日の timeline replayer へ直接 import したいです。</p>
+          <p class="en-copy">Keep watching the WebXR DOM Overlays Module, MDN `beforexrselect`, the Immersive Web DOM Overlay explainer, DOM Overlay extensions in the WebXR Test API, and WPT DOM Overlay tests. Next, attach listeners to a real overlay root, store pointer event and `beforexrselect` timestamps in IndexedDB, and import them directly into today's timeline replayer.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`DOM Overlay Frame Owner Guard` で target を `cross-origin iframe`、input を `screen transient touch`、handler を `preventDefault` にすると `delay-input-source` へ落ちます。次に派生側へ row JSON を貼り、DOM timing を `DOM after XR` にすると、DOM / XR の順序差が commit decision にどう効くかを見られます。</p>
+          <p class="en-copy">In `DOM Overlay Frame Owner Guard`, set target to `cross-origin iframe`, input to `screen transient touch`, and handler to `preventDefault` to route into `delay-input-source`. Then paste the row JSON into the derivative sample and set DOM timing to `DOM after XR` to see how DOM / XR ordering changes the commit decision.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-28_html_dom_overlay_frame_owner_guard.html" target="_blank" rel="noreferrer">Open DOM Overlay Frame Owner Guard</a></li>
+          
+            <li><a href="../outputs/2026-09-28_html_beforexrselect_timeline_replayer.html" target="_blank" rel="noreferrer">Open BeforeXRSelect Timeline Replayer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR DOM Overlays Module、MDN beforexrselect、Immersive Web DOM Overlay explainer、WebXR Test API、WPT の DOM Overlay frame owner 更新を確認。設計: 1本目は frame owner guard、2本目は beforexrselect timeline replayer。実装: `outputs/2026-09-28_html_dom_overlay_frame_owner_guard.html` と `outputs/2026-09-28_html_beforexrselect_timeline_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish を確認する。</p>
+          <p class="en-copy">Research: checked the W3C WebXR DOM Overlays Module, MDN beforexrselect, the Immersive Web DOM Overlay explainer, the WebXR Test API, and WPT DOM Overlay frame-owner updates. Design: make the first sample a frame owner guard and the second a beforexrselect timeline replayer. Implementation: add `outputs/2026-09-28_html_dom_overlay_frame_owner_guard.html` and `outputs/2026-09-28_html_beforexrselect_timeline_replayer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, and publish.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月後半の流れは、session trust、overlay recovery、space-warp recovery、attachment audit と続きました。今日の2本は描画ではなく入力の境界を揃える小さな部品です。XR 体験の失敗理由を説明するには、`ユーザーはDOMを触った`、`XR worldを選んだ`、`cross-origin内でprivacy routeに入った` を同じ粒度で保存する必要があります。</p>
+          <p class="en-copy">The late-September thread has moved through session trust, overlay recovery, space-warp recovery, and attachment audit. Today's two samples align the input boundary rather than rendering. To explain XR experience failures, `the user touched DOM`, `the user selected the XR world`, and `the action entered a privacy route inside cross-origin content` need to be stored at comparable granularity.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `DOM Overlay Frame Owner Guard` です。何が動くか: overlay / iframe / world target と handler policy から `beforexrselect` の抑止結果、XR event 数、pose feed 制限、route を row 化します。次に足すなら、実 overlay root に listener を張り、`event.target` と iframe 所有情報を保存します。派生として `BeforeXRSelect Timeline Replayer` も実装しました。何が動くか: 本命 row または preset を読み、DOM event と XR input event の到着順から duplicate risk と commit decision を再判定します。次に足すなら、IndexedDB の実 timestamp row を import して9月23日の arbitration logger と接続します。</p>
+          <p class="en-copy">The selected main prototype is `DOM Overlay Frame Owner Guard`. What it does: records `beforexrselect` suppression, XR event count, pose-feed limits, and route from overlay / iframe / world targets plus handler policy. Next addition: attach a real listener to the overlay root and store `event.target` plus iframe ownership. The derivative `BeforeXRSelect Timeline Replayer` was also implemented. What it does: reads the main row or a preset and reclassifies duplicate risk and commit decision from DOM and XR input event ordering. Next addition: import real timestamp rows from IndexedDB and connect them to the September 23 arbitration logger.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-28_html_dom_overlay_frame_owner_guard.html" target="_blank" rel="noreferrer">Today's main sample: DOM Overlay Frame Owner Guard</a></li>
+          
+            <li><a href="../outputs/2026-09-28_html_beforexrselect_timeline_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: BeforeXRSelect Timeline Replayer</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-dom-overlays-1/" target="_blank" rel="noreferrer">W3C: WebXR DOM Overlays Module</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Element/beforexrselect_event" target="_blank" rel="noreferrer">MDN: Element beforexrselect event</a></li>
+          
+            <li><a href="https://github.com/immersive-web/dom-overlays/blob/main/explainer.md" target="_blank" rel="noreferrer">Immersive Web: DOM Overlays explainer</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-test-api/" target="_blank" rel="noreferrer">Immersive Web: WebXR Test API</a></li>
+          
+            <li><a href="https://chromium.googlesource.com/external/w3c/web-platform-tests/+/refs/tags/merge_pr_61430" target="_blank" rel="noreferrer">Web Platform Tests change: Detect all frame owners in DOM Overlay</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-09-28_html_dom_overlay_frame_owner_guard.html" loading="lazy" title="DOM Overlay Frame Owner Guard"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

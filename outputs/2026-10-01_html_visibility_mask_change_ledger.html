@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visibility Mask Change Ledger</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10130f;
+      --panel: #182019;
+      --panel2: #243026;
+      --line: #51604f;
+      --text: #f7f3ea;
+      --muted: #bbc7b4;
+      --green: #aee48d;
+      --cyan: #80d8ed;
+      --gold: #f1c66d;
+      --red: #ef817a;
+      --ink: #071007;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(128, 216, 237, 0.10), transparent 42%),
+        linear-gradient(315deg, rgba(174, 228, 141, 0.08), transparent 54%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 16px; margin-bottom: 16px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(24, 32, 25, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26);
+    }
+    .panel { padding: 24px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    code { color: var(--cyan); }
+    .stage { min-height: 432px; padding: 16px; display: grid; grid-template-rows: auto 1fr auto; gap: 12px; overflow: hidden; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(7, 16, 7, 0.68); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 21px; overflow-wrap: anywhere; }
+    .surface {
+      position: relative;
+      min-height: 268px;
+      border: 1px solid rgba(247, 243, 234, 0.18);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(128, 216, 237, 0.08) 1px, transparent 1px),
+        linear-gradient(rgba(128, 216, 237, 0.08) 1px, transparent 1px),
+        #111812;
+      background-size: 32px 32px;
+    }
+    .viewport {
+      position: absolute;
+      inset: 22px 44px;
+      border: 2px solid var(--cyan);
+      border-radius: 8px;
+      background: rgba(128, 216, 237, 0.08);
+    }
+    svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    polygon { transition: all 0.24s ease; }
+    .mesh-line { stroke: rgba(247, 243, 234, 0.42); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+    .controls { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--green); }
+    button { cursor: pointer; font-weight: 800; background: var(--green); color: var(--ink); border-color: transparent; }
+    section { padding: 16px; margin-top: 16px; }
+    .ledger { display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 0.75fr 0.7fr 0.8fr 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(7, 16, 7, 0.56);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .row strong { color: var(--text); }
+    .chip { justify-self: start; border-radius: 999px; padding: 5px 9px; background: rgba(128, 216, 237, 0.14); color: var(--cyan); font-weight: 800; }
+    textarea { width: 100%; min-height: 152px; padding: 12px; resize: vertical; line-height: 1.45; }
+    @media (max-width: 880px) {
+      header, .controls { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Visibility Mask Change Ledger</h1>
+        <p><code>XRVisibilityMaskChange</code> 相当の viewId、vertices、indices、coverage を小さな frame row にして、描画範囲の節約と信頼度を見ます。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>coverage</span><strong id="coverageMetric">0%</strong></div>
+          <div class="metric"><span>triangles</span><strong id="triMetric">0</strong></div>
+          <div class="metric"><span>saved pixels</span><strong id="savedMetric">0%</strong></div>
+          <div class="metric"><span>route</span><strong id="routeMetric">-</strong></div>
+        </div>
+        <div class="surface" aria-label="visibility mask preview">
+          <div class="viewport"></div>
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+            <polygon id="maskPolygon" fill="rgba(174, 228, 141, 0.30)" stroke="#aee48d" stroke-width="1.6"></polygon>
+            <polyline class="mesh-line" points="50,50 0,0 100,0 50,50 100,100 0,100 50,50 0,0"></polyline>
+          </svg>
+        </div>
+        <p id="verdictCopy">mask を調整すると ledger row が更新されます。</p>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>View
+        <select id="viewSelect">
+          <option value="left-eye">left-eye</option>
+          <option value="right-eye">right-eye</option>
+          <option value="mono-inline">mono-inline</option>
+        </select>
+      </label>
+      <label>Mask shape
+        <select id="shapeSelect">
+          <option value="rounded">rounded viewport</option>
+          <option value="sidecut">side cut</option>
+          <option value="notched">notched passthrough</option>
+        </select>
+      </label>
+      <label>Inset
+        <input id="insetRange" type="range" min="4" max="22" value="10">
+      </label>
+      <label>Jitter px
+        <input id="jitterRange" type="range" min="0" max="18" value="5">
+      </label>
+      <label>Mask age ms
+        <input id="ageRange" type="range" min="4" max="90" value="22">
+      </label>
+      <label>Action
+        <button id="saveBtn" type="button">Save row</button>
+      </label>
+    </div>
+
+    <section>
+      <h2>Ledger</h2>
+      <div id="ledger" class="ledger"></div>
+    </section>
+
+    <section>
+      <h2>Export row</h2>
+      <textarea id="exportBox" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ledger = [];
+
+    function verticesFor(shape, inset, jitter) {
+      const j = jitter / 4;
+      if (shape === "sidecut") {
+        return [
+          [inset + 8, inset], [100 - inset, inset + j], [100 - inset - 3, 100 - inset],
+          [inset + 8, 100 - inset - j], [inset, 64], [inset, 36]
+        ];
+      }
+      if (shape === "notched") {
+        return [
+          [inset, inset], [100 - inset, inset], [100 - inset, 42 - j],
+          [88 - inset, 50], [100 - inset, 58 + j], [100 - inset, 100 - inset],
+          [inset, 100 - inset], [inset + 5, 50]
+        ];
+      }
+      return [
+        [inset + 8, inset], [100 - inset - 8, inset], [100 - inset, inset + 10],
+        [100 - inset, 100 - inset - 10], [100 - inset - 8, 100 - inset],
+        [inset + 8, 100 - inset], [inset, 100 - inset - 10], [inset, inset + 10]
+      ];
+    }
+
+    function polygonArea(points) {
+      let area = 0;
+      for (let i = 0; i < points.length; i += 1) {
+        const [x1, y1] = points[i];
+        const [x2, y2] = points[(i + 1) % points.length];
+        area += x1 * y2 - x2 * y1;
+      }
+      return Math.abs(area / 2);
+    }
+
+    function classify(row) {
+      if (row.maskAgeMs > 64 || row.jitterPx > 14) return "hold-mask-row";
+      if (row.coverage < 0.58) return "expand-fallback-row";
+      if (row.savedPixels > 0.28) return "submit-mask-row";
+      return "monitor-full-viewport";
+    }
+
+    function makeRow(saved) {
+      const shape = $("shapeSelect").value;
+      const inset = Number($("insetRange").value);
+      const jitter = Number($("jitterRange").value);
+      const maskAgeMs = Number($("ageRange").value);
+      const vertices = verticesFor(shape, inset, jitter);
+      const coverage = polygonArea(vertices) / 10000;
+      const triangleCount = Math.max(0, vertices.length - 2);
+      const row = {
+        type: "visibility-mask-change-row",
+        date: "2026-10-01",
+        viewId: $("viewSelect").value,
+        shape,
+        vertices: vertices.map(([x, y]) => [Number((x / 100).toFixed(3)), Number((y / 100).toFixed(3))]),
+        indices: Array.from({ length: triangleCount }, (_, i) => [0, i + 1, i + 2]).flat(),
+        coverage: Number(coverage.toFixed(3)),
+        savedPixels: Number((1 - coverage).toFixed(3)),
+        triangleCount,
+        jitterPx: jitter,
+        maskAgeMs,
+        route: "",
+        savedAt: saved ? new Date().toISOString() : "preview"
+      };
+      row.route = classify(row);
+      return row;
+    }
+
+    function render() {
+      const row = makeRow(false);
+      const points = verticesFor(row.shape, Number($("insetRange").value), row.jitterPx).map((p) => p.join(",")).join(" ");
+      $("maskPolygon").setAttribute("points", points);
+      $("coverageMetric").textContent = `${Math.round(row.coverage * 100)}%`;
+      $("triMetric").textContent = row.triangleCount;
+      $("savedMetric").textContent = `${Math.round(row.savedPixels * 100)}%`;
+      $("routeMetric").textContent = row.route;
+      $("verdictCopy").textContent = `${row.viewId}: ${row.route} / age ${row.maskAgeMs}ms / jitter ${row.jitterPx}px`;
+      $("exportBox").value = JSON.stringify(row, null, 2);
+      renderLedger();
+    }
+
+    function renderLedger() {
+      const rows = ledger.length ? ledger : [makeRow(false)];
+      $("ledger").innerHTML = rows.slice(-5).reverse().map((row) => `
+        <div class="row">
+          <strong>${row.viewId}</strong>
+          <span>${Math.round(row.coverage * 100)}% coverage</span>
+          <span>${row.triangleCount} tris</span>
+          <span>${row.maskAgeMs}ms</span>
+          <span class="chip">${row.route}</span>
+        </div>
+      `).join("");
+    }
+
+    $("saveBtn").addEventListener("click", () => {
+      ledger.push(makeRow(true));
+      render();
+    });
+    ["viewSelect", "shapeSelect", "insetRange", "jitterRange", "ageRange"].forEach((id) => {
+      $(id).addEventListener("input", render);
+    });
+    render();
+  </script>
+</body>
+</html>

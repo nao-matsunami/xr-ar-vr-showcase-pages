@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reprojection Recovery Timeline Replayer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #121416;
+      --panel: #1d242a;
+      --panel2: #28323a;
+      --line: #58656c;
+      --text: #f4f3ed;
+      --muted: #c5c8c2;
+      --blue: #82bfff;
+      --green: #a7dc88;
+      --gold: #e8c86b;
+      --red: #ef817b;
+      --ink: #0c0f11;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(145deg, rgba(130, 191, 255, 0.11), transparent 36%),
+        linear-gradient(320deg, rgba(167, 220, 136, 0.08), transparent 56%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(29, 36, 42, 0.96);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--blue); }
+    button { cursor: pointer; font-weight: 800; background: var(--gold); color: var(--ink); border-color: transparent; }
+    textarea { width: 100%; min-height: 176px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(12, 15, 17, 0.62); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 21px; overflow-wrap: anywhere; }
+    .lane { display: grid; gap: 8px; }
+    .tick {
+      display: grid;
+      grid-template-columns: 72px 1fr 156px;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(12, 15, 17, 0.62);
+      color: var(--muted);
+    }
+    .track { height: 18px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+    .fill { height: 100%; width: 0; background: var(--green); transition: width 0.2s ease; }
+    .matrix { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: rgba(12, 15, 17, 0.62); }
+    .card strong { display: block; font-size: 22px; margin-bottom: 8px; }
+    .card span { color: var(--muted); line-height: 1.45; }
+    @media (max-width: 860px) {
+      header, .controls, .metrics, .matrix, .tick { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Reprojection Recovery Timeline Replayer</h1>
+        <p>1本目の reprojection row を複数フレームへ展開し、いつ tiled rendering に戻せるかを再生します。drift、reuse、comfort risk の推移から、hold、patch、recover の境目を見ます。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>recovery frame</span><strong id="frameMetric">-</strong></div>
+          <div class="metric"><span>final action</span><strong id="actionMetric">-</strong></div>
+          <div class="metric"><span>stability</span><strong id="stabilityMetric">0%</strong></div>
+        </div>
+        <div id="matrix" class="matrix"></div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Recovery policy
+        <select id="policySelect">
+          <option value="balanced">balanced</option>
+          <option value="strict">strict</option>
+          <option value="latency-first">latency-first</option>
+        </select>
+      </label>
+      <label>Frame count
+        <input id="frameRange" type="range" min="4" max="10" value="7">
+      </label>
+      <label>Action
+        <button id="presetBtn" type="button">Load drift preset</button>
+      </label>
+    </div>
+
+    <section>
+      <h2>Reprojection row input</h2>
+      <textarea id="inputBox" spellcheck="false"></textarea>
+    </section>
+
+    <section>
+      <h2>Recovery timeline</h2>
+      <div id="timeline" class="lane"></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const preset = {
+      type: "visibility-reprojection-drift-row",
+      date: "2026-10-03",
+      viewId: "left-eye",
+      maskAgeMs: 24,
+      historyAgeMs: 58,
+      poseDeltaPx: 13,
+      velocityDeg: 12,
+      driftPx: 43,
+      overlap: 0.587,
+      reuse: 0.365,
+      patchBandPx: 43,
+      comfortRisk: 29,
+      route: "patch-reprojected-border"
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function readRow() {
+      try {
+        const row = JSON.parse($("inputBox").value);
+        if (!row.type || !row.route) throw new Error("not a row");
+        return row;
+      } catch {
+        return preset;
+      }
+    }
+
+    function expand(row) {
+      const frames = Number($("frameRange").value);
+      const policy = $("policySelect").value;
+      const policyBias = policy === "strict" ? 1.12 : policy === "latency-first" ? 0.9 : 1;
+      return Array.from({ length: frames }, (_, index) => {
+        const decay = index / Math.max(1, frames - 1);
+        const driftPx = Math.round(row.driftPx * (1 - decay * 0.58) + Math.sin(index * 1.7) * 4);
+        const reuse = clamp(row.reuse + decay * 0.44 - Math.max(0, driftPx - 52) / 180, 0, 0.95);
+        const risk = clamp(Math.round((row.comfortRisk * (1 - decay * 0.5) + driftPx * 0.28) * policyBias), 0, 100);
+        let action = "hold-history-row";
+        if (risk < 28 && reuse > 0.62) action = "recover-tiled-rendering";
+        else if (risk < 52 && reuse > 0.42) action = "patch-reprojected-border";
+        else if (risk > 74) action = "full-viewport-refresh";
+        return { frame: index + 1, driftPx, reuse, risk, action };
+      });
+    }
+
+    function summarize(frames) {
+      const recovery = frames.find((frame) => frame.action === "recover-tiled-rendering");
+      const last = frames[frames.length - 1];
+      const stability = clamp(frames.filter((frame) => frame.risk < 52).length / frames.length, 0, 1);
+      return { recovery, last, stability };
+    }
+
+    function render() {
+      const row = readRow();
+      const frames = expand(row);
+      const summary = summarize(frames);
+      $("frameMetric").textContent = summary.recovery ? `#${summary.recovery.frame}` : "none";
+      $("actionMetric").textContent = summary.last.action;
+      $("stabilityMetric").textContent = `${Math.round(summary.stability * 100)}%`;
+      const averages = [
+        ["avg drift", `${Math.round(frames.reduce((sum, frame) => sum + frame.driftPx, 0) / frames.length)} px`],
+        ["avg reuse", `${Math.round(frames.reduce((sum, frame) => sum + frame.reuse, 0) / frames.length * 100)}%`],
+        ["max risk", Math.max(...frames.map((frame) => frame.risk))]
+      ];
+      $("matrix").innerHTML = averages.map(([label, value]) => `<div class="card"><strong>${value}</strong><span>${label}</span></div>`).join("");
+      $("timeline").innerHTML = frames.map((frame) => {
+        const color = frame.action === "recover-tiled-rendering" ? "var(--green)" : frame.action === "full-viewport-refresh" ? "var(--red)" : "var(--gold)";
+        return `<div class="tick"><strong>#${frame.frame}</strong><div class="track"><div class="fill" style="width:${Math.round(frame.reuse * 100)}%; background:${color}"></div></div><span>${frame.action} / ${frame.driftPx}px / risk ${frame.risk}</span></div>`;
+      }).join("");
+    }
+
+    $("presetBtn").addEventListener("click", () => {
+      $("inputBox").value = JSON.stringify(preset, null, 2);
+      render();
+    });
+    document.querySelectorAll("input, select, textarea").forEach((control) => control.addEventListener("input", render));
+    $("inputBox").value = JSON.stringify(preset, null, 2);
+    render();
+  </script>
+</body>
+</html>

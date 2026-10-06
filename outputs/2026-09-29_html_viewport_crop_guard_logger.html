@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XR Viewport Crop Guard Logger</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101313;
+      --panel: #182124;
+      --panel2: #232b2d;
+      --line: #435155;
+      --text: #f5f1e8;
+      --muted: #b2c0c2;
+      --cyan: #84d9e8;
+      --green: #a8df8f;
+      --gold: #e7bd6d;
+      --red: #ee8176;
+      --ink: #071012;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(145deg, rgba(132, 217, 232, 0.10), transparent 42%),
+        linear-gradient(315deg, rgba(168, 223, 143, 0.08), transparent 54%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 40px; }
+    header { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 16px; margin-bottom: 16px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(24, 33, 36, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+    }
+    .panel { padding: 24px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    code { color: var(--cyan); }
+    .stage { min-height: 424px; padding: 16px; display: grid; grid-template-rows: auto 1fr auto; gap: 12px; overflow: hidden; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(7, 16, 18, 0.72); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 21px; overflow-wrap: anywhere; }
+    .surface {
+      position: relative;
+      min-height: 264px;
+      border: 1px solid rgba(245, 241, 232, 0.18);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(132, 217, 232, 0.08) 1px, transparent 1px),
+        linear-gradient(rgba(132, 217, 232, 0.08) 1px, transparent 1px),
+        #12191a;
+      background-size: 28px 28px;
+    }
+    .rect {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 800;
+      padding: 8px;
+      transition: all 0.2s ease;
+    }
+    #textureRect { border: 2px solid var(--cyan); background: rgba(132, 217, 232, 0.12); color: var(--text); }
+    #viewportRect { border: 2px solid var(--green); background: rgba(168, 223, 143, 0.16); color: var(--text); }
+    #guardRect { border: 2px dashed var(--gold); background: rgba(231, 189, 109, 0.12); color: var(--text); }
+    .controls { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--cyan); }
+    button { cursor: pointer; font-weight: 800; background: var(--cyan); color: var(--ink); border-color: transparent; }
+    section { padding: 16px; margin-top: 16px; }
+    .ledger { display: grid; gap: 8px; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 0.8fr 0.8fr 0.8fr 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(7, 16, 18, 0.58);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .row strong { color: var(--text); }
+    .chip { justify-self: start; border-radius: 999px; padding: 5px 9px; background: rgba(132, 217, 232, 0.14); color: var(--cyan); font-weight: 800; }
+    textarea { width: 100%; min-height: 146px; padding: 12px; resize: vertical; line-height: 1.45; }
+    @media (max-width: 860px) {
+      header, .controls { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>XR Viewport Crop Guard Logger</h1>
+        <p><code>XRWebGLLayer.getViewport()</code> や <code>XRWebGLSubImage</code> 由来の viewport / texture rect を、crop guard として保存する最小ロガーです。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>Route</span><strong id="routeLabel">commit</strong></div>
+          <div class="metric"><span>Guard</span><strong id="guardLabel">8px</strong></div>
+          <div class="metric"><span>Visible</span><strong id="visibleLabel">92%</strong></div>
+          <div class="metric"><span>Rows</span><strong id="countLabel">0</strong></div>
+        </div>
+        <div class="surface">
+          <div class="rect" id="textureRect">texture</div>
+          <div class="rect" id="viewportRect">XR viewport</div>
+          <div class="rect" id="guardRect">safe crop</div>
+        </div>
+        <p id="hint">viewport が texture の端に寄るほど、UI と foveation の安全余白を増やします。</p>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Viewport width
+        <input id="viewWidth" type="range" min="48" max="96" value="78">
+      </label>
+      <label>Viewport height
+        <input id="viewHeight" type="range" min="48" max="96" value="72">
+      </label>
+      <label>X offset
+        <input id="xOffset" type="range" min="0" max="32" value="10">
+      </label>
+      <label>Y offset
+        <input id="yOffset" type="range" min="0" max="28" value="12">
+      </label>
+      <label>Foveation
+        <select id="foveation">
+          <option value="none">none</option>
+          <option value="low" selected>low</option>
+          <option value="medium">medium</option>
+          <option value="high">high</option>
+        </select>
+      </label>
+      <label>Action
+        <button id="logButton" type="button">log crop row</button>
+      </label>
+    </div>
+
+    <section>
+      <h2>Crop Ledger</h2>
+      <div class="ledger" id="ledger"></div>
+    </section>
+
+    <section>
+      <h2>Export JSON</h2>
+      <textarea id="jsonOut" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const els = {
+      viewWidth: document.querySelector("#viewWidth"),
+      viewHeight: document.querySelector("#viewHeight"),
+      xOffset: document.querySelector("#xOffset"),
+      yOffset: document.querySelector("#yOffset"),
+      foveation: document.querySelector("#foveation"),
+      routeLabel: document.querySelector("#routeLabel"),
+      guardLabel: document.querySelector("#guardLabel"),
+      visibleLabel: document.querySelector("#visibleLabel"),
+      countLabel: document.querySelector("#countLabel"),
+      textureRect: document.querySelector("#textureRect"),
+      viewportRect: document.querySelector("#viewportRect"),
+      guardRect: document.querySelector("#guardRect"),
+      hint: document.querySelector("#hint"),
+      ledger: document.querySelector("#ledger"),
+      jsonOut: document.querySelector("#jsonOut"),
+      logButton: document.querySelector("#logButton")
+    };
+
+    const rows = [];
+
+    function current() {
+      const width = Number(els.viewWidth.value);
+      const height = Number(els.viewHeight.value);
+      const x = Number(els.xOffset.value);
+      const y = Number(els.yOffset.value);
+      const foveation = els.foveation.value;
+      const edgeDebt = Math.max(0, x + width - 100) + Math.max(0, y + height - 100);
+      const hidden = Math.max(0, 100 - Math.min(100, x + width)) + Math.max(0, 100 - Math.min(100, y + height));
+      const foveationDebt = { none: 0, low: 4, medium: 11, high: 19 }[foveation];
+      const guardPx = Math.round(8 + edgeDebt * 1.8 + foveationDebt);
+      const visible = Math.max(0, Math.min(100, Math.round((width * height / 100) - hidden * 0.7 - foveationDebt * 0.5)));
+      let route = "commit-viewport";
+      if (edgeDebt > 14 || hidden > 10) route = "projection-fallback";
+      else if (guardPx > 30) route = "expand-guard";
+      else if (foveation === "high" && visible < 55) route = "foveation-hold";
+      return { textureWidth: 2400, textureHeight: 1800, viewportPercent: { x, y, width, height }, foveation, guardPx, visible, route };
+    }
+
+    function render() {
+      const row = current();
+      const vp = row.viewportPercent;
+      els.textureRect.style.left = "5%";
+      els.textureRect.style.top = "8%";
+      els.textureRect.style.width = "90%";
+      els.textureRect.style.height = "82%";
+      els.viewportRect.style.left = `${5 + vp.x * 0.9}%`;
+      els.viewportRect.style.top = `${8 + vp.y * 0.82}%`;
+      els.viewportRect.style.width = `${vp.width * 0.9}%`;
+      els.viewportRect.style.height = `${vp.height * 0.82}%`;
+      const guardX = Math.max(0, row.guardPx / 18);
+      els.guardRect.style.left = `${5 + vp.x * 0.9 + guardX}%`;
+      els.guardRect.style.top = `${8 + vp.y * 0.82 + guardX}%`;
+      els.guardRect.style.width = `${Math.max(8, vp.width * 0.9 - guardX * 2)}%`;
+      els.guardRect.style.height = `${Math.max(8, vp.height * 0.82 - guardX * 2)}%`;
+      els.routeLabel.textContent = row.route;
+      els.guardLabel.textContent = `${row.guardPx}px`;
+      els.visibleLabel.textContent = `${row.visible}%`;
+      els.countLabel.textContent = rows.length;
+      els.hint.textContent = row.route === "projection-fallback"
+        ? "viewport が texture 外へ出かけています。projection fallback が安全です。"
+        : row.route === "expand-guard"
+          ? "端の余白を広げて、overlay と foveation の欠けを避けます。"
+          : row.route === "foveation-hold"
+            ? "high foveation と狭い viewport の組み合わせを一旦 hold します。"
+            : "この viewport は安全余白つきで commit できます。";
+      els.jsonOut.value = JSON.stringify(rows.at(-1) || row, null, 2);
+    }
+
+    function logRow() {
+      const row = { id: `crop-${String(rows.length + 1).padStart(2, "0")}`, timestamp: Math.round(performance.now()), ...current() };
+      rows.unshift(row);
+      rows.splice(6);
+      els.ledger.innerHTML = rows.map((item) => `
+        <div class="row">
+          <strong>${item.id}</strong>
+          <span>${item.viewportPercent.width}x${item.viewportPercent.height}%</span>
+          <span>${item.foveation}</span>
+          <span>${item.visible}% visible</span>
+          <span class="chip">${item.route}</span>
+        </div>
+      `).join("");
+      render();
+    }
+
+    [els.viewWidth, els.viewHeight, els.xOffset, els.yOffset, els.foveation].forEach((el) => {
+      el.addEventListener("input", render);
+    });
+    els.logButton.addEventListener("click", logRow);
+    render();
+  </script>
+</body>
+</html>

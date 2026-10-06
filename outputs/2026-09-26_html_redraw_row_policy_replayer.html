@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Redraw Row Policy Replayer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0e1117;
+      --panel: #171d25;
+      --panel2: #212936;
+      --line: #43505f;
+      --text: #f5efe6;
+      --muted: #b6c2ca;
+      --blue: #83d7ff;
+      --green: #8fe1a9;
+      --amber: #e8be68;
+      --red: #ef837c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 85% 12%, rgba(143, 225, 169, 0.13), transparent 24%),
+        linear-gradient(150deg, rgba(131, 215, 255, 0.08), transparent 44%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1160px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 40px; }
+    header {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .panel, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(23, 29, 37, 0.96);
+      box-shadow: 0 20px 46px rgba(0, 0, 0, 0.24);
+    }
+    .panel, section { padding: 18px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    textarea {
+      width: 100%;
+      min-height: 240px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      padding: 12px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+    .controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    select, button {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    button { cursor: pointer; font-weight: 800; background: var(--blue); color: #061116; border-color: transparent; }
+    .policy-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .policy {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(14, 17, 23, 0.64);
+    }
+    .policy h3 { margin: 0 0 10px; font-size: 15px; letter-spacing: 0; }
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: #2b3540;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .fill { height: 100%; width: var(--w); background: var(--c); }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .chip { border-radius: 999px; padding: 5px 9px; background: rgba(131, 215, 255, 0.14); color: var(--blue); font-weight: 800; }
+    .timeline { display: grid; gap: 8px; }
+    @media (max-width: 860px) {
+      header, .controls, .policy-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Redraw Row Policy Replayer</h1>
+        <p>1本目の redraw row JSON を貼り付けると、strict / balanced / forgiving の3つの復帰ポリシーで `redraw-next-frame`、`projection-fallback`、`disable-space-warp`、`rebuild-layer` を再判定します。</p>
+        <div class="controls">
+          <label>Preset
+            <select id="preset">
+              <option value="mixed">mixed rows</option>
+              <option value="clean">clean redraw</option>
+              <option value="missing">missing attachments</option>
+            </select>
+          </label>
+          <label>Action
+            <button id="loadPreset" type="button">load preset</button>
+          </label>
+          <label>Replay
+            <button id="replay" type="button">replay rows</button>
+          </label>
+          <label>Copy
+            <button id="copy" type="button">copy result</button>
+          </label>
+        </div>
+      </div>
+      <div class="panel">
+        <textarea id="source" spellcheck="false"></textarea>
+      </div>
+    </header>
+
+    <section>
+      <h2>Policy Comparison</h2>
+      <div class="policy-grid" id="policies"></div>
+    </section>
+
+    <section>
+      <h2>Replay Timeline</h2>
+      <div class="timeline" id="timeline"></div>
+    </section>
+  </main>
+
+  <script>
+    const source = document.getElementById("source");
+    const preset = document.getElementById("preset");
+    const policies = document.getElementById("policies");
+    const timeline = document.getElementById("timeline");
+
+    const presets = {
+      mixed: {
+        kind: "xrlayer-redraw-log",
+        date: "2026-09-26",
+        rows: [
+          { time: "2026-09-26T00:00:00.000Z", eventKind: "redraw", depthState: "fresh", motionState: "fresh", frameGap: 16, headMotion: 28, score: 99, route: "redraw-next-frame" },
+          { time: "2026-09-26T00:00:01.000Z", eventKind: "redraw", depthState: "fresh", motionState: "stale", frameGap: 34, headMotion: 44, score: 74, route: "projection-fallback" },
+          { time: "2026-09-26T00:00:02.000Z", eventKind: "none", depthState: "fresh", motionState: "missing", frameGap: 22, headMotion: 38, score: 56, route: "disable-space-warp" },
+          { time: "2026-09-26T00:00:03.000Z", eventKind: "resource-lost", depthState: "stale", motionState: "stale", frameGap: 58, headMotion: 71, score: 41, route: "rebuild-layer" }
+        ]
+      },
+      clean: {
+        kind: "xrlayer-redraw-log",
+        date: "2026-09-26",
+        rows: [
+          { time: "2026-09-26T00:00:00.000Z", eventKind: "redraw", depthState: "fresh", motionState: "fresh", frameGap: 12, headMotion: 18, score: 100, route: "redraw-next-frame" },
+          { time: "2026-09-26T00:00:01.000Z", eventKind: "none", depthState: "fresh", motionState: "fresh", frameGap: 15, headMotion: 22, score: 100, route: "space-warp-continue" }
+        ]
+      },
+      missing: {
+        kind: "xrlayer-redraw-log",
+        date: "2026-09-26",
+        rows: [
+          { time: "2026-09-26T00:00:00.000Z", eventKind: "redraw", depthState: "missing", motionState: "fresh", frameGap: 18, headMotion: 33, score: 58, route: "disable-space-warp" },
+          { time: "2026-09-26T00:00:01.000Z", eventKind: "redraw", depthState: "fresh", motionState: "missing", frameGap: 26, headMotion: 37, score: 55, route: "disable-space-warp" }
+        ]
+      }
+    };
+
+    const policyDefs = {
+      strict: { minScore: 86, maxGap: 22, maxHead: 48 },
+      balanced: { minScore: 72, maxGap: 36, maxHead: 68 },
+      forgiving: { minScore: 58, maxGap: 52, maxHead: 84 }
+    };
+
+    function classify(row, policy) {
+      if (row.eventKind === "resource-lost") return "rebuild-layer";
+      if (row.eventKind === "visibility-hidden") return "hidden-hold";
+      if (row.depthState === "missing" || row.motionState === "missing") return "disable-space-warp";
+      if (row.eventKind === "redraw" && row.score >= policy.minScore && row.frameGap <= policy.maxGap && row.headMotion <= policy.maxHead) return "redraw-next-frame";
+      if (row.eventKind === "redraw") return "projection-fallback";
+      if (row.score < policy.minScore || row.frameGap > policy.maxGap || row.headMotion > policy.maxHead) return "warp-guarded";
+      return "space-warp-continue";
+    }
+
+    function parseRows() {
+      try {
+        const parsed = JSON.parse(source.value);
+        return Array.isArray(parsed.rows) ? parsed.rows : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function colorFor(route) {
+      if (route.includes("rebuild") || route.includes("disable")) return "var(--red)";
+      if (route.includes("fallback") || route.includes("guarded") || route.includes("hold")) return "var(--amber)";
+      if (route.includes("redraw")) return "var(--blue)";
+      return "var(--green)";
+    }
+
+    function replayRows() {
+      const rows = parseRows();
+      policies.innerHTML = Object.entries(policyDefs).map(([name, policy]) => {
+        const classified = rows.map((row) => classify(row, policy));
+        const ok = classified.filter((route) => route === "redraw-next-frame" || route === "space-warp-continue").length;
+        const score = rows.length ? Math.round((ok / rows.length) * 100) : 0;
+        return `
+          <article class="policy">
+            <h3>${name}</h3>
+            <p>${ok}/${rows.length} rows stay native or next-frame redraw.</p>
+            <div class="bar"><div class="fill" style="--w:${score}%;--c:${score > 70 ? "var(--green)" : score > 35 ? "var(--amber)" : "var(--red)"}"></div></div>
+            <div class="row"><span>min score</span><strong>${policy.minScore}</strong></div>
+            <div class="row"><span>max gap</span><strong>${policy.maxGap}ms</strong></div>
+          </article>
+        `;
+      }).join("");
+
+      timeline.innerHTML = rows.map((row, index) => {
+        const verdicts = Object.entries(policyDefs).map(([name, policy]) => {
+          const route = classify(row, policy);
+          return `<span class="chip" style="color:${colorFor(route)}">${name}: ${route}</span>`;
+        }).join(" ");
+        return `
+          <div class="row">
+            <span><strong>#${index + 1}</strong> ${row.eventKind} / ${row.depthState}+${row.motionState} / ${row.frameGap}ms / score ${row.score}</span>
+            <span>${verdicts}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    document.getElementById("loadPreset").addEventListener("click", () => {
+      source.value = JSON.stringify(presets[preset.value], null, 2);
+      replayRows();
+    });
+    document.getElementById("replay").addEventListener("click", replayRows);
+    document.getElementById("copy").addEventListener("click", async () => {
+      const rows = parseRows();
+      const result = {
+        kind: "redraw-row-policy-result",
+        rows: rows.map((row) => ({
+          ...row,
+          policies: Object.fromEntries(Object.entries(policyDefs).map(([name, policy]) => [name, classify(row, policy)]))
+        }))
+      };
+      await navigator.clipboard?.writeText(JSON.stringify(result, null, 2));
+    });
+
+    source.value = JSON.stringify(presets.mixed, null, 2);
+    replayRows();
+  </script>
+</body>
+</html>

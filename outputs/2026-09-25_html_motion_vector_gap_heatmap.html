@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Motion Vector Gap Heatmap</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101214;
+      --panel: #182226;
+      --panel-2: #222d33;
+      --line: #43515a;
+      --text: #f5f2e9;
+      --muted: #b8c4c4;
+      --cyan: #7ed7ff;
+      --green: #8fe0b0;
+      --yellow: #e8bf68;
+      --red: #ee8077;
+      --violet: #bca7ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(145deg, rgba(126, 215, 255, 0.12), transparent 35%),
+        linear-gradient(315deg, rgba(238, 128, 119, 0.10), transparent 42%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1160px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 38px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 0.85fr 1.15fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .intro, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(24, 34, 38, 0.96);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.25);
+    }
+
+    .intro { padding: 24px; }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 5vw, 54px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+
+    .stage {
+      min-height: 390px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .score {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(16, 18, 20, 0.68);
+    }
+
+    .score span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .score strong {
+      display: block;
+      font-size: 23px;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      min-height: 250px;
+      display: block;
+      border: 1px solid rgba(245, 242, 233, 0.18);
+      border-radius: 8px;
+      background: #101719;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    select, input, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+
+    input[type="range"] { padding: 0; accent-color: var(--cyan); }
+
+    section {
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .policy-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .policy {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(34, 45, 51, 0.78);
+      min-height: 116px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .policy strong { font-size: 15px; }
+    .policy span { color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 12px;
+      line-height: 1.45;
+      resize: vertical;
+    }
+
+    @media (max-width: 900px) {
+      header, .controls { grid-template-columns: 1fr 1fr; }
+      .policy-grid, .scoreboard { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      header, .controls, .policy-grid, .scoreboard { grid-template-columns: 1fr; }
+      .stage { min-height: 440px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="intro">
+        <h1>Motion Vector Gap Heatmap</h1>
+        <p>Space warp に渡す motion vector attachment の穴、depth 不一致、頭部移動量を、どのタイルから補修するかの heatmap として見る派生試作です。</p>
+      </div>
+      <div class="stage" aria-label="motion vector heatmap">
+        <div class="scoreboard">
+          <div class="score"><span>route</span><strong id="route">patch-vector</strong></div>
+          <div class="score"><span>coverage</span><strong id="coverage">78%</strong></div>
+          <div class="score"><span>risk</span><strong id="risk">medium</strong></div>
+        </div>
+        <canvas id="heatmap" width="900" height="430"></canvas>
+        <p id="explain">中央の高速タイルだけ motion vector を補間し、周辺は前 frame を弱く保持します。</p>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>gap pattern
+        <select id="pattern">
+          <option value="center">center tear</option>
+          <option value="edge">edge loss</option>
+          <option value="checker">checker holes</option>
+          <option value="none">none</option>
+        </select>
+      </label>
+      <label>depth match
+        <select id="depth">
+          <option value="aligned">aligned</option>
+          <option value="offset">offset</option>
+          <option value="missing">missing</option>
+        </select>
+      </label>
+      <label>vector density <span id="densityLabel">74</span>
+        <input id="density" type="range" min="20" max="100" value="74">
+      </label>
+      <label>head motion <span id="motionLabel">42</span>
+        <input id="motion" type="range" min="0" max="100" value="42">
+      </label>
+      <label>prediction ms <span id="predictionLabel">28</span>
+        <input id="prediction" type="range" min="8" max="80" value="28">
+      </label>
+      <label>comfort guard <span id="comfortLabel">62</span>
+        <input id="comfort" type="range" min="0" max="100" value="62">
+      </label>
+    </div>
+
+    <section>
+      <h2>Patch policy</h2>
+      <div class="policy-grid" id="policyGrid"></div>
+    </section>
+
+    <section>
+      <h2>Export row</h2>
+      <textarea id="rowJson" readonly></textarea>
+    </section>
+  </main>
+
+  <script>
+    const controls = {
+      pattern: document.getElementById("pattern"),
+      depth: document.getElementById("depth"),
+      density: document.getElementById("density"),
+      motion: document.getElementById("motion"),
+      prediction: document.getElementById("prediction"),
+      comfort: document.getElementById("comfort")
+    };
+
+    const els = {
+      canvas: document.getElementById("heatmap"),
+      route: document.getElementById("route"),
+      coverage: document.getElementById("coverage"),
+      risk: document.getElementById("risk"),
+      explain: document.getElementById("explain"),
+      policyGrid: document.getElementById("policyGrid"),
+      rowJson: document.getElementById("rowJson"),
+      densityLabel: document.getElementById("densityLabel"),
+      motionLabel: document.getElementById("motionLabel"),
+      predictionLabel: document.getElementById("predictionLabel"),
+      comfortLabel: document.getElementById("comfortLabel")
+    };
+
+    const ctx = els.canvas.getContext("2d");
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function holeWeight(pattern, x, y, cols, rows) {
+      const nx = x / (cols - 1);
+      const ny = y / (rows - 1);
+      if (pattern === "none") return 0;
+      if (pattern === "edge") return Math.max(Math.abs(nx - 0.5), Math.abs(ny - 0.5)) * 1.55;
+      if (pattern === "checker") return (x + y) % 2 === 0 ? 0.75 : 0.18;
+      const dx = nx - 0.52;
+      const dy = ny - 0.48;
+      return clamp(1 - Math.sqrt(dx * dx + dy * dy) * 3.1, 0, 1);
+    }
+
+    function classify(state) {
+      let coverage = state.density;
+      if (state.pattern === "center") coverage -= 16;
+      if (state.pattern === "edge") coverage -= 18;
+      if (state.pattern === "checker") coverage -= 26;
+      if (state.depth === "offset") coverage -= 14;
+      if (state.depth === "missing") coverage -= 34;
+      coverage -= Math.round(state.headMotion / 10);
+      coverage -= Math.round(state.predictionMs / 18);
+      coverage += Math.round(state.comfortGuard / 12);
+      coverage = clamp(coverage, 0, 100);
+
+      let route = "use-vector";
+      let risk = "low";
+      let explanation = "motion vector と depth が十分に揃っているため、そのまま space-warp に渡せます。";
+      if (state.depth === "missing" || coverage < 32) {
+        route = "disable-warp";
+        risk = "high";
+        explanation = "depth または vector coverage が不足しているため、space-warp を切って通常 frame に戻します。";
+      } else if (coverage < 62 || state.pattern !== "none") {
+        route = "patch-vector";
+        risk = coverage < 48 ? "high" : "medium";
+        explanation = "穴のあるタイルだけ motion vector を補間し、差分が大きい場所は弱く保持します。";
+      } else if (state.depth === "offset" || state.predictionMs > 52) {
+        route = "hold-depth";
+        risk = "medium";
+        explanation = "depth alignment または予測時間が不安なので、depth を基準に conservative hold します。";
+      }
+      return { coverage, route, risk, explanation };
+    }
+
+    function drawHeatmap(state, result) {
+      const { width, height } = els.canvas;
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#101719";
+      ctx.fillRect(0, 0, width, height);
+
+      const cols = 16;
+      const rows = 9;
+      const gap = 6;
+      const cellW = (width - gap * (cols + 1)) / cols;
+      const cellH = (height - gap * (rows + 1)) / rows;
+
+      for (let y = 0; y < rows; y += 1) {
+        for (let x = 0; x < cols; x += 1) {
+          const hole = holeWeight(state.pattern, x, y, cols, rows);
+          const speed = clamp((state.headMotion / 100) + Math.abs(x - cols / 2) / cols * 0.42 + state.predictionMs / 160, 0, 1);
+          const depthPenalty = state.depth === "missing" ? 0.5 : state.depth === "offset" ? 0.24 : 0;
+          const heat = clamp(hole * 0.72 + speed * 0.42 + depthPenalty - state.density / 210, 0, 1);
+          const hue = 186 - heat * 160;
+          const light = 34 + heat * 24;
+          ctx.fillStyle = `hsl(${hue} 72% ${light}%)`;
+          const px = gap + x * (cellW + gap);
+          const py = gap + y * (cellH + gap);
+          ctx.fillRect(px, py, cellW, cellH);
+
+          if (heat > 0.58) {
+            ctx.strokeStyle = "rgba(245, 242, 233, 0.75)";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(px + 2, py + 2, cellW - 4, cellH - 4);
+          }
+
+          const vx = (x - cols / 2) * (state.headMotion / 95);
+          const vy = Math.sin((x + y) * 0.8) * (state.predictionMs / 26);
+          ctx.strokeStyle = heat > 0.64 ? "rgba(16,18,20,0.78)" : "rgba(245,242,233,0.45)";
+          ctx.beginPath();
+          ctx.moveTo(px + cellW * 0.32, py + cellH * 0.52);
+          ctx.lineTo(px + cellW * 0.68 + vx, py + cellH * 0.52 + vy);
+          ctx.stroke();
+        }
+      }
+
+      ctx.fillStyle = "rgba(245,242,233,0.88)";
+      ctx.font = "700 18px system-ui";
+      ctx.fillText(`${result.route} / ${result.coverage}% coverage`, 18, 30);
+    }
+
+    function renderPolicy(state, result) {
+      const rows = [
+        ["coverage", `${result.coverage}%`, "density、gap、depth、head motion から算出"],
+        ["high heat tiles", state.pattern, "補間対象または conservative hold 対象"],
+        ["comfort guard", `${state.comfortGuard}`, "急な補間より視覚安定を優先する係数"],
+        ["next", "capture real vector gaps", "実 attachment サイズと missing tile を保存"]
+      ];
+      els.policyGrid.innerHTML = rows.map(([title, value, note]) => `
+        <div class="policy">
+          <strong>${title}</strong>
+          <span>${value}</span>
+          <span>${note}</span>
+        </div>
+      `).join("");
+    }
+
+    function update() {
+      const state = {
+        pattern: controls.pattern.value,
+        depth: controls.depth.value,
+        density: Number(controls.density.value),
+        headMotion: Number(controls.motion.value),
+        predictionMs: Number(controls.prediction.value),
+        comfortGuard: Number(controls.comfort.value)
+      };
+      const result = classify(state);
+      els.route.textContent = result.route;
+      els.coverage.textContent = `${result.coverage}%`;
+      els.risk.textContent = result.risk;
+      els.explain.textContent = result.explanation;
+      els.densityLabel.textContent = String(state.density);
+      els.motionLabel.textContent = String(state.headMotion);
+      els.predictionLabel.textContent = String(state.predictionMs);
+      els.comfortLabel.textContent = String(state.comfortGuard);
+      drawHeatmap(state, result);
+      renderPolicy(state, result);
+      els.rowJson.value = JSON.stringify({
+        date: "2026-09-25",
+        sample: "motion-vector-gap-heatmap",
+        ...state,
+        coverage: result.coverage,
+        route: result.route,
+        risk: result.risk,
+        next: "本命サンプルの layer recovery row へ tile coverage と route を渡す"
+      }, null, 2);
+    }
+
+    Object.values(controls).forEach((control) => control.addEventListener("input", update));
+    update();
+  </script>
+</body>
+</html>

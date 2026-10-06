@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Space Warp Layer Recovery Console</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d1113;
+      --panel: #172025;
+      --panel-2: #202b31;
+      --line: #40505a;
+      --text: #f5f2e9;
+      --muted: #b7c6c7;
+      --cyan: #79d7ff;
+      --green: #8fe0b0;
+      --yellow: #e8bd68;
+      --red: #ef817a;
+      --violet: #bba6ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(121, 215, 255, 0.12), transparent 28%),
+        linear-gradient(135deg, rgba(143, 224, 176, 0.10), transparent 40%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 38px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 0.92fr 1.08fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .intro, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(23, 32, 37, 0.96);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.25);
+    }
+
+    .intro { padding: 24px; }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 5vw, 54px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    h3 { margin: 0; font-size: 14px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+
+    .stage {
+      min-height: 390px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+    }
+
+    .status-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(13, 17, 19, 0.68);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+
+    .viewport {
+      border: 1px solid rgba(245, 242, 233, 0.18);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(121, 215, 255, 0.10) 1px, transparent 1px),
+        linear-gradient(rgba(121, 215, 255, 0.08) 1px, transparent 1px),
+        #11171b;
+      background-size: 34px 34px;
+    }
+
+    .layer {
+      position: absolute;
+      border: 2px solid var(--layer-color);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--layer-color) 18%, transparent);
+      box-shadow: 0 0 26px color-mix(in srgb, var(--layer-color) 42%, transparent);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      transform: translateZ(0);
+    }
+
+    .projection {
+      left: 8%;
+      top: 16%;
+      width: 68%;
+      height: 65%;
+      --layer-color: var(--cyan);
+    }
+
+    .quad {
+      right: 7%;
+      top: 13%;
+      width: 28%;
+      height: 30%;
+      --layer-color: var(--green);
+    }
+
+    .cylinder {
+      left: 16%;
+      bottom: 10%;
+      width: 38%;
+      height: 20%;
+      border-radius: 50% / 42%;
+      --layer-color: var(--violet);
+    }
+
+    .layer.is-stale {
+      --layer-color: var(--yellow);
+      border-style: dashed;
+    }
+
+    .layer.is-blocked {
+      --layer-color: var(--red);
+      opacity: 0.72;
+    }
+
+    .motion-path {
+      position: absolute;
+      inset: 10% 8%;
+      pointer-events: none;
+    }
+
+    .motion-dot {
+      position: absolute;
+      width: 11px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--yellow);
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 18px var(--yellow);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+
+    input[type="range"] { padding: 0; accent-color: var(--cyan); }
+
+    button {
+      cursor: pointer;
+      font-weight: 800;
+      background: var(--cyan);
+      color: #061016;
+      border-color: transparent;
+    }
+
+    section {
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .ledger {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(32, 43, 49, 0.78);
+      min-height: 118px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .row strong { font-size: 15px; }
+    .row span { color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      padding: 12px;
+      line-height: 1.45;
+      resize: vertical;
+    }
+
+    @media (max-width: 900px) {
+      header, .controls { grid-template-columns: 1fr 1fr; }
+      .ledger, .status-strip { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      header, .controls, .ledger, .status-strip { grid-template-columns: 1fr; }
+      .stage { min-height: 460px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="intro">
+        <h1>Space Warp Layer Recovery Console</h1>
+        <p>WebXR Layers の redraw event、depth-sorted-layers、space-warp 用 depth / motion vector attachment を同じ復帰判定にまとめる自作ミニ試作です。</p>
+      </div>
+      <div class="stage" aria-label="layer recovery preview">
+        <div class="status-strip">
+          <div class="metric"><span>route</span><strong id="route">redraw-next-frame</strong></div>
+          <div class="metric"><span>warp confidence</span><strong id="confidence">82%</strong></div>
+          <div class="metric"><span>missed frames</span><strong id="missed">1</strong></div>
+          <div class="metric"><span>fallback</span><strong id="fallback">projection</strong></div>
+        </div>
+        <div class="viewport">
+          <div class="layer projection" id="projection">XRProjectionLayer</div>
+          <div class="layer quad" id="quad">XRQuadLayer</div>
+          <div class="layer cylinder" id="cylinder">XRCylinderLayer</div>
+          <div class="motion-path" id="motionPath"></div>
+        </div>
+        <p id="explain">Layer redraw を次の XR animation frame へ寄せ、motion vector と depth が揃うなら space-warp を継続します。</p>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>layer event
+        <select id="event">
+          <option value="redraw">redraw</option>
+          <option value="resource-lost">resource lost</option>
+          <option value="stable">stable</option>
+          <option value="hidden">visibility hidden</option>
+        </select>
+      </label>
+      <label>feature
+        <select id="feature">
+          <option value="space-warp">space-warp</option>
+          <option value="depth-sorted-layers">depth-sorted-layers</option>
+          <option value="layers-only">layers only</option>
+          <option value="projection-only">projection fallback</option>
+        </select>
+      </label>
+      <label>depth attachment
+        <select id="depth">
+          <option value="fresh">fresh</option>
+          <option value="stale">stale</option>
+          <option value="missing">missing</option>
+        </select>
+      </label>
+      <label>motion vector attachment
+        <select id="motion">
+          <option value="fresh">fresh</option>
+          <option value="partial">partial</option>
+          <option value="missing">missing</option>
+        </select>
+      </label>
+      <label>missed frames <span id="missedLabel">1</span>
+        <input id="missedInput" type="range" min="0" max="6" value="1">
+      </label>
+      <label>head motion <span id="motionLabel">38</span>
+        <input id="headMotion" type="range" min="0" max="100" value="38">
+      </label>
+    </div>
+
+    <section>
+      <h2>Recovery ledger</h2>
+      <div class="ledger" id="ledger"></div>
+    </section>
+
+    <section>
+      <h2>Export row</h2>
+      <textarea id="rowJson" readonly></textarea>
+    </section>
+  </main>
+
+  <script>
+    const controls = {
+      event: document.getElementById("event"),
+      feature: document.getElementById("feature"),
+      depth: document.getElementById("depth"),
+      motion: document.getElementById("motion"),
+      missedInput: document.getElementById("missedInput"),
+      headMotion: document.getElementById("headMotion")
+    };
+
+    const els = {
+      route: document.getElementById("route"),
+      confidence: document.getElementById("confidence"),
+      missed: document.getElementById("missed"),
+      fallback: document.getElementById("fallback"),
+      explain: document.getElementById("explain"),
+      ledger: document.getElementById("ledger"),
+      rowJson: document.getElementById("rowJson"),
+      missedLabel: document.getElementById("missedLabel"),
+      motionLabel: document.getElementById("motionLabel"),
+      projection: document.getElementById("projection"),
+      quad: document.getElementById("quad"),
+      cylinder: document.getElementById("cylinder"),
+      motionPath: document.getElementById("motionPath")
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function classify(state) {
+      let score = 92;
+      if (state.event === "resource-lost") score -= 34;
+      if (state.event === "redraw") score -= 12;
+      if (state.event === "hidden") score -= 42;
+      if (state.depth === "stale") score -= 18;
+      if (state.depth === "missing") score -= 38;
+      if (state.motion === "partial") score -= 14;
+      if (state.motion === "missing") score -= 36;
+      if (state.feature === "layers-only") score -= 14;
+      if (state.feature === "projection-only") score -= 26;
+      score -= state.missedFrames * 5;
+      score -= Math.round(state.headMotion / 12);
+      score = clamp(score, 0, 100);
+
+      let route = "space-warp-continue";
+      let fallback = "none";
+      let explanation = "Depth と motion vector が揃っているので、space-warp を継続できます。";
+
+      if (state.event === "hidden") {
+        route = "hold-hidden";
+        fallback = "pause layers";
+        explanation = "session visibility が hidden なら redraw より先に animation loop を保留します。";
+      } else if (state.event === "resource-lost" || score < 34) {
+        route = "rebuild-layer";
+        fallback = "projection";
+        explanation = "Layer resource loss または attachment 欠落が重いので projection fallback へ退避します。";
+      } else if (state.depth === "missing" || state.motion === "missing") {
+        route = "disable-space-warp";
+        fallback = "native frame";
+        explanation = "depth / motion vector の片方が無いので space-warp なしの通常 frame として処理します。";
+      } else if (state.event === "redraw" || score < 72) {
+        route = "redraw-next-frame";
+        fallback = state.feature === "projection-only" ? "projection" : "layer redraw";
+        explanation = "redraw event を受け、次の XR animation frame で layer 内容を描き直します。";
+      } else if (state.feature === "depth-sorted-layers") {
+        route = "depth-sort-commit";
+        fallback = "none";
+        explanation = "depth-sorted-layers で quad / cylinder / projection の奥行き順を優先します。";
+      }
+
+      return { score, route, fallback, explanation };
+    }
+
+    function renderMotionDots(state) {
+      els.motionPath.innerHTML = "";
+      const count = state.motion === "missing" ? 2 : state.motion === "partial" ? 5 : 9;
+      for (let index = 0; index < count; index += 1) {
+        const dot = document.createElement("span");
+        dot.className = "motion-dot";
+        const x = 12 + index * (76 / Math.max(1, count - 1));
+        const wave = Math.sin(index * 0.9 + state.headMotion / 16) * (state.headMotion / 5);
+        dot.style.left = `${x}%`;
+        dot.style.top = `${50 + wave}%`;
+        dot.style.opacity = String(0.35 + index / Math.max(3, count) * 0.6);
+        els.motionPath.append(dot);
+      }
+    }
+
+    function renderLedger(state, result) {
+      const rows = [
+        ["event", state.event, state.event === "redraw" ? "XRLayer redraw を次 frame で処理" : "session / resource 状態を見る"],
+        ["attachments", `${state.depth} depth / ${state.motion} motion`, "space-warp は両方が揃うと強い"],
+        ["risk", `${state.missedFrames} missed / motion ${state.headMotion}`, "欠落 frame と頭部移動で confidence を下げる"],
+        ["route", result.route, result.explanation]
+      ];
+      els.ledger.innerHTML = rows.map(([title, value, note]) => `
+        <div class="row">
+          <strong>${title}</strong>
+          <span>${value}</span>
+          <span>${note}</span>
+        </div>
+      `).join("");
+    }
+
+    function update() {
+      const state = {
+        event: controls.event.value,
+        feature: controls.feature.value,
+        depth: controls.depth.value,
+        motion: controls.motion.value,
+        missedFrames: Number(controls.missedInput.value),
+        headMotion: Number(controls.headMotion.value)
+      };
+      const result = classify(state);
+
+      els.route.textContent = result.route;
+      els.confidence.textContent = `${result.score}%`;
+      els.missed.textContent = String(state.missedFrames);
+      els.fallback.textContent = result.fallback;
+      els.explain.textContent = result.explanation;
+      els.missedLabel.textContent = String(state.missedFrames);
+      els.motionLabel.textContent = String(state.headMotion);
+
+      for (const layer of [els.projection, els.quad, els.cylinder]) {
+        layer.classList.toggle("is-stale", result.score < 72 && result.score >= 34);
+        layer.classList.toggle("is-blocked", result.score < 34 || state.event === "hidden");
+      }
+      els.quad.style.transform = `translate(${state.headMotion / 8}px, ${state.missedFrames * 4}px)`;
+      els.cylinder.style.transform = `translate(${-state.headMotion / 12}px, ${state.missedFrames * -2}px)`;
+      renderMotionDots(state);
+      renderLedger(state, result);
+
+      els.rowJson.value = JSON.stringify({
+        date: "2026-09-25",
+        sample: "space-warp-layer-recovery-console",
+        ...state,
+        warpConfidence: result.score,
+        route: result.route,
+        fallback: result.fallback,
+        next: "実 XRLayer redraw event と XR animation frame timestamp を IndexedDB row に保存する"
+      }, null, 2);
+    }
+
+    Object.values(controls).forEach((control) => control.addEventListener("input", update));
+    update();
+  </script>
+</body>
+</html>

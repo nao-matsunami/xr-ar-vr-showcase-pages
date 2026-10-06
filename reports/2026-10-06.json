@@ -1,0 +1,131 @@
+{
+  "date": "2026-10-06",
+  "headline": "Foveation と Space Warp を同じ予算 row で読む",
+  "headlineEn": "Reading foveation and Space Warp through one budget row",
+  "summary": "Meta Quest Browser の WebGPU foveation / space-warp layers、W3C WebXR Layers の fixedFoveation、WebXR Device API、Immersive Web WebGPU samples を確認し、foveation と Space Warp の信頼度を扱う自作サンプル2本を追加しました。",
+  "summaryEn": "After checking Meta Quest Browser notes around WebGPU foveation and space-warp layers, W3C WebXR Layers fixedFoveation, the WebXR Device API, and Immersive Web WebGPU samples, today's original work adds two samples that treat foveation and Space Warp as a shared confidence budget.",
+  "keyTopics": [
+    "Meta Horizon OS release notes では Browser 150.1 に Experimental WebGPU foveation support、149.1 に WebGPU support for space-warp layers が並び、描画負荷削減と補間復帰を一緒に見る流れが見えます。",
+    "W3C WebXR Layers API Level 1 は `XRProjectionLayer.fixedFoveation` を定義し、0から1の範囲で compositor 側の foveation 量を調整する入口になります。",
+    "WebXR Space Warp は Meta Quest Browser 上の実験的機能として、WebXR Layers の `XRProjectionLayer` と draft spec を前提にしています。",
+    "Immersive Web WebGPU samples は `XRGPUBinding` と `XRProjectionLayer` を使う最小経路を確認する参考になります。",
+    "今日の公開カードは `Foveation Space Warp Budget Mixer` と `Foveated Tile Risk Heatmap` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "Meta Horizon OS release notes place experimental WebGPU foveation support in Browser 150.1 and WebGPU support for space-warp layers in 149.1, suggesting that render-load reduction and interpolation recovery should be inspected together.",
+    "W3C WebXR Layers API Level 1 defines `XRProjectionLayer.fixedFoveation`, giving applications a 0 to 1 control surface for compositor-side foveation.",
+    "WebXR Space Warp is an experimental Meta Quest Browser feature that depends on WebXR Layers `XRProjectionLayer` and a draft specification.",
+    "Immersive Web WebGPU samples are useful references for the minimal `XRGPUBinding` and `XRProjectionLayer` route.",
+    "Today's public cards are the two original samples `Foveation Space Warp Budget Mixer` and `Foveated Tile Risk Heatmap`."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Foveation Space Warp Budget Mixer",
+      "url": "../outputs/2026-10-06_html_foveation_space_warp_budget_mixer.html"
+    },
+    {
+      "label": "Today's derivative sample: Foveated Tile Risk Heatmap",
+      "url": "../outputs/2026-10-06_html_foveated_tile_risk_heatmap.html"
+    },
+    {
+      "label": "Meta Horizon OS release notes: Browser WebGPU / WebXR notes",
+      "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+    },
+    {
+      "label": "Meta: WebXR Space Warp",
+      "url": "https://developers.meta.com/vr/documentation/web/webxr-space-warp/"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR WebGPU Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Meta の Browser release notes では、149.1 の WebGPU support for space-warp layers と、150.1 の Experimental WebGPU foveation support が近い時期に出ています。W3C WebXR Layers API の `fixedFoveation` は compositor 側に foveation 量を渡す入口で、Space Warp は `XRProjectionLayer` と補助情報の信頼度に強く依存します。昨日の depth + motion vector recovery queue に続き、今日は `foveation を強めて GPU 余力を作る` と `強めすぎて gaze / warp / depth の信頼が落ちる` の境界を自作サンプル化しました。",
+      "bodyEn": "Meta's Browser release notes place WebGPU support for space-warp layers in 149.1 and experimental WebGPU foveation support in 150.1. W3C WebXR Layers `fixedFoveation` is the application-facing entry point for compositor foveation, while Space Warp depends heavily on `XRProjectionLayer` and the trustworthiness of auxiliary data. Following yesterday's depth + motion-vector recovery queue, today's original samples explore the boundary between increasing foveation to create GPU headroom and overdoing it until gaze, warp, or depth confidence drops.",
+      "links": [
+        {
+          "label": "Meta Horizon OS release notes",
+          "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+        },
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://www.w3.org/TR/webxrlayers-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Foveation Space Warp Budget Mixer` は fixed foveation、gaze jitter、motion miss、depth stale を操作し、focus ring、peripheral ring、warp guard を重ねて route を切り替えます。派生サンプル `Foveated Tile Risk Heatmap` は、その row を viewport tile に分解した想定で、各 tile を retain / blur / redraw / full render に分類します。体験としては、foveation を単なる品質スライダーではなく、視線、補間、深度の信頼度を同時に扱う `運用予算` として見せます。",
+      "bodyEn": "The main sample, `Foveation Space Warp Budget Mixer`, manipulates fixed foveation, gaze jitter, motion miss, and depth staleness, then overlays a focus ring, peripheral ring, and warp guard while switching routes. The derivative sample, `Foveated Tile Risk Heatmap`, imagines that row decomposed into viewport tiles and classifies each tile as retain, blur, redraw, or full render. The interaction reframes foveation as an operational budget across gaze, interpolation, and depth confidence rather than a simple quality slider."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "保存する row は `fixedFoveation`、`gazeJitterPx`、`motionMissPx`、`depthStaleMs`、`gazeConfidence`、`warpConfidence`、`depthConfidence`、`comfort`、`gpuSpare`、`riskDebt`、`route` に絞りました。実機版では `XRProjectionLayer.fixedFoveation` が `null` かどうか、設定値が次の `XRFrame` でどう効くか、Space Warp の有効 / 無効、depth frame の鮮度、gaze pointer の揺れを同じ timeline に保存すると、画質と快適性の両方を説明できます。",
+      "bodyEn": "The saved row is deliberately compact: `fixedFoveation`, `gazeJitterPx`, `motionMissPx`, `depthStaleMs`, `gazeConfidence`, `warpConfidence`, `depthConfidence`, `comfort`, `gpuSpare`, `riskDebt`, and `route`. On device, logging whether `XRProjectionLayer.fixedFoveation` is `null`, how a changed value takes effect on the next `XRFrame`, whether Space Warp is active, depth freshness, and gaze pointer jitter in one timeline would explain both image quality and comfort."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の row と tile map は、XR QA で `中心は保持できたが周辺が redraw になった`、`GPU 余力はあるが motion miss が大きく full render に戻した` といった説明に向いています。動画、Gaussian Splatting、操作 UI、展示空間の注視ログと組み合わせると、どの領域を高精細に残すべきかをセッション後に再分析できます。AI と組み合わせるなら、tile route の時系列から `redraw が多い領域` と `foveation を緩めるべき操作タイミング` を要約させるのが使いやすいです。",
+      "bodyEn": "Today's rows and tile map are useful for XR QA explanations such as a retained center with peripheral redraw, or enough GPU headroom but a motion miss that forced full rendering. Combined with video, Gaussian splatting, operational UI, or installation gaze logs, the data can be reanalyzed after a session to decide which areas deserve high fidelity. With AI, summarize tile-route timelines to find regions with frequent redraw and interaction moments where foveation should be relaxed."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Meta Browser の WebGPU foveation / space-warp layers の追加情報、WebXR Layers の `fixedFoveation` と projection layer 実装差、Immersive Web WebGPU samples の更新、Depth Sensing と WebGPU binding の実機挙動を継続します。自作側では、10月3日の reprojection drift、10月4日の prediction miss、10月5日の depth + motion vector recovery、今日の foveation tile を同じ import 形式にまとめたいです。",
+      "bodyEn": "Keep watching Meta Browser updates around WebGPU foveation and space-warp layers, implementation differences for WebXR Layers `fixedFoveation` and projection layers, updates to Immersive Web WebGPU samples, and on-device behavior for Depth Sensing plus WebGPU binding. On the original side, unify October 3 reprojection drift, October 4 prediction miss, October 5 depth + motion-vector recovery, and today's foveation tiles into one import format."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Foveation Space Warp Budget Mixer` で fixed foveation を上げると gpu spare は増えますが、gaze jitter と motion miss が大きい状態では `hold-warp-reduce-foveation` や `full-render-reset-foveation` に落ちます。その値を見ながら `Foveated Tile Risk Heatmap` で gaze center と foveation を動かすと、中心以外の tile が blur / redraw / reset に分かれる様子を確認できます。",
+      "bodyEn": "In `Foveation Space Warp Budget Mixer`, raising fixed foveation increases GPU spare, but high gaze jitter and motion miss push the route toward `hold-warp-reduce-foveation` or `full-render-reset-foveation`. Then adjust gaze center and foveation in `Foveated Tile Risk Heatmap` to see peripheral tiles split into blur, redraw, and reset.",
+      "links": [
+        {
+          "label": "Open Foveation Space Warp Budget Mixer",
+          "url": "../outputs/2026-10-06_html_foveation_space_warp_budget_mixer.html"
+        },
+        {
+          "label": "Open Foveated Tile Risk Heatmap",
+          "url": "../outputs/2026-10-06_html_foveated_tile_risk_heatmap.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Meta Horizon OS release notes、Meta WebXR Space Warp、W3C WebXR Layers API、W3C WebXR Device API、Immersive Web WebGPU Samples を確認。設計: 1本目は foveation + Space Warp budget mixer、2本目は tile risk heatmap。実装: `outputs/2026-10-06_html_foveation_space_warp_budget_mixer.html` と `outputs/2026-10-06_html_foveated_tile_risk_heatmap.html` を追加。検証: report JSON parse、HTML 内 script 構文、gallery / day page 再生成、publish を確認する。",
+      "bodyEn": "Research: checked Meta Horizon OS release notes, Meta WebXR Space Warp, W3C WebXR Layers API, W3C WebXR Device API, and Immersive Web WebGPU Samples. Design: make the first sample a foveation + Space Warp budget mixer and the second a tile risk heatmap. Implementation: add `outputs/2026-10-06_html_foveation_space_warp_budget_mixer.html` and `outputs/2026-10-06_html_foveated_tile_risk_heatmap.html`. Validation: parse the report JSON, check embedded HTML scripts, regenerate gallery / day pages, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月前半の流れは、visibility mask、prediction miss、depth + motion vector、Space Warp recovery へ進んできました。今日はそこに foveation を足し、`描画を省く材料` を viewport 全体ではなく tile / gaze / confidence の単位で扱えるようにしました。次はサンプル単体ではなく、過去数日の row を import して原因ランキングと tile replay を同じ画面へまとめると、検証レポートとして強くなります。",
+      "bodyEn": "The early-October thread has moved through visibility masks, prediction misses, depth + motion vectors, and Space Warp recovery. Today adds foveation and shifts render-saving inputs from whole-viewport decisions to tile, gaze, and confidence units. Next, importing the last few days of rows into one cause-ranking and tile-replay screen would make the validation report stronger than another isolated sample."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Foveation Space Warp Budget Mixer` です。何が動くか: policy、fixed foveation、gaze jitter、motion miss、depth stale から gaze / warp / depth confidence、comfort、gpu spare、risk debt、route を計算し、focus / peripheral / warp guard を重ねます。次に足すなら、実 `XRProjectionLayer.fixedFoveation` と headset frame timestamp を IndexedDB に保存します。派生として `Foveated Tile Risk Heatmap` も実装しました。何が動くか: gaze center、fixed foveation、warp miss、depth stale から 8x4 tile を retain / blur / redraw / reset に分類します。次に足すなら、1本目の export row を直接 import し、tile route を実 headset session の QA trace として保存します。",
+      "bodyEn": "The selected main prototype is `Foveation Space Warp Budget Mixer`. What it does: computes gaze / warp / depth confidence, comfort, GPU spare, risk debt, and route from policy, fixed foveation, gaze jitter, motion miss, and depth staleness, then overlays focus / peripheral / warp guards. Next addition: save real `XRProjectionLayer.fixedFoveation` values and headset frame timestamps to IndexedDB. The derivative `Foveated Tile Risk Heatmap` was also implemented. What it does: classifies an 8x4 viewport tile grid into retain, blur, redraw, and reset from gaze center, fixed foveation, warp miss, and depth staleness. Next addition: import the first sample's export row directly and save tile routes as a QA trace for real headset sessions."
+    }
+  ]
+}

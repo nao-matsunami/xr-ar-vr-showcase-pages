@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visibility Mask Tile Budget Replayer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #12120f;
+      --panel: #1f211a;
+      --panel2: #2f3326;
+      --line: #5c614e;
+      --text: #f7f1e6;
+      --muted: #c8c1ae;
+      --green: #aee48d;
+      --cyan: #7fd8ee;
+      --gold: #efc76d;
+      --red: #ef817a;
+      --ink: #0c1008;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(150deg, rgba(239, 199, 109, 0.10), transparent 40%),
+        linear-gradient(315deg, rgba(127, 216, 238, 0.08), transparent 54%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 16px; margin-bottom: 16px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(31, 33, 26, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26);
+    }
+    .panel, section { padding: 18px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    code { color: var(--cyan); }
+    .stage { padding: 16px; display: grid; gap: 12px; min-height: 432px; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(12, 16, 8, 0.62); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 21px; overflow-wrap: anywhere; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 6px;
+      min-height: 272px;
+      align-content: stretch;
+    }
+    .tile {
+      min-height: 38px;
+      border: 1px solid rgba(247, 241, 230, 0.14);
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 900;
+      transition: transform 0.18s ease, opacity 0.18s ease;
+    }
+    .native { background: var(--green); }
+    .skip { background: rgba(127, 216, 238, 0.42); color: var(--text); opacity: 0.66; }
+    .patch { background: var(--gold); }
+    .fallback { background: var(--red); }
+    .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--gold); }
+    button { cursor: pointer; font-weight: 800; background: var(--gold); color: var(--ink); border-color: transparent; }
+    textarea { width: 100%; min-height: 184px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill { border-radius: 999px; padding: 6px 10px; border: 1px solid var(--line); color: var(--muted); }
+    .rows { display: grid; gap: 8px; }
+    .row { border: 1px solid var(--line); border-radius: 8px; padding: 10px; color: var(--muted); background: rgba(12, 16, 8, 0.58); }
+    @media (max-width: 880px) {
+      header, .controls { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Visibility Mask Tile Budget Replayer</h1>
+        <p>1本目の visibility mask row を貼り付け、8 x 5 tile の描画予算へ戻します。mask 内は native、境界は patch、外側は skip として再判定します。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>native tiles</span><strong id="nativeMetric">0</strong></div>
+          <div class="metric"><span>patch tiles</span><strong id="patchMetric">0</strong></div>
+          <div class="metric"><span>skip tiles</span><strong id="skipMetric">0</strong></div>
+          <div class="metric"><span>route</span><strong id="routeMetric">-</strong></div>
+        </div>
+        <div id="grid" class="grid" aria-label="tile budget grid"></div>
+        <div class="legend">
+          <span class="pill">native: mask 内を描画</span>
+          <span class="pill">patch: 境界を安全側に描画</span>
+          <span class="pill">skip: 視界外として節約</span>
+          <span class="pill">fallback: row が古い</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Policy
+        <select id="policySelect">
+          <option value="balanced">balanced</option>
+          <option value="strict">strict</option>
+          <option value="saving">saving</option>
+        </select>
+      </label>
+      <label>Head motion
+        <input id="motionRange" type="range" min="0" max="24" value="7">
+      </label>
+      <label>Action
+        <button id="presetBtn" type="button">Load preset row</button>
+      </label>
+    </div>
+
+    <section>
+      <h2>Input row</h2>
+      <textarea id="inputBox" spellcheck="false"></textarea>
+    </section>
+
+    <section>
+      <h2>Replay summary</h2>
+      <div id="summary" class="rows"></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const preset = {
+      type: "visibility-mask-change-row",
+      date: "2026-10-01",
+      viewId: "left-eye",
+      shape: "notched",
+      vertices: [[0.10,0.10],[0.90,0.10],[0.90,0.37],[0.78,0.50],[0.90,0.63],[0.90,0.90],[0.10,0.90],[0.15,0.50]],
+      indices: [0,1,2,0,2,3,0,3,4,0,4,5,0,5,6,0,6,7],
+      coverage: 0.71,
+      savedPixels: 0.29,
+      triangleCount: 6,
+      jitterPx: 5,
+      maskAgeMs: 24,
+      route: "submit-mask-row",
+      savedAt: "preset"
+    };
+
+    function pointInPolygon(point, vertices) {
+      const [x, y] = point;
+      let inside = false;
+      for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+        const [xi, yi] = vertices[i];
+        const [xj, yj] = vertices[j];
+        const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    function distanceToCenter(x, y) {
+      return Math.hypot(x - 0.5, y - 0.5);
+    }
+
+    function classifyTile(row, x, y) {
+      const policy = $("policySelect").value;
+      const motion = Number($("motionRange").value);
+      if (row.maskAgeMs + motion > 82) return "fallback";
+      const inside = pointInPolygon([x, y], row.vertices);
+      const nearCenter = distanceToCenter(x, y) < (policy === "strict" ? 0.48 : 0.42);
+      if (inside && (nearCenter || policy !== "saving")) return "native";
+      if (inside) return "patch";
+      if (distanceToCenter(x, y) < 0.56 && policy === "strict") return "patch";
+      return "skip";
+    }
+
+    function readRow() {
+      try {
+        const row = JSON.parse($("inputBox").value);
+        if (!Array.isArray(row.vertices)) throw new Error("vertices missing");
+        return row;
+      } catch {
+        return preset;
+      }
+    }
+
+    function render() {
+      const row = readRow();
+      const counts = { native: 0, patch: 0, skip: 0, fallback: 0 };
+      const tiles = [];
+      for (let y = 0; y < 5; y += 1) {
+        for (let x = 0; x < 8; x += 1) {
+          const cx = (x + 0.5) / 8;
+          const cy = (y + 0.5) / 5;
+          const route = classifyTile(row, cx, cy);
+          counts[route] += 1;
+          tiles.push(`<div class="tile ${route}">${route === "native" ? "draw" : route}</div>`);
+        }
+      }
+      const route = counts.fallback ? "full-viewport-fallback" : counts.patch > 8 ? "patch-mask-border" : "submit-visible-tiles";
+      $("grid").innerHTML = tiles.join("");
+      $("nativeMetric").textContent = counts.native;
+      $("patchMetric").textContent = counts.patch;
+      $("skipMetric").textContent = counts.skip;
+      $("routeMetric").textContent = route;
+      $("summary").innerHTML = `
+        <div class="row">viewId: <strong>${row.viewId || "unknown"}</strong> / coverage: <strong>${Math.round((row.coverage || 0) * 100)}%</strong> / age + motion: <strong>${(row.maskAgeMs || 0) + Number($("motionRange").value)}ms</strong></div>
+        <div class="row">次に足すなら: 実機の viewId ごとに tile 履歴を保存し、左右目の mask 差分から描画予算を別々に調整します。</div>
+      `;
+    }
+
+    $("presetBtn").addEventListener("click", () => {
+      $("inputBox").value = JSON.stringify(preset, null, 2);
+      render();
+    });
+    ["policySelect", "motionRange", "inputBox"].forEach((id) => $(id).addEventListener("input", render));
+    $("inputBox").value = JSON.stringify(preset, null, 2);
+    render();
+  </script>
+</body>
+</html>

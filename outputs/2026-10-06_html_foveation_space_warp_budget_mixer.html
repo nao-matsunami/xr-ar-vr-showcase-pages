@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Foveation Space Warp Budget Mixer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d1113;
+      --panel: #172023;
+      --panel2: #233036;
+      --line: #59666b;
+      --text: #f5f1e8;
+      --muted: #c6ccc8;
+      --cyan: #74d7df;
+      --green: #9bd47b;
+      --gold: #e6bd63;
+      --red: #ee837b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(116, 215, 223, 0.13), transparent 40%),
+        linear-gradient(315deg, rgba(230, 189, 99, 0.11), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(23, 32, 35, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(8, 11, 13, 0.62); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+    .viewport {
+      position: relative;
+      min-height: 350px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+        #091012;
+      background-size: 12.5% 20%, 12.5% 20%;
+    }
+    .ring, .warp, .focus {
+      position: absolute;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.22s ease;
+    }
+    .ring { border: 2px solid var(--cyan); background: rgba(116, 215, 223, 0.12); }
+    .warp { border: 2px dashed var(--gold); background: rgba(230, 189, 99, 0.10); }
+    .focus { border: 2px solid var(--green); background: rgba(155, 212, 123, 0.18); }
+    .vector {
+      position: absolute;
+      left: 52%;
+      top: 50%;
+      width: 92px;
+      height: 4px;
+      background: var(--red);
+      transform-origin: left center;
+      transition: width 0.22s ease, transform 0.22s ease;
+    }
+    .label {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(8, 11, 13, 0.84);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .controls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    input, select, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--cyan); }
+    textarea { width: 100%; min-height: 180px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .bars, .ledger { display: grid; gap: 8px; }
+    .bar { display: grid; grid-template-columns: 150px 1fr 72px; gap: 8px; align-items: center; color: var(--muted); }
+    .track { height: 16px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.05); }
+    .fill { height: 100%; width: 0; background: var(--cyan); transition: width 0.22s ease; }
+    .row { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(8, 11, 13, 0.62); color: var(--muted); }
+    @media (max-width: 900px) {
+      header, .controls, .metrics, .bar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Foveation Space Warp Budget Mixer</h1>
+        <p>WebXR Layers の <code>fixedFoveation</code>、WebGPU foveation、Space Warp の補助データを、1つの軽量 row にまとめます。中心品質、周辺の粗さ、motion miss、depth stale を動かし、いつ foveation を強め、いつ full render に戻すかを見ます。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>route</span><strong id="routeMetric">-</strong></div>
+          <div class="metric"><span>comfort</span><strong id="comfortMetric">0%</strong></div>
+          <div class="metric"><span>gpu spare</span><strong id="spareMetric">0%</strong></div>
+          <div class="metric"><span>risk</span><strong id="riskMetric">0</strong></div>
+        </div>
+        <div class="viewport" aria-label="foveation and space warp preview">
+          <div id="ring" class="ring"></div>
+          <div id="warp" class="warp"></div>
+          <div id="focus" class="focus"></div>
+          <div id="vector" class="vector"></div>
+          <div id="label" class="label">balanced</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Policy
+        <select id="policySelect">
+          <option value="balanced">balanced</option>
+          <option value="comfort-first">comfort-first</option>
+          <option value="performance-first">performance-first</option>
+        </select>
+      </label>
+      <label>Fixed foveation
+        <input id="foveationRange" type="range" min="0" max="100" value="44">
+      </label>
+      <label>Gaze jitter
+        <input id="jitterRange" type="range" min="0" max="80" value="18">
+      </label>
+      <label>Motion miss
+        <input id="motionRange" type="range" min="0" max="110" value="32">
+      </label>
+      <label>Depth stale
+        <input id="depthRange" type="range" min="0" max="150" value="42">
+      </label>
+    </div>
+
+    <section>
+      <h2>Budget weights</h2>
+      <div id="bars" class="bars"></div>
+    </section>
+
+    <section>
+      <h2>Export row</h2>
+      <textarea id="rowBox" spellcheck="false"></textarea>
+    </section>
+
+    <section>
+      <h2>Ledger</h2>
+      <div id="ledger" class="ledger"></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ledger = [];
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function compute() {
+      const policy = $("policySelect").value;
+      const fixedFoveation = Number($("foveationRange").value) / 100;
+      const gazeJitterPx = Number($("jitterRange").value);
+      const motionMissPx = Number($("motionRange").value);
+      const depthStaleMs = Number($("depthRange").value);
+      const policyBias = policy === "comfort-first" ? 0.12 : policy === "performance-first" ? -0.1 : 0.02;
+      const foveationRelief = clamp(fixedFoveation * 0.72 + policyBias, 0, 1);
+      const gazeConfidence = clamp(1 - gazeJitterPx / 88, 0, 1);
+      const warpConfidence = clamp(1 - motionMissPx / 125, 0, 1);
+      const depthConfidence = clamp(1 - depthStaleMs / 170, 0, 1);
+      const comfort = clamp(gazeConfidence * 0.36 + warpConfidence * 0.28 + depthConfidence * 0.22 + (1 - fixedFoveation) * 0.14, 0, 1);
+      const gpuSpare = clamp(0.28 + foveationRelief * 0.56 + warpConfidence * 0.14 - gazeJitterPx / 320, 0, 1);
+      const riskDebt = clamp((1 - comfort) * 48 + motionMissPx * 0.24 + depthStaleMs * 0.12 + fixedFoveation * gazeJitterPx * 0.22, 0, 100);
+      const route = riskDebt > 72 ? "full-render-reset-foveation" :
+        comfort < 0.48 ? "hold-warp-reduce-foveation" :
+        gpuSpare > 0.62 ? "raise-fixed-foveation" :
+        "balanced-projection-layer";
+      return {
+        type: "foveation-space-warp-budget-row",
+        date: "2026-10-06",
+        policy,
+        fixedFoveation: Number(fixedFoveation.toFixed(2)),
+        gazeJitterPx,
+        motionMissPx,
+        depthStaleMs,
+        gazeConfidence: Number(gazeConfidence.toFixed(3)),
+        warpConfidence: Number(warpConfidence.toFixed(3)),
+        depthConfidence: Number(depthConfidence.toFixed(3)),
+        comfort: Number(comfort.toFixed(3)),
+        gpuSpare: Number(gpuSpare.toFixed(3)),
+        riskDebt: Number(riskDebt.toFixed(1)),
+        route,
+        next: "Export this row into a tile map so each viewport area can choose retain, blur, redraw, or full render."
+      };
+    }
+
+    function renderPreview(row) {
+      const foveal = 18 + (1 - row.fixedFoveation) * 34;
+      const peripheral = foveal + row.fixedFoveation * 72 + row.motionMissPx * 0.2;
+      const warp = peripheral + row.depthStaleMs * 0.09;
+      $("focus").style.cssText = `left:${50 + row.gazeJitterPx * 0.06}%;top:${50 - row.gazeJitterPx * 0.035}%;width:${foveal}%;height:${foveal}%;`;
+      $("ring").style.cssText = `left:50%;top:50%;width:${peripheral}%;height:${peripheral}%;`;
+      $("warp").style.cssText = `left:${50 + row.motionMissPx * 0.025}%;top:${50 + row.depthStaleMs * 0.012}%;width:${warp}%;height:${warp}%;`;
+      $("vector").style.width = `${48 + row.motionMissPx * 1.6}px`;
+      $("vector").style.transform = `rotate(${row.gazeJitterPx * 0.45 + row.motionMissPx * 0.16}deg)`;
+      $("label").textContent = `${row.policy} / ${row.route}`;
+    }
+
+    function renderBars(row) {
+      const items = [
+        ["gaze confidence", row.gazeConfidence],
+        ["warp confidence", row.warpConfidence],
+        ["depth confidence", row.depthConfidence],
+        ["comfort", row.comfort],
+        ["gpu spare", row.gpuSpare]
+      ];
+      $("bars").innerHTML = items.map(([label, value]) => `
+        <div class="bar">
+          <span>${label}</span>
+          <div class="track"><div class="fill" style="width:${Math.round(value * 100)}%"></div></div>
+          <strong>${Math.round(value * 100)}%</strong>
+        </div>
+      `).join("");
+    }
+
+    function render() {
+      const row = compute();
+      $("routeMetric").textContent = row.route;
+      $("comfortMetric").textContent = `${Math.round(row.comfort * 100)}%`;
+      $("spareMetric").textContent = `${Math.round(row.gpuSpare * 100)}%`;
+      $("riskMetric").textContent = row.riskDebt;
+      $("rowBox").value = JSON.stringify(row, null, 2);
+      renderPreview(row);
+      renderBars(row);
+      ledger.unshift(`${new Date().toLocaleTimeString()} ${row.route} / foveation ${row.fixedFoveation} / risk ${row.riskDebt}`);
+      $("ledger").innerHTML = ledger.slice(0, 6).map((item) => `<div class="row">${item}</div>`).join("");
+    }
+
+    document.querySelectorAll("input, select").forEach((el) => el.addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>

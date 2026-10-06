@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Space Warp の layer 復帰を attachment 行で判定する | 2026-09-25</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.09.25</p>
+      <h1>Space Warp の layer 復帰を attachment 行で判定する</h1>
+      <p class="hero-subtitle">Judging Space Warp layer recovery by attachment rows</p>
+      <p>W3C WebXR Device API、WebXR Layers API Level 1、W3C の WebXR 関連標準一覧、Immersive Web samples、Meta Horizon OS の WebXR overview を参照し、Layer redraw / resource loss / depth-sorted-layers / space-warp attachment を同じ復帰行として扱う本命サンプルと、motion vector の穴を heatmap で補修判定する派生サンプルを追加しました。</p>
+      <p class="en-copy">After checking the W3C WebXR Device API, WebXR Layers API Level 1, W3C's WebXR standards index, Immersive Web samples, and Meta Horizon OS WebXR overview, today's original work adds a main sample that treats layer redraw / resource loss / depth-sorted-layers / space-warp attachments as one recovery row, plus a derivative heatmap for patching motion vector gaps.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-09-25_html_space_warp_layer_recovery_console.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-09-24.html">← 2026.09.24</a>
+      <a class="day-link" href="../days/2026-09-26.html">2026.09.26 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Space Warp Layer Recovery Console</h3>
+              <p>WebXR Layers の redraw event、depth-sorted-layers、space-warp 用 depth / motion vector attachment を同じ復帰判定にまとめる自作ミニ試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-25_html_space_warp_layer_recovery_console.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Motion Vector Gap Heatmap</h3>
+              <p>Space warp に渡す motion vector attachment の穴、depth 不一致、頭部移動量を、どのタイルから補修するかの heatmap として見る派生試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-09-25_html_motion_vector_gap_heatmap.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>W3C WebXR Device API は 2026年6月9日の Candidate Recommendation Draft が最新公開版で、session lifecycle、input、visibility、permissions policy を横断する基準になります。</span>
+              <span class="en-copy">The W3C WebXR Device API Candidate Recommendation Draft dated June 9, 2026 remains the latest published anchor for session lifecycle, input, visibility, and permissions policy behavior.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Layers API Level 1 は 2026年8月11日の Draft Standard として一覧に出ており、`XRLayer`、composition layer、`redraw` event、`depth-sorted-layers`、`space-warp` の扱いを確認できます。</span>
+              <span class="en-copy">WebXR Layers API Level 1 appears in the W3C index as an August 11, 2026 Draft Standard, covering `XRLayer`, composition layers, `redraw` events, `depth-sorted-layers`, and `space-warp`.</span>
+            </li>
+          
+            <li>
+              <span>Layers API では `redraw` event が layer resource loss や compositor が再投影できない場合に発火し、著者は次の XR animation frame で描き直すべきだとされています。</span>
+              <span class="en-copy">The Layers API says a `redraw` event can fire when layer resources are lost or the compositor can no longer reproject the layer, and authors should redraw at the next XR animation frame.</span>
+            </li>
+          
+            <li>
+              <span>`space-warp` では depth / motion vector attachment が揃わない frame は space warp なしとして扱うため、欠落時の fallback route をログに残す価値があります。</span>
+              <span class="en-copy">For `space-warp`, a frame missing depth or motion vector attachments is processed as if space warp were not enabled, so logging the fallback route is useful.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは外部デモではなく、自作の `Space Warp Layer Recovery Console` と `Motion Vector Gap Heatmap` の2本です。</span>
+              <span class="en-copy">Today's public cards are the original workspace samples `Space Warp Layer Recovery Console` and `Motion Vector Gap Heatmap`, not external demos.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>9月24日は DOM Overlay の focus 復帰と pinch / gaze intent の debounce を扱いました。今日は視線や手前の UI ではなく、XR compositor 側の復帰問題へ寄せます。WebXR Layers API では quad / cylinder / projection layer を composition layer として扱えますが、resource loss、`redraw`、depth sorting、space-warp の attachment 欠落が別々に見えると、実装側は `描き直す`、`warp を止める`、`projection fallback へ退避する` の判断を後追いでしかできません。そこを1行の recovery row にまとめるのが今日の面白い点です。</p>
+          <p class="en-copy">September 24 focused on DOM Overlay focus recovery and pinch / gaze intent debouncing. Today moves from front-facing UI to compositor recovery. WebXR Layers API lets authors use quad, cylinder, and projection layers as composition layers, but resource loss, `redraw`, depth sorting, and missing space-warp attachments can otherwise feel like separate failures. Implementations then decide too late whether to redraw, disable warp, or fall back to projection. Today's main idea is to turn those signals into one recovery row.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers samples</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Space Warp Layer Recovery Console` は layer event、feature descriptor、depth attachment、motion vector attachment、missed frames、head motion から `space-warp-continue`、`redraw-next-frame`、`disable-space-warp`、`rebuild-layer`、`hold-hidden`、`depth-sort-commit` を出します。派生サンプル `Motion Vector Gap Heatmap` は motion vector の穴をタイル heatmap として見せ、`use-vector`、`patch-vector`、`hold-depth`、`disable-warp` を判定します。</p>
+          <p class="en-copy">The main sample, `Space Warp Layer Recovery Console`, emits `space-warp-continue`, `redraw-next-frame`, `disable-space-warp`, `rebuild-layer`, `hold-hidden`, or `depth-sort-commit` from layer event, feature descriptor, depth attachment, motion vector attachment, missed frames, and head motion. The derivative `Motion Vector Gap Heatmap` shows vector gaps as tiled heat and classifies them as `use-vector`, `patch-vector`, `hold-depth`, or `disable-warp`.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>Layer 復帰ログは `redraw` を受けた事実だけでなく、session visibility、feature descriptor、depth texture / motion vector texture の新鮮さ、missed frame 数、head motion、fallback route を同じ JSON row に保存すると replay しやすいです。`space-warp` が使える端末でも attachment が片方欠けた frame は通常 frame として扱う前提にし、演出側では `warp 継続` と `見た目だけ保持` を分けておくと、急なぐらつきを説明できます。</p>
+          <p class="en-copy">For layer recovery logs, store not only the fact that `redraw` fired but also session visibility, feature descriptor, depth / motion vector freshness, missed frame count, head motion, and fallback route in the same JSON row. Even on devices that support `space-warp`, treat frames missing either attachment as normal frames, and separate visual hold from warp continuation so sudden instability can be explained.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の row は、9月10日の layer redraw recovery、9月11日の depth occlusion、9月20日の passthrough obscuration budget、9月24日の focus recovery と組み合わせられます。視覚的な `なぜいま薄くなったか`、`なぜ UI が projection fallback になったか`、`なぜ warp を止めたか` を同じ監査ログにできるので、展示、遠隔支援、設計レビュー、教育用 XR の説明 UI に向いています。</p>
+          <p class="en-copy">Today's rows combine well with the September 10 layer redraw recovery, September 11 depth occlusion, September 20 passthrough obscuration budget, and September 24 focus recovery. They can explain why something faded, why UI fell back to projection, or why warp was disabled, making them useful for installations, remote assistance, design review, and educational XR explanation UI.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Layers API の `redraw` event、`depth-sorted-layers`、`space-warp`、recommended depth / motion vector resolution、W3C の Depth Sensing Module、Immersive Web samples の Layers / depth proposals、Meta の WebXR / IWSDK 周辺を続けて見ます。次は今日の row を実 `XRLayer` event listener と `requestAnimationFrame` timestamp に接続し、depth / motion vector attachment サイズと欠落 tile を保存する実測版に進めたいです。</p>
+          <p class="en-copy">Keep watching `redraw` events, `depth-sorted-layers`, `space-warp`, recommended depth / motion vector resolution in WebXR Layers API, the W3C Depth Sensing Module, Immersive Web Layers / depth proposals, and Meta's WebXR / IWSDK materials. Next, connect today's rows to real `XRLayer` event listeners and `requestAnimationFrame` timestamps, then save attachment sizes and missing tiles.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Space Warp Layer Recovery Console` で layer event を `redraw`、feature を `space-warp`、depth / motion を fresh にすると `redraw-next-frame` になります。motion vector を missing にすると `disable-space-warp`、resource lost にすると `rebuild-layer` に落ちます。派生側では `checker holes` と density 低めで `patch-vector`、depth missing で `disable-warp` を確認できます。</p>
+          <p class="en-copy">In `Space Warp Layer Recovery Console`, set layer event to `redraw`, feature to `space-warp`, and both depth / motion to fresh to get `redraw-next-frame`. Set motion vector to missing to get `disable-space-warp`; set resource lost to get `rebuild-layer`. In the derivative sample, use `checker holes` with low density for `patch-vector`, or missing depth for `disable-warp`.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-25_html_space_warp_layer_recovery_console.html" target="_blank" rel="noreferrer">Open Space Warp Layer Recovery Console</a></li>
+          
+            <li><a href="../outputs/2026-09-25_html_motion_vector_gap_heatmap.html" target="_blank" rel="noreferrer">Open Motion Vector Gap Heatmap</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR Device API、WebXR Layers API Level 1、W3C WebXR standards index、Immersive Web WebXR samples proposals、Immersive Web Layers samples、Meta Horizon OS WebXR overview を確認。設計: 1本目は layer redraw / space-warp attachment recovery console、2本目は motion vector gap heatmap。実装: `outputs/2026-09-25_html_space_warp_layer_recovery_console.html` と `outputs/2026-09-25_html_motion_vector_gap_heatmap.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish、公開反映を確認する。</p>
+          <p class="en-copy">Research: checked the W3C WebXR Device API, WebXR Layers API Level 1, W3C WebXR standards index, Immersive Web WebXR samples proposals, Immersive Web Layers samples, and Meta Horizon OS WebXR overview. Design: make the first sample a layer redraw / space-warp attachment recovery console, and the second a motion vector gap heatmap. Implementation: add `outputs/2026-09-25_html_space_warp_layer_recovery_console.html` and `outputs/2026-09-25_html_motion_vector_gap_heatmap.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, publish, and confirm publication.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>9月後半の流れは、起動前 trust、session context、DOM Overlay arbitration、focus recovery から、今日は compositor / layer recovery へ移りました。XR の品質問題は入力の誤発火だけでなく、描画 pipeline の一部が一瞬欠けた時にも発生します。今日の2本は `入力 row` と同じ粒度で `描画 row` を作り、あとから説明・再生・fallback policy 比較に使える形にする部品です。</p>
+          <p class="en-copy">The late-September thread now moves from pre-launch trust, session context, DOM Overlay arbitration, and focus recovery into compositor / layer recovery. XR quality failures are not only input misfires; they also happen when part of the rendering pipeline briefly goes missing. Today's two samples create rendering rows at the same granularity as input rows, making them reusable for explanation, replay, and fallback policy comparison.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Space Warp Layer Recovery Console` です。何が動くか: layer event、feature、depth / motion vector attachment、missed frames、head motion から warp 継続 / next frame redraw / warp 無効化 / layer rebuild / hidden hold / depth sort commit を判定し、ledger と JSON row を出します。次に足すなら、実 `XRLayer` の `redraw` listener と XR frame timestamp を保存します。派生として `Motion Vector Gap Heatmap` も実装しました。何が動くか: vector gap pattern、depth match、density、head motion、prediction ms、comfort guard から tile heatmap と patch route を出します。次に足すなら、本命サンプルへ tile coverage を渡し、`disable-space-warp` の理由をタイル単位で説明します。</p>
+          <p class="en-copy">The selected main prototype is `Space Warp Layer Recovery Console`. What it does: judges warp continuation / next-frame redraw / warp disable / layer rebuild / hidden hold / depth-sort commit from layer event, feature, depth / motion vector attachments, missed frames, and head motion, then emits a ledger and JSON row. Next addition: save real `XRLayer` `redraw` listeners and XR frame timestamps. The derivative `Motion Vector Gap Heatmap` was also implemented. What it does: emits a tile heatmap and patch route from vector gap pattern, depth match, density, head motion, prediction ms, and comfort guard. Next addition: pass tile coverage back into the main sample and explain `disable-space-warp` per tile.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-09-25_html_space_warp_layer_recovery_console.html" target="_blank" rel="noreferrer">Today's main sample: Space Warp Layer Recovery Console</a></li>
+          
+            <li><a href="../outputs/2026-09-25_html_motion_vector_gap_heatmap.html" target="_blank" rel="noreferrer">Today's derivative sample: Motion Vector Gap Heatmap</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://www.w3.org/TR/?filter-tr-name=webxr" target="_blank" rel="noreferrer">W3C: WebXR standards and drafts</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/proposals/" target="_blank" rel="noreferrer">Immersive Web: WebXR samples proposals</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Layers samples</a></li>
+          
+            <li><a href="https://developers.meta.com/horizon/documentation/web/webxr-overview/" target="_blank" rel="noreferrer">Meta Horizon OS: WebXR overview</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-09-25_html_space_warp_layer_recovery_console.html" loading="lazy" title="Space Warp Layer Recovery Console"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

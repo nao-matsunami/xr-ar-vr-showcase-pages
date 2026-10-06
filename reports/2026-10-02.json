@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-02",
+  "headline": "可視マスク row を redraw / subimage row と合流して理由つき fallback にする",
+  "headlineEn": "Merging visibility-mask rows with redraw and subimage rows for explainable fallback",
+  "summary": "Chrome 144 の XRVisibilityMaskChange、W3C の WebXR Device API 履歴、WebXR Layers API Editor's Draft、Immersive Web Samples を確認し、昨日の visibility mask row を redraw timestamp / subimage viewport row と合流する本命サンプルと、fallback 理由を分解する派生サンプルを追加しました。",
+  "summaryEn": "After checking Chrome 144's XRVisibilityMaskChange, the W3C WebXR Device API history, the WebXR Layers API Editor's Draft, and Immersive Web Samples, today's original work adds a main sample that merges yesterday's visibility-mask row with redraw-timestamp and subimage-viewport rows plus a derivative sample that explains fallback reasons.",
+  "keyTopics": [
+    "Chrome 144 の `XRVisibilityMaskChange` は可視 viewport mesh を vertices / indices として渡し、描画対象を絞るための入力になります。",
+    "`XRView` の unique identifier により、左右目や view ごとの mask row を layer / subimage / redraw row と対応付けやすくなります。",
+    "W3C の WebXR Device API 履歴では 2026-06-09 の Candidate Recommendation Draft が最新として示されており、session / view / frame loop の基礎確認に使います。",
+    "WebXR Layers API Level 1 Editor's Draft は 2026-08-11 の文書として layer type、subimage、space warp、XRView changes を扱っており、9月後半の layer row 群と接続できます。",
+    "今日の公開カードは外部デモではなく、自作の `Visibility Mask Row Merge Console` と `Visibility Fallback Reason Replayer` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "Chrome 144's `XRVisibilityMaskChange` provides visible-viewport mesh vertices and indices, making it an input for narrowing the drawn region.",
+    "Unique `XRView` identifiers make it easier to pair per-eye or per-view mask rows with layer, subimage, and redraw rows.",
+    "The W3C WebXR Device API history lists the 2026-06-09 Candidate Recommendation Draft as the latest entry, which is the base reference for session, view, and frame-loop checks.",
+    "The WebXR Layers API Level 1 Editor's Draft dated 2026-08-11 covers layer types, subimages, space warp, and XRView changes, connecting naturally to the late-September layer rows.",
+    "Today's public cards are the original workspace samples `Visibility Mask Row Merge Console` and `Visibility Fallback Reason Replayer`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Visibility Mask Row Merge Console",
+      "url": "../outputs/2026-10-02_html_visibility_mask_row_merge_console.html"
+    },
+    {
+      "label": "Today's derivative sample: Visibility Fallback Reason Replayer",
+      "url": "../outputs/2026-10-02_html_visibility_fallback_reason_replayer.html"
+    },
+    {
+      "label": "Chrome 144 release notes: XRVisibilityMaskChange",
+      "url": "https://developer.chrome.com/release-notes/144"
+    },
+    {
+      "label": "W3C: WebXR Device API publication history",
+      "url": "https://www.w3.org/standards/history/webxr/"
+    },
+    {
+      "label": "W3C: WebXR standards and drafts",
+      "url": "https://www.w3.org/TR/?filter-tr-name=webxr"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers API Editor's Draft",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "昨日は visibility mask change を単独 row として保存し、tile budget に戻しました。今日はその row を9月26日の redraw timestamp、9月30日の subimage viewport row、9月29日の viewport crop guard と同じ診断平面に置きます。`XRVisibilityMaskChange` の mesh だけでは「描く場所」は分かりますが、「なぜ fallback したか」は分かりません。mask age、redraw age、crop mismatch、head motion を合わせると、全画面描画へ戻した理由を運用者に説明できます。",
+      "bodyEn": "Yesterday saved visibility-mask changes as standalone rows and replayed them into a tile budget. Today puts those rows on the same diagnostic plane as the September 26 redraw timestamp, September 30 subimage viewport row, and September 29 viewport crop guard. An `XRVisibilityMaskChange` mesh explains where to draw, but not why fallback happened. Combining mask age, redraw age, crop mismatch, and head motion gives operators a reason for returning to full-viewport rendering.",
+      "links": [
+        {
+          "label": "Chrome 144 release notes",
+          "url": "https://developer.chrome.com/release-notes/144"
+        },
+        {
+          "label": "WebXR Layers API Editor's Draft",
+          "url": "https://immersive-web.github.io/layers/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Visibility Mask Row Merge Console` は view、mask age、redraw age、crop inset、head motion を動かし、merged route、saved pixels、risk score、patch band を出します。派生サンプル `Visibility Fallback Reason Replayer` は本命 row を貼り付け、mask / redraw / crop / motion のどれが fallback 理由として支配的かを分解します。体験としては、XR 描画の黒箱を「今日は mask が古い」「今日は crop mismatch が大きい」のように読める小さな診断盤です。",
+      "bodyEn": "The main sample, `Visibility Mask Row Merge Console`, lets you adjust view, mask age, redraw age, crop inset, and head motion, then produces a merged route, saved pixels, risk score, and patch band. The derivative sample, `Visibility Fallback Reason Replayer`, accepts the main row and breaks down whether mask, redraw, crop, or motion dominates the fallback reason. As an experience, it turns XR rendering fallback from a black box into a small diagnostic board that can say things like `the mask is stale` or `crop mismatch is high`."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では `viewId` を primary key にし、`visibility-mask-change`、`subimage-viewport-row`、`layer-redraw-timestamp` の3系統を同じ frame window で merge します。保存対象は vertices / indices / viewport / timestamp / age / route などの軽量 row に限定し、実 texture や camera frame は保存しません。古い mask は full viewport、軽い crop mismatch は patch band、redraw だけ古い場合は layer 更新待ち、と原因別に処理を分けると、性能と説明可能性の両方が上がります。",
+      "bodyEn": "In production, use `viewId` as the primary key and merge `visibility-mask-change`, `subimage-viewport-row`, and `layer-redraw-timestamp` within the same frame window. Store only lightweight rows such as vertices / indices / viewport / timestamp / age / route, not textures or camera frames. Split causes into full viewport for stale masks, patch bands for light crop mismatch, and layer-update hold when only redraw is stale; this improves both performance and explainability."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の merged row は、遠隔支援、展示 UI、XR 業務手順のログ再生に向いています。ユーザーが見ていた範囲、実際に描いた範囲、省略した tile、fallback 理由を分けておくと、後から `なぜ一瞬重くなったか`、`どの目だけ mask がずれたか`、`どの layer が更新待ちだったか` を説明できます。AI 要約と組み合わせる場合も、実画像ではなく row を読むだけで、privacy-aware なセッション診断にできます。",
+      "bodyEn": "Today's merged rows fit remote assistance, installation UI, and replay for XR operational procedures. Separating what the user could see, what was drawn, which tiles were skipped, and why fallback happened makes it possible to explain later why a frame became heavy, which eye had mask drift, or which layer was waiting for an update. When combined with AI summaries, the system can read rows instead of images, enabling privacy-aware session diagnostics."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "`XRVisibilityMaskChange` の spec 側更新、ChromeStatus の実装状況、WebXR Layers API の subimage / XRView changes、Immersive Web Samples の Layers / Proposals を継続して見ます。自作側では、今日の merged row に9月25日の motion vector gap と9月27日の attachment size を足し、space warp / layer size / visibility mask の3者で fallback 原因を比較したいです。",
+      "bodyEn": "Keep watching spec updates for `XRVisibilityMaskChange`, ChromeStatus implementation state, WebXR Layers API subimage / XRView changes, and Immersive Web Samples for Layers / Proposals. On the original-sample side, add the September 25 motion-vector gap and September 27 attachment size to today's merged row, then compare fallback causes across space warp, layer size, and visibility mask."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Visibility Mask Row Merge Console` で mask age と redraw age を低く、crop inset を8前後、head motion を10未満にすると `submit-merged-row` になります。mask age や head motion を上げると `hold-merged-row` や `full-viewport-fallback` に落ちます。その JSON を `Visibility Fallback Reason Replayer` に貼ると、fallback 理由が mask / redraw / crop / motion に分解されます。",
+      "bodyEn": "In `Visibility Mask Row Merge Console`, keep mask age and redraw age low, crop inset near 8, and head motion below 10 to get `submit-merged-row`. Raise mask age or head motion and it drops into `hold-merged-row` or `full-viewport-fallback`. Paste that JSON into `Visibility Fallback Reason Replayer` to split the fallback reason into mask / redraw / crop / motion.",
+      "links": [
+        {
+          "label": "Open Visibility Mask Row Merge Console",
+          "url": "../outputs/2026-10-02_html_visibility_mask_row_merge_console.html"
+        },
+        {
+          "label": "Open Visibility Fallback Reason Replayer",
+          "url": "../outputs/2026-10-02_html_visibility_fallback_reason_replayer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Chrome 144 release notes、W3C WebXR Device API publication history、W3C WebXR standards and drafts、WebXR Layers API Editor's Draft、Immersive Web Samples を確認。設計: 1本目は visibility mask / redraw / subimage の merge console、2本目は fallback reason replayer。実装: `outputs/2026-10-02_html_visibility_mask_row_merge_console.html` と `outputs/2026-10-02_html_visibility_fallback_reason_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish を確認する。",
+      "bodyEn": "Research: checked Chrome 144 release notes, the W3C WebXR Device API publication history, W3C WebXR standards and drafts, the WebXR Layers API Editor's Draft, and Immersive Web Samples. Design: make the first sample a visibility-mask / redraw / subimage merge console and the second a fallback-reason replayer. Implementation: add `outputs/2026-10-02_html_visibility_mask_row_merge_console.html` and `outputs/2026-10-02_html_visibility_fallback_reason_replayer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "9月後半から `motion vector gap`、`redraw timestamp`、`attachment size`、`viewport crop`、`subimage row`、`visibility mask` と、XR 描画パイプラインの各段を row 化してきました。今日はそれらを個別の試作から統合診断へ移す日です。次は row を増やすより、原因を横断して `fallback の説明文` と `復帰手順` を作るほうが価値が高そうです。",
+      "bodyEn": "Since late September, the work has turned each stage of the XR rendering pipeline into rows: `motion vector gap`, `redraw timestamp`, `attachment size`, `viewport crop`, `subimage row`, and `visibility mask`. Today moves from isolated prototypes toward integrated diagnosis. Next, rather than adding more row types, it is likely more valuable to produce cross-cause fallback explanations and recovery steps."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Visibility Mask Row Merge Console` です。何が動くか: view、mask age、redraw age、crop inset、head motion から merged route、saved pixels、risk score、patch band を計算し、JSON row と ledger にします。次に足すなら、実 `XRVisibilityMaskChange` row と `XRWebGLSubImage` viewport row を viewId で自動 merge します。派生として `Visibility Fallback Reason Replayer` も実装しました。何が動くか: 本命 row を読み込み、mask / redraw / crop / motion のどれが fallback 理由かを policy 別に可視化します。次に足すなら、複数 frame row を読み込んで dominant reason の時系列を出します。",
+      "bodyEn": "The selected main prototype is `Visibility Mask Row Merge Console`. What it does: computes a merged route, saved pixels, risk score, and patch band from view, mask age, redraw age, crop inset, and head motion, then outputs a JSON row and ledger. Next addition: automatically merge real `XRVisibilityMaskChange` rows and `XRWebGLSubImage` viewport rows by viewId. The derivative `Visibility Fallback Reason Replayer` was also implemented. What it does: reads the main row and visualizes whether mask / redraw / crop / motion is the fallback reason under different policies. Next addition: load multiple frame rows and chart the dominant reason over time."
+    }
+  ]
+}

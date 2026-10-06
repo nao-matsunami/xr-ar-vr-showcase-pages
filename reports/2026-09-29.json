@@ -1,0 +1,127 @@
+{
+  "date": "2026-09-29",
+  "headline": "XR viewport の crop guard を frame row として保存する",
+  "headlineEn": "Saving XR viewport crop guards as frame rows",
+  "summary": "W3C WebXR Device API、WebXR Layers API Level 1、MDN の WebXR rendering guide、XRWebGLLayer.getViewport、Immersive Web Layers samples を参照し、viewport / texture rect / foveation を crop guard row として保存する本命サンプルと、その row を tile foveation policy へ戻す派生サンプルを追加しました。",
+  "summaryEn": "After checking the W3C WebXR Device API, WebXR Layers API Level 1, MDN's WebXR rendering guide and XRWebGLLayer.getViewport, plus Immersive Web Layers samples, today's original work adds a main sample that stores viewport / texture rect / foveation as crop-guard rows, plus a derivative sample that replays those rows into tile foveation policy.",
+  "keyTopics": [
+    "WebXR Device API は XRView ごとの viewport を描画先 framebuffer の矩形として扱い、実装側は frame ごとにその範囲へ描画します。",
+    "WebXR Layers API Level 1 では projection layer の sub image や texture 情報が layer 描画の単位になり、前日の attachment size audit と自然につながります。",
+    "MDN の WebXR rendering guide は XR frame callback の時間予算と viewport 描画の流れを整理しており、crop guard を軽い row にする理由になります。",
+    "foveation や viewport の端寄りは UI、reticle、space warp tile の見え方に影響するため、体験品質ログとして保存する価値があります。",
+    "今日の公開カードは外部デモではなく、自作の `XR Viewport Crop Guard Logger` と `Crop Row Foveation Replayer` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Device API treats each XRView viewport as a rectangle in the target framebuffer, and applications render into that rectangle every frame.",
+    "In WebXR Layers API Level 1, projection-layer sub images and texture data become the unit of layer rendering, connecting naturally to yesterday's attachment-size audit.",
+    "MDN's WebXR rendering guide explains XR frame callback budgets and viewport rendering flow, which is why crop guards should be lightweight rows.",
+    "Foveation and edge-biased viewports affect UI, reticles, and space-warp tiles, so they are worth preserving as experience-quality logs.",
+    "Today's public cards are the original workspace samples `XR Viewport Crop Guard Logger` and `Crop Row Foveation Replayer`, not external demos."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: XR Viewport Crop Guard Logger",
+      "url": "../outputs/2026-09-29_html_viewport_crop_guard_logger.html"
+    },
+    {
+      "label": "Today's derivative sample: Crop Row Foveation Replayer",
+      "url": "../outputs/2026-09-29_html_crop_row_foveation_replayer.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "MDN: Rendering and the WebXR frame animation callback",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Rendering"
+    },
+    {
+      "label": "MDN: XRWebGLLayer.getViewport",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLLayer/getViewport"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "9月26日は `redraw` event、9月27日は `XRWebGLSubImage` の attachment size を扱いました。今日はその次段として、描画先 texture の中で実際に使う viewport / crop rectangle と、foveation による余白の変化を row として保存します。問題が起きた時に `attachment は揃っていたが、viewport が端へ寄っていた` と説明できるようにする小さな部品です。",
+      "bodyEn": "September 26 covered `redraw` events, and September 27 covered `XRWebGLSubImage` attachment sizes. Today moves one step further by storing the actually used viewport / crop rectangle inside the render texture, plus guard changes caused by foveation. It is a small part that helps explain cases where attachments were present but the viewport was pushed too close to the edge.",
+      "links": [
+        {
+          "label": "W3C: WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        },
+        {
+          "label": "W3C: WebXR Layers API Level 1",
+          "url": "https://www.w3.org/TR/webxrlayers-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `XR Viewport Crop Guard Logger` は viewport の幅、高さ、offset、foveation を操作し、`commit-viewport`、`expand-guard`、`foveation-hold`、`projection-fallback` を出します。派生サンプル `Crop Row Foveation Replayer` はその JSON row を貼り付け、tile ごとに `full-rate`、`lower-rate`、`guard-band`、`fallback` を再判定します。",
+      "bodyEn": "The main sample, `XR Viewport Crop Guard Logger`, lets you change viewport width, height, offset, and foveation, then emits `commit-viewport`, `expand-guard`, `foveation-hold`, or `projection-fallback`. The derivative `Crop Row Foveation Replayer` accepts that JSON row and reclassifies tiles into `full-rate`, `lower-rate`, `guard-band`, or `fallback`."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では `XRWebGLLayer.getViewport(view)` または Layers API の sub image 取得直後に、x / y / width / height と texture size、foveation、frame timestamp を最小 row に保存します。XR frame callback 内では判定を軽くし、詳細な tile policy は後段の replay 側に寄せると frame budget を守りやすいです。",
+      "bodyEn": "In production, store x / y / width / height, texture size, foveation, and frame timestamp immediately after `XRWebGLLayer.getViewport(view)` or layer sub-image retrieval. Keep the XR frame callback classification light, and move detailed tile policy into a replay stage to protect the frame budget."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の crop row は、9月25日の motion vector gap heatmap、9月26日の redraw timestamp logger、9月27日の attachment size auditor と合わせられます。遠隔支援や展示運用では、head motion、redraw、attachment 欠落、viewport edge risk を同じ時系列に置くと、projection fallback の理由を説明しやすくなります。",
+      "bodyEn": "Today's crop rows combine with the September 25 motion-vector gap heatmap, September 26 redraw timestamp logger, and September 27 attachment-size auditor. In remote-support or installation contexts, placing head motion, redraw, attachment gaps, and viewport edge risk on one timeline makes projection fallback easier to explain."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "引き続き WebXR Device API の viewport、WebXR Layers API の sub image と texture、MDN の rendering guide、Immersive Web Layers samples を見ます。次は実機で `getViewport()` / `getViewSubImage()` の row を IndexedDB に保存し、9月27日の attachment row と自動 merge するところまで進めたいです。",
+      "bodyEn": "Keep watching WebXR Device API viewports, WebXR Layers API sub images and textures, MDN's rendering guide, and Immersive Web Layers samples. Next, store real `getViewport()` / `getViewSubImage()` rows in IndexedDB and automatically merge them with the September 27 attachment rows."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`XR Viewport Crop Guard Logger` で viewport を中央寄せ、foveation を low にすると `commit-viewport` になります。offset を大きくして端へ寄せると `expand-guard` または `projection-fallback` へ落ちます。派生側ではその JSON を貼り付け、head motion と policy を切り替えて tile route の差を見られます。",
+      "bodyEn": "In `XR Viewport Crop Guard Logger`, keep the viewport centered with low foveation to get `commit-viewport`. Push the offset toward the edge to get `expand-guard` or `projection-fallback`. In the derivative sample, paste that JSON and switch head motion and policy to compare tile routes.",
+      "links": [
+        {
+          "label": "Open XR Viewport Crop Guard Logger",
+          "url": "../outputs/2026-09-29_html_viewport_crop_guard_logger.html"
+        },
+        {
+          "label": "Open Crop Row Foveation Replayer",
+          "url": "../outputs/2026-09-29_html_crop_row_foveation_replayer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、W3C WebXR Layers API Level 1、MDN WebXR rendering、MDN XRWebGLLayer.getViewport、Immersive Web Layers samples を確認。設計: 1本目は viewport crop guard logger、2本目は crop row foveation replayer。実装: `outputs/2026-09-29_html_viewport_crop_guard_logger.html` と `outputs/2026-09-29_html_crop_row_foveation_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery 再生成、publish を確認する。",
+      "bodyEn": "Research: checked W3C WebXR Device API, W3C WebXR Layers API Level 1, MDN WebXR rendering, MDN XRWebGLLayer.getViewport, and Immersive Web Layers samples. Design: make the first sample a viewport crop-guard logger, and the second a crop-row foveation replayer. Implementation: add `outputs/2026-09-29_html_viewport_crop_guard_logger.html` and `outputs/2026-09-29_html_crop_row_foveation_replayer.html`. Validation: parse JSON, check embedded HTML scripts, rebuild the gallery, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "9月後半の流れは、session context、overlay recovery、space-warp recovery、attachment audit から viewport crop audit へ進みました。XR の体験品質ログとして、入力 row、tracking row、layer row、attachment row、crop row を同じ粒度へそろえると、後続の policy replay と説明 UI がかなり作りやすくなります。",
+      "bodyEn": "The late-September thread has moved from session context, overlay recovery, space-warp recovery, and attachment audits into viewport crop audits. As XR experience-quality logs, aligning input rows, tracking rows, layer rows, attachment rows, and crop rows at the same granularity makes later policy replay and explanation UI much easier."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `XR Viewport Crop Guard Logger` です。何が動くか: viewport の幅、高さ、offset、foveation から安全余白と route を判定し、JSON row を作ります。次に足すなら、実 `XRWebGLLayer.getViewport()` と `XRWebGLSubImage` の texture 情報を保存します。派生として `Crop Row Foveation Replayer` も実装しました。何が動くか: 本命 row または preset を読み込み、tile ごとの foveation / fallback route を可視化します。次に足すなら、9月27日の attachment size row と merge して tile coverage をより現実寄りにします。",
+      "bodyEn": "The selected main prototype is `XR Viewport Crop Guard Logger`. What it does: judges guard margin and route from viewport width, height, offset, and foveation, then emits JSON rows. Next addition: save real `XRWebGLLayer.getViewport()` and `XRWebGLSubImage` texture data. The derivative `Crop Row Foveation Replayer` was also implemented. What it does: reads the main row or a preset and visualizes per-tile foveation / fallback routing. Next addition: merge it with September 27 attachment-size rows for more realistic tile coverage."
+    }
+  ]
+}

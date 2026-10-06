@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Attachment Crop Merge Policy Replayer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111412;
+      --panel: #19231f;
+      --panel2: #243028;
+      --line: #4a5a52;
+      --text: #f7f1e8;
+      --muted: #b9c3bc;
+      --blue: #82d7f0;
+      --green: #a8df91;
+      --gold: #e9c06e;
+      --red: #ee8178;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(145deg, rgba(130, 215, 240, 0.10), transparent 44%),
+        linear-gradient(315deg, rgba(233, 192, 110, 0.08), transparent 52%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1160px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 40px; }
+    header { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 16px; margin-bottom: 16px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(25, 35, 31, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+    }
+    .panel { padding: 24px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    code { color: var(--blue); }
+    .stage { min-height: 420px; padding: 16px; display: grid; grid-template-rows: auto 1fr auto; gap: 12px; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(8, 15, 13, 0.72); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 21px; overflow-wrap: anywhere; }
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      align-content: center;
+      min-height: 260px;
+      border: 1px solid rgba(247, 241, 232, 0.18);
+      border-radius: 8px;
+      padding: 12px;
+      background: #121916;
+    }
+    .tile {
+      aspect-ratio: 1;
+      border-radius: 5px;
+      border: 1px solid rgba(247, 241, 232, 0.15);
+      background: var(--tile);
+      display: grid;
+      place-items: center;
+      color: rgba(7, 16, 15, 0.8);
+      font-weight: 900;
+      font-size: 11px;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .tile:hover { transform: translateY(-2px); }
+    .controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    select, input, button, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--blue); }
+    button { cursor: pointer; font-weight: 800; background: var(--blue); color: #07100f; border-color: transparent; }
+    section { padding: 16px; margin-top: 16px; }
+    textarea { width: 100%; min-height: 150px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .routes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .route { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(8, 15, 13, 0.58); }
+    .route strong { display: block; margin-bottom: 5px; }
+    .route span { color: var(--muted); font-size: 13px; }
+    @media (max-width: 820px) {
+      header, .controls, .routes { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tiles { grid-template-columns: repeat(4, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Attachment Crop Merge Policy Replayer</h1>
+        <p>9月27日の attachment audit と昨日の crop row、今日の subimage row を1つに畳み、tile 単位で <code>native-submit</code> / <code>patch-crop</code> / <code>hold-depth</code> / <code>projection-fallback</code> を再判定します。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>Dominant</span><strong id="dominantLabel">ready</strong></div>
+          <div class="metric"><span>Native</span><strong id="nativeLabel">0</strong></div>
+          <div class="metric"><span>Fallback</span><strong id="fallbackLabel">0</strong></div>
+          <div class="metric"><span>Policy</span><strong id="policyLabel">balanced</strong></div>
+        </div>
+        <div class="tiles" id="tiles"></div>
+        <p id="hint">row の trust、attachment、crop drift、head motion を合成して、layer submit の説明可能な route にします。</p>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Policy
+        <select id="policy">
+          <option value="balanced">balanced</option>
+          <option value="strict">strict</option>
+          <option value="forgiving">forgiving</option>
+        </select>
+      </label>
+      <label>Head motion
+        <input id="motion" type="range" min="0" max="100" value="32">
+      </label>
+      <label>Preset
+        <select id="preset">
+          <option value="imported">imported / pasted</option>
+          <option value="healthy">healthy subimage</option>
+          <option value="crop">crop drift</option>
+          <option value="attachment">attachment gap</option>
+        </select>
+      </label>
+      <label>Action
+        <button id="applyButton" type="button">merge policy</button>
+      </label>
+    </div>
+
+    <section>
+      <h2>Import Subimage Row</h2>
+      <textarea id="jsonIn" spellcheck="false"></textarea>
+    </section>
+
+    <section>
+      <h2>Route Mix</h2>
+      <div class="routes" id="routes"></div>
+    </section>
+  </main>
+
+  <script>
+    const els = {
+      policy: document.querySelector("#policy"),
+      motion: document.querySelector("#motion"),
+      preset: document.querySelector("#preset"),
+      applyButton: document.querySelector("#applyButton"),
+      jsonIn: document.querySelector("#jsonIn"),
+      tiles: document.querySelector("#tiles"),
+      routes: document.querySelector("#routes"),
+      dominantLabel: document.querySelector("#dominantLabel"),
+      nativeLabel: document.querySelector("#nativeLabel"),
+      fallbackLabel: document.querySelector("#fallbackLabel"),
+      policyLabel: document.querySelector("#policyLabel"),
+      hint: document.querySelector("#hint")
+    };
+
+    const presets = {
+      healthy: { attachment: "color-depth-motion", foveation: "low", trust: 86, driftPx: 76, route: "record-subimage-row", viewport: { widthPercent: 76, heightPercent: 66 } },
+      crop: { attachment: "color-depth-motion", foveation: "medium", trust: 61, driftPx: 260, route: "guarded-viewport-row", viewport: { widthPercent: 68, heightPercent: 58 } },
+      attachment: { attachment: "color-only", foveation: "high", trust: 38, driftPx: 188, route: "projection-fallback-row", viewport: { widthPercent: 58, heightPercent: 48 } }
+    };
+
+    function importedRow() {
+      if (els.preset.value !== "imported") return presets[els.preset.value];
+      try {
+        const parsed = JSON.parse(els.jsonIn.value);
+        return Array.isArray(parsed) ? parsed[0] : parsed;
+      } catch {
+        return presets.crop;
+      }
+    }
+
+    function limit() {
+      return {
+        strict: { native: 78, patch: 60, hold: 46, motion: 66 },
+        balanced: { native: 68, patch: 50, hold: 34, motion: 82 },
+        forgiving: { native: 56, patch: 40, hold: 28, motion: 94 }
+      }[els.policy.value];
+    }
+
+    function route(score, row, rules, motion) {
+      if (row.route === "projection-fallback-row" || motion > rules.motion || score < rules.hold) return "projection-fallback";
+      if (row.attachment === "color-only" || score < rules.patch) return "hold-depth";
+      if (score < rules.native) return "patch-crop";
+      return "native-submit";
+    }
+
+    function replay() {
+      const row = importedRow();
+      const rules = limit();
+      const motion = Number(els.motion.value);
+      const attachmentDebt = { "color-depth-motion": 0, "color-depth": 12, "color-only": 28 }[row.attachment || "color-depth"] || 12;
+      const foveationDebt = { none: 0, low: 5, medium: 13, high: 24 }[row.foveation || "low"] || 5;
+      const cropDebt = Math.min(34, (row.driftPx || 0) / 10);
+      const viewportBonus = Math.max(0, ((row.viewport?.widthPercent || 70) + (row.viewport?.heightPercent || 60) - 110) * 0.16);
+      const counts = { "native-submit": 0, "patch-crop": 0, "hold-depth": 0, "projection-fallback": 0 };
+      const tiles = Array.from({ length: 40 }, (_, index) => {
+        const col = index % 8;
+        const band = Math.abs(col - 3.5) * 3;
+        const score = Math.max(0, Math.min(100, Math.round((row.trust || 60) + viewportBonus - attachmentDebt - foveationDebt - cropDebt - motion * 0.15 - band)));
+        const tileRoute = route(score, row, rules, motion);
+        counts[tileRoute] += 1;
+        return { score, route: tileRoute };
+      });
+      const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+      els.dominantLabel.textContent = dominant;
+      els.nativeLabel.textContent = counts["native-submit"];
+      els.fallbackLabel.textContent = counts["projection-fallback"];
+      els.policyLabel.textContent = els.policy.value;
+      els.tiles.innerHTML = tiles.map((tile) => {
+        const color = {
+          "native-submit": "var(--green)",
+          "patch-crop": "var(--blue)",
+          "hold-depth": "var(--gold)",
+          "projection-fallback": "var(--red)"
+        }[tile.route];
+        return `<div class="tile" style="--tile:${color}" title="${tile.route} / ${tile.score}">${tile.score}</div>`;
+      }).join("");
+      els.routes.innerHTML = Object.entries(counts).map(([name, count]) => `
+        <div class="route">
+          <strong>${name}</strong>
+          <span>${count} tiles</span>
+        </div>
+      `).join("");
+      els.hint.textContent = `${row.attachment || "attachment unknown"} / ${row.foveation || "foveation unknown"} / ${dominant}`;
+      if (els.preset.value !== "imported") els.jsonIn.value = JSON.stringify(row, null, 2);
+    }
+
+    els.applyButton.addEventListener("click", replay);
+    ["input", "change"].forEach((eventName) => {
+      [els.policy, els.motion, els.preset].forEach((el) => el.addEventListener(eventName, replay));
+    });
+
+    els.jsonIn.value = JSON.stringify(presets.crop, null, 2);
+    replay();
+  </script>
+</body>
+</html>
