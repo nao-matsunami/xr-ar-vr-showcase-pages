@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 90</span>
+        <span>days: 91</span>
         <span>page: 3 / 8</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -317,6 +317,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-09-13">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.13</p>
+              <h2>検出平面を Anchor 作成へ渡す前に queue で判定する</h2>
+              <p class="card-subtitle">Queueing detected planes before handing them to anchor creation</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-13" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API 2026-06-09 CRD、Immersive Web の Plane Detection / Anchors / Hit Test 仕様、公式 WebXR Samples を参照し、検出平面から anchor 作成へ進む条件を queue 化する本命サンプルと、`XRPlane.polygon` の frame-to-frame jitter を見る派生サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Device API 2026-06-09 CRD, Immersive Web Plane Detection / Anchors / Hit Test specifications, and official WebXR Samples, today's original work adds a main sample that queues detected planes before anchor creation plus a derivative sample that visualizes frame-to-frame `XRPlane.polygon` jitter.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-09-13.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-09-13_html_plane_anchor_handoff_queue.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-09-12">
           <div class="card-top">
             <div>
@@ -566,29 +589,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-08-31.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-08-31_html_xr_event_pose_ledger.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-30">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.30</p>
-              <h2>XRInputSource.gamepad の frame poll 安定化と input event 差分検査を自作サンプル化</h2>
-              <p class="card-subtitle">Original samples for XRInputSource.gamepad frame-poll stability and input-event diff inspection</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-30" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR Device API、W3C WebXR Gamepads Module、MDN の XRInputSource.gamepad / input guide、Immersive Web Samples の Controller State / Input Selection を確認し、実 inline probe と合成フレームで gamepad poll を安定化する本命サンプルと、select event と frame poll の時刻差を検査する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the W3C WebXR Device API, W3C WebXR Gamepads Module, MDN XRInputSource.gamepad/input guidance, and Immersive Web Controller State/Input Selection samples, today's original work adds a main sample for stabilizing gamepad frame polling with an inline probe plus synthetic frames, and a derivative sample for inspecting timing differences between select events and frame polling.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-30.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-30_html_xr_gamepad_frame_poller_stability_lab.html">代表サンプル / Sample</a>
           </div>
         </article>
       

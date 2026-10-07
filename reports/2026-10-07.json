@@ -1,0 +1,135 @@
+{
+  "date": "2026-10-07",
+  "headline": "予測フレーム予算で Space Warp 復帰を先読みする",
+  "headlineEn": "Reading Space Warp recovery through a predictive frame budget",
+  "summary": "W3C WebXR Layers / Depth、Meta の WebXR Space Warp と WebGPU foveation、Immersive Web WebGPU samples を参照し、次フレームの描画 route を先読みする自作サンプル2本を追加しました。",
+  "summaryEn": "After checking W3C WebXR Layers / Depth, Meta WebXR Space Warp and WebGPU foveation notes, and Immersive Web WebGPU samples, today's original work adds two samples for predicting next-frame rendering routes.",
+  "keyTopics": [
+    "Meta の WebXR Space Warp は、WebXR Layers の `XRProjectionLayer` と、アプリ側が出す motion vector / depth data による compositor の補間を前提にしています。",
+    "Meta Browser 150.1 の release note には WebGPU foveation の experimental support、149.1 には WebGPU support for space-warp layers が記載され、WebGPU / foveation / warp を同じ予算で見る理由があります。",
+    "W3C WebXR Layers API Level 1 は 2026-08-11 Working Draft で、projection layer、composition layer、`fixedFoveation` などの土台を確認できます。",
+    "W3C WebXR Depth Sensing Module は 2026-08-25 Working Draft で、depth data を occlusion や物理的な実世界理解へ使う流れを確認できます。",
+    "今日の公開カードは `Predictive Frame Budget Governor` と `Frame Budget Replay Comparator` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "Meta WebXR Space Warp depends on WebXR Layers `XRProjectionLayer` and compositor interpolation driven by app-provided motion-vector and depth data.",
+    "Meta Browser 150.1 notes experimental WebGPU foveation support, while 149.1 notes WebGPU support for space-warp layers, making WebGPU / foveation / warp a shared budget problem.",
+    "W3C WebXR Layers API Level 1 has an 11 August 2026 Working Draft covering projection layers, composition layers, and `fixedFoveation`.",
+    "W3C WebXR Depth Sensing Module has a 25 August 2026 Working Draft that frames depth data as input for occlusion and real-world understanding.",
+    "Today's public cards are the two original samples `Predictive Frame Budget Governor` and `Frame Budget Replay Comparator`."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Predictive Frame Budget Governor",
+      "url": "../outputs/2026-10-07_html_predictive_frame_budget_governor.html"
+    },
+    {
+      "label": "Today's derivative sample: Frame Budget Replay Comparator",
+      "url": "../outputs/2026-10-07_html_frame_budget_replay_comparator.html"
+    },
+    {
+      "label": "Meta: WebXR Space Warp",
+      "url": "https://developers.meta.com/vr/documentation/web/webxr-space-warp/"
+    },
+    {
+      "label": "Meta Horizon OS release notes: Browser WebGPU / WebXR notes",
+      "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+    },
+    {
+      "label": "Meta Browser 150.1 release notes",
+      "url": "https://developers.meta.com/vr/downloads/package/browser/150.1/?view=full_width"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1 publication history",
+      "url": "https://www.w3.org/standards/history/webxrlayers-1/"
+    },
+    {
+      "label": "W3C: WebXR Depth Sensing Module",
+      "url": "https://www.w3.org/TR/webxr-depth-sensing-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR WebGPU Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Meta の WebXR Space Warp documentation は、`XRProjectionLayer` と motion vector / depth data を使って compositor が外挿・再投影し、web app 側は低い frame rate でも滑らかさを保てる、という考え方を示しています。さらに Meta Browser 149.1 / 150.1 の release note では WebGPU support for space-warp layers と WebGPU foveation support が近接しており、昨日の foveation tile risk を `次フレームの route 予測` に押し出す価値があります。今日は外部デモ一覧ではなく、自作の governor と replay comparator にしました。",
+      "bodyEn": "Meta's WebXR Space Warp documentation frames the feature around `XRProjectionLayer` plus app-provided motion-vector and depth data so the compositor can extrapolate and reproject, letting web apps run at lower frame rates while preserving smoothness. Meta Browser 149.1 / 150.1 release notes place WebGPU support for space-warp layers near WebGPU foveation support, making yesterday's foveated tile risk useful as a next-frame route predictor. Today keeps the archive centered on original governor and replay-comparator samples instead of external demo cards.",
+      "links": [
+        {
+          "label": "Meta: WebXR Space Warp",
+          "url": "https://developers.meta.com/vr/documentation/web/webxr-space-warp/"
+        },
+        {
+          "label": "Meta Horizon OS release notes",
+          "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Predictive Frame Budget Governor` は、GPU headroom、motion miss、depth stale、prediction confidence を操作し、次の frame route を `balanced-projection-layer`、`raise-foveation-keep-warp`、`drop-peripheral-redraw`、`reduce-foveation-and-hold-warp`、`full-render-safety-frame` に分けます。派生サンプル `Frame Budget Replay Comparator` は、その route が次の5フレームの synthetic outcome と合っていたかを見ます。体験としては、画質設定を後追いで動かすのではなく、1-2フレーム先の失敗を読む dashboard です。",
+      "bodyEn": "The main sample, `Predictive Frame Budget Governor`, manipulates GPU headroom, motion miss, depth staleness, and prediction confidence, then classifies the next frame into `balanced-projection-layer`, `raise-foveation-keep-warp`, `drop-peripheral-redraw`, `reduce-foveation-and-hold-warp`, or `full-render-safety-frame`. The derivative sample, `Frame Budget Replay Comparator`, checks whether that route matched the next five synthetic frame outcomes. The interaction is a dashboard for reading failures one or two frames ahead rather than reacting after image quality has already dropped."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "保存する row は `gpuHeadroom`、`motionMissPx`、`depthStaleMs`、`predictionConfidence`、`motionConfidence`、`depthConfidence`、`stableBudget`、`nextFrameMs`、`quality`、`risk`、`route` にしました。実機版では WebGPU / WebXR binding の projection layer、Space Warp 用の motion vector texture、Depth Sensing の frame age、`XRProjectionLayer.fixedFoveation` を同一 timestamp で IndexedDB に入れると、予測 route と観測 frame time の差分を追えます。",
+      "bodyEn": "The saved row is `gpuHeadroom`, `motionMissPx`, `depthStaleMs`, `predictionConfidence`, `motionConfidence`, `depthConfidence`, `stableBudget`, `nextFrameMs`, `quality`, `risk`, and `route`. On device, storing projection-layer state from the WebGPU / WebXR binding path, Space Warp motion-vector texture readiness, Depth Sensing frame age, and `XRProjectionLayer.fixedFoveation` under one timestamp in IndexedDB would make it possible to compare predicted routes against observed frame time."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の governor row と replay row は、XR QA で `なぜこの frame だけ full render に戻したか`、`予測では foveation を上げたが、実際は depth delay で失敗した` という説明に使えます。動画、Gaussian Splatting、操作 UI、展示空間のログと組み合わせるなら、どの体験シーンで motion vector / depth / foveation のどれが支配的な失敗要因だったかを後からランキングできます。",
+      "bodyEn": "Today's governor and replay rows are useful for XR QA explanations such as why a frame returned to full render or why a predicted foveation increase failed because of depth delay. Combined with video, Gaussian splatting, operational UI, or installation logs, the rows can later rank which scene was dominated by motion-vector, depth, or foveation failure."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Meta Browser の WebGPU foveation / space-warp layers、Immersive Web の WebGPU samples、WebXR-WebGPU Binding の motion vector / depth attachment、WebXR Layers の `fixedFoveation`、Depth Sensing の Working Draft 更新を継続します。自作側では、10月3日から10月7日までの reprojection / prediction / depth-motion / foveation / frame-budget row を同じ import schema に寄せるのが次の山です。",
+      "bodyEn": "Keep watching Meta Browser WebGPU foveation / space-warp layer notes, Immersive Web WebGPU samples, motion-vector / depth attachments in the WebXR-WebGPU Binding work, WebXR Layers `fixedFoveation`, and Depth Sensing Working Draft updates. On the original side, the next milestone is normalizing October 3-7 reprojection, prediction, depth-motion, foveation, and frame-budget rows into one import schema."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Predictive Frame Budget Governor` で GPU headroom を下げ、motion miss と depth stale を上げると、route が `drop-peripheral-redraw` や `full-render-safety-frame` に移ります。その route を `Frame Budget Replay Comparator` の seed route に合わせ、jitter / GPU dip / depth delay / warp miss を動かすと、予測が当たる frame と reset が遅れた frame が見えます。",
+      "bodyEn": "In `Predictive Frame Budget Governor`, lower GPU headroom and raise motion miss plus depth staleness to push the route toward `drop-peripheral-redraw` or `full-render-safety-frame`. Then set that route as the seed in `Frame Budget Replay Comparator` and adjust jitter, GPU dip, depth delay, and warp miss to see which frames matched and which reset too late.",
+      "links": [
+        {
+          "label": "Open Predictive Frame Budget Governor",
+          "url": "../outputs/2026-10-07_html_predictive_frame_budget_governor.html"
+        },
+        {
+          "label": "Open Frame Budget Replay Comparator",
+          "url": "../outputs/2026-10-07_html_frame_budget_replay_comparator.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Meta WebXR Space Warp、Meta Browser release notes、W3C WebXR Layers publication history、W3C Depth Sensing、Immersive Web WebGPU / Layers samples を確認。設計: 1本目は predictive frame budget governor、2本目は frame budget replay comparator。実装: `outputs/2026-10-07_html_predictive_frame_budget_governor.html` と `outputs/2026-10-07_html_frame_budget_replay_comparator.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery / day page 再生成、publish を確認する。",
+      "bodyEn": "Research: checked Meta WebXR Space Warp, Meta Browser release notes, W3C WebXR Layers publication history, W3C Depth Sensing, and Immersive Web WebGPU / Layers samples. Design: make the first sample a predictive frame budget governor and the second a frame budget replay comparator. Implementation: add `outputs/2026-10-07_html_predictive_frame_budget_governor.html` and `outputs/2026-10-07_html_frame_budget_replay_comparator.html`. Validation: parse JSON, check embedded HTML scripts, regenerate gallery / day pages, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月前半は visibility mask、prediction miss、depth + motion vector、Space Warp recovery、foveated tile risk と進みました。今日はそれらを `次フレームの判断` に寄せ、どの route を選ぶべきだったかを replay で検証する形にしました。次は実 session row を IndexedDB から読み、同じ画面で `予測` と `観測` を並べると、日次サンプルが実機 QA ツールに近づきます。",
+      "bodyEn": "Early October has moved through visibility masks, prediction misses, depth + motion vectors, Space Warp recovery, and foveated tile risk. Today turns those into next-frame decisions and validates which route should have been chosen through replay. Next, loading real session rows from IndexedDB and comparing prediction with observation in the same screen would move the daily samples closer to a headset QA tool."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Predictive Frame Budget Governor` です。何が動くか: GPU headroom、motion miss、depth stale、prediction confidence から stable budget、next frame ms、quality、risk、route を計算し、4本の状態 lane と needle で表示します。次に足すなら、実 `XRProjectionLayer.fixedFoveation`、motion vector texture readiness、depth frame age を IndexedDB に保存します。派生として `Frame Budget Replay Comparator` も実装しました。何が動くか: seed route と5フレームの synthetic outcome を比較し、予測一致、late reset、score を表示します。次に足すなら、1本目の export row を直接 paste / import し、実 headset session の frame time と比較します。",
+      "bodyEn": "The selected main prototype is `Predictive Frame Budget Governor`. What it does: computes stable budget, next-frame milliseconds, quality, risk, and route from GPU headroom, motion miss, depth staleness, and prediction confidence, then displays four state lanes and a needle. Next addition: save real `XRProjectionLayer.fixedFoveation`, motion-vector texture readiness, and depth frame age to IndexedDB. The derivative `Frame Budget Replay Comparator` was also implemented. What it does: compares a seed route against five synthetic frame outcomes and displays prediction matches, late resets, and score. Next addition: directly paste / import the first sample's export row and compare it with real headset session frame time."
+    }
+  ]
+}
