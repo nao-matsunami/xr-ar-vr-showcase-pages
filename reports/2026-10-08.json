@@ -1,0 +1,139 @@
+{
+  "date": "2026-10-08",
+  "headline": "予測 row と観測 row を同じ telemetry schema に寄せる",
+  "headlineEn": "Mapping predicted and observed rows into one telemetry schema",
+  "summary": "W3C WebXR Layers / Device API、Meta Browser の WebGPU foveation / Space Warp release notes、Immersive Web WebGPU samples を参照し、10月前半の frame budget 系サンプルを実機ログへつなぐ自作サンプル2本を追加しました。",
+  "summaryEn": "After checking W3C WebXR Layers / Device API, Meta Browser WebGPU foveation / Space Warp release notes, and Immersive Web WebGPU samples, today's original work adds two samples that connect early-October frame-budget prototypes to headset telemetry rows.",
+  "keyTopics": [
+    "W3C WebXR Layers API Level 1 は `XRProjectionLayer`、`fixedFoveation`、`deltaPose` などを扱い、frame route の予測と観測を結びつける土台になります。",
+    "Meta Browser 149.1 / 150.1 の release notes では WebGPU support for space-warp layers と experimental WebGPU foveation support が近接しており、GPU / warp / foveation を同じ telemetry row で見る理由があります。",
+    "Immersive Web の WebGPU samples は `XRGPUBinding` と `XRProjectionLayer` を使う WebXR + WebGPU の実装入口として参照できます。",
+    "WebXR Device API は frame、view、layer、input の基礎仕様で、実機ログの timestamp と route 判定を揃えるための共通語彙になります。",
+    "今日の公開カードは `Frame Telemetry Schema Mapper` と `Prediction Observation Diff Replayer` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "W3C WebXR Layers API Level 1 covers `XRProjectionLayer`, `fixedFoveation`, and `deltaPose`, making it a foundation for connecting predicted and observed frame routes.",
+    "Meta Browser 149.1 / 150.1 release notes place WebGPU support for space-warp layers and experimental WebGPU foveation support close together, which is a reason to track GPU, warp, and foveation in one telemetry row.",
+    "Immersive Web WebGPU samples are a practical entry point for WebXR + WebGPU implementation with `XRGPUBinding` and `XRProjectionLayer`.",
+    "The WebXR Device API supplies the baseline vocabulary for frames, views, layers, and input, useful when aligning headset timestamps and route decisions.",
+    "Today's public cards are the two original samples `Frame Telemetry Schema Mapper` and `Prediction Observation Diff Replayer`."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Frame Telemetry Schema Mapper",
+      "url": "../outputs/2026-10-08_html_frame_telemetry_schema_mapper.html"
+    },
+    {
+      "label": "Today's derivative sample: Prediction Observation Diff Replayer",
+      "url": "../outputs/2026-10-08_html_prediction_observation_diff_replayer.html"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR WebGPU Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples repository",
+      "url": "https://github.com/immersive-web/webxr-samples"
+    },
+    {
+      "label": "Meta Horizon OS release notes: Browser WebGPU / WebXR notes",
+      "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+    },
+    {
+      "label": "Meta Browser 150.1 release notes",
+      "url": "https://developers.meta.com/vr/downloads/package/browser/150.1/?view=full_width"
+    },
+    {
+      "label": "Meta: WebXR Space Warp",
+      "url": "https://developers.meta.com/vr/documentation/web/webxr-space-warp/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Meta Browser の release notes では、149.1 に WebGPU support for space-warp layers、150.1 に experimental support for foveation to WebGPU in WebXR が並びます。W3C WebXR Layers では `XRProjectionLayer.fixedFoveation` が次の `XRFrame` で反映される性質を確認でき、Immersive Web の WebGPU samples は `XRGPUBinding` と `XRProjectionLayer` の入口を示しています。面白いのは、画質調整を単発の slider ではなく、`予測 row` と `観測 row` の差分として蓄積できる点です。",
+      "bodyEn": "Meta Browser release notes list WebGPU support for space-warp layers in 149.1 and experimental WebGPU foveation support in WebXR in 150.1. W3C WebXR Layers documents that `XRProjectionLayer.fixedFoveation` changes take effect at the next `XRFrame`, while Immersive Web WebGPU samples provide an entry point for `XRGPUBinding` and `XRProjectionLayer`. The interesting part is treating quality adjustment as an accumulated diff between predicted rows and observed rows, not as a one-off slider.",
+      "links": [
+        {
+          "label": "Meta Horizon OS release notes",
+          "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+        },
+        {
+          "label": "W3C: WebXR Layers API Level 1",
+          "url": "https://www.w3.org/TR/webxrlayers-1/"
+        },
+        {
+          "label": "Immersive Web: WebXR WebGPU Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Frame Telemetry Schema Mapper` は、10月4日の prediction、10月5日の depth-motion、10月6日の foveation、10月7日の frame-budget を source day として選び、frameMs、motionErrorPx、depthAgeMs、fixedFoveation を共通 observation row に正規化します。派生サンプル `Prediction Observation Diff Replayer` は、その row から予測 route と観測 route のズレを6フレームで再生します。体験としては、毎日の小さな試作を実機 QA の同じログ形式へ寄せる橋です。",
+      "bodyEn": "The main sample, `Frame Telemetry Schema Mapper`, lets you choose October 4 prediction, October 5 depth-motion, October 6 foveation, or October 7 frame-budget as the source day, then normalizes frameMs, motionErrorPx, depthAgeMs, and fixedFoveation into a shared observation row. The derivative sample, `Prediction Observation Diff Replayer`, replays the mismatch between predicted and observed routes across six frames. The interaction is a bridge from daily prototypes into one headset-QA log format."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "今日の schema は `timestamp`、`frameMs`、`motionErrorPx`、`depthAgeMs`、`fixedFoveation`、`predictedRoute`、`observedRoute` を必須候補にしました。実機版では `XRFrame` timestamp、WebGPU / WebXR binding の projection layer 状態、Depth Sensing の frame age、motion vector texture readiness、`XRProjectionLayer.fixedFoveation` を同じ row に保存し、予測と観測の route flip を再生できるようにします。",
+      "bodyEn": "Today's schema treats `timestamp`, `frameMs`, `motionErrorPx`, `depthAgeMs`, `fixedFoveation`, `predictedRoute`, and `observedRoute` as required candidates. On device, the `XRFrame` timestamp, projection-layer state from the WebGPU / WebXR binding path, Depth Sensing frame age, motion-vector texture readiness, and `XRProjectionLayer.fixedFoveation` should be saved into one row so route flips between prediction and observation can be replayed."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の observation row と diff row は、実機 QA、展示ログ、Gaussian Splatting の LOD 制御、360動画の decode / render budget、操作 UI の品質説明に使えます。たとえば `motionErrorPx が高い時は splat LOD を落とす`、`depthAgeMs が古い時は occlusion を hold する`、`fixedFoveation を上げたのに frameMs が改善しない時は shader path を疑う` という分析に接続できます。",
+      "bodyEn": "Today's observation and diff rows can support headset QA, installation logs, Gaussian splatting LOD control, 360-video decode / render budgets, and operational UI explanations. Example uses include lowering splat LOD when `motionErrorPx` is high, holding occlusion when `depthAgeMs` is stale, or questioning the shader path when raising `fixedFoveation` does not improve `frameMs`."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR-WebGPU Binding、Immersive Web WebGPU samples、Meta Browser の WebGPU foveation / space-warp layers、W3C WebXR Layers の `fixedFoveation` と `deltaPose`、Depth Sensing の Working Draft 更新を継続します。自作側では、今日の schema mapper に 10月3日から10月7日までの export row を paste / import できるようにして、日跨ぎ replay を作るのが次の山です。",
+      "bodyEn": "Keep watching WebXR-WebGPU Binding work, Immersive Web WebGPU samples, Meta Browser WebGPU foveation / space-warp layer notes, W3C WebXR Layers `fixedFoveation` and `deltaPose`, and Depth Sensing Working Draft updates. On the original side, the next milestone is adding paste / import for October 3-7 export rows into today's schema mapper and creating cross-day replay."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Frame Telemetry Schema Mapper` で source day を切り替え、frameMs、motion error、depth age、foveation を動かすと coverage と missing fields が変わります。次に `Prediction Observation Diff Replayer` で predicted route、observed drift、GPU dip、depth lag、reset delay を動かすと、予測が当たった frame と route flip が見えます。",
+      "bodyEn": "In `Frame Telemetry Schema Mapper`, switch the source day and adjust frameMs, motion error, depth age, and foveation to see coverage and missing fields change. Then in `Prediction Observation Diff Replayer`, adjust predicted route, observed drift, GPU dip, depth lag, and reset delay to see matched frames and route flips.",
+      "links": [
+        {
+          "label": "Open Frame Telemetry Schema Mapper",
+          "url": "../outputs/2026-10-08_html_frame_telemetry_schema_mapper.html"
+        },
+        {
+          "label": "Open Prediction Observation Diff Replayer",
+          "url": "../outputs/2026-10-08_html_prediction_observation_diff_replayer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Layers、W3C WebXR Device API、Immersive Web WebGPU samples、webxr-samples repository、Meta Browser release notes、Meta WebXR Space Warp を確認。設計: 1本目は telemetry schema mapper、2本目は prediction / observation diff replayer。実装: `outputs/2026-10-08_html_frame_telemetry_schema_mapper.html` と `outputs/2026-10-08_html_prediction_observation_diff_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery / day page 再生成、publish を確認する。",
+      "bodyEn": "Research: checked W3C WebXR Layers, W3C WebXR Device API, Immersive Web WebGPU samples, the webxr-samples repository, Meta Browser release notes, and Meta WebXR Space Warp. Design: make the first sample a telemetry schema mapper and the second a prediction / observation diff replayer. Implementation: add `outputs/2026-10-08_html_frame_telemetry_schema_mapper.html` and `outputs/2026-10-08_html_prediction_observation_diff_replayer.html`. Validation: parse JSON, check embedded HTML scripts, regenerate gallery / day pages, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月前半は visibility mask、reprojection、prediction miss、depth-motion、space warp、foveation、frame budget と進みました。今日の役割は、これらを実測ログに接続するための `列名を揃える日` です。次に実機 row を IndexedDB から読み、同じ diff replayer に流せるようにすると、日次サンプルが単発 UI から継続観測ツールへ近づきます。",
+      "bodyEn": "Early October has moved through visibility masks, reprojection, prediction misses, depth-motion, space warp, foveation, and frame budgets. Today's role is to align column names so those prototypes can connect to measured logs. Loading real rows from IndexedDB into the same diff replayer would move the archive from one-off UI sketches toward an ongoing observation tool."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Frame Telemetry Schema Mapper` です。何が動くか: 10月4日から10月7日の系統を source day として切り替え、frameMs、motionErrorPx、depthAgeMs、fixedFoveation を共通 row に正規化し、coverage、missing fields、observed route を表示します。次に足すなら、過去サンプルの export JSON を paste / import して自動 mapping します。派生として `Prediction Observation Diff Replayer` も実装しました。何が動くか: predicted route と観測条件を6フレームで比較し、matched、route flips、late holds、confidence を表示します。次に足すなら、1本目の export row を直接読み込み、実 headset session の frame time と比較します。",
+      "bodyEn": "The selected main prototype is `Frame Telemetry Schema Mapper`. What it does: switches between October 4-7 source-day families, normalizes frameMs, motionErrorPx, depthAgeMs, and fixedFoveation into a shared row, and displays coverage, missing fields, and observed route. Next addition: paste / import export JSON from earlier samples and map it automatically. The derivative `Prediction Observation Diff Replayer` was also implemented. What it does: compares a predicted route with observed conditions across six frames and displays matched count, route flips, late holds, and confidence. Next addition: directly load the first sample's export row and compare it against real headset session frame time."
+    }
+  ]
+}

@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Frame Telemetry Schema Mapper</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f1515;
+      --panel: #182323;
+      --panel2: #243132;
+      --line: #5d7270;
+      --text: #f6f2ea;
+      --muted: #c4d0ca;
+      --cyan: #7bdde2;
+      --green: #a6d982;
+      --gold: #e7c76f;
+      --red: #ef827b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(123, 221, 226, 0.14), transparent 38%),
+        linear-gradient(310deg, rgba(231, 199, 111, 0.1), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(24, 35, 35, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 52px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(8, 11, 12, 0.62); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+    .mapper { display: grid; gap: 8px; min-height: 348px; align-content: center; }
+    .lane {
+      display: grid;
+      grid-template-columns: 150px 1fr 94px;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(8, 11, 12, 0.56);
+      color: var(--muted);
+    }
+    .track { height: 16px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+    .fill { height: 100%; width: 0; background: var(--cyan); transition: width 0.18s ease; }
+    .fill.warn { background: var(--gold); }
+    .fill.bad { background: var(--red); }
+    .controls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    input, select, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--cyan); }
+    textarea { width: 100%; min-height: 190px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .rows { display: grid; gap: 8px; }
+    .row { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(8, 11, 12, 0.62); color: var(--muted); }
+    @media (max-width: 900px) {
+      header, .controls, .metrics, .lane { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Frame Telemetry Schema Mapper</h1>
+        <p>10月前半の prediction、depth、motion vector、foveation、frame budget row を、実機ログへつなぐための正規化パッドです。入力値を 1 つの observation schema に畳み、どの列が不足しているかを見ます。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>schema</span><strong id="schemaMetric">-</strong></div>
+          <div class="metric"><span>coverage</span><strong id="coverageMetric">0%</strong></div>
+          <div class="metric"><span>risk</span><strong id="riskMetric">0</strong></div>
+          <div class="metric"><span>route</span><strong id="routeMetric">-</strong></div>
+        </div>
+        <div id="mapper" class="mapper" aria-label="telemetry schema mapper"></div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Source day
+        <select id="sourceSelect">
+          <option value="prediction">10/04 prediction</option>
+          <option value="depth-motion">10/05 depth-motion</option>
+          <option value="foveation">10/06 foveation</option>
+          <option value="frame-budget">10/07 frame-budget</option>
+        </select>
+      </label>
+      <label>Frame ms
+        <input id="frameRange" type="range" min="11" max="25" value="17">
+      </label>
+      <label>Motion error
+        <input id="motionRange" type="range" min="0" max="120" value="42">
+      </label>
+      <label>Depth age
+        <input id="depthRange" type="range" min="0" max="180" value="56">
+      </label>
+      <label>Foveation
+        <input id="foveationRange" type="range" min="0" max="100" value="48">
+      </label>
+    </div>
+
+    <section>
+      <h2>Normalized fields</h2>
+      <div id="rows" class="rows"></div>
+    </section>
+
+    <section>
+      <h2>Export observation row</h2>
+      <textarea id="rowBox" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const sourceFields = {
+      prediction: ["timestamp", "predictedRoute", "predictionConfidence", "motionErrorPx", "frameMs"],
+      "depth-motion": ["timestamp", "motionVectorReady", "depthAgeMs", "motionErrorPx", "depthConfidence"],
+      foveation: ["timestamp", "fixedFoveation", "tileRisk", "gpuHeadroom", "frameMs"],
+      "frame-budget": ["timestamp", "gpuHeadroom", "depthAgeMs", "motionErrorPx", "predictedRoute", "frameMs"]
+    };
+
+    const required = [
+      "timestamp",
+      "frameMs",
+      "motionErrorPx",
+      "depthAgeMs",
+      "fixedFoveation",
+      "predictedRoute",
+      "observedRoute"
+    ];
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function observedRoute(frameMs, motionErrorPx, depthAgeMs, fixedFoveation) {
+      if (frameMs > 20.8 || motionErrorPx > 92) return "full-render-safety-frame";
+      if (depthAgeMs > 120) return "hold-depth-and-reproject";
+      if (fixedFoveation > 0.7 && frameMs > 17.8) return "lower-foveation-check";
+      if (frameMs < 15.5 && motionErrorPx < 36) return "raise-foveation-keep-warp";
+      return "balanced-observation";
+    }
+
+    function compute() {
+      const source = $("sourceSelect").value;
+      const frameMs = Number($("frameRange").value);
+      const motionErrorPx = Number($("motionRange").value);
+      const depthAgeMs = Number($("depthRange").value);
+      const fixedFoveation = Number($("foveationRange").value) / 100;
+      const fields = new Set(sourceFields[source]);
+      const route = observedRoute(frameMs, motionErrorPx, depthAgeMs, fixedFoveation);
+      fields.add("observedRoute");
+      if (source === "depth-motion" || source === "frame-budget") fields.add("depthAgeMs");
+      if (source === "foveation") fields.add("fixedFoveation");
+      const coverage = required.filter((field) => fields.has(field)).length / required.length;
+      const risk = clamp((frameMs - 13) / 12 * 0.32 + motionErrorPx / 120 * 0.28 + depthAgeMs / 180 * 0.24 + fixedFoveation * 0.16, 0, 1);
+      return {
+        source,
+        timestamp: new Date().toISOString(),
+        frameMs,
+        motionErrorPx,
+        depthAgeMs,
+        fixedFoveation: Number(fixedFoveation.toFixed(2)),
+        predictedRoute: source === "prediction" || source === "frame-budget" ? "drop-peripheral-redraw" : "missing",
+        observedRoute: route,
+        coverage: Number(coverage.toFixed(3)),
+        risk: Number(risk.toFixed(3)),
+        missingFields: required.filter((field) => !fields.has(field))
+      };
+    }
+
+    function renderLane(label, value, badAt, suffix = "") {
+      const pct = clamp(value / badAt, 0, 1);
+      const state = pct > 0.78 ? "bad" : pct > 0.55 ? "warn" : "";
+      return `
+        <div class="lane">
+          <span>${label}</span>
+          <div class="track"><div class="fill ${state}" style="width:${Math.round(pct * 100)}%"></div></div>
+          <strong>${value}${suffix}</strong>
+        </div>
+      `;
+    }
+
+    function render() {
+      const row = compute();
+      $("schemaMetric").textContent = row.source;
+      $("coverageMetric").textContent = `${Math.round(row.coverage * 100)}%`;
+      $("riskMetric").textContent = row.risk.toFixed(2);
+      $("routeMetric").textContent = row.observedRoute;
+      $("mapper").innerHTML = [
+        renderLane("frameMs", row.frameMs, 24, " ms"),
+        renderLane("motionError", row.motionErrorPx, 120, " px"),
+        renderLane("depthAge", row.depthAgeMs, 180, " ms"),
+        renderLane("fixedFoveation", Math.round(row.fixedFoveation * 100), 100, "%")
+      ].join("");
+      $("rows").innerHTML = [
+        `missing: ${row.missingFields.length ? row.missingFields.join(", ") : "none"}`,
+        `predicted: ${row.predictedRoute}`,
+        `observed: ${row.observedRoute}`,
+        `next: IndexedDB の実 session row をこの schema へ import する`
+      ].map((text) => `<div class="row">${text}</div>`).join("");
+      $("rowBox").value = JSON.stringify(row, null, 2);
+    }
+
+    document.querySelectorAll("input, select").forEach((input) => input.addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>

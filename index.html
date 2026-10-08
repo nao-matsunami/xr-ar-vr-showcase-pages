@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 91</span>
+        <span>days: 92</span>
         <span>page: 1 / 8</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -317,6 +317,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-10-08">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.08</p>
+              <h2>予測 row と観測 row を同じ telemetry schema に寄せる</h2>
+              <p class="card-subtitle">Mapping predicted and observed rows into one telemetry schema</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-08" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Layers / Device API、Meta Browser の WebGPU foveation / Space Warp release notes、Immersive Web WebGPU samples を参照し、10月前半の frame budget 系サンプルを実機ログへつなぐ自作サンプル2本を追加しました。</p>
+          <p class="description en-copy">After checking W3C WebXR Layers / Device API, Meta Browser WebGPU foveation / Space Warp release notes, and Immersive Web WebGPU samples, today's original work adds two samples that connect early-October frame-budget prototypes to headset telemetry rows.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-10-08.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-10-08_html_frame_telemetry_schema_mapper.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-10-07">
           <div class="card-top">
             <div>
@@ -566,29 +589,6 @@
           <div class="actions">
             <a class="primary" href="days/2026-09-27.html">その日のページ / Day</a>
             <a class="secondary-link" href="outputs/2026-09-27_html_subimage_attachment_size_auditor.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-26">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.26</p>
-              <h2>XRLayer redraw を timestamp 付きの復帰行として保存する</h2>
-              <p class="card-subtitle">Saving XRLayer redraw as timestamped recovery rows</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-26" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR Layers API Level 1、W3C WebXR Device API、MDN XRLayerEvent、Immersive Web Layers samples、Meta の WebXR Space Warp 資料を参照し、`redraw` と frame timestamp、depth / motion vector attachment を同じ JSON row にまとめる本命サンプルと、その row を strict / balanced / forgiving policy で再判定する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking the W3C WebXR Layers API Level 1, W3C WebXR Device API, MDN XRLayerEvent, Immersive Web Layers samples, and Meta's WebXR Space Warp documentation, today's original work adds a main sample that stores `redraw`, frame timestamps, and depth / motion vector attachments in one JSON row, plus a derivative replay sample that compares strict / balanced / forgiving recovery policies.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-26.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-26_html_xrlayer_redraw_timestamp_logger.html">代表サンプル / Sample</a>
           </div>
         </article>
       

@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prediction Observation Diff Replayer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101416;
+      --panel: #1a2227;
+      --panel2: #26323a;
+      --line: #62717a;
+      --text: #f7f1e9;
+      --muted: #cbd0cc;
+      --blue: #81c7f2;
+      --green: #a3db83;
+      --gold: #e8c56e;
+      --red: #ef8179;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(140deg, rgba(129, 199, 242, 0.13), transparent 40%),
+        linear-gradient(310deg, rgba(163, 219, 131, 0.1), transparent 56%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1160px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(26, 34, 39, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 50px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(8, 10, 12, 0.62); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+    .timeline { display: grid; gap: 8px; min-height: 348px; align-content: center; }
+    .frame {
+      display: grid;
+      grid-template-columns: 80px 1fr 138px;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(8, 10, 12, 0.55);
+      color: var(--muted);
+    }
+    .track { height: 16px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+    .fill { height: 100%; width: 0; transition: width 0.18s ease; }
+    .ok { background: var(--green); }
+    .watch { background: var(--gold); }
+    .fail { background: var(--red); }
+    .controls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    label { display: grid; gap: 8px; color: var(--muted); font-size: 13px; }
+    input, select, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    input[type="range"] { padding: 0; accent-color: var(--blue); }
+    textarea { width: 100%; min-height: 180px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .queue { display: grid; gap: 8px; }
+    .row { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(8, 10, 12, 0.62); color: var(--muted); }
+    @media (max-width: 900px) {
+      header, .controls, .metrics, .frame { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Prediction Observation Diff Replayer</h1>
+        <p>1本目の observation row を受け取った後の派生試作です。予測 route と観測 route のズレを 6 フレームで再生し、どこで reset、hold、quality loss が起きたかを小さく拾います。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>matched</span><strong id="matchedMetric">0</strong></div>
+          <div class="metric"><span>route flips</span><strong id="flipMetric">0</strong></div>
+          <div class="metric"><span>late holds</span><strong id="holdMetric">0</strong></div>
+          <div class="metric"><span>confidence</span><strong id="confidenceMetric">0%</strong></div>
+        </div>
+        <div id="timeline" class="timeline" aria-label="prediction observation diff timeline"></div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <label>Predicted route
+        <select id="routeSelect">
+          <option value="drop-peripheral-redraw">drop-peripheral-redraw</option>
+          <option value="balanced-observation">balanced-observation</option>
+          <option value="raise-foveation-keep-warp">raise-foveation-keep-warp</option>
+          <option value="hold-depth-and-reproject">hold-depth-and-reproject</option>
+          <option value="full-render-safety-frame">full-render-safety-frame</option>
+        </select>
+      </label>
+      <label>Observed drift
+        <input id="driftRange" type="range" min="0" max="100" value="46">
+      </label>
+      <label>GPU dip
+        <input id="gpuRange" type="range" min="0" max="100" value="40">
+      </label>
+      <label>Depth lag
+        <input id="depthRange" type="range" min="0" max="100" value="52">
+      </label>
+      <label>Reset delay
+        <input id="resetRange" type="range" min="0" max="100" value="34">
+      </label>
+    </div>
+
+    <section>
+      <h2>Diff findings</h2>
+      <div id="queue" class="queue"></div>
+    </section>
+
+    <section>
+      <h2>Export diff row</h2>
+      <textarea id="rowBox" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function classify(frameMs, drift, depthLag, resetDelay) {
+      if (frameMs > 21.2 || drift > 0.86) return "full-render-safety-frame";
+      if (depthLag > 0.72) return "hold-depth-and-reproject";
+      if (resetDelay > 0.68 && frameMs > 18) return "drop-peripheral-redraw";
+      if (frameMs < 15.4 && drift < 0.34) return "raise-foveation-keep-warp";
+      return "balanced-observation";
+    }
+
+    function compute() {
+      const predicted = $("routeSelect").value;
+      const drift = Number($("driftRange").value) / 100;
+      const gpuDip = Number($("gpuRange").value) / 100;
+      const depthLag = Number($("depthRange").value) / 100;
+      const resetDelay = Number($("resetRange").value) / 100;
+      const frames = Array.from({ length: 6 }, (_, index) => {
+        const pulse = Math.sin((index + 1) * 1.04) * 0.07;
+        const frameMs = clamp(14.6 + gpuDip * 4.6 + drift * 2.1 + resetDelay * index * 0.46 + pulse * 8, 12, 24);
+        const observed = classify(frameMs, drift + index * 0.035, depthLag - index * 0.025, resetDelay);
+        const matched = observed === predicted || (predicted === "drop-peripheral-redraw" && observed === "full-render-safety-frame");
+        const holdLate = observed === "hold-depth-and-reproject" && index > 2;
+        return {
+          index,
+          frameMs: Number(frameMs.toFixed(2)),
+          predicted,
+          observed,
+          matched,
+          holdLate
+        };
+      });
+      const matched = frames.filter((frame) => frame.matched).length;
+      const flips = frames.filter((frame) => frame.observed !== predicted).length;
+      const lateHolds = frames.filter((frame) => frame.holdLate).length;
+      const confidence = clamp(matched / frames.length - flips * 0.04 - lateHolds * 0.08, 0, 1);
+      return {
+        predicted,
+        drift: Number(drift.toFixed(2)),
+        gpuDip: Number(gpuDip.toFixed(2)),
+        depthLag: Number(depthLag.toFixed(2)),
+        resetDelay: Number(resetDelay.toFixed(2)),
+        matched,
+        flips,
+        lateHolds,
+        confidence: Number(confidence.toFixed(3)),
+        frames
+      };
+    }
+
+    function render() {
+      const row = compute();
+      $("matchedMetric").textContent = `${row.matched}/6`;
+      $("flipMetric").textContent = row.flips;
+      $("holdMetric").textContent = row.lateHolds;
+      $("confidenceMetric").textContent = `${Math.round(row.confidence * 100)}%`;
+      $("timeline").innerHTML = row.frames.map((frame) => {
+        const pct = clamp((frame.frameMs - 12) / 12, 0, 1);
+        const state = frame.matched ? "ok" : frame.holdLate ? "watch" : "fail";
+        return `
+          <div class="frame">
+            <strong>f+${frame.index + 1}</strong>
+            <div class="track"><div class="fill ${state}" style="width:${Math.round(pct * 100)}%"></div></div>
+            <span>${frame.frameMs}ms / ${frame.observed}</span>
+          </div>
+        `;
+      }).join("");
+      $("queue").innerHTML = [
+        row.flips ? `${row.flips} frame で予測 route と観測 route がズレた` : "全 frame で予測 route が観測と合った",
+        row.lateHolds ? "depth hold が遅れている。次は depthAgeMs の threshold を早める" : "depth hold の遅延は目立たない",
+        row.confidence < 0.5 ? "次に足すなら実機 row import と threshold preset 保存" : "次に足すなら replay 結果を 1本目の schema mapper へ戻す"
+      ].map((text) => `<div class="row">${text}</div>`).join("");
+      $("rowBox").value = JSON.stringify(row, null, 2);
+    }
+
+    document.querySelectorAll("input, select").forEach((input) => input.addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>予測 row と観測 row を同じ telemetry schema に寄せる | 2026-10-08</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.08</p>
+      <h1>予測 row と観測 row を同じ telemetry schema に寄せる</h1>
+      <p class="hero-subtitle">Mapping predicted and observed rows into one telemetry schema</p>
+      <p>W3C WebXR Layers / Device API、Meta Browser の WebGPU foveation / Space Warp release notes、Immersive Web WebGPU samples を参照し、10月前半の frame budget 系サンプルを実機ログへつなぐ自作サンプル2本を追加しました。</p>
+      <p class="en-copy">After checking W3C WebXR Layers / Device API, Meta Browser WebGPU foveation / Space Warp release notes, and Immersive Web WebGPU samples, today's original work adds two samples that connect early-October frame-budget prototypes to headset telemetry rows.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-08_html_frame_telemetry_schema_mapper.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-10-07.html">← 2026.10.07</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Frame Telemetry Schema Mapper</h3>
+              <p>10月前半の prediction、depth、motion vector、foveation、frame budget row を、実機ログへつなぐための正規化パッドです。入力値を 1 つの observation schema に畳み、どの列が不足しているかを見ます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-08_html_frame_telemetry_schema_mapper.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Prediction Observation Diff Replayer</h3>
+              <p>1本目の observation row を受け取った後の派生試作です。予測 route と観測 route のズレを 6 フレームで再生し、どこで reset、hold、quality loss が起きたかを小さく拾います。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-08_html_prediction_observation_diff_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>W3C WebXR Layers API Level 1 は `XRProjectionLayer`、`fixedFoveation`、`deltaPose` などを扱い、frame route の予測と観測を結びつける土台になります。</span>
+              <span class="en-copy">W3C WebXR Layers API Level 1 covers `XRProjectionLayer`, `fixedFoveation`, and `deltaPose`, making it a foundation for connecting predicted and observed frame routes.</span>
+            </li>
+          
+            <li>
+              <span>Meta Browser 149.1 / 150.1 の release notes では WebGPU support for space-warp layers と experimental WebGPU foveation support が近接しており、GPU / warp / foveation を同じ telemetry row で見る理由があります。</span>
+              <span class="en-copy">Meta Browser 149.1 / 150.1 release notes place WebGPU support for space-warp layers and experimental WebGPU foveation support close together, which is a reason to track GPU, warp, and foveation in one telemetry row.</span>
+            </li>
+          
+            <li>
+              <span>Immersive Web の WebGPU samples は `XRGPUBinding` と `XRProjectionLayer` を使う WebXR + WebGPU の実装入口として参照できます。</span>
+              <span class="en-copy">Immersive Web WebGPU samples are a practical entry point for WebXR + WebGPU implementation with `XRGPUBinding` and `XRProjectionLayer`.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Device API は frame、view、layer、input の基礎仕様で、実機ログの timestamp と route 判定を揃えるための共通語彙になります。</span>
+              <span class="en-copy">The WebXR Device API supplies the baseline vocabulary for frames, views, layers, and input, useful when aligning headset timestamps and route decisions.</span>
+            </li>
+          
+            <li>
+              <span>今日の公開カードは `Frame Telemetry Schema Mapper` と `Prediction Observation Diff Replayer` の2本です。</span>
+              <span class="en-copy">Today's public cards are the two original samples `Frame Telemetry Schema Mapper` and `Prediction Observation Diff Replayer`.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>Meta Browser の release notes では、149.1 に WebGPU support for space-warp layers、150.1 に experimental support for foveation to WebGPU in WebXR が並びます。W3C WebXR Layers では `XRProjectionLayer.fixedFoveation` が次の `XRFrame` で反映される性質を確認でき、Immersive Web の WebGPU samples は `XRGPUBinding` と `XRProjectionLayer` の入口を示しています。面白いのは、画質調整を単発の slider ではなく、`予測 row` と `観測 row` の差分として蓄積できる点です。</p>
+          <p class="en-copy">Meta Browser release notes list WebGPU support for space-warp layers in 149.1 and experimental WebGPU foveation support in WebXR in 150.1. W3C WebXR Layers documents that `XRProjectionLayer.fixedFoveation` changes take effect at the next `XRFrame`, while Immersive Web WebGPU samples provide an entry point for `XRGPUBinding` and `XRProjectionLayer`. The interesting part is treating quality adjustment as an accumulated diff between predicted rows and observed rows, not as a one-off slider.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developers.meta.com/vr/release-notes/?search_key=browser" target="_blank" rel="noreferrer">Meta Horizon OS release notes</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/webgpu/" target="_blank" rel="noreferrer">Immersive Web: WebXR WebGPU Samples</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `Frame Telemetry Schema Mapper` は、10月4日の prediction、10月5日の depth-motion、10月6日の foveation、10月7日の frame-budget を source day として選び、frameMs、motionErrorPx、depthAgeMs、fixedFoveation を共通 observation row に正規化します。派生サンプル `Prediction Observation Diff Replayer` は、その row から予測 route と観測 route のズレを6フレームで再生します。体験としては、毎日の小さな試作を実機 QA の同じログ形式へ寄せる橋です。</p>
+          <p class="en-copy">The main sample, `Frame Telemetry Schema Mapper`, lets you choose October 4 prediction, October 5 depth-motion, October 6 foveation, or October 7 frame-budget as the source day, then normalizes frameMs, motionErrorPx, depthAgeMs, and fixedFoveation into a shared observation row. The derivative sample, `Prediction Observation Diff Replayer`, replays the mismatch between predicted and observed routes across six frames. The interaction is a bridge from daily prototypes into one headset-QA log format.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>今日の schema は `timestamp`、`frameMs`、`motionErrorPx`、`depthAgeMs`、`fixedFoveation`、`predictedRoute`、`observedRoute` を必須候補にしました。実機版では `XRFrame` timestamp、WebGPU / WebXR binding の projection layer 状態、Depth Sensing の frame age、motion vector texture readiness、`XRProjectionLayer.fixedFoveation` を同じ row に保存し、予測と観測の route flip を再生できるようにします。</p>
+          <p class="en-copy">Today's schema treats `timestamp`, `frameMs`, `motionErrorPx`, `depthAgeMs`, `fixedFoveation`, `predictedRoute`, and `observedRoute` as required candidates. On device, the `XRFrame` timestamp, projection-layer state from the WebGPU / WebXR binding path, Depth Sensing frame age, motion-vector texture readiness, and `XRProjectionLayer.fixedFoveation` should be saved into one row so route flips between prediction and observation can be replayed.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の observation row と diff row は、実機 QA、展示ログ、Gaussian Splatting の LOD 制御、360動画の decode / render budget、操作 UI の品質説明に使えます。たとえば `motionErrorPx が高い時は splat LOD を落とす`、`depthAgeMs が古い時は occlusion を hold する`、`fixedFoveation を上げたのに frameMs が改善しない時は shader path を疑う` という分析に接続できます。</p>
+          <p class="en-copy">Today's observation and diff rows can support headset QA, installation logs, Gaussian splatting LOD control, 360-video decode / render budgets, and operational UI explanations. Example uses include lowering splat LOD when `motionErrorPx` is high, holding occlusion when `depthAgeMs` is stale, or questioning the shader path when raising `fixedFoveation` does not improve `frameMs`.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR-WebGPU Binding、Immersive Web WebGPU samples、Meta Browser の WebGPU foveation / space-warp layers、W3C WebXR Layers の `fixedFoveation` と `deltaPose`、Depth Sensing の Working Draft 更新を継続します。自作側では、今日の schema mapper に 10月3日から10月7日までの export row を paste / import できるようにして、日跨ぎ replay を作るのが次の山です。</p>
+          <p class="en-copy">Keep watching WebXR-WebGPU Binding work, Immersive Web WebGPU samples, Meta Browser WebGPU foveation / space-warp layer notes, W3C WebXR Layers `fixedFoveation` and `deltaPose`, and Depth Sensing Working Draft updates. On the original side, the next milestone is adding paste / import for October 3-7 export rows into today's schema mapper and creating cross-day replay.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`Frame Telemetry Schema Mapper` で source day を切り替え、frameMs、motion error、depth age、foveation を動かすと coverage と missing fields が変わります。次に `Prediction Observation Diff Replayer` で predicted route、observed drift、GPU dip、depth lag、reset delay を動かすと、予測が当たった frame と route flip が見えます。</p>
+          <p class="en-copy">In `Frame Telemetry Schema Mapper`, switch the source day and adjust frameMs, motion error, depth age, and foveation to see coverage and missing fields change. Then in `Prediction Observation Diff Replayer`, adjust predicted route, observed drift, GPU dip, depth lag, and reset delay to see matched frames and route flips.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-08_html_frame_telemetry_schema_mapper.html" target="_blank" rel="noreferrer">Open Frame Telemetry Schema Mapper</a></li>
+          
+            <li><a href="../outputs/2026-10-08_html_prediction_observation_diff_replayer.html" target="_blank" rel="noreferrer">Open Prediction Observation Diff Replayer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C WebXR Layers、W3C WebXR Device API、Immersive Web WebGPU samples、webxr-samples repository、Meta Browser release notes、Meta WebXR Space Warp を確認。設計: 1本目は telemetry schema mapper、2本目は prediction / observation diff replayer。実装: `outputs/2026-10-08_html_frame_telemetry_schema_mapper.html` と `outputs/2026-10-08_html_prediction_observation_diff_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery / day page 再生成、publish を確認する。</p>
+          <p class="en-copy">Research: checked W3C WebXR Layers, W3C WebXR Device API, Immersive Web WebGPU samples, the webxr-samples repository, Meta Browser release notes, and Meta WebXR Space Warp. Design: make the first sample a telemetry schema mapper and the second a prediction / observation diff replayer. Implementation: add `outputs/2026-10-08_html_frame_telemetry_schema_mapper.html` and `outputs/2026-10-08_html_prediction_observation_diff_replayer.html`. Validation: parse JSON, check embedded HTML scripts, regenerate gallery / day pages, and publish.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>10月前半は visibility mask、reprojection、prediction miss、depth-motion、space warp、foveation、frame budget と進みました。今日の役割は、これらを実測ログに接続するための `列名を揃える日` です。次に実機 row を IndexedDB から読み、同じ diff replayer に流せるようにすると、日次サンプルが単発 UI から継続観測ツールへ近づきます。</p>
+          <p class="en-copy">Early October has moved through visibility masks, reprojection, prediction misses, depth-motion, space warp, foveation, and frame budgets. Today's role is to align column names so those prototypes can connect to measured logs. Loading real rows from IndexedDB into the same diff replayer would move the archive from one-off UI sketches toward an ongoing observation tool.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `Frame Telemetry Schema Mapper` です。何が動くか: 10月4日から10月7日の系統を source day として切り替え、frameMs、motionErrorPx、depthAgeMs、fixedFoveation を共通 row に正規化し、coverage、missing fields、observed route を表示します。次に足すなら、過去サンプルの export JSON を paste / import して自動 mapping します。派生として `Prediction Observation Diff Replayer` も実装しました。何が動くか: predicted route と観測条件を6フレームで比較し、matched、route flips、late holds、confidence を表示します。次に足すなら、1本目の export row を直接読み込み、実 headset session の frame time と比較します。</p>
+          <p class="en-copy">The selected main prototype is `Frame Telemetry Schema Mapper`. What it does: switches between October 4-7 source-day families, normalizes frameMs, motionErrorPx, depthAgeMs, and fixedFoveation into a shared row, and displays coverage, missing fields, and observed route. Next addition: paste / import export JSON from earlier samples and map it automatically. The derivative `Prediction Observation Diff Replayer` was also implemented. What it does: compares a predicted route with observed conditions across six frames and displays matched count, route flips, late holds, and confidence. Next addition: directly load the first sample's export row and compare it against real headset session frame time.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-08_html_frame_telemetry_schema_mapper.html" target="_blank" rel="noreferrer">Today's main sample: Frame Telemetry Schema Mapper</a></li>
+          
+            <li><a href="../outputs/2026-10-08_html_prediction_observation_diff_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Prediction Observation Diff Replayer</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/webgpu/" target="_blank" rel="noreferrer">Immersive Web: WebXR WebGPU Samples</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples repository</a></li>
+          
+            <li><a href="https://developers.meta.com/vr/release-notes/?search_key=browser" target="_blank" rel="noreferrer">Meta Horizon OS release notes: Browser WebGPU / WebXR notes</a></li>
+          
+            <li><a href="https://developers.meta.com/vr/downloads/package/browser/150.1/?view=full_width" target="_blank" rel="noreferrer">Meta Browser 150.1 release notes</a></li>
+          
+            <li><a href="https://developers.meta.com/vr/documentation/web/webxr-space-warp/" target="_blank" rel="noreferrer">Meta: WebXR Space Warp</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-08_html_frame_telemetry_schema_mapper.html" loading="lazy" title="Frame Telemetry Schema Mapper"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

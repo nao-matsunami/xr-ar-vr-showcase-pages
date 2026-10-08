@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 91</span>
+        <span>days: 92</span>
         <span>page: 3 / 8</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -317,6 +317,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-09-14">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.14</p>
+              <h2>検出 mesh を三角形 budget と plane 融合で使い分ける</h2>
+              <p class="card-subtitle">Routing detected meshes by triangle budget and plane fusion</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-14" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API 2026-06-09 CRD、WebXR Mesh Detection Module、Depth Sensing Module、Plane Detection explainer、公式 Mesh Detection proposal sample を参照し、`XRFrame.detectedMeshes` の頂点・三角形・更新時刻から mesh 利用可否を判定する本命サンプルと、plane と mesh を分担して anchor / occlusion に回す派生サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Device API 2026-06-09 CRD, WebXR Mesh Detection Module, Depth Sensing Module, Plane Detection explainer, and official Mesh Detection proposal sample, today's original work adds a main sample that routes `XRFrame.detectedMeshes` by vertices, triangles, and update age, plus a derivative sample that splits plane and mesh responsibilities for anchors and occlusion.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">html-surface</span><span class="tag">xr</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-09-14.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-09-14_html_mesh_detection_triangle_budget_router.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-09-13">
           <div class="card-top">
             <div>
@@ -566,29 +589,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-09-01.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-09-01_html_xr_input_log_store_lab.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-31">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.31</p>
-              <h2>XR input event の pose 台帳と action commit window を自作サンプル化</h2>
-              <p class="card-subtitle">Original samples for XR input-event pose ledgers and action commit windows</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-31" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR Device API、W3C WebXR Gamepads Module、MDN の XRInputSourceEvent / input guide、Immersive Web Samples の Input Selection / Controller State を確認し、イベント側の `XRFrame.getPose()` と frame poll 側の gamepad 状態を同じ操作ログへ束ねる本命サンプルと、短い hold window で commit 判定を再生する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the W3C WebXR Device API, W3C WebXR Gamepads Module, MDN XRInputSourceEvent/input guidance, and Immersive Web Input Selection/Controller State samples, today's original work adds a main sample that records event-frame poses and frame-polled gamepad state into one action ledger, plus a derivative sample that replays commit decisions through a short hold window.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-31.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-31_html_xr_event_pose_ledger.html">代表サンプル / Sample</a>
           </div>
         </article>
       
