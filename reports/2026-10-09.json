@@ -1,0 +1,143 @@
+{
+  "date": "2026-10-09",
+  "headline": "WebGPU / WebXR の起動前交渉を telemetry row にする",
+  "headlineEn": "Turning WebGPU / WebXR startup negotiation into telemetry rows",
+  "summary": "W3C WebXR Layers / Depth Sensing、Immersive Web WebGPU samples、WebXR-WebGPU Binding、Meta Browser の WebGPU space-warp / foveation 情報を参照し、実機セッション開始前の capability negotiation と fallback route を見る自作サンプル2本を追加しました。",
+  "summaryEn": "After checking W3C WebXR Layers / Depth Sensing, Immersive Web WebGPU samples, WebXR-WebGPU Binding, and Meta Browser WebGPU space-warp / foveation notes, today's original work adds two samples for capability negotiation and fallback routing before a real headset session starts.",
+  "keyTopics": [
+    "Immersive Web の WebXR WebGPU samples は `XRGPUBinding` と `XRProjectionLayer` を使う実装入口で、WebGL から WebGPU へ移る際の最小確認点になります。",
+    "WebXR-WebGPU Binding explainer / draft では、WebGPU resources を `XRGPUBinding` から供給し、projection layer を WebGPU texture backed にする流れを確認できます。",
+    "Meta Browser 149.1 では WebGPU support for space-warp layers が追加され、150.1 系の release note では WebGPU foveation も近い論点として出ています。",
+    "W3C WebXR Depth Sensing Module は 2026-08-25 Working Draft として出ており、depth data / depth buffer を telemetry row に混ぜる理由があります。",
+    "今日の公開カードは `WebGPU XR Capability Negotiation Board` と `Feature Fallback Route Replayer` の2本です。"
+  ],
+  "keyTopicsEn": [
+    "Immersive Web WebXR WebGPU samples are a practical entry point for `XRGPUBinding` and `XRProjectionLayer`, making them a compact checklist when moving from WebGL to WebGPU.",
+    "The WebXR-WebGPU Binding explainer / draft describes WebGPU resources supplied through `XRGPUBinding` and projection layers backed by WebGPU textures.",
+    "Meta Browser 149.1 added WebGPU support for space-warp layers, and 150.1-era notes keep WebGPU foveation in the same neighborhood.",
+    "W3C WebXR Depth Sensing Module was published as a 2026-08-25 Working Draft, giving a reason to include depth data / buffers in telemetry rows.",
+    "Today's public cards are the two original samples `WebGPU XR Capability Negotiation Board` and `Feature Fallback Route Replayer`."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: WebGPU XR Capability Negotiation Board",
+      "url": "../outputs/2026-10-09_html_webgpu_xr_capability_negotiation_board.html"
+    },
+    {
+      "label": "Today's derivative sample: Feature Fallback Route Replayer",
+      "url": "../outputs/2026-10-09_html_feature_fallback_route_replayer.html"
+    },
+    {
+      "label": "Immersive Web: WebXR WebGPU Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding explainer",
+      "url": "https://github.com/immersive-web/WebXR-WebGPU-Binding/blob/main/explainer.md"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding draft",
+      "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: WebXR Depth Sensing Module",
+      "url": "https://www.w3.org/TR/webxr-depth-sensing-1/"
+    },
+    {
+      "label": "Meta Browser 149.1 release notes",
+      "url": "https://developers.meta.com/vr/downloads/package/browser/149.1/"
+    },
+    {
+      "label": "Meta: WebXR Space Warp",
+      "url": "https://developers.meta.com/vr/documentation/web/webxr-space-warp/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Immersive Web の WebGPU samples は WebXR session を WebGPU で描画する最小入口として使え、WebXR-WebGPU Binding 側では `XRGPUBinding.createProjectionLayer()` のような考え方が確認できます。Meta Browser 149.1 の WebGPU space-warp layers と、Meta の WebXR Space Warp 説明は、projection layer、depth、motion vector、foveation を別々ではなく同じ起動前交渉 row として扱う動機になります。面白いのは、`対応しているか` だけでなく、どの不足がどの fallback へ落ちたかを後から replay できる点です。",
+      "bodyEn": "Immersive Web WebGPU samples are a compact entry point for rendering WebXR sessions with WebGPU, while WebXR-WebGPU Binding work exposes concepts such as `XRGPUBinding.createProjectionLayer()`. Meta Browser 149.1 WebGPU space-warp layer support and Meta's WebXR Space Warp docs motivate treating projection layers, depth, motion vectors, and foveation as one startup negotiation row. The interesting part is not just whether support exists, but replaying which missing capability caused which fallback.",
+      "links": [
+        {
+          "label": "WebXR WebGPU Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+        },
+        {
+          "label": "WebXR-WebGPU Binding draft",
+          "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+        },
+        {
+          "label": "Meta Browser 149.1",
+          "url": "https://developers.meta.com/vr/downloads/package/browser/149.1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `WebGPU XR Capability Negotiation Board` は、session target、WebGPU readiness、XRGPUBinding confidence、depth / motion vector、policy / consent を動かし、`webgpu-space-warp-candidate`、`webgpu-projection-layer`、`webgl-projection-fallback` などの route を作ります。派生サンプル `Feature Fallback Route Replayer` は、その route を7フレームに展開し、feature 欠落・policy・GPU pressure・depth gap がどこで fallback や block を生むかを見ます。",
+      "bodyEn": "The main sample, `WebGPU XR Capability Negotiation Board`, lets you tune session target, WebGPU readiness, XRGPUBinding confidence, depth / motion vector, and policy / consent, then produces routes such as `webgpu-space-warp-candidate`, `webgpu-projection-layer`, and `webgl-projection-fallback`. The derivative `Feature Fallback Route Replayer` expands that route across seven frames and shows where missing features, policy pressure, GPU pressure, or depth gaps create fallback or blocking behavior."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機版では `navigator.gpu`、`navigator.xr?.isSessionSupported()`、`requestSession()` の required / optional feature、Permissions-Policy、Depth Sensing、WebXR Layers、WebXR-WebGPU Binding の結果を同じ JSON row に入れます。今日の row は `xrSessionMode`、`webgpuAdapter`、`xrGpuBinding`、`projectionLayer`、`fixedFoveation`、`depthOrMotionVector`、`spaceWarpCandidate`、`policyConsent` を候補列にしました。",
+      "bodyEn": "On device, `navigator.gpu`, `navigator.xr?.isSessionSupported()`, `requestSession()` required / optional features, Permissions-Policy, Depth Sensing, WebXR Layers, and WebXR-WebGPU Binding outcomes should be saved into one JSON row. Today's row uses `xrSessionMode`, `webgpuAdapter`, `xrGpuBinding`, `projectionLayer`, `fixedFoveation`, `depthOrMotionVector`, `spaceWarpCandidate`, and `policyConsent` as candidate columns."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の negotiation row は、昨日の telemetry schema mapper、10月6日の foveation tile risk、10月5日の depth / motion recovery、10月4日の prediction miss に流し込めます。たとえば、WebGPU が不安定なら WebGL projection fallback へ落とし、depth / motion vector が十分なら space-warp candidate に残し、policy が弱い場合は requestSession 前に UI で止める、という起動前 QA に使えます。",
+      "bodyEn": "Today's negotiation row can feed yesterday's telemetry schema mapper, the October 6 foveation tile risk sample, the October 5 depth / motion recovery sample, and the October 4 prediction miss sample. For example, unstable WebGPU can drop to WebGL projection fallback, sufficient depth / motion vectors can keep a space-warp candidate alive, and weak policy can stop the flow before `requestSession()`."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR-WebGPU Binding の draft、Immersive Web WebGPU samples、W3C WebXR Layers の projection layer / foveation 周辺、W3C Depth Sensing Module の Working Draft 更新、Meta Browser の WebGPU foveation / space-warp release notes を継続します。自作側では、今日の board を実 `navigator.gpu` / `navigator.xr` probe につなぎ、結果を IndexedDB に保存して昨日の mapper へ import するのが次の一歩です。",
+      "bodyEn": "Keep watching the WebXR-WebGPU Binding draft, Immersive Web WebGPU samples, W3C WebXR Layers projection layer / foveation work, W3C Depth Sensing Module updates, and Meta Browser WebGPU foveation / space-warp release notes. On the original side, the next step is connecting today's board to real `navigator.gpu` / `navigator.xr` probes, saving the result in IndexedDB, and importing it into yesterday's mapper."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`WebGPU XR Capability Negotiation Board` で session target を `immersive-vr` と `immersive-ar` で切り替え、WebGPU readiness と policy / consent を下げると route が変わります。次に `Feature Fallback Route Replayer` で missing feature pressure と depth / vector gap を上げると、space-warp candidate が projection layer no-warp や WebGL fallback に落ちる様子が見えます。",
+      "bodyEn": "In `WebGPU XR Capability Negotiation Board`, switch the session target between `immersive-vr` and `immersive-ar`, then lower WebGPU readiness and policy / consent to change the route. Next, in `Feature Fallback Route Replayer`, raise missing feature pressure and depth / vector gap to see a space-warp candidate drop to projection-layer no-warp or WebGL fallback.",
+      "links": [
+        {
+          "label": "Open WebGPU XR Capability Negotiation Board",
+          "url": "../outputs/2026-10-09_html_webgpu_xr_capability_negotiation_board.html"
+        },
+        {
+          "label": "Open Feature Fallback Route Replayer",
+          "url": "../outputs/2026-10-09_html_feature_fallback_route_replayer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Immersive Web WebGPU samples、WebXR-WebGPU Binding、W3C WebXR Layers、W3C WebXR Device API、W3C Depth Sensing Module、Meta Browser 149.1、Meta WebXR Space Warp を確認。設計: 1本目は capability negotiation board、2本目は fallback route replayer。実装: `outputs/2026-10-09_html_webgpu_xr_capability_negotiation_board.html` と `outputs/2026-10-09_html_feature_fallback_route_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery / day page 再生成、publish を確認する。",
+      "bodyEn": "Research: checked Immersive Web WebGPU samples, WebXR-WebGPU Binding, W3C WebXR Layers, W3C WebXR Device API, W3C Depth Sensing Module, Meta Browser 149.1, and Meta WebXR Space Warp. Design: make the first sample a capability negotiation board and the second a fallback route replayer. Implementation: add `outputs/2026-10-09_html_webgpu_xr_capability_negotiation_board.html` and `outputs/2026-10-09_html_feature_fallback_route_replayer.html`. Validation: parse JSON, check embedded scripts, regenerate gallery / day pages, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月前半は visibility mask、prediction、depth / motion、space warp、foveation、frame budget、telemetry schema と進みました。今日の役割は、実機セッション開始前に `そもそもその route を選んでよいか` を判断する入口です。ここが入ると、起動後の frame telemetry だけでなく、起動前の feature negotiation も同じ日次アーカイブで比較できます。",
+      "bodyEn": "Early October has covered visibility masks, prediction, depth / motion, space warp, foveation, frame budgets, and telemetry schema. Today's role is the pre-session gate that decides whether a route should be selected at all. With this in place, the archive can compare both post-start frame telemetry and pre-start feature negotiation."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `WebGPU XR Capability Negotiation Board` です。何が動くか: WebGPU、XRGPUBinding、projection layer、depth / motion vector、policy / consent をスライダーで動かし、起動前 route、coverage、missing fields、risk を JSON row として出します。次に足すなら、実 `navigator.gpu` / `navigator.xr` probe を実行して row を自動生成します。派生として `Feature Fallback Route Replayer` も実装しました。何が動くか: requested feature と pressure 値から7フレーム分の fallback / block / stable を再生します。次に足すなら、1本目の export JSON を直接読み込み、requiredFeatures / optionalFeatures ごとの retry queue を表示します。",
+      "bodyEn": "The selected main prototype is `WebGPU XR Capability Negotiation Board`. What it does: sliders tune WebGPU, XRGPUBinding, projection layer, depth / motion vector, and policy / consent, then export pre-start route, coverage, missing fields, and risk as a JSON row. Next addition: run real `navigator.gpu` / `navigator.xr` probes and generate the row automatically. The derivative `Feature Fallback Route Replayer` was also implemented. What it does: replays seven frames of fallback / block / stable behavior from a requested feature and pressure values. Next addition: directly load the first sample's export JSON and show a retry queue per required / optional feature."
+    }
+  ]
+}
