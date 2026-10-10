@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Probe Row Schema Route Replayer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111514;
+      --panel: #1d2523;
+      --panel2: #293331;
+      --line: #68766f;
+      --text: #f8f3eb;
+      --muted: #cbd2ca;
+      --cyan: #8fd7ff;
+      --green: #a8dc8f;
+      --gold: #f0ca74;
+      --red: #ee8179;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(145deg, rgba(143, 215, 255, 0.11), transparent 38%),
+        linear-gradient(315deg, rgba(240, 202, 116, 0.1), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1160px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(29, 37, 35, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 50px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(7, 10, 11, 0.62); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+    .timeline { display: grid; gap: 8px; min-height: 338px; align-content: center; }
+    .frame {
+      display: grid;
+      grid-template-columns: 76px 1fr 176px;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(7, 10, 11, 0.58);
+      color: var(--muted);
+    }
+    .track { height: 16px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+    .fill { height: 100%; width: 0; transition: width 0.18s ease; }
+    .ok { background: var(--green); }
+    .watch { background: var(--gold); }
+    .fail { background: var(--red); }
+    .toolbar { display: grid; grid-template-columns: 1fr 150px; gap: 10px; margin-bottom: 14px; }
+    textarea, button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      min-width: 0;
+    }
+    textarea { width: 100%; min-height: 188px; padding: 12px; resize: vertical; line-height: 1.45; }
+    button { min-height: 42px; padding: 0 12px; cursor: pointer; background: #24495d; border-color: #86cdeb; }
+    .rows { display: grid; gap: 8px; }
+    .row { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(7, 10, 11, 0.62); color: var(--muted); overflow-wrap: anywhere; }
+    @media (max-width: 900px) {
+      header, .toolbar, .metrics, .frame { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Probe Row Schema Route Replayer</h1>
+        <p>1本目の probe row を貼り付け、昨日の fallback route と 10/08 の telemetry schema へ入れる前に、欠損フィールド、retry queue、起動後 6 frame の route を再判定する派生試作です。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>schema fit</span><strong id="fitMetric">0%</strong></div>
+          <div class="metric"><span>retry queue</span><strong id="retryMetric">0</strong></div>
+          <div class="metric"><span>blocked</span><strong id="blockedMetric">0</strong></div>
+          <div class="metric"><span>route</span><strong id="routeMetric">-</strong></div>
+        </div>
+        <div id="timeline" class="timeline" aria-label="schema route replay timeline"></div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <textarea id="inputBox" spellcheck="false"></textarea>
+      <button id="replayButton" type="button">Replay row</button>
+    </div>
+
+    <section>
+      <h2>Schema and retry notes</h2>
+      <div id="notes" class="rows"></div>
+    </section>
+
+    <section>
+      <h2>Export replay result</h2>
+      <textarea id="outputBox" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const requiredSchema = [
+      "timestamp",
+      "sessionMode",
+      "secureContext",
+      "webgpuNavigator",
+      "gpuAdapterLikely",
+      "xrNavigator",
+      "sessionSupported",
+      "xrSpatialPolicyAllowed",
+      "indexedDbWritable",
+      "route"
+    ];
+
+    const seed = {
+      id: "seed-probe-2026-10-10",
+      timestamp: new Date().toISOString(),
+      sessionMode: "immersive-vr",
+      source: "seed",
+      secureContext: true,
+      webgpuNavigator: true,
+      gpuAdapterLikely: true,
+      xrNavigator: true,
+      sessionSupported: false,
+      xrSpatialPolicyAllowed: true,
+      cameraPolicyAllowed: true,
+      indexedDbWritable: true,
+      route: "inline-or-screen-fallback",
+      coverage: 0.75,
+      risk: 0.24,
+      missingFields: ["sessionSupported"],
+      nextStep: "retry isSessionSupported, then requestSession with optional webgpu"
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function asBool(value) {
+      return value === true;
+    }
+
+    function classifyFrame(row, index) {
+      const pressure = clamp((row.risk || 0) + index * 0.045 + (row.missingFields?.length || 0) * 0.04, 0, 1);
+      if (!asBool(row.secureContext)) return { route: "block-insecure-context", pressure, blocked: true };
+      if (!asBool(row.xrSpatialPolicyAllowed)) return { route: "block-policy", pressure, blocked: true };
+      if (!asBool(row.webgpuNavigator)) return { route: "webgl-fallback", pressure, blocked: false };
+      if (!asBool(row.gpuAdapterLikely) && index < 2) return { route: "retry-gpu-adapter", pressure, blocked: false };
+      if (!asBool(row.sessionSupported) && row.sessionMode !== "inline") return { route: index < 3 ? "retry-session-support" : "inline-preview-hold", pressure, blocked: false };
+      if (!asBool(row.xrNavigator)) return { route: "screen-webgpu-preview", pressure, blocked: false };
+      return { route: "commit-probe-ready-row", pressure, blocked: false };
+    }
+
+    function replay(row) {
+      const present = requiredSchema.filter((field) => Object.prototype.hasOwnProperty.call(row, field));
+      const missing = requiredSchema.filter((field) => !Object.prototype.hasOwnProperty.call(row, field));
+      const retryQueue = [];
+      if (!asBool(row.gpuAdapterLikely)) retryQueue.push("navigator.gpu.requestAdapter()");
+      if (!asBool(row.sessionSupported) && row.sessionMode !== "inline") retryQueue.push(`navigator.xr.isSessionSupported("${row.sessionMode || "immersive-vr"}")`);
+      if (!asBool(row.xrSpatialPolicyAllowed)) retryQueue.push("Permissions-Policy: xr-spatial-tracking");
+      if (!asBool(row.indexedDbWritable)) retryQueue.push("IndexedDB save fallback");
+      const frames = Array.from({ length: 6 }, (_, index) => ({
+        index,
+        ...classifyFrame(row, index)
+      }));
+      return {
+        sourceId: row.id || "pasted-row",
+        schemaFit: Number((present.length / requiredSchema.length).toFixed(3)),
+        missingSchemaFields: missing,
+        retryQueue,
+        blockedFrames: frames.filter((frame) => frame.blocked).length,
+        finalRoute: frames[frames.length - 1].route,
+        frames
+      };
+    }
+
+    function render() {
+      let row;
+      try {
+        row = JSON.parse($("inputBox").value);
+      } catch {
+        row = seed;
+      }
+      const result = replay(row);
+      $("fitMetric").textContent = `${Math.round(result.schemaFit * 100)}%`;
+      $("retryMetric").textContent = result.retryQueue.length;
+      $("blockedMetric").textContent = result.blockedFrames;
+      $("routeMetric").textContent = result.finalRoute;
+      $("timeline").innerHTML = result.frames.map((frame) => {
+        const state = frame.blocked ? "fail" : frame.route.includes("retry") || frame.route.includes("hold") || frame.route.includes("fallback") ? "watch" : "ok";
+        return `
+          <div class="frame">
+            <strong>f+${frame.index + 1}</strong>
+            <div class="track"><div class="fill ${state}" style="width:${Math.round(frame.pressure * 100)}%"></div></div>
+            <span>${frame.route}</span>
+          </div>
+        `;
+      }).join("");
+      $("notes").innerHTML = [
+        `missing schema fields: ${result.missingSchemaFields.length ? result.missingSchemaFields.join(", ") : "none"}`,
+        `retry queue: ${result.retryQueue.length ? result.retryQueue.join(" -> ") : "none"}`,
+        `next: import saved probe rows from IndexedDB instead of manual paste`
+      ].map((text) => `<div class="row">${text}</div>`).join("");
+      $("outputBox").value = JSON.stringify(result, null, 2);
+    }
+
+    $("inputBox").value = JSON.stringify(seed, null, 2);
+    $("replayButton").addEventListener("click", render);
+    $("inputBox").addEventListener("input", render);
+    render();
+  </script>
+</body>
+</html>

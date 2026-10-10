@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 93</span>
+        <span>days: 94</span>
         <span>page: 1 / 8</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -317,6 +317,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-10-10">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.10</p>
+              <h2>WebGPU / WebXR probe を保存可能な telemetry row にする</h2>
+              <p class="card-subtitle">Turning WebGPU / WebXR probes into storable telemetry rows</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-10" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR-WebGPU Binding、Immersive Web WebGPU samples、W3C WebXR / Layers / Depth Sensing、Meta Browser の WebGPU space-warp 情報を確認し、実ブラウザで読める capability probe を IndexedDB 保存 row にする本命サンプルと、その row を schema / route / retry queue に再判定する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking WebXR-WebGPU Binding, Immersive Web WebGPU samples, W3C WebXR / Layers / Depth Sensing, and Meta Browser WebGPU space-warp notes, today's original work adds a main sample that stores runtime capability probes as IndexedDB rows and a derivative sample that replays those rows through schema, route, and retry-queue checks.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-10-10.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-10-10_html_xr_webgpu_probe_store_console.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-10-09">
           <div class="card-top">
             <div>
@@ -566,29 +589,6 @@
           <div class="actions">
             <a class="primary" href="days/2026-09-29.html">その日のページ / Day</a>
             <a class="secondary-link" href="outputs/2026-09-29_html_viewport_crop_guard_logger.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-28">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.28</p>
-              <h2>DOM Overlay の frame owner と beforexrselect を台帳化する</h2>
-              <p class="card-subtitle">Ledgering DOM Overlay frame owners and beforexrselect</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-28" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR DOM Overlays Module、MDN の `beforexrselect`、Immersive Web DOM Overlay explainer、WebXR Test API、Web Platform Tests の DOM Overlay 更新を参照し、overlay / iframe / cross-origin 領域で XR select を止めるべきかを記録する本命サンプルと、DOM event と XR input event の非同期順序を再生して重複 commit を検出する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking the W3C WebXR DOM Overlays Module, MDN `beforexrselect`, the Immersive Web DOM Overlay explainer, the WebXR Test API, and recent Web Platform Tests work around DOM Overlay, today's original work adds a main sample that records whether XR select should be suppressed for overlay / iframe / cross-origin regions, plus a derivative sample that replays asynchronous DOM and XR input ordering to detect duplicate commits.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-09-28.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-09-28_html_dom_overlay_frame_owner_guard.html">代表サンプル / Sample</a>
           </div>
         </article>
       

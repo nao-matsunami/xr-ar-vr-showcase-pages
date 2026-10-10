@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XR WebGPU Probe Store Console</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101517;
+      --panel: #192326;
+      --panel2: #243136;
+      --line: #62747b;
+      --text: #f7f3eb;
+      --muted: #c5d0ce;
+      --cyan: #8fd7ff;
+      --green: #a7dc8f;
+      --gold: #f0cb74;
+      --red: #ef8178;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(140deg, rgba(143, 215, 255, 0.12), transparent 34%),
+        linear-gradient(315deg, rgba(167, 220, 143, 0.09), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(25, 35, 38, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 50px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(6, 10, 12, 0.62); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+    .gates { display: grid; gap: 8px; min-height: 340px; align-content: center; }
+    .gate {
+      display: grid;
+      grid-template-columns: 150px 1fr 138px;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(6, 10, 12, 0.58);
+      color: var(--muted);
+    }
+    .track { height: 16px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+    .fill { height: 100%; width: 0; transition: width 0.18s ease; background: var(--green); }
+    .fill.warn { background: var(--gold); }
+    .fill.bad { background: var(--red); }
+    .toolbar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    button, select, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    button { cursor: pointer; }
+    button.primary { background: #24495d; border-color: #86cdeb; }
+    textarea { width: 100%; min-height: 218px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .rows { display: grid; gap: 8px; }
+    .row { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: rgba(6, 10, 12, 0.62); color: var(--muted); overflow-wrap: anywhere; }
+    @media (max-width: 900px) {
+      header, .toolbar, .metrics, .gate { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>XR WebGPU Probe Store Console</h1>
+        <p>昨日の WebGPU / WebXR capability negotiation を、実ブラウザで読める `navigator.gpu`、`navigator.xr`、Permissions-Policy、IndexedDB 保存 row に近づける本命試作です。実機 XR がなくても不足理由を同じ JSON で残せます。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>route</span><strong id="routeMetric">-</strong></div>
+          <div class="metric"><span>coverage</span><strong id="coverageMetric">0%</strong></div>
+          <div class="metric"><span>risk</span><strong id="riskMetric">0</strong></div>
+          <div class="metric"><span>stored</span><strong id="storedMetric">0</strong></div>
+        </div>
+        <div id="gates" class="gates" aria-label="probe gates"></div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <select id="modeSelect">
+        <option value="immersive-vr">immersive-vr</option>
+        <option value="immersive-ar">immersive-ar</option>
+        <option value="inline">inline</option>
+      </select>
+      <button id="probeButton" class="primary" type="button">Run probe</button>
+      <button id="simulateButton" type="button">Blend simulated row</button>
+      <button id="saveButton" type="button">Save row</button>
+    </div>
+
+    <section>
+      <h2>Probe notes</h2>
+      <div id="notes" class="rows"></div>
+    </section>
+
+    <section>
+      <h2>Export stored probe row</h2>
+      <textarea id="rowBox" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const dbName = "xr-webgpu-probe-store-2026-10-10";
+    let currentRow = null;
+    let savedCount = 0;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function score(value) {
+      return value ? 1 : 0;
+    }
+
+    function permissionsPolicyAllows(feature) {
+      const policy = document.permissionsPolicy || document.featurePolicy;
+      if (!policy || typeof policy.allowsFeature !== "function") return null;
+      try {
+        return policy.allowsFeature(feature);
+      } catch {
+        return null;
+      }
+    }
+
+    function openDb() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(dbName, 1);
+        request.onupgradeneeded = () => request.result.createObjectStore("rows", { keyPath: "id" });
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+    }
+
+    async function countRows() {
+      if (!("indexedDB" in window)) return 0;
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction("rows", "readonly");
+        const request = tx.objectStore("rows").count();
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+    }
+
+    async function saveRow(row) {
+      if (!("indexedDB" in window)) throw new Error("IndexedDB is unavailable.");
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction("rows", "readwrite");
+        tx.objectStore("rows").put(row);
+        tx.onerror = () => reject(tx.error);
+        tx.oncomplete = () => resolve();
+      });
+    }
+
+    function decideRoute(row) {
+      if (!row.secureContext) return "block-insecure-context";
+      if (!row.xrNavigator) return "screen-webgpu-preview";
+      if (!row.sessionSupported && row.sessionMode !== "inline") return "inline-or-screen-fallback";
+      if (!row.webgpuNavigator) return "webgl-xr-fallback";
+      if (!row.gpuAdapterLikely) return "webgpu-adapter-retry";
+      if (!row.xrSpatialPolicyAllowed) return "policy-before-session";
+      if (row.webgpuNavigator && row.sessionSupported) return "probe-ready-store-row";
+      return "capability-observe-only";
+    }
+
+    function normalizeRow(raw) {
+      const fields = [
+        "secureContext",
+        "webgpuNavigator",
+        "gpuAdapterLikely",
+        "xrNavigator",
+        "sessionSupported",
+        "xrSpatialPolicyAllowed",
+        "cameraPolicyAllowed",
+        "indexedDbWritable"
+      ];
+      const coverage = fields.reduce((sum, field) => sum + score(raw[field]), 0) / fields.length;
+      const risk = clamp(
+        (raw.secureContext ? 0 : 0.26) +
+        (raw.webgpuNavigator ? 0 : 0.16) +
+        (raw.gpuAdapterLikely ? 0 : 0.13) +
+        (raw.xrNavigator ? 0 : 0.19) +
+        (raw.sessionSupported || raw.sessionMode === "inline" ? 0 : 0.16) +
+        (raw.xrSpatialPolicyAllowed ? 0 : 0.1),
+        0,
+        1
+      );
+      return {
+        ...raw,
+        route: decideRoute(raw),
+        coverage: Number(coverage.toFixed(3)),
+        risk: Number(risk.toFixed(3)),
+        missingFields: fields.filter((field) => !raw[field])
+      };
+    }
+
+    async function runProbe(simulated = false) {
+      const sessionMode = $("modeSelect").value;
+      const hasGpu = "gpu" in navigator;
+      let adapterLikely = false;
+      let adapterError = "";
+      if (hasGpu && !simulated) {
+        try {
+          const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
+          adapterLikely = Boolean(adapter);
+        } catch (error) {
+          adapterError = error.message;
+        }
+      }
+      const hasXr = "xr" in navigator;
+      let sessionSupported = sessionMode === "inline";
+      let sessionError = "";
+      if (hasXr && sessionMode !== "inline" && !simulated) {
+        try {
+          sessionSupported = await navigator.xr.isSessionSupported(sessionMode);
+        } catch (error) {
+          sessionError = error.message;
+        }
+      }
+      const xrPolicy = permissionsPolicyAllows("xr-spatial-tracking");
+      const cameraPolicy = permissionsPolicyAllows("camera");
+      const raw = {
+        id: `probe-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        sessionMode,
+        source: simulated ? "simulated-blend" : "runtime-probe",
+        secureContext: window.isSecureContext,
+        webgpuNavigator: simulated ? true : hasGpu,
+        gpuAdapterLikely: simulated ? true : adapterLikely,
+        xrNavigator: simulated ? true : hasXr,
+        sessionSupported: simulated ? sessionMode !== "inline" : sessionSupported,
+        xrSpatialPolicyAllowed: xrPolicy === null ? true : xrPolicy,
+        cameraPolicyAllowed: cameraPolicy === null ? true : cameraPolicy,
+        indexedDbWritable: "indexedDB" in window,
+        adapterError,
+        sessionError,
+        nextStep: "store row, then import into route replayer"
+      };
+      currentRow = normalizeRow(raw);
+      render();
+    }
+
+    function gate(label, value, detail) {
+      const width = Math.round(value * 100);
+      const state = value < 0.42 ? "bad" : value < 0.72 ? "warn" : "";
+      return `
+        <div class="gate">
+          <span>${label}</span>
+          <div class="track"><div class="fill ${state}" style="width:${width}%"></div></div>
+          <strong>${detail}</strong>
+        </div>
+      `;
+    }
+
+    function render() {
+      const row = currentRow || normalizeRow({
+        id: "seed",
+        timestamp: new Date().toISOString(),
+        sessionMode: $("modeSelect").value,
+        source: "seed",
+        secureContext: window.isSecureContext,
+        webgpuNavigator: "gpu" in navigator,
+        gpuAdapterLikely: false,
+        xrNavigator: "xr" in navigator,
+        sessionSupported: $("modeSelect").value === "inline",
+        xrSpatialPolicyAllowed: true,
+        cameraPolicyAllowed: true,
+        indexedDbWritable: "indexedDB" in window,
+        adapterError: "",
+        sessionError: "",
+        nextStep: "run probe"
+      });
+      $("routeMetric").textContent = row.route;
+      $("coverageMetric").textContent = `${Math.round(row.coverage * 100)}%`;
+      $("riskMetric").textContent = row.risk.toFixed(2);
+      $("storedMetric").textContent = savedCount;
+      $("gates").innerHTML = [
+        gate("secure context", score(row.secureContext), row.secureContext ? "ok" : "blocked"),
+        gate("navigator.gpu", score(row.webgpuNavigator), row.webgpuNavigator ? "present" : "missing"),
+        gate("GPU adapter", score(row.gpuAdapterLikely), row.gpuAdapterLikely ? "likely" : "retry"),
+        gate("navigator.xr", score(row.xrNavigator), row.xrNavigator ? "present" : "missing"),
+        gate("session support", score(row.sessionSupported || row.sessionMode === "inline"), row.sessionSupported ? "supported" : "fallback"),
+        gate("policy", score(row.xrSpatialPolicyAllowed), row.xrSpatialPolicyAllowed ? "allows" : "blocked")
+      ].join("");
+      $("notes").innerHTML = [
+        `sessionMode: ${row.sessionMode}`,
+        `missingFields: ${row.missingFields.length ? row.missingFields.join(", ") : "none"}`,
+        row.adapterError ? `adapterError: ${row.adapterError}` : "adapter probe did not throw",
+        row.sessionError ? `sessionError: ${row.sessionError}` : "session support probe did not throw",
+        `next: ${row.nextStep}`
+      ].map((text) => `<div class="row">${text}</div>`).join("");
+      $("rowBox").value = JSON.stringify(row, null, 2);
+    }
+
+    $("probeButton").addEventListener("click", () => runProbe(false));
+    $("simulateButton").addEventListener("click", () => runProbe(true));
+    $("saveButton").addEventListener("click", async () => {
+      if (!currentRow) await runProbe(false);
+      await saveRow(currentRow);
+      savedCount = await countRows();
+      render();
+    });
+    $("modeSelect").addEventListener("input", render);
+
+    countRows().then((count) => {
+      savedCount = count;
+      render();
+    }).catch(render);
+  </script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+{
+  "date": "2026-10-10",
+  "headline": "WebGPU / WebXR probe を保存可能な telemetry row にする",
+  "headlineEn": "Turning WebGPU / WebXR probes into storable telemetry rows",
+  "summary": "WebXR-WebGPU Binding、Immersive Web WebGPU samples、W3C WebXR / Layers / Depth Sensing、Meta Browser の WebGPU space-warp 情報を確認し、実ブラウザで読める capability probe を IndexedDB 保存 row にする本命サンプルと、その row を schema / route / retry queue に再判定する派生サンプルを追加しました。",
+  "summaryEn": "After checking WebXR-WebGPU Binding, Immersive Web WebGPU samples, W3C WebXR / Layers / Depth Sensing, and Meta Browser WebGPU space-warp notes, today's original work adds a main sample that stores runtime capability probes as IndexedDB rows and a derivative sample that replays those rows through schema, route, and retry-queue checks.",
+  "keyTopics": [
+    "Immersive Web の WebXR WebGPU samples は `XRGPUBinding` と `XRProjectionLayer` を使う WebGPU XR の最小確認点として引き続き重要です。",
+    "WebXR-WebGPU Binding explainer / draft では、WebGPU-compatible session と `GPUDevice` から `XRGPUBinding` を作り、WebGPU backed layer へ進む流れが示されています。",
+    "W3C WebXR Device API は 2026-06-09 Candidate Recommendation Draft が公開されており、session support / render state / layers 前提の土台です。",
+    "W3C Depth Sensing Editor's Draft では WebGPU-compatible session 向けの `XRGPUDepthInformation` も言及され、depth row を WebGPU 側へ持ち込む理由があります。",
+    "Meta Browser 149.1 の release note は WebGPU support for space-warp layers を明記しており、起動前 probe に space-warp 候補を含める根拠になります。"
+  ],
+  "keyTopicsEn": [
+    "Immersive Web WebXR WebGPU samples remain an important minimal checklist for WebGPU XR using `XRGPUBinding` and `XRProjectionLayer`.",
+    "The WebXR-WebGPU Binding explainer / draft shows the path from a WebGPU-compatible session and `GPUDevice` to `XRGPUBinding` and WebGPU-backed layers.",
+    "The W3C WebXR Device API 2026-06-09 Candidate Recommendation Draft is the base for session support, render state, and layer assumptions.",
+    "The W3C Depth Sensing Editor's Draft mentions `XRGPUDepthInformation` for WebGPU-compatible sessions, which motivates carrying depth rows into the WebGPU path.",
+    "Meta Browser 149.1 release notes explicitly mention WebGPU support for space-warp layers, giving a reason to include space-warp candidates in pre-start probes."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: XR WebGPU Probe Store Console",
+      "url": "../outputs/2026-10-10_html_xr_webgpu_probe_store_console.html"
+    },
+    {
+      "label": "Today's derivative sample: Probe Row Schema Route Replayer",
+      "url": "../outputs/2026-10-10_html_probe_row_schema_route_replayer.html"
+    },
+    {
+      "label": "Immersive Web: WebXR WebGPU Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding explainer",
+      "url": "https://github.com/immersive-web/WebXR-WebGPU-Binding/blob/main/explainer.md"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding draft",
+      "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR Depth Sensing Editor's Draft",
+      "url": "https://immersive-web.github.io/depth-sensing/"
+    },
+    {
+      "label": "Meta Browser 149.1 release notes",
+      "url": "https://developers.meta.com/vr/downloads/package/browser/149.1/"
+    },
+    {
+      "label": "Meta: WebXR Space Warp",
+      "url": "https://developers.meta.com/vr/documentation/web/webxr-space-warp/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Immersive Web の WebGPU samples は、WebXR session を WebGPU で描画するための実装入口として `XRGPUBinding` / `XRProjectionLayer` の存在確認に使えます。WebXR-WebGPU Binding explainer / draft では WebGPU resources を WebXR へ渡す考え方が整理され、Meta Browser 149.1 の WebGPU space-warp layers と合わせると、`対応しているか` だけでなく `どの確認で route が落ちたか` を保存する価値が出ます。",
+      "bodyEn": "Immersive Web WebGPU samples are a practical entry point for checking `XRGPUBinding` / `XRProjectionLayer` in WebGPU-rendered WebXR sessions. The WebXR-WebGPU Binding explainer / draft describes how WebGPU resources are provided to WebXR, and Meta Browser 149.1 WebGPU space-warp layer support makes it useful to store not just whether support exists, but which check caused a route to fall back.",
+      "links": [
+        {
+          "label": "WebXR WebGPU Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+        },
+        {
+          "label": "WebXR-WebGPU Binding explainer",
+          "url": "https://github.com/immersive-web/WebXR-WebGPU-Binding/blob/main/explainer.md"
+        },
+        {
+          "label": "Meta Browser 149.1",
+          "url": "https://developers.meta.com/vr/downloads/package/browser/149.1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `XR WebGPU Probe Store Console` は、`navigator.gpu`、`navigator.xr`、`isSessionSupported()`、Permissions-Policy、IndexedDB の可用性を probe row としてまとめ、保存件数と missing fields を見せます。派生サンプル `Probe Row Schema Route Replayer` は、その row を貼り付けるだけで schema fit、retry queue、起動直後 6 frame の route を再判定します。",
+      "bodyEn": "The main sample, `XR WebGPU Probe Store Console`, combines `navigator.gpu`, `navigator.xr`, `isSessionSupported()`, Permissions-Policy, and IndexedDB availability into a probe row while showing saved count and missing fields. The derivative sample, `Probe Row Schema Route Replayer`, replays pasted rows through schema fit, retry queue, and six post-start frame routes."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機版の最小列は `secureContext`、`webgpuNavigator`、`gpuAdapterLikely`、`xrNavigator`、`sessionSupported`、`xrSpatialPolicyAllowed`、`cameraPolicyAllowed`、`indexedDbWritable`、`route` です。ここに WebXR-WebGPU Binding の `XRGPUBinding` / `XRProjectionLayer` probe、Depth Sensing の CPU / GPU usage、WebXR Layers の foveation / subimage 情報を段階的に足せます。",
+      "bodyEn": "The minimal on-device columns are `secureContext`, `webgpuNavigator`, `gpuAdapterLikely`, `xrNavigator`, `sessionSupported`, `xrSpatialPolicyAllowed`, `cameraPolicyAllowed`, `indexedDbWritable`, and `route`. WebXR-WebGPU Binding `XRGPUBinding` / `XRProjectionLayer` probes, Depth Sensing CPU / GPU usage, and WebXR Layers foveation / subimage details can be added incrementally."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の row は 10月9日の capability negotiation board、10月8日の telemetry schema mapper、10月6日の foveated tile risk、10月5日の depth / motion recovery に接続できます。保存 row があれば、WebGPU がない端末、XR がない通常ブラウザ、policy が足りない iframe、実機で session support が落ちるケースを同じ route replayer に流せます。",
+      "bodyEn": "Today's row can connect to the October 9 capability negotiation board, October 8 telemetry schema mapper, October 6 foveated tile risk sample, and October 5 depth / motion recovery. With saved rows, devices without WebGPU, normal browsers without XR, iframes with weak policy, and headsets with failed session support can all feed the same route replayer."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR-WebGPU Binding の draft、Immersive Web WebGPU samples、W3C Depth Sensing の WebGPU-compatible session 表現、W3C WebXR Layers の projection / foveation 周辺、Meta Browser の WebGPU foveation / space-warp release notes を継続します。自作側では IndexedDB の最新 row を派生サンプルが自動 import し、10月8日の schema mapper 形式へ変換する流れを作ると重複が少ないです。",
+      "bodyEn": "Keep watching the WebXR-WebGPU Binding draft, Immersive Web WebGPU samples, W3C Depth Sensing wording for WebGPU-compatible sessions, W3C WebXR Layers projection / foveation work, and Meta Browser WebGPU foveation / space-warp release notes. On the original side, the next useful step is auto-importing the latest IndexedDB row into the derivative sample and converting it to the October 8 schema mapper format."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`XR WebGPU Probe Store Console` で `Run probe` を押し、通常ブラウザでどの field が missing になるか確認してください。次に `Save row` で IndexedDB に保存し、JSON を `Probe Row Schema Route Replayer` に貼ると、retry queue と route がどこで落ちるか見えます。",
+      "bodyEn": "Press `Run probe` in `XR WebGPU Probe Store Console` and check which fields go missing in a normal browser. Then save the row to IndexedDB, paste the JSON into `Probe Row Schema Route Replayer`, and inspect where the retry queue and route fall back.",
+      "links": [
+        {
+          "label": "Open XR WebGPU Probe Store Console",
+          "url": "../outputs/2026-10-10_html_xr_webgpu_probe_store_console.html"
+        },
+        {
+          "label": "Open Probe Row Schema Route Replayer",
+          "url": "../outputs/2026-10-10_html_probe_row_schema_route_replayer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Immersive Web WebGPU samples、WebXR-WebGPU Binding、W3C WebXR Device API、W3C WebXR Layers、W3C Depth Sensing、Meta Browser 149.1、Meta WebXR Space Warp を確認。設計: 1本目は runtime probe + IndexedDB store、2本目は pasted row の schema / retry / route replay。実装: `outputs/2026-10-10_html_xr_webgpu_probe_store_console.html` と `outputs/2026-10-10_html_probe_row_schema_route_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery / day page 再生成、publish を確認する。",
+      "bodyEn": "Research: checked Immersive Web WebGPU samples, WebXR-WebGPU Binding, W3C WebXR Device API, W3C WebXR Layers, W3C Depth Sensing, Meta Browser 149.1, and Meta WebXR Space Warp. Design: make the first sample a runtime probe plus IndexedDB store and the second a pasted-row schema / retry / route replay. Implementation: add `outputs/2026-10-10_html_xr_webgpu_probe_store_console.html` and `outputs/2026-10-10_html_probe_row_schema_route_replayer.html`. Validation: parse JSON, check embedded scripts, regenerate gallery / day pages, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月前半は visibility mask、prediction miss、depth / motion recovery、foveation、frame budget、telemetry schema、WebGPU / WebXR capability negotiation と積み上がっています。今日の役割は、起動前の `実際にこのブラウザはどこまで持っているか` を保存可能な row にし、後続の shader / layer / telemetry 試作に渡すことです。",
+      "bodyEn": "Early October has built up visibility masks, prediction misses, depth / motion recovery, foveation, frame budgets, telemetry schema, and WebGPU / WebXR capability negotiation. Today's role is to turn `what this browser actually has before startup` into a storable row that later shader / layer / telemetry prototypes can consume."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `XR WebGPU Probe Store Console` です。何が動くか: `navigator.gpu`、`navigator.xr`、Permissions-Policy、IndexedDB を確認し、route、coverage、risk、missing fields を JSON row として保存します。次に足すなら、実 `requestSession()` の requiredFeatures / optionalFeatures と `XRGPUBinding` 作成結果を row に追加します。派生として `Probe Row Schema Route Replayer` も実装しました。何が動くか: 1本目の row を貼り付け、schema fit、retry queue、6 frame route を再判定します。次に足すなら、IndexedDB から最新 row を直接読み込み、10月8日の telemetry schema mapper へ自動変換します。",
+      "bodyEn": "The selected main prototype is `XR WebGPU Probe Store Console`. What it does: checks `navigator.gpu`, `navigator.xr`, Permissions-Policy, and IndexedDB, then stores route, coverage, risk, and missing fields as a JSON row. Next addition: add real `requestSession()` requiredFeatures / optionalFeatures and `XRGPUBinding` creation results. The derivative `Probe Row Schema Route Replayer` was also implemented. What it does: paste the first row and replay schema fit, retry queue, and six frame routes. Next addition: load the latest row directly from IndexedDB and auto-convert it into the October 8 telemetry schema mapper."
+    }
+  ]
+}

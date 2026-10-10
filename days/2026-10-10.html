@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebGPU / WebXR probe を保存可能な telemetry row にする | 2026-10-10</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.10</p>
+      <h1>WebGPU / WebXR probe を保存可能な telemetry row にする</h1>
+      <p class="hero-subtitle">Turning WebGPU / WebXR probes into storable telemetry rows</p>
+      <p>WebXR-WebGPU Binding、Immersive Web WebGPU samples、W3C WebXR / Layers / Depth Sensing、Meta Browser の WebGPU space-warp 情報を確認し、実ブラウザで読める capability probe を IndexedDB 保存 row にする本命サンプルと、その row を schema / route / retry queue に再判定する派生サンプルを追加しました。</p>
+      <p class="en-copy">After checking WebXR-WebGPU Binding, Immersive Web WebGPU samples, W3C WebXR / Layers / Depth Sensing, and Meta Browser WebGPU space-warp notes, today's original work adds a main sample that stores runtime capability probes as IndexedDB rows and a derivative sample that replays those rows through schema, route, and retry-queue checks.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-10_html_xr_webgpu_probe_store_console.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-10-09.html">← 2026.10.09</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>XR WebGPU Probe Store Console</h3>
+              <p>昨日の WebGPU / WebXR capability negotiation を、実ブラウザで読める `navigator.gpu`、`navigator.xr`、Permissions-Policy、IndexedDB 保存 row に近づける本命試作です。実機 XR がなくても不足理由を同じ JSON で残せます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-10_html_xr_webgpu_probe_store_console.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Probe Row Schema Route Replayer</h3>
+              <p>1本目の probe row を貼り付け、昨日の fallback route と 10/08 の telemetry schema へ入れる前に、欠損フィールド、retry queue、起動後 6 frame の route を再判定する派生試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-10_html_probe_row_schema_route_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>Immersive Web の WebXR WebGPU samples は `XRGPUBinding` と `XRProjectionLayer` を使う WebGPU XR の最小確認点として引き続き重要です。</span>
+              <span class="en-copy">Immersive Web WebXR WebGPU samples remain an important minimal checklist for WebGPU XR using `XRGPUBinding` and `XRProjectionLayer`.</span>
+            </li>
+          
+            <li>
+              <span>WebXR-WebGPU Binding explainer / draft では、WebGPU-compatible session と `GPUDevice` から `XRGPUBinding` を作り、WebGPU backed layer へ進む流れが示されています。</span>
+              <span class="en-copy">The WebXR-WebGPU Binding explainer / draft shows the path from a WebGPU-compatible session and `GPUDevice` to `XRGPUBinding` and WebGPU-backed layers.</span>
+            </li>
+          
+            <li>
+              <span>W3C WebXR Device API は 2026-06-09 Candidate Recommendation Draft が公開されており、session support / render state / layers 前提の土台です。</span>
+              <span class="en-copy">The W3C WebXR Device API 2026-06-09 Candidate Recommendation Draft is the base for session support, render state, and layer assumptions.</span>
+            </li>
+          
+            <li>
+              <span>W3C Depth Sensing Editor's Draft では WebGPU-compatible session 向けの `XRGPUDepthInformation` も言及され、depth row を WebGPU 側へ持ち込む理由があります。</span>
+              <span class="en-copy">The W3C Depth Sensing Editor's Draft mentions `XRGPUDepthInformation` for WebGPU-compatible sessions, which motivates carrying depth rows into the WebGPU path.</span>
+            </li>
+          
+            <li>
+              <span>Meta Browser 149.1 の release note は WebGPU support for space-warp layers を明記しており、起動前 probe に space-warp 候補を含める根拠になります。</span>
+              <span class="en-copy">Meta Browser 149.1 release notes explicitly mention WebGPU support for space-warp layers, giving a reason to include space-warp candidates in pre-start probes.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>Immersive Web の WebGPU samples は、WebXR session を WebGPU で描画するための実装入口として `XRGPUBinding` / `XRProjectionLayer` の存在確認に使えます。WebXR-WebGPU Binding explainer / draft では WebGPU resources を WebXR へ渡す考え方が整理され、Meta Browser 149.1 の WebGPU space-warp layers と合わせると、`対応しているか` だけでなく `どの確認で route が落ちたか` を保存する価値が出ます。</p>
+          <p class="en-copy">Immersive Web WebGPU samples are a practical entry point for checking `XRGPUBinding` / `XRProjectionLayer` in WebGPU-rendered WebXR sessions. The WebXR-WebGPU Binding explainer / draft describes how WebGPU resources are provided to WebXR, and Meta Browser 149.1 WebGPU space-warp layer support makes it useful to store not just whether support exists, but which check caused a route to fall back.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-samples/webgpu/" target="_blank" rel="noreferrer">WebXR WebGPU Samples</a></li>
+          
+            <li><a href="https://github.com/immersive-web/WebXR-WebGPU-Binding/blob/main/explainer.md" target="_blank" rel="noreferrer">WebXR-WebGPU Binding explainer</a></li>
+          
+            <li><a href="https://developers.meta.com/vr/downloads/package/browser/149.1/" target="_blank" rel="noreferrer">Meta Browser 149.1</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命サンプル `XR WebGPU Probe Store Console` は、`navigator.gpu`、`navigator.xr`、`isSessionSupported()`、Permissions-Policy、IndexedDB の可用性を probe row としてまとめ、保存件数と missing fields を見せます。派生サンプル `Probe Row Schema Route Replayer` は、その row を貼り付けるだけで schema fit、retry queue、起動直後 6 frame の route を再判定します。</p>
+          <p class="en-copy">The main sample, `XR WebGPU Probe Store Console`, combines `navigator.gpu`, `navigator.xr`, `isSessionSupported()`, Permissions-Policy, and IndexedDB availability into a probe row while showing saved count and missing fields. The derivative sample, `Probe Row Schema Route Replayer`, replays pasted rows through schema fit, retry queue, and six post-start frame routes.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実機版の最小列は `secureContext`、`webgpuNavigator`、`gpuAdapterLikely`、`xrNavigator`、`sessionSupported`、`xrSpatialPolicyAllowed`、`cameraPolicyAllowed`、`indexedDbWritable`、`route` です。ここに WebXR-WebGPU Binding の `XRGPUBinding` / `XRProjectionLayer` probe、Depth Sensing の CPU / GPU usage、WebXR Layers の foveation / subimage 情報を段階的に足せます。</p>
+          <p class="en-copy">The minimal on-device columns are `secureContext`, `webgpuNavigator`, `gpuAdapterLikely`, `xrNavigator`, `sessionSupported`, `xrSpatialPolicyAllowed`, `cameraPolicyAllowed`, `indexedDbWritable`, and `route`. WebXR-WebGPU Binding `XRGPUBinding` / `XRProjectionLayer` probes, Depth Sensing CPU / GPU usage, and WebXR Layers foveation / subimage details can be added incrementally.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の row は 10月9日の capability negotiation board、10月8日の telemetry schema mapper、10月6日の foveated tile risk、10月5日の depth / motion recovery に接続できます。保存 row があれば、WebGPU がない端末、XR がない通常ブラウザ、policy が足りない iframe、実機で session support が落ちるケースを同じ route replayer に流せます。</p>
+          <p class="en-copy">Today's row can connect to the October 9 capability negotiation board, October 8 telemetry schema mapper, October 6 foveated tile risk sample, and October 5 depth / motion recovery. With saved rows, devices without WebGPU, normal browsers without XR, iframes with weak policy, and headsets with failed session support can all feed the same route replayer.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR-WebGPU Binding の draft、Immersive Web WebGPU samples、W3C Depth Sensing の WebGPU-compatible session 表現、W3C WebXR Layers の projection / foveation 周辺、Meta Browser の WebGPU foveation / space-warp release notes を継続します。自作側では IndexedDB の最新 row を派生サンプルが自動 import し、10月8日の schema mapper 形式へ変換する流れを作ると重複が少ないです。</p>
+          <p class="en-copy">Keep watching the WebXR-WebGPU Binding draft, Immersive Web WebGPU samples, W3C Depth Sensing wording for WebGPU-compatible sessions, W3C WebXR Layers projection / foveation work, and Meta Browser WebGPU foveation / space-warp release notes. On the original side, the next useful step is auto-importing the latest IndexedDB row into the derivative sample and converting it to the October 8 schema mapper format.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>`XR WebGPU Probe Store Console` で `Run probe` を押し、通常ブラウザでどの field が missing になるか確認してください。次に `Save row` で IndexedDB に保存し、JSON を `Probe Row Schema Route Replayer` に貼ると、retry queue と route がどこで落ちるか見えます。</p>
+          <p class="en-copy">Press `Run probe` in `XR WebGPU Probe Store Console` and check which fields go missing in a normal browser. Then save the row to IndexedDB, paste the JSON into `Probe Row Schema Route Replayer`, and inspect where the retry queue and route fall back.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-10_html_xr_webgpu_probe_store_console.html" target="_blank" rel="noreferrer">Open XR WebGPU Probe Store Console</a></li>
+          
+            <li><a href="../outputs/2026-10-10_html_probe_row_schema_route_replayer.html" target="_blank" rel="noreferrer">Open Probe Row Schema Route Replayer</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Immersive Web WebGPU samples、WebXR-WebGPU Binding、W3C WebXR Device API、W3C WebXR Layers、W3C Depth Sensing、Meta Browser 149.1、Meta WebXR Space Warp を確認。設計: 1本目は runtime probe + IndexedDB store、2本目は pasted row の schema / retry / route replay。実装: `outputs/2026-10-10_html_xr_webgpu_probe_store_console.html` と `outputs/2026-10-10_html_probe_row_schema_route_replayer.html` を追加。検証: JSON parse、HTML 内 script 構文、gallery / day page 再生成、publish を確認する。</p>
+          <p class="en-copy">Research: checked Immersive Web WebGPU samples, WebXR-WebGPU Binding, W3C WebXR Device API, W3C WebXR Layers, W3C Depth Sensing, Meta Browser 149.1, and Meta WebXR Space Warp. Design: make the first sample a runtime probe plus IndexedDB store and the second a pasted-row schema / retry / route replay. Implementation: add `outputs/2026-10-10_html_xr_webgpu_probe_store_console.html` and `outputs/2026-10-10_html_probe_row_schema_route_replayer.html`. Validation: parse JSON, check embedded scripts, regenerate gallery / day pages, and publish.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>10月前半は visibility mask、prediction miss、depth / motion recovery、foveation、frame budget、telemetry schema、WebGPU / WebXR capability negotiation と積み上がっています。今日の役割は、起動前の `実際にこのブラウザはどこまで持っているか` を保存可能な row にし、後続の shader / layer / telemetry 試作に渡すことです。</p>
+          <p class="en-copy">Early October has built up visibility masks, prediction misses, depth / motion recovery, foveation, frame budgets, telemetry schema, and WebGPU / WebXR capability negotiation. Today's role is to turn `what this browser actually has before startup` into a storable row that later shader / layer / telemetry prototypes can consume.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命として採用した候補は `XR WebGPU Probe Store Console` です。何が動くか: `navigator.gpu`、`navigator.xr`、Permissions-Policy、IndexedDB を確認し、route、coverage、risk、missing fields を JSON row として保存します。次に足すなら、実 `requestSession()` の requiredFeatures / optionalFeatures と `XRGPUBinding` 作成結果を row に追加します。派生として `Probe Row Schema Route Replayer` も実装しました。何が動くか: 1本目の row を貼り付け、schema fit、retry queue、6 frame route を再判定します。次に足すなら、IndexedDB から最新 row を直接読み込み、10月8日の telemetry schema mapper へ自動変換します。</p>
+          <p class="en-copy">The selected main prototype is `XR WebGPU Probe Store Console`. What it does: checks `navigator.gpu`, `navigator.xr`, Permissions-Policy, and IndexedDB, then stores route, coverage, risk, and missing fields as a JSON row. Next addition: add real `requestSession()` requiredFeatures / optionalFeatures and `XRGPUBinding` creation results. The derivative `Probe Row Schema Route Replayer` was also implemented. What it does: paste the first row and replay schema fit, retry queue, and six frame routes. Next addition: load the latest row directly from IndexedDB and auto-convert it into the October 8 telemetry schema mapper.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-10_html_xr_webgpu_probe_store_console.html" target="_blank" rel="noreferrer">Today's main sample: XR WebGPU Probe Store Console</a></li>
+          
+            <li><a href="../outputs/2026-10-10_html_probe_row_schema_route_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Probe Row Schema Route Replayer</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/webgpu/" target="_blank" rel="noreferrer">Immersive Web: WebXR WebGPU Samples</a></li>
+          
+            <li><a href="https://github.com/immersive-web/WebXR-WebGPU-Binding/blob/main/explainer.md" target="_blank" rel="noreferrer">Immersive Web: WebXR-WebGPU Binding explainer</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs" target="_blank" rel="noreferrer">Immersive Web: WebXR-WebGPU Binding draft</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/depth-sensing/" target="_blank" rel="noreferrer">Immersive Web: WebXR Depth Sensing Editor's Draft</a></li>
+          
+            <li><a href="https://developers.meta.com/vr/downloads/package/browser/149.1/" target="_blank" rel="noreferrer">Meta Browser 149.1 release notes</a></li>
+          
+            <li><a href="https://developers.meta.com/vr/documentation/web/webxr-space-warp/" target="_blank" rel="noreferrer">Meta: WebXR Space Warp</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-10_html_xr_webgpu_probe_store_console.html" loading="lazy" title="XR WebGPU Probe Store Console"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
