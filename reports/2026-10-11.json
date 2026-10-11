@@ -1,0 +1,139 @@
+{
+  "date": "2026-10-11",
+  "headline": "WebGPU depth projection を projection attachment row にする",
+  "headlineEn": "Turning WebGPU depth projection into projection attachment rows",
+  "summary": "Meta Browser 152.1 の experimental WebGPU and WebXR depth projection support、WebXR-WebGPU Binding、Immersive Web WebGPU samples、WebXR Layers / Device API を確認し、depth projection / motion vector / foveation を起動前 row として判定する本命サンプルと、その row を6 frameの attachment plan に再配置する派生サンプルを追加しました。",
+  "summaryEn": "After checking Meta Browser 152.1 experimental WebGPU and WebXR depth projection support, WebXR-WebGPU Binding, Immersive Web WebGPU samples, and the WebXR Layers / Device APIs, today's original work adds a main sample that scores depth projection / motion vector / foveation as a pre-start row and a derivative sample that replays that row into a six-frame attachment plan.",
+  "keyTopics": [
+    "Meta Browser 152.1 release notes は Experimental WebGPU and WebXR depth projection support を明記しており、昨日の WebGPU probe row に depth projection 列を足す理由になります。",
+    "WebXR-WebGPU Binding draft は `XRGPUBinding`、WebGPU-backed `XRProjectionLayer`、`XRGPUSubImage`、motion vector texture を扱うため、attachment 単位の route 判定に向いています。",
+    "Immersive Web の WebGPU samples は `immersive-vr` XRSession と WebGPU の最小動作確認点で、実装側の smoke test として引き続き使えます。",
+    "WebXR Layers API は projection layer / foveation / depth formats 周辺の前提を与えるため、depth projection を color-only fallback と分けて考えやすいです。",
+    "WebXR Device API の 2026-06-09 Candidate Recommendation Draft は session / feature descriptor / render state の基礎で、起動前 row の必須列を定義する土台です。"
+  ],
+  "keyTopicsEn": [
+    "Meta Browser 152.1 release notes explicitly mention experimental WebGPU and WebXR depth projection support, which motivates adding depth projection columns to yesterday's WebGPU probe row.",
+    "The WebXR-WebGPU Binding draft covers `XRGPUBinding`, WebGPU-backed `XRProjectionLayer`, `XRGPUSubImage`, and motion vector textures, making attachment-level route decisions useful.",
+    "Immersive Web WebGPU samples remain the minimum smoke test for an `immersive-vr` XRSession rendered with WebGPU.",
+    "The WebXR Layers API gives the projection layer / foveation / depth format assumptions needed to separate depth projection from color-only fallback.",
+    "The WebXR Device API 2026-06-09 Candidate Recommendation Draft is the basis for sessions, feature descriptors, and render state, so it anchors the required columns in the pre-start row."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Depth Projection Readiness Console",
+      "url": "../outputs/2026-10-11_html_depth_projection_readiness_console.html"
+    },
+    {
+      "label": "Today's derivative sample: Projection Attachment Plan Replayer",
+      "url": "../outputs/2026-10-11_html_projection_attachment_plan_replayer.html"
+    },
+    {
+      "label": "Meta Horizon OS release notes: Browser 152.1",
+      "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+    },
+    {
+      "label": "Immersive Web: WebXR WebGPU Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding draft",
+      "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding explainer",
+      "url": "https://github.com/immersive-web/WebXR-WebGPU-Binding/blob/main/explainer.md"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1 publication history",
+      "url": "https://www.w3.org/standards/history/webxrlayers-1/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Meta Browser 152.1 の release notes は WebGPU と WebXR depth projection の experimental support に触れており、WebGPU XR の関心が `描けるか` から `color / depth / motion vector / foveation をどう揃えるか` へ進んでいます。WebXR-WebGPU Binding draft では `XRGPUBinding` と WebGPU-backed projection layer / subimage が中心なので、今日の自作サンプルでは browser capability を attachment plan に変換するところに絞りました。",
+      "bodyEn": "Meta Browser 152.1 release notes mention experimental WebGPU and WebXR depth projection support, moving WebGPU XR from `can it render` toward `how do color, depth, motion vectors, and foveation line up`. The WebXR-WebGPU Binding draft centers on `XRGPUBinding` plus WebGPU-backed projection layers / subimages, so today's original samples focus on converting browser capability into an attachment plan.",
+      "links": [
+        {
+          "label": "Meta Horizon OS release notes",
+          "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+        },
+        {
+          "label": "WebXR-WebGPU Binding draft",
+          "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+        },
+        {
+          "label": "WebXR WebGPU Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `Depth Projection Readiness Console` は、runtime / Quest 152.1 target / WebGPU only / WebGL depth fallback の4 profile を切り替え、depth、motion vector、foveation の要求を attachment plan と route に変換します。派生サンプル `Projection Attachment Plan Replayer` は、その row を貼り付けて6 frame分の warm / fallback / commit を再生します。",
+      "bodyEn": "The main sample, `Depth Projection Readiness Console`, switches among runtime, Quest 152.1 target, WebGPU-only, and WebGL-depth-fallback profiles, then converts requested depth, motion vector, and foveation features into an attachment plan and route. The derivative sample, `Projection Attachment Plan Replayer`, accepts that row and replays six frames of warmup / fallback / commit behavior."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "最小 row は `secureContext`、`webgpuNavigator`、`xrNavigator`、`xrGpuBindingConstructor`、`projectionLayerConstructor`、`xrSpatialPolicyAllowed`、`depthPolicyAllowed`、`attachmentPlan`、`route` です。実機へ進める時は `navigator.gpu.requestAdapter({ xrCompatible: true })`、`XRGPUBinding(session, gpuDevice)`、`getSubImage()` の color / depth / motion vector 可用性、`fixedFoveation` の有無を同じ row に足します。",
+      "bodyEn": "The minimal row is `secureContext`, `webgpuNavigator`, `xrNavigator`, `xrGpuBindingConstructor`, `projectionLayerConstructor`, `xrSpatialPolicyAllowed`, `depthPolicyAllowed`, `attachmentPlan`, and `route`. On a real device, add `navigator.gpu.requestAdapter({ xrCompatible: true })`, `XRGPUBinding(session, gpuDevice)`, color / depth / motion vector availability from `getSubImage()`, and `fixedFoveation` support into the same row."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の row は10月10日の WebGPU probe store、10月9日の capability negotiation board、10月6日の foveation / space-warp budget、10月5日の depth motion vector budget とつなげられます。特に `attachmentPlan` を共通列にすると、色だけで出す、depth だけ遅延保持する、motion vector がない時に prediction を弱める、といった fallback を同じ UI で比較できます。",
+      "bodyEn": "Today's row connects to the October 10 WebGPU probe store, October 9 capability negotiation board, October 6 foveation / space-warp budget, and October 5 depth motion vector budget. Making `attachmentPlan` a shared column lets one UI compare color-only rendering, delayed depth retention, and weakened prediction when motion vectors are missing."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Meta Browser の WebGPU / WebXR depth projection release notes、WebXR-WebGPU Binding の subimage / motion vector texture、Immersive Web WebGPU samples、WebXR Layers の projection / foveation / depth formats、Depth Sensing draft の WebGPU-compatible session 表現を継続します。自作側では、今日の row を昨日の IndexedDB store に保存し、派生 sample が自動 import する流れを作ると重複が少ないです。",
+      "bodyEn": "Keep watching Meta Browser WebGPU / WebXR depth projection release notes, WebXR-WebGPU Binding subimage / motion vector texture details, Immersive Web WebGPU samples, WebXR Layers projection / foveation / depth formats, and Depth Sensing wording around WebGPU-compatible sessions. On the original side, the clean next step is saving today's row into yesterday's IndexedDB store and auto-importing it into the derivative sample."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`Depth Projection Readiness Console` で profile を `quest 152.1 target` と `webgl depth fallback` に切り替え、depth / motion vector / foveation の checkbox を外して route がどう変わるか見てください。出力 JSON を `Projection Attachment Plan Replayer` に貼ると、起動後6 frameでどこが warm / fallback / commit になるか確認できます。",
+      "bodyEn": "In `Depth Projection Readiness Console`, switch between `quest 152.1 target` and `webgl depth fallback`, then toggle depth / motion vector / foveation to see how the route changes. Paste the output JSON into `Projection Attachment Plan Replayer` to inspect which of the first six frames warm up, fall back, or commit.",
+      "links": [
+        {
+          "label": "Open Depth Projection Readiness Console",
+          "url": "../outputs/2026-10-11_html_depth_projection_readiness_console.html"
+        },
+        {
+          "label": "Open Projection Attachment Plan Replayer",
+          "url": "../outputs/2026-10-11_html_projection_attachment_plan_replayer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Meta Browser 152.1、WebXR-WebGPU Binding draft / explainer、Immersive Web WebGPU samples、WebXR Layers、WebXR Device API publication history を確認。設計: 1本目は depth projection readiness row、2本目は attachment plan replayer。実装: `outputs/2026-10-11_html_depth_projection_readiness_console.html` と `outputs/2026-10-11_html_projection_attachment_plan_replayer.html` を追加。検証: JSON parse、HTML script 構文、日付ページ / index / pages 再生成、publish を行う。",
+      "bodyEn": "Research: checked Meta Browser 152.1, WebXR-WebGPU Binding draft / explainer, Immersive Web WebGPU samples, WebXR Layers, and WebXR Device API publication history. Design: make the first sample a depth projection readiness row and the second an attachment plan replayer. Implementation: add `outputs/2026-10-11_html_depth_projection_readiness_console.html` and `outputs/2026-10-11_html_projection_attachment_plan_replayer.html`. Validation: parse JSON, check embedded scripts, regenerate day / index / pages, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月前半の流れは、prediction / visibility / foveation / telemetry / WebGPU probe から、projection attachment の実装単位へ移っています。今日の役割は、`WebGPU XR に対応` という大きい yes/no を、color、depth、motion vector、foveation の小さい列に分け、将来の実機ログや shader route へ渡せる形にすることです。",
+      "bodyEn": "Early October has moved from prediction / visibility / foveation / telemetry / WebGPU probes toward projection attachment implementation units. Today's role is to split the large yes/no of `WebGPU XR supported` into smaller color, depth, motion vector, and foveation columns that future device logs and shader routes can consume."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `Depth Projection Readiness Console` です。何が動くか: browser / target profile から `attachmentPlan`、readiness、risk、route を作り、depth projection と motion vector / foveation の要求差を見ます。次に足すなら、昨日の IndexedDB store へ保存し、実 `requestAdapter({ xrCompatible: true })` と `XRGPUBinding` の例外名を row に入れます。派生として `Projection Attachment Plan Replayer` も実装しました。何が動くか: 1本目の row を貼り付け、color / depth / motion vector / foveation attachment を6 frameに再配置します。次に足すなら、実 headset profile 別に attachment plan を横比較し、Depth Sensing / Space Warp の有無で shader route を切り替えます。",
+      "bodyEn": "The selected main prototype is `Depth Projection Readiness Console`. What it does: builds `attachmentPlan`, readiness, risk, and route from a browser / target profile, then shows how depth projection and motion vector / foveation requests change the result. Next addition: save it into yesterday's IndexedDB store and include real `requestAdapter({ xrCompatible: true })` plus `XRGPUBinding` exception names. The derivative `Projection Attachment Plan Replayer` was also implemented. What it does: pastes the first row and redistributes color / depth / motion vector / foveation attachments across six frames. Next addition: compare attachment plans by real headset profile and switch shader routes based on Depth Sensing / Space Warp availability."
+    }
+  ]
+}

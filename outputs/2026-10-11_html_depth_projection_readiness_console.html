@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Depth Projection Readiness Console</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f1412;
+      --panel: #1b2420;
+      --panel2: #26332d;
+      --line: #69776e;
+      --text: #f8f4eb;
+      --muted: #cbd3cb;
+      --cyan: #8fd7ff;
+      --green: #a8dc8f;
+      --gold: #efca74;
+      --red: #ef8178;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(142deg, rgba(143, 215, 255, 0.11), transparent 34%),
+        linear-gradient(315deg, rgba(168, 220, 143, 0.1), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(27, 36, 32, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 50px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric, .lane, .row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(5, 9, 9, 0.62);
+    }
+    .metric { padding: 10px; }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+    .lanes { display: grid; gap: 8px; min-height: 338px; align-content: center; }
+    .lane { display: grid; grid-template-columns: 158px 1fr 160px; align-items: center; gap: 10px; padding: 10px; color: var(--muted); }
+    .track { height: 16px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+    .fill { height: 100%; width: 0; transition: width 0.18s ease; background: var(--green); }
+    .fill.warn { background: var(--gold); }
+    .fill.bad { background: var(--red); }
+    .toolbar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    button, select, input, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    button { cursor: pointer; background: #24495d; border-color: #86cdeb; }
+    input { accent-color: var(--cyan); }
+    textarea { width: 100%; min-height: 210px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .rows { display: grid; gap: 8px; }
+    .row { padding: 10px; color: var(--muted); overflow-wrap: anywhere; }
+    @media (max-width: 900px) {
+      header, .toolbar, .metrics, .lane { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Depth Projection Readiness Console</h1>
+        <p>Meta Browser 152.1 の WebGPU + WebXR depth projection 情報をきっかけに、`XRGPUBinding`、projection layer、depth usage、motion vector、foveation を起動前 row として評価する本命試作です。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>route</span><strong id="routeMetric">-</strong></div>
+          <div class="metric"><span>readiness</span><strong id="readyMetric">0%</strong></div>
+          <div class="metric"><span>risk</span><strong id="riskMetric">0.00</strong></div>
+          <div class="metric"><span>attachments</span><strong id="attachMetric">0</strong></div>
+        </div>
+        <div id="lanes" class="lanes" aria-label="depth projection readiness lanes"></div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <select id="profileSelect">
+        <option value="runtime">runtime probe</option>
+        <option value="quest152">quest 152.1 target</option>
+        <option value="webgpuOnly">webgpu only</option>
+        <option value="webglDepth">webgl depth fallback</option>
+      </select>
+      <label><input id="depthToggle" type="checkbox" checked> depth</label>
+      <label><input id="motionToggle" type="checkbox" checked> motion vector</label>
+      <label><input id="foveationToggle" type="checkbox" checked> foveation</label>
+      <button id="copyButton" type="button">Copy row</button>
+    </div>
+
+    <section>
+      <h2>Decision notes</h2>
+      <div id="notes" class="rows"></div>
+    </section>
+
+    <section>
+      <h2>Export readiness row</h2>
+      <textarea id="rowBox" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function yes(value) {
+      return value ? 1 : 0;
+    }
+
+    function permissionsPolicyAllows(feature) {
+      const policy = document.permissionsPolicy || document.featurePolicy;
+      if (!policy || typeof policy.allowsFeature !== "function") return null;
+      try {
+        return policy.allowsFeature(feature);
+      } catch {
+        return null;
+      }
+    }
+
+    function profileSeed(profile) {
+      const runtime = {
+        secureContext: window.isSecureContext,
+        webgpuNavigator: "gpu" in navigator,
+        xrNavigator: "xr" in navigator,
+        xrGpuBindingConstructor: "XRGPUBinding" in window,
+        projectionLayerConstructor: "XRProjectionLayer" in window,
+        xrSpatialPolicyAllowed: permissionsPolicyAllows("xr-spatial-tracking") !== false,
+        depthPolicyAllowed: permissionsPolicyAllows("camera") !== false
+      };
+      const presets = {
+        runtime,
+        quest152: {
+          secureContext: true,
+          webgpuNavigator: true,
+          xrNavigator: true,
+          xrGpuBindingConstructor: true,
+          projectionLayerConstructor: true,
+          xrSpatialPolicyAllowed: true,
+          depthPolicyAllowed: true
+        },
+        webgpuOnly: {
+          secureContext: true,
+          webgpuNavigator: true,
+          xrNavigator: false,
+          xrGpuBindingConstructor: false,
+          projectionLayerConstructor: false,
+          xrSpatialPolicyAllowed: true,
+          depthPolicyAllowed: true
+        },
+        webglDepth: {
+          secureContext: true,
+          webgpuNavigator: false,
+          xrNavigator: true,
+          xrGpuBindingConstructor: false,
+          projectionLayerConstructor: true,
+          xrSpatialPolicyAllowed: true,
+          depthPolicyAllowed: true
+        }
+      };
+      return presets[profile];
+    }
+
+    function buildRow() {
+      const seed = profileSeed($("profileSelect").value);
+      const requested = {
+        depthProjection: $("depthToggle").checked,
+        motionVector: $("motionToggle").checked,
+        foveation: $("foveationToggle").checked
+      };
+      const attachmentPlan = [
+        seed.webgpuNavigator && seed.xrGpuBindingConstructor ? "gpu-color" : null,
+        requested.depthProjection && seed.depthPolicyAllowed ? "depth-projection" : null,
+        requested.motionVector && seed.webgpuNavigator ? "motion-vector" : null,
+        requested.foveation && seed.projectionLayerConstructor ? "fixed-foveation" : null
+      ].filter(Boolean);
+      const fields = [
+        "secureContext",
+        "webgpuNavigator",
+        "xrNavigator",
+        "xrGpuBindingConstructor",
+        "projectionLayerConstructor",
+        "xrSpatialPolicyAllowed",
+        "depthPolicyAllowed"
+      ];
+      const readiness = fields.reduce((sum, field) => sum + yes(seed[field]), 0) / fields.length;
+      const risk = clamp(
+        (seed.secureContext ? 0 : 0.24) +
+        (seed.webgpuNavigator ? 0 : 0.16) +
+        (seed.xrNavigator ? 0 : 0.18) +
+        (seed.xrGpuBindingConstructor ? 0 : 0.14) +
+        (seed.projectionLayerConstructor ? 0 : 0.1) +
+        (seed.xrSpatialPolicyAllowed ? 0 : 0.1) +
+        (seed.depthPolicyAllowed ? 0 : 0.08),
+        0,
+        1
+      );
+      let route = "commit-webgpu-depth-projection";
+      if (!seed.secureContext) route = "block-insecure-context";
+      else if (!seed.xrNavigator) route = "screen-webgpu-depth-preview";
+      else if (!seed.webgpuNavigator || !seed.xrGpuBindingConstructor) route = "webgl-depth-layer-fallback";
+      else if (!seed.depthPolicyAllowed && requested.depthProjection) route = "projection-without-depth";
+      else if (!seed.projectionLayerConstructor) route = "base-layer-projection-fallback";
+      return {
+        id: `depth-projection-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        source: $("profileSelect").value,
+        requested,
+        ...seed,
+        attachmentPlan,
+        readiness: Number(readiness.toFixed(3)),
+        risk: Number(risk.toFixed(3)),
+        route,
+        missingFields: fields.filter((field) => !seed[field]),
+        nextStep: "feed this row into the attachment planner and compare color/depth/motion routes"
+      };
+    }
+
+    function lane(label, value, detail) {
+      const width = Math.round(value * 100);
+      const state = value < 0.42 ? "bad" : value < 0.72 ? "warn" : "";
+      return `
+        <div class="lane">
+          <span>${label}</span>
+          <div class="track"><div class="fill ${state}" style="width:${width}%"></div></div>
+          <strong>${detail}</strong>
+        </div>
+      `;
+    }
+
+    function render() {
+      const row = buildRow();
+      $("routeMetric").textContent = row.route;
+      $("readyMetric").textContent = `${Math.round(row.readiness * 100)}%`;
+      $("riskMetric").textContent = row.risk.toFixed(2);
+      $("attachMetric").textContent = row.attachmentPlan.length;
+      $("lanes").innerHTML = [
+        lane("secure context", yes(row.secureContext), row.secureContext ? "ok" : "blocked"),
+        lane("navigator.gpu", yes(row.webgpuNavigator), row.webgpuNavigator ? "present" : "missing"),
+        lane("navigator.xr", yes(row.xrNavigator), row.xrNavigator ? "present" : "screen"),
+        lane("XRGPUBinding", yes(row.xrGpuBindingConstructor), row.xrGpuBindingConstructor ? "constructable" : "fallback"),
+        lane("projection layer", yes(row.projectionLayerConstructor), row.projectionLayerConstructor ? "layer path" : "base layer"),
+        lane("depth policy", yes(row.depthPolicyAllowed), row.depthPolicyAllowed ? "allows" : "masked")
+      ].join("");
+      $("notes").innerHTML = [
+        `attachmentPlan: ${row.attachmentPlan.join(" + ") || "none"}`,
+        `missingFields: ${row.missingFields.length ? row.missingFields.join(", ") : "none"}`,
+        `requested: depth=${row.requested.depthProjection}, motion=${row.requested.motionVector}, foveation=${row.requested.foveation}`,
+        `next: ${row.nextStep}`
+      ].map((text) => `<div class="row">${text}</div>`).join("");
+      $("rowBox").value = JSON.stringify(row, null, 2);
+    }
+
+    $("profileSelect").addEventListener("input", render);
+    $("depthToggle").addEventListener("input", render);
+    $("motionToggle").addEventListener("input", render);
+    $("foveationToggle").addEventListener("input", render);
+    $("copyButton").addEventListener("click", async () => {
+      $("rowBox").select();
+      try {
+        await navigator.clipboard.writeText($("rowBox").value);
+      } catch {
+        document.execCommand("copy");
+      }
+    });
+    render();
+  </script>
+</body>
+</html>

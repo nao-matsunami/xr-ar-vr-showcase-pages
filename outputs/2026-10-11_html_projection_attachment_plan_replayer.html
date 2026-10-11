@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Projection Attachment Plan Replayer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111513;
+      --panel: #1d2522;
+      --panel2: #29332f;
+      --line: #68766f;
+      --text: #f8f3eb;
+      --muted: #cbd2ca;
+      --green: #a8dc8f;
+      --gold: #f0ca74;
+      --red: #ee8179;
+      --cyan: #8fd7ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(145deg, rgba(143, 215, 255, 0.11), transparent 38%),
+        linear-gradient(315deg, rgba(240, 202, 116, 0.1), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1160px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(29, 37, 34, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 50px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric, .frame, .row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(7, 10, 10, 0.62);
+    }
+    .metric { padding: 10px; }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+    .timeline { display: grid; gap: 8px; min-height: 338px; align-content: center; }
+    .frame { display: grid; grid-template-columns: 82px 1fr 170px; align-items: center; gap: 10px; padding: 10px; color: var(--muted); }
+    .track { height: 16px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+    .fill { height: 100%; width: 0; transition: width 0.18s ease; }
+    .ok { background: var(--green); }
+    .watch { background: var(--gold); }
+    .fail { background: var(--red); }
+    .toolbar { display: grid; grid-template-columns: 1fr 150px; gap: 10px; margin-bottom: 14px; }
+    textarea, button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      min-width: 0;
+    }
+    textarea { width: 100%; min-height: 188px; padding: 12px; resize: vertical; line-height: 1.45; }
+    button { min-height: 42px; padding: 0 12px; cursor: pointer; background: #24495d; border-color: #86cdeb; }
+    .rows { display: grid; gap: 8px; }
+    .row { padding: 10px; color: var(--muted); overflow-wrap: anywhere; }
+    @media (max-width: 900px) {
+      header, .toolbar, .metrics, .frame { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Projection Attachment Plan Replayer</h1>
+        <p>1本目の readiness row を貼り付け、color / depth / motion vector / foveation attachment を6 frameの起動タイムラインへ配置し直す派生試作です。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>plan fit</span><strong id="fitMetric">0%</strong></div>
+          <div class="metric"><span>attachments</span><strong id="attachMetric">0</strong></div>
+          <div class="metric"><span>fallbacks</span><strong id="fallbackMetric">0</strong></div>
+          <div class="metric"><span>final route</span><strong id="routeMetric">-</strong></div>
+        </div>
+        <div id="timeline" class="timeline" aria-label="projection attachment replay timeline"></div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <textarea id="inputBox" spellcheck="false"></textarea>
+      <button id="replayButton" type="button">Replay plan</button>
+    </div>
+
+    <section>
+      <h2>Attachment notes</h2>
+      <div id="notes" class="rows"></div>
+    </section>
+
+    <section>
+      <h2>Export replay result</h2>
+      <textarea id="outputBox" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const required = [
+      "secureContext",
+      "webgpuNavigator",
+      "xrNavigator",
+      "xrGpuBindingConstructor",
+      "projectionLayerConstructor",
+      "attachmentPlan",
+      "route"
+    ];
+    const seed = {
+      id: "seed-depth-projection-2026-10-11",
+      timestamp: new Date().toISOString(),
+      source: "quest152",
+      requested: { depthProjection: true, motionVector: true, foveation: true },
+      secureContext: true,
+      webgpuNavigator: true,
+      xrNavigator: true,
+      xrGpuBindingConstructor: true,
+      projectionLayerConstructor: true,
+      xrSpatialPolicyAllowed: true,
+      depthPolicyAllowed: true,
+      attachmentPlan: ["gpu-color", "depth-projection", "motion-vector", "fixed-foveation"],
+      readiness: 1,
+      risk: 0,
+      route: "commit-webgpu-depth-projection",
+      missingFields: [],
+      nextStep: "compare color/depth/motion routes"
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function bool(value) {
+      return value === true;
+    }
+
+    function classify(row, index) {
+      const attachments = Array.isArray(row.attachmentPlan) ? row.attachmentPlan : [];
+      const basePressure = clamp((row.risk || 0) + index * 0.05, 0, 1);
+      if (!bool(row.secureContext)) return { route: "block-insecure-context", pressure: 1, fallback: true };
+      if (!bool(row.xrNavigator)) return { route: "screen-preview-attachments", pressure: basePressure + 0.2, fallback: true };
+      if (!bool(row.webgpuNavigator) || !bool(row.xrGpuBindingConstructor)) {
+        return { route: index < 2 ? "try-webgpu-binding" : "webgl-depth-fallback", pressure: basePressure + 0.18, fallback: true };
+      }
+      if (!attachments.includes("depth-projection") && row.requested?.depthProjection) {
+        return { route: "color-only-projection", pressure: basePressure + 0.12, fallback: true };
+      }
+      if (!attachments.includes("motion-vector") && row.requested?.motionVector) {
+        return { route: "depth-without-motion-vector", pressure: basePressure + 0.1, fallback: true };
+      }
+      return { route: index < 2 ? "warm-projection-attachments" : "commit-depth-projection", pressure: basePressure, fallback: false };
+    }
+
+    function replay(row) {
+      const present = required.filter((field) => Object.prototype.hasOwnProperty.call(row, field));
+      const missing = required.filter((field) => !Object.prototype.hasOwnProperty.call(row, field));
+      const frames = Array.from({ length: 6 }, (_, index) => ({ index, ...classify(row, index) }));
+      const attachments = Array.isArray(row.attachmentPlan) ? row.attachmentPlan : [];
+      return {
+        sourceId: row.id || "pasted-row",
+        planFit: Number((present.length / required.length).toFixed(3)),
+        attachments,
+        missingSchemaFields: missing,
+        fallbackFrames: frames.filter((frame) => frame.fallback).length,
+        finalRoute: frames[frames.length - 1].route,
+        frames,
+        nextStep: "load rows directly from IndexedDB and compare real headset profiles"
+      };
+    }
+
+    function render() {
+      let row;
+      try {
+        row = JSON.parse($("inputBox").value);
+      } catch {
+        row = seed;
+      }
+      const result = replay(row);
+      $("fitMetric").textContent = `${Math.round(result.planFit * 100)}%`;
+      $("attachMetric").textContent = result.attachments.length;
+      $("fallbackMetric").textContent = result.fallbackFrames;
+      $("routeMetric").textContent = result.finalRoute;
+      $("timeline").innerHTML = result.frames.map((frame) => {
+        const cls = frame.fallback ? "watch" : frame.route.includes("commit") ? "ok" : "fail";
+        return `
+          <div class="frame">
+            <strong>f+${frame.index + 1}</strong>
+            <div class="track"><div class="fill ${cls}" style="width:${Math.round(clamp(frame.pressure, 0, 1) * 100)}%"></div></div>
+            <span>${frame.route}</span>
+          </div>
+        `;
+      }).join("");
+      $("notes").innerHTML = [
+        `attachments: ${result.attachments.join(" + ") || "none"}`,
+        `missing schema fields: ${result.missingSchemaFields.length ? result.missingSchemaFields.join(", ") : "none"}`,
+        `fallback frames: ${result.fallbackFrames}`,
+        `next: ${result.nextStep}`
+      ].map((text) => `<div class="row">${text}</div>`).join("");
+      $("outputBox").value = JSON.stringify(result, null, 2);
+    }
+
+    $("inputBox").value = JSON.stringify(seed, null, 2);
+    $("replayButton").addEventListener("click", render);
+    $("inputBox").addEventListener("input", render);
+    render();
+  </script>
+</body>
+</html>
