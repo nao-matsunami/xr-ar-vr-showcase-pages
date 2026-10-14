@@ -1,0 +1,135 @@
+{
+  "date": "2026-10-14",
+  "headline": "XR 能力 probe を操作 gate へ変換する",
+  "headlineEn": "Turning XR capability probes into action gates",
+  "summary": "Meta Browser 152.1 の experimental WebGPU composition layers、Immersive Web の WebXR WebGPU samples、WebXR-WebGPU Binding draft、W3C WebGPU CRD、Meta の WebXR Space Warp 資料を確認し、WebGPU / WebXR / Layers / Depth / Motion Vector の probe を実際に有効化する UI 操作へ落とす本命サンプルと、その row を履歴付きで8 frame再生する派生サンプルを追加しました。",
+  "summaryEn": "After checking Meta Browser 152.1 experimental WebGPU composition layers, Immersive Web WebXR WebGPU samples, the WebXR-WebGPU Binding draft, the W3C WebGPU CRD, and Meta's WebXR Space Warp documentation, today's original work adds a main sample that turns WebGPU / WebXR / Layers / Depth / Motion Vector probes into UI action gates and a derivative sample that replays that row against history across eight frames.",
+  "keyTopics": [
+    "Meta Browser release notes は 2026-10-02 の Browser 152.1 で experimental WebGPU composition layers を示しており、WebGPU XR は layer 設計を実装 UI に接続する段階へ進んでいます。",
+    "Immersive Web WebXR WebGPU samples は WebXR と WebGPU の同時対応をチェックし、barebones VR / AR、input selection、benchmark、hands などを smoke test として提示しています。",
+    "WebXR-WebGPU Binding draft は `XRGPUBinding` と projection layer / subimage の扱いを定義しており、probe row を UI action gate に変換する時の列設計に使えます。",
+    "W3C WebGPU CRD は `requestAdapter({ xrCompatible: true })` の重要性を明記しており、通常の WebGPU 対応と XR 用 device の成立を分けて見る必要があります。",
+    "Meta の WebXR Space Warp 資料は depth buffer と motion vector を smooth motion の材料として扱うため、`enable space warp` の UI は depth / motion の両方を gate にするのが自然です。"
+  ],
+  "keyTopicsEn": [
+    "Meta Browser release notes mention experimental WebGPU composition layers in Browser 152.1 on 2026-10-02, pushing WebGPU XR from layer design toward implementation UI decisions.",
+    "Immersive Web WebXR WebGPU samples check combined WebXR and WebGPU support and provide smoke tests for barebones VR / AR, input selection, benchmark scenes, and hands.",
+    "The WebXR-WebGPU Binding draft defines `XRGPUBinding`, projection layers, and subimages, which are useful columns when converting probe rows into UI action gates.",
+    "The W3C WebGPU CRD calls out `requestAdapter({ xrCompatible: true })`, so generic WebGPU support and XR-compatible device creation should be treated separately.",
+    "Meta's WebXR Space Warp documentation treats depth buffers and motion vectors as inputs for smooth motion, so an `enable space warp` UI naturally needs both depth and motion gates."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: XR Capability Action Gateboard",
+      "url": "../outputs/2026-10-14_html_xr_capability_action_gateboard.html"
+    },
+    {
+      "label": "Today's derivative sample: Action Gate History Replayer",
+      "url": "../outputs/2026-10-14_html_action_gate_history_replayer.html"
+    },
+    {
+      "label": "Meta Horizon OS release notes: Browser",
+      "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+    },
+    {
+      "label": "Immersive Web: WebXR WebGPU Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding draft",
+      "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+    },
+    {
+      "label": "W3C: WebGPU Candidate Recommendation Draft",
+      "url": "https://www.w3.org/TR/webgpu/"
+    },
+    {
+      "label": "Meta: WebXR Space Warp",
+      "url": "https://developers.meta.com/vr/documentation/web/webxr-space-warp/"
+    },
+    {
+      "label": "Meta Quest Browser overview",
+      "url": "https://developers.meta.com/vr/documentation/web/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Meta Browser の experimental WebGPU composition layers と Immersive Web の WebGPU samples を見ると、次の焦点は `WebGPU XR が起動するか` から `どの操作をユーザーへ開いてよいか` へ移っています。今日の自作サンプルでは、secure context、WebGPU adapter、WebXR session、`XRGPUBinding`、projection layer、depth、motion vector、permissions policy を gate にし、Enter WebGPU XR / Enable Space Warp / Depth Occlusion / Hand Pin UI / DOM Overlay Controls / WebGL Fallback の各 action を有効化または縮退させます。",
+      "bodyEn": "Meta Browser's experimental WebGPU composition layers and the Immersive Web WebGPU samples suggest that the next focus is moving from `does WebGPU XR start` to `which actions should be opened to the user`. Today's original sample uses secure context, WebGPU adapter, WebXR session, `XRGPUBinding`, projection layers, depth, motion vectors, and permissions policy as gates for enabling or degrading Enter WebGPU XR, Enable Space Warp, Depth Occlusion, Hand Pin UI, DOM Overlay Controls, and WebGL Fallback.",
+      "links": [
+        {
+          "label": "Meta Horizon OS release notes",
+          "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+        },
+        {
+          "label": "WebXR WebGPU Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+        },
+        {
+          "label": "WebXR-WebGPU Binding draft",
+          "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `XR Capability Action Gateboard` は profile、session mode、frame spare、hands UI、DOM overlay を切り替えながら、runtime probe を action gate に変換します。派生サンプル `Action Gate History Replayer` は、本命サンプルの row を貼り付け、stable / flapping / new feature spike の履歴と照合して、8 frame の間に primary route へ戻せるかを再生します。",
+      "bodyEn": "The main sample, `XR Capability Action Gateboard`, converts runtime probes into action gates while switching profile, session mode, frame spare, hands UI, and DOM overlay. The derivative sample, `Action Gate History Replayer`, accepts the main sample's row, compares it against stable / flapping / new feature spike history, and replays whether the primary route can be restored within eight frames."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "最小 row は `secure`、`webgpu`、`xr`、`xrgpu`、`layers`、`depth`、`motion`、`policy`、`route`、`actionScore`、`enabledActions`、`firstHold`、`actions` です。実機では `navigator.gpu.requestAdapter({ xrCompatible: true })`、`navigator.xr.isSessionSupported()`、`requestSession()` の feature descriptor、`new XRGPUBinding(session, device)`、`createProjectionLayer()`、Space Warp 用の depth / motion-vector attachment を同じ row に入れると、UI の無効化理由を説明しやすくなります。",
+      "bodyEn": "The minimal row is `secure`, `webgpu`, `xr`, `xrgpu`, `layers`, `depth`, `motion`, `policy`, `route`, `actionScore`, `enabledActions`, `firstHold`, and `actions`. On device, put `navigator.gpu.requestAdapter({ xrCompatible: true })`, `navigator.xr.isSessionSupported()`, `requestSession()` feature descriptors, `new XRGPUBinding(session, device)`, `createProjectionLayer()`, and Space Warp depth / motion-vector attachments into the same row so disabled UI can explain itself."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の action gate row は、10月10日の probe store、10月11日の depth projection readiness、10月12日の composition layer plan、10月13日の XRGPUBinding fault triage と接続できます。特に `firstHold` と `actions.*.missing` を共通化すると、WebGPU adapter 欠落、XR policy 欠落、depth 欠落、motion vector 欠落、履歴 flapping をすべて同じ UI decision log として保存できます。",
+      "bodyEn": "Today's action gate row connects to the October 10 probe store, October 11 depth projection readiness, October 12 composition layer plan, and October 13 XRGPUBinding fault triage. Sharing `firstHold` and `actions.*.missing` lets WebGPU adapter gaps, XR policy gaps, depth gaps, motion vector gaps, and historical flapping all live in one UI decision log."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Meta Browser の WebGPU composition layers と Space Warp 更新、Immersive Web WebGPU samples の source、WebXR-WebGPU Binding の `XRGPUSubImage` / layer issue、W3C WebGPU の XR-compatible adapter 記述、Meta Quest Browser の配布・debugging guidance を継続して見ます。自作側では、今日の action gate row を IndexedDB に保存し、前日との差分で UI の復帰を遅延させる policy を足すと発展します。",
+      "bodyEn": "Keep watching Meta Browser WebGPU composition layers and Space Warp updates, Immersive Web WebGPU sample sources, WebXR-WebGPU Binding `XRGPUSubImage` / layer issues, W3C WebGPU XR-compatible adapter language, and Meta Quest Browser distribution / debugging guidance. On the original side, the next step is saving today's action gate row in IndexedDB and adding a policy that delays UI restoration based on day-to-day diffs."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`XR Capability Action Gateboard` で profile を `Meta 152.1 target`、`depth missing`、`runtime probe` に切り替え、`Enable Space Warp` と `Depth Occlusion` の status がどう変わるかを見てください。出力 row を `Action Gate History Replayer` に貼ると、flapping history では primary route に戻すまで数 frame 待つ挙動を確認できます。",
+      "bodyEn": "In `XR Capability Action Gateboard`, switch profiles between `Meta 152.1 target`, `depth missing`, and `runtime probe`, then watch how `Enable Space Warp` and `Depth Occlusion` change status. Paste the output row into `Action Gate History Replayer` to see how flapping history waits a few frames before restoring the primary route.",
+      "links": [
+        {
+          "label": "Open XR Capability Action Gateboard",
+          "url": "../outputs/2026-10-14_html_xr_capability_action_gateboard.html"
+        },
+        {
+          "label": "Open Action Gate History Replayer",
+          "url": "../outputs/2026-10-14_html_action_gate_history_replayer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Meta Browser release notes、Immersive Web WebGPU samples、WebXR-WebGPU Binding draft、W3C WebGPU CRD、Meta WebXR Space Warp を確認。設計: 1本目は capability probe から action gate、2本目は action gate row の履歴 replay。実装: `outputs/2026-10-14_html_xr_capability_action_gateboard.html` と `outputs/2026-10-14_html_action_gate_history_replayer.html` を追加。検証: JSON parse、HTML script 構文、日付ページ / index / pages 再生成、publish を行う。",
+      "bodyEn": "Research: checked Meta Browser release notes, Immersive Web WebGPU samples, the WebXR-WebGPU Binding draft, W3C WebGPU CRD, and Meta WebXR Space Warp. Design: make the first sample capability probes to action gates and the second a history replay of the action gate row. Implementation: add `outputs/2026-10-14_html_xr_capability_action_gateboard.html` and `outputs/2026-10-14_html_action_gate_history_replayer.html`. Validation: parse JSON, check embedded scripts, regenerate day / index / pages, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月前半は visibility、foveation、WebGPU probe、depth projection、composition layer、XRGPUBinding fault へ進みました。今日の役割は、その低レベル row をユーザー操作に接続し、`起動できるか` だけではなく `この操作は今押せるか、押せないならなぜか、いつ戻せるか` へ変換することです。",
+      "bodyEn": "Early October has moved through visibility, foveation, WebGPU probes, depth projection, composition layers, and XRGPUBinding faults. Today's role is to connect those low-level rows to user actions, converting `can it launch` into `can this action be pressed now, why not, and when can it return`."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `XR Capability Action Gateboard` です。何が動くか: profile、mode、frame spare、hands UI、DOM overlay を切り替え、WebGPU / WebXR / Layers / Depth / Motion / Policy の gate から action の enabled / degraded / probe を出します。次に足すなら、実 `requestAdapter({ xrCompatible: true })`、`requestSession()`、`XRGPUBinding`、Space Warp attachment の例外名を IndexedDB に保存します。派生として `Action Gate History Replayer` も実装しました。何が動くか: 1本目の row を貼り付け、stable / flapping / new feature spike の履歴と比較し、8 frame で primary route へ戻せるかを判定します。次に足すなら、前日までの `reports` や probe store から履歴を自動生成し、UI 復帰 cooldown を実データで調整します。",
+      "bodyEn": "The selected main prototype is `XR Capability Action Gateboard`. What it does: switches profile, mode, frame spare, hands UI, and DOM overlay, then emits enabled / degraded / probe states for actions based on WebGPU / WebXR / Layers / Depth / Motion / Policy gates. Next addition: save real exception names from `requestAdapter({ xrCompatible: true })`, `requestSession()`, `XRGPUBinding`, and Space Warp attachments into IndexedDB. The derivative `Action Gate History Replayer` was also implemented. What it does: accepts the first row, compares it with stable / flapping / new feature spike history, and decides whether the primary route can be restored within eight frames. Next addition: generate history from previous `reports` or probe store rows and tune UI restoration cooldown with real data."
+    }
+  ]
+}

@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XR Capability Action Gateboard</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111518;
+      --panel: #1b2428;
+      --panel2: #26343a;
+      --line: #73838a;
+      --text: #f5f1e7;
+      --muted: #c3ced1;
+      --cyan: #8bd7f4;
+      --green: #a8df92;
+      --gold: #edc76e;
+      --red: #ef8178;
+      --blue: #9fb8ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(139, 215, 244, 0.15), transparent 38%),
+        linear-gradient(300deg, rgba(237, 199, 110, 0.12), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(27, 36, 40, 0.95);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 50px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric, .gate, .action, .row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(5, 9, 12, 0.54);
+    }
+    .metric { padding: 10px; }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 17px; overflow-wrap: anywhere; }
+    .toolbar { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    button, select, input, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    button { cursor: pointer; background: #24495b; border-color: #86cee8; }
+    label { display: grid; gap: 4px; color: var(--muted); font-size: 13px; }
+    label input[type="checkbox"] { min-height: auto; justify-self: start; accent-color: var(--cyan); }
+    label input[type="range"] { padding: 0; accent-color: var(--cyan); }
+    .gates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; min-height: 266px; }
+    .gate { padding: 12px; display: grid; gap: 8px; align-content: start; }
+    .gate b { font-size: 14px; }
+    .gate small { color: var(--muted); line-height: 1.45; }
+    .bar { height: 12px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+    .fill { height: 100%; width: 0; transition: width 0.18s ease; background: var(--green); }
+    .fill.warn { background: var(--gold); }
+    .fill.bad { background: var(--red); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .actions { display: grid; gap: 8px; }
+    .action { padding: 12px; display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+    .action strong { overflow-wrap: anywhere; }
+    .pill { border-radius: 999px; padding: 6px 9px; color: #071014; background: var(--green); font-size: 12px; font-weight: 800; }
+    .pill.warn { background: var(--gold); }
+    .pill.bad { background: var(--red); }
+    .pill.info { background: var(--blue); }
+    textarea { width: 100%; min-height: 234px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .rows { display: grid; gap: 8px; }
+    .row { padding: 10px; color: var(--muted); overflow-wrap: anywhere; }
+    @media (max-width: 940px) {
+      header, .toolbar, .metrics, .gates, .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>XR Capability Action Gateboard</h1>
+        <p>WebGPU / WebXR / Layers / Space Warp / Depth の probe を、実際にユーザーへ開ける操作へ変換する本命試作です。対応有無だけでなく、どのボタンを有効化し、何を縮退表示へ回すかを row にします。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>route</span><strong id="routeMetric">-</strong></div>
+          <div class="metric"><span>action score</span><strong id="scoreMetric">0%</strong></div>
+          <div class="metric"><span>enabled actions</span><strong id="enabledMetric">0</strong></div>
+          <div class="metric"><span>first hold</span><strong id="holdMetric">-</strong></div>
+        </div>
+        <div id="gates" class="gates" aria-label="capability gates"></div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <select id="profileSelect">
+        <option value="runtime">runtime probe</option>
+        <option value="meta152">Meta 152.1 target</option>
+        <option value="spaceWarp">space warp ready</option>
+        <option value="depthMissing">depth missing</option>
+      </select>
+      <select id="modeSelect">
+        <option value="immersive-ar">immersive-ar</option>
+        <option value="immersive-vr">immersive-vr</option>
+        <option value="inline">inline</option>
+      </select>
+      <label>frame spare <input id="spareRange" type="range" min="0" max="12" value="6" step="1"></label>
+      <label><input id="handsToggle" type="checkbox" checked> hands UI</label>
+      <label><input id="overlayToggle" type="checkbox" checked> DOM overlay</label>
+      <button id="copyButton" type="button">Copy row</button>
+    </div>
+
+    <div class="grid">
+      <section>
+        <h2>Action routing</h2>
+        <div id="actions" class="actions"></div>
+      </section>
+      <section>
+        <h2>Probe row</h2>
+        <textarea id="rowOutput" spellcheck="false"></textarea>
+      </section>
+    </div>
+    <section style="margin-top:14px">
+      <h2>Decision log</h2>
+      <div id="decisionLog" class="rows"></div>
+    </section>
+  </main>
+  <script>
+    const profiles = {
+      runtime: { secure: true, webgpu: "unknown", xr: "unknown", xrgpu: "unknown", layers: "unknown", depth: "unknown", motion: "unknown", policy: "unknown" },
+      meta152: { secure: true, webgpu: true, xr: true, xrgpu: true, layers: true, depth: true, motion: true, policy: true },
+      spaceWarp: { secure: true, webgpu: true, xr: true, xrgpu: true, layers: true, depth: true, motion: true, policy: true },
+      depthMissing: { secure: true, webgpu: true, xr: true, xrgpu: true, layers: true, depth: false, motion: true, policy: true }
+    };
+
+    const runtimeProbe = {
+      secure: window.isSecureContext,
+      webgpu: Boolean(navigator.gpu),
+      xr: Boolean(navigator.xr),
+      xrgpu: typeof window.XRGPUBinding !== "undefined" ? true : "unknown",
+      layers: typeof window.XRProjectionLayer !== "undefined" ? true : "unknown",
+      depth: "unknown",
+      motion: "unknown",
+      policy: typeof document.permissionsPolicy?.allowsFeature === "function"
+        ? document.permissionsPolicy.allowsFeature("xr-spatial-tracking")
+        : "unknown"
+    };
+
+    const gates = [
+      ["secure", "secure context", "HTTPS / localhost で WebGPU と WebXR の起動前条件を満たす"],
+      ["webgpu", "WebGPU adapter", "navigator.gpu と xrCompatible adapter の前提"],
+      ["xr", "WebXR session", "navigator.xr と immersive session の前提"],
+      ["xrgpu", "XRGPUBinding", "WebGPU device と XRSession を結ぶ binding"],
+      ["layers", "projection layer", "XRProjectionLayer / composition layer を使う準備"],
+      ["depth", "depth attachment", "depth projection / occlusion / space warp の材料"],
+      ["motion", "motion vector", "space warp の欠損 frame 補間に使う材料"],
+      ["policy", "permissions policy", "xr-spatial-tracking と embed 条件の gate"]
+    ];
+
+    const actions = [
+      { id: "enterGpuXR", label: "Enter WebGPU XR", needs: ["secure", "webgpu", "xr", "xrgpu", "layers", "policy"] },
+      { id: "enableSpaceWarp", label: "Enable Space Warp", needs: ["secure", "webgpu", "xr", "xrgpu", "layers", "depth", "motion"] },
+      { id: "depthOcclusion", label: "Depth Occlusion", needs: ["secure", "xr", "depth"] },
+      { id: "handPins", label: "Hand Pin UI", needs: ["secure", "xr", "policy"], optional: ["hands"] },
+      { id: "overlayControls", label: "DOM Overlay Controls", needs: ["secure", "xr"], optional: ["overlay"] },
+      { id: "webglFallback", label: "WebGL Projection Fallback", needs: ["secure", "xr"] }
+    ];
+
+    const els = {
+      profile: document.querySelector("#profileSelect"),
+      mode: document.querySelector("#modeSelect"),
+      spare: document.querySelector("#spareRange"),
+      hands: document.querySelector("#handsToggle"),
+      overlay: document.querySelector("#overlayToggle"),
+      gates: document.querySelector("#gates"),
+      actions: document.querySelector("#actions"),
+      row: document.querySelector("#rowOutput"),
+      log: document.querySelector("#decisionLog"),
+      route: document.querySelector("#routeMetric"),
+      score: document.querySelector("#scoreMetric"),
+      enabled: document.querySelector("#enabledMetric"),
+      hold: document.querySelector("#holdMetric")
+    };
+
+    function valueOf(capability, key) {
+      if (capability[key] !== "unknown") return capability[key];
+      return runtimeProbe[key];
+    }
+
+    function gateScore(value) {
+      if (value === true) return 1;
+      if (value === "unknown") return 0.5;
+      return 0;
+    }
+
+    function labelFor(value) {
+      if (value === true) return "pass";
+      if (value === "unknown") return "probe";
+      return "hold";
+    }
+
+    function evaluateAction(action, capability) {
+      const missing = action.needs.filter((need) => valueOf(capability, need) !== true);
+      if (action.optional?.includes("hands") && !els.hands.checked) missing.push("hands disabled");
+      if (action.optional?.includes("overlay") && !els.overlay.checked) missing.push("overlay disabled");
+      const spare = Number(els.spare.value);
+      if (action.id === "enableSpaceWarp" && spare < 4) missing.push("low frame spare");
+      if (action.id === "enterGpuXR" && els.mode.value === "inline") missing.push("inline mode");
+      const status = missing.length === 0 ? "enabled" : missing.some((item) => item.includes("unknown")) ? "probe" : "degraded";
+      return { ...action, status, missing };
+    }
+
+    function routeFor(evaluated) {
+      if (evaluated.find((item) => item.id === "enterGpuXR").status === "enabled") return "webgpu-xr-primary";
+      if (evaluated.find((item) => item.id === "webglFallback").status === "enabled") return "webgl-xr-fallback";
+      return "inline-preview-only";
+    }
+
+    function render() {
+      const selected = els.profile.value === "runtime" ? runtimeProbe : profiles[els.profile.value];
+      const capability = { ...selected };
+      const gateRows = gates.map(([key, title, note]) => {
+        const value = valueOf(capability, key);
+        const score = gateScore(value);
+        return { key, title, note, value, score, state: labelFor(value) };
+      });
+      const evaluated = actions.map((action) => evaluateAction(action, capability));
+      const enabled = evaluated.filter((item) => item.status === "enabled").length;
+      const actionScore = Math.round((gateRows.reduce((sum, item) => sum + item.score, 0) / gateRows.length) * 100);
+      const firstHold = gateRows.find((item) => item.value !== true)?.key || "none";
+      const route = routeFor(evaluated);
+      const row = {
+        date: "2026-10-14",
+        sample: "xr-capability-action-gateboard",
+        profile: els.profile.value,
+        mode: els.mode.value,
+        frameSpareMs: Number(els.spare.value),
+        route,
+        actionScore,
+        enabledActions: enabled,
+        firstHold,
+        gates: Object.fromEntries(gateRows.map((item) => [item.key, item.value])),
+        actions: Object.fromEntries(evaluated.map((item) => [item.id, { status: item.status, missing: item.missing }])),
+        nextAdd: "Persist real requestAdapter, requestSession, XRGPUBinding and layer creation errors to IndexedDB."
+      };
+
+      els.gates.innerHTML = gateRows.map((item) => {
+        const cls = item.score === 1 ? "" : item.score > 0 ? "warn" : "bad";
+        return `<div class="gate"><b>${item.title}</b><div class="bar"><div class="fill ${cls}" style="width:${Math.round(item.score * 100)}%"></div></div><small>${item.state}: ${item.note}</small></div>`;
+      }).join("");
+      els.actions.innerHTML = evaluated.map((item) => {
+        const cls = item.status === "enabled" ? "" : item.status === "probe" ? "info" : "warn";
+        const detail = item.missing.length ? item.missing.join(", ") : "ready";
+        return `<div class="action"><strong>${item.label}<br><small>${detail}</small></strong><span class="pill ${cls}">${item.status}</span></div>`;
+      }).join("");
+      els.row.value = JSON.stringify(row, null, 2);
+      els.log.innerHTML = [
+        `route=${route} は enabled action と fallback の最初の成立点から決めています。`,
+        `firstHold=${firstHold} は UI を有効化する前にユーザーへ説明すべき最初の不足です。`,
+        `次に足すなら、実機 probe の例外名と viewport size をこの row へ保存します。`
+      ].map((text) => `<div class="row">${text}</div>`).join("");
+      els.route.textContent = route;
+      els.score.textContent = `${actionScore}%`;
+      els.enabled.textContent = String(enabled);
+      els.hold.textContent = firstHold;
+    }
+
+    document.querySelector("#copyButton").addEventListener("click", async () => {
+      await navigator.clipboard?.writeText(els.row.value);
+    });
+    [els.profile, els.mode, els.spare, els.hands, els.overlay].forEach((el) => el.addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>
