@@ -1,0 +1,115 @@
+{
+  "date": "2026-10-15",
+  "headline": "手のピンチを確定前に検証する XR 入力 gate",
+  "headlineEn": "An XR input gate that validates hand pinches before commit",
+  "summary": "WebXR Hand Input の関節 pose と Meta の WebXR Hands ガイダンスを参照し、通常ピンチだけを安全に commit へ進める本命試作と、短い commit window を8 frameで再生する派生試作を追加しました。",
+  "summaryEn": "Using WebXR Hand Input joint poses and Meta WebXR Hands guidance, today adds an original main prototype that safely commits only regular pinches and a derivative that replays a short commit window across eight frames.",
+  "keyTopics": [
+    "WebXR hand input は手を XRInputSource として扱い、25個の skeleton joint pose を gesture recognition や描画に利用できます。",
+    "Meta の WebXR Hands は、通常ピンチが emulated gamepad の button press として扱われる一方、palm pinch はシステム予約であることを説明しています。",
+    "手とコントローラは並行して現れうるため、どちらが primary input かを gesture 判定とは別の gate にする必要があります。",
+    "関節 pose の欠落や jitter は即時 select より preview / reacquire へ落とすほうが、誤発火の理由を説明しやすくなります。"
+  ],
+  "keyTopicsEn": [
+    "WebXR hand input exposes hands as XRInputSource objects and supplies 25 skeleton joint poses for gesture recognition or rendering.",
+    "Meta WebXR Hands describes regular pinch as an emulated gamepad button while reserving palm pinch for system use.",
+    "Hands and controllers can coexist, so primary-input ownership needs a gate separate from gesture detection.",
+    "Joint-pose loss and jitter are easier to explain when routed to preview or reacquire instead of immediate select."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Hand Pinch Intent Gateboard",
+      "url": "../outputs/2026-10-15_html_hand_pinch_intent_gateboard.html"
+    },
+    {
+      "label": "Today's derivative sample: Pinch Commit Window Replayer",
+      "url": "../outputs/2026-10-15_html_pinch_commit_window_replayer.html"
+    },
+    {
+      "label": "Meta: WebXR Hands",
+      "url": "https://developers.meta.com/vr/documentation/web/webxr-hands/"
+    },
+    {
+      "label": "Meta: WebXR overview",
+      "url": "https://developers.meta.com/vr/documentation/web/webxr-overview/"
+    },
+    {
+      "label": "Meta: Hands design guidance",
+      "url": "https://developers.meta.com/vr/design/hands/"
+    },
+    {
+      "label": "Immersive Web: WebXR Hand Input explainer",
+      "url": "https://github.com/immersive-web/webxr-hand-input"
+    },
+    {
+      "label": "MDN: XRHand",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRHand"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Meta の WebXR Hands は、hands が controller と同じく XRInputSource として現れ、25関節の pose を gesture recognition に使えること、通常の pinch とシステム予約の palm pinch を区別すべきことを示します。今日の本命はその区別を UI decision に変換し、system gesture をアプリの選択として誤処理しない設計を小さく検証します。",
+      "bodyEn": "Meta WebXR Hands shows that hands arrive as XRInputSource objects with 25 joint poses for gesture recognition and that regular pinch must be distinguished from system-reserved palm pinch. The main prototype turns that distinction into a small UI decision system.",
+      "links": [
+        {
+          "label": "Meta WebXR Hands",
+          "url": "https://developers.meta.com/vr/documentation/web/webxr-hands/"
+        },
+        {
+          "label": "WebXR Hand Input repository",
+          "url": "https://github.com/immersive-web/webxr-hand-input"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命 `Hand Pinch Intent Gateboard` は tip distance、joint tracking、motion stability、gesture ownership、controller takeover を変え、commit / preview / hold / block の理由を row 化します。派生 `Pinch Commit Window Replayer` はその row を受け、連続する数 frame が閉じ・安定の条件を満たした時だけ1回の select candidate を出します。",
+      "bodyEn": "The main gateboard changes tip distance, joint tracking, motion stability, gesture ownership, and controller takeover to emit reasons for commit, preview, hold, or block. The derivative replays the row and emits one select candidate only after a few contiguous good frames."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装 row は `tipDistanceMm`、`jointTracking`、`motionStability`、`gesture`、`controllerActive`、`confidence`、`intent`、`route`、`hold` を最小にします。実機では `XRInputSource.hand` の index-finger-tip と thumb-tip を `XRFrame.getJointPose()` または `fillPoses()` で読み、`selectstart` / `select` / `selectend` の timestamp と同じログへ保存します。",
+      "bodyEn": "Keep `tipDistanceMm`, `jointTracking`, `motionStability`, `gesture`, `controllerActive`, `confidence`, `intent`, `route`, and `hold` in the minimal row. On device, read index-finger-tip and thumb-tip via `XRFrame.getJointPose()` or `fillPoses()` and store them with select-event timestamps."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の row は8月末〜9月初頭の input event / pose / commit-window ledger にそのまま接続できます。手関節の短い履歴を音のアタック、UI のピン表示、AR annotation の anchor creation、展示の light pulse と組み合わせると、単なるボタンではなく「意図が育つ」表現になります。",
+      "bodyEn": "Today's row connects directly to the late-August and early-September input-event, pose, and commit-window ledgers. Combine short joint histories with audio attacks, UI pin feedback, AR annotation anchoring, or exhibition light pulses to make intention visibly grow."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Hand Input の issue と samples、Input Profiles の `generic-hand` asset、Meta の hand interaction guidance、hands と controllers の simultaneous input を継続して見ます。自作側では実 `XRFrame` の pose 欠落率と select event を IndexedDB に保存し、閾値を端末別に再生できるようにします。",
+      "bodyEn": "Keep watching WebXR Hand Input issues and samples, the Input Profiles `generic-hand` asset, Meta hand-interaction guidance, and simultaneous hands/controllers. Next, persist real XRFrame pose-loss rates and select events in IndexedDB for device-specific threshold replay."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で `steady pinch`、`jittery pinch`、`system palm pinch`、`controller takeover` を切り替えて route と hold reason を見比べてください。次に出力 row を派生へ貼り、`bounce / jitter` と `clean close` で commit frame がどう変わるかを確認します。",
+      "bodyEn": "Switch the main sample between steady pinch, jittery pinch, system palm pinch, and controller takeover to compare route and hold reason. Then paste the row into the derivative and compare commit frames for bounce/jitter versus clean close."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Meta WebXR Hands、WebXR overview、Hands design guidance、WebXR Hand Input、MDN XRHand を確認。設計: 1本目は gesture ownership を含む intent gate、2本目は連続 frame の commit window。実装: outputs 2本と report を追加し、日付ページと一覧を再生成して公開します。",
+      "bodyEn": "Research checked Meta WebXR Hands, WebXR overview, Hands design guidance, WebXR Hand Input, and MDN XRHand. Design is an intent gate followed by a consecutive-frame commit window. Implementation adds two outputs and this report, then regenerates and publishes the gallery."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月前半は WebGPU XR の capability と layer を UI action に接続しました。今日は同じ考え方を手入力へ移し、`pinch を見た` と `この入力をアプリの action として確定する` の間に、追跡品質・システム所有・入力競合の説明可能な層を置きます。",
+      "bodyEn": "Early October connected WebGPU XR capabilities and layers to UI actions. Today applies the same idea to hands, inserting an explainable layer for tracking quality, system ownership, and input contention between seeing a pinch and committing an app action."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Hand Pinch Intent Gateboard` を実装しました。何が動くか: 閉じ具合、tracking、安定性、system gesture、controller takeover を切り替え、commit / preview / hold / block の row を出します。次に足すなら実 `XRInputSource.hand` と event timestamp の IndexedDB 保存です。派生 `Pinch Commit Window Replayer` も実装しました。何が動くか: 本命 row と4つの frame pattern から、1回だけ select を確定する連続 window を再生します。次に足すなら実測 pose sequence の import と端末別の閾値比較です。",
+      "bodyEn": "The main Hand Pinch Intent Gateboard is implemented. It switches closure, tracking, stability, system gesture, and controller takeover to emit a commit/preview/hold/block row; next add real XRInputSource.hand and event timestamps in IndexedDB. The derivative Pinch Commit Window Replayer is also implemented. It replays one-select consecutive windows from the row and four frame patterns; next add measured pose-sequence import and per-device thresholds."
+    }
+  ]
+}

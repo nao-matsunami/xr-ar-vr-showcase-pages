@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>手のピンチを確定前に検証する XR 入力 gate | 2026-10-15</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.15</p>
+      <h1>手のピンチを確定前に検証する XR 入力 gate</h1>
+      <p class="hero-subtitle">An XR input gate that validates hand pinches before commit</p>
+      <p>WebXR Hand Input の関節 pose と Meta の WebXR Hands ガイダンスを参照し、通常ピンチだけを安全に commit へ進める本命試作と、短い commit window を8 frameで再生する派生試作を追加しました。</p>
+      <p class="en-copy">Using WebXR Hand Input joint poses and Meta WebXR Hands guidance, today adds an original main prototype that safely commits only regular pinches and a derivative that replays a short commit window across eight frames.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-15_html_hand_pinch_intent_gateboard.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-10-14.html">← 2026.10.14</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Hand Pinch Intent Gateboard</h3>
+              <p>手の index-tip / thumb-tip の距離、関節追跡、速度、target ray、入力の競合をまとめ、通常のピンチを「確定」「プレビュー」「待機」に振り分ける自作試作です。システム予約の palm pinch は明示的に通しません。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-15_html_hand_pinch_intent_gateboard.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Pinch Commit Window Replayer</h3>
+              <p>本命サンプルの intent row を貼り、8 frame の閉じ具合・追跡・安定性を再生して、即時確定ではなく短い commit window が重複発火や手振れをどう抑えるかを見る派生試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-15_html_pinch_commit_window_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR hand input は手を XRInputSource として扱い、25個の skeleton joint pose を gesture recognition や描画に利用できます。</span>
+              <span class="en-copy">WebXR hand input exposes hands as XRInputSource objects and supplies 25 skeleton joint poses for gesture recognition or rendering.</span>
+            </li>
+          
+            <li>
+              <span>Meta の WebXR Hands は、通常ピンチが emulated gamepad の button press として扱われる一方、palm pinch はシステム予約であることを説明しています。</span>
+              <span class="en-copy">Meta WebXR Hands describes regular pinch as an emulated gamepad button while reserving palm pinch for system use.</span>
+            </li>
+          
+            <li>
+              <span>手とコントローラは並行して現れうるため、どちらが primary input かを gesture 判定とは別の gate にする必要があります。</span>
+              <span class="en-copy">Hands and controllers can coexist, so primary-input ownership needs a gate separate from gesture detection.</span>
+            </li>
+          
+            <li>
+              <span>関節 pose の欠落や jitter は即時 select より preview / reacquire へ落とすほうが、誤発火の理由を説明しやすくなります。</span>
+              <span class="en-copy">Joint-pose loss and jitter are easier to explain when routed to preview or reacquire instead of immediate select.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>Meta の WebXR Hands は、hands が controller と同じく XRInputSource として現れ、25関節の pose を gesture recognition に使えること、通常の pinch とシステム予約の palm pinch を区別すべきことを示します。今日の本命はその区別を UI decision に変換し、system gesture をアプリの選択として誤処理しない設計を小さく検証します。</p>
+          <p class="en-copy">Meta WebXR Hands shows that hands arrive as XRInputSource objects with 25 joint poses for gesture recognition and that regular pinch must be distinguished from system-reserved palm pinch. The main prototype turns that distinction into a small UI decision system.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developers.meta.com/vr/documentation/web/webxr-hands/" target="_blank" rel="noreferrer">Meta WebXR Hands</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-hand-input" target="_blank" rel="noreferrer">WebXR Hand Input repository</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命 `Hand Pinch Intent Gateboard` は tip distance、joint tracking、motion stability、gesture ownership、controller takeover を変え、commit / preview / hold / block の理由を row 化します。派生 `Pinch Commit Window Replayer` はその row を受け、連続する数 frame が閉じ・安定の条件を満たした時だけ1回の select candidate を出します。</p>
+          <p class="en-copy">The main gateboard changes tip distance, joint tracking, motion stability, gesture ownership, and controller takeover to emit reasons for commit, preview, hold, or block. The derivative replays the row and emits one select candidate only after a few contiguous good frames.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装 row は `tipDistanceMm`、`jointTracking`、`motionStability`、`gesture`、`controllerActive`、`confidence`、`intent`、`route`、`hold` を最小にします。実機では `XRInputSource.hand` の index-finger-tip と thumb-tip を `XRFrame.getJointPose()` または `fillPoses()` で読み、`selectstart` / `select` / `selectend` の timestamp と同じログへ保存します。</p>
+          <p class="en-copy">Keep `tipDistanceMm`, `jointTracking`, `motionStability`, `gesture`, `controllerActive`, `confidence`, `intent`, `route`, and `hold` in the minimal row. On device, read index-finger-tip and thumb-tip via `XRFrame.getJointPose()` or `fillPoses()` and store them with select-event timestamps.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の row は8月末〜9月初頭の input event / pose / commit-window ledger にそのまま接続できます。手関節の短い履歴を音のアタック、UI のピン表示、AR annotation の anchor creation、展示の light pulse と組み合わせると、単なるボタンではなく「意図が育つ」表現になります。</p>
+          <p class="en-copy">Today's row connects directly to the late-August and early-September input-event, pose, and commit-window ledgers. Combine short joint histories with audio attacks, UI pin feedback, AR annotation anchoring, or exhibition light pulses to make intention visibly grow.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Hand Input の issue と samples、Input Profiles の `generic-hand` asset、Meta の hand interaction guidance、hands と controllers の simultaneous input を継続して見ます。自作側では実 `XRFrame` の pose 欠落率と select event を IndexedDB に保存し、閾値を端末別に再生できるようにします。</p>
+          <p class="en-copy">Keep watching WebXR Hand Input issues and samples, the Input Profiles `generic-hand` asset, Meta hand-interaction guidance, and simultaneous hands/controllers. Next, persist real XRFrame pose-loss rates and select events in IndexedDB for device-specific threshold replay.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で `steady pinch`、`jittery pinch`、`system palm pinch`、`controller takeover` を切り替えて route と hold reason を見比べてください。次に出力 row を派生へ貼り、`bounce / jitter` と `clean close` で commit frame がどう変わるかを確認します。</p>
+          <p class="en-copy">Switch the main sample between steady pinch, jittery pinch, system palm pinch, and controller takeover to compare route and hold reason. Then paste the row into the derivative and compare commit frames for bounce/jitter versus clean close.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Meta WebXR Hands、WebXR overview、Hands design guidance、WebXR Hand Input、MDN XRHand を確認。設計: 1本目は gesture ownership を含む intent gate、2本目は連続 frame の commit window。実装: outputs 2本と report を追加し、日付ページと一覧を再生成して公開します。</p>
+          <p class="en-copy">Research checked Meta WebXR Hands, WebXR overview, Hands design guidance, WebXR Hand Input, and MDN XRHand. Design is an intent gate followed by a consecutive-frame commit window. Implementation adds two outputs and this report, then regenerates and publishes the gallery.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>10月前半は WebGPU XR の capability と layer を UI action に接続しました。今日は同じ考え方を手入力へ移し、`pinch を見た` と `この入力をアプリの action として確定する` の間に、追跡品質・システム所有・入力競合の説明可能な層を置きます。</p>
+          <p class="en-copy">Early October connected WebGPU XR capabilities and layers to UI actions. Today applies the same idea to hands, inserting an explainable layer for tracking quality, system ownership, and input contention between seeing a pinch and committing an app action.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `Hand Pinch Intent Gateboard` を実装しました。何が動くか: 閉じ具合、tracking、安定性、system gesture、controller takeover を切り替え、commit / preview / hold / block の row を出します。次に足すなら実 `XRInputSource.hand` と event timestamp の IndexedDB 保存です。派生 `Pinch Commit Window Replayer` も実装しました。何が動くか: 本命 row と4つの frame pattern から、1回だけ select を確定する連続 window を再生します。次に足すなら実測 pose sequence の import と端末別の閾値比較です。</p>
+          <p class="en-copy">The main Hand Pinch Intent Gateboard is implemented. It switches closure, tracking, stability, system gesture, and controller takeover to emit a commit/preview/hold/block row; next add real XRInputSource.hand and event timestamps in IndexedDB. The derivative Pinch Commit Window Replayer is also implemented. It replays one-select consecutive windows from the row and four frame patterns; next add measured pose-sequence import and per-device thresholds.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-15_html_hand_pinch_intent_gateboard.html" target="_blank" rel="noreferrer">Today's main sample: Hand Pinch Intent Gateboard</a></li>
+          
+            <li><a href="../outputs/2026-10-15_html_pinch_commit_window_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Pinch Commit Window Replayer</a></li>
+          
+            <li><a href="https://developers.meta.com/vr/documentation/web/webxr-hands/" target="_blank" rel="noreferrer">Meta: WebXR Hands</a></li>
+          
+            <li><a href="https://developers.meta.com/vr/documentation/web/webxr-overview/" target="_blank" rel="noreferrer">Meta: WebXR overview</a></li>
+          
+            <li><a href="https://developers.meta.com/vr/design/hands/" target="_blank" rel="noreferrer">Meta: Hands design guidance</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-hand-input" target="_blank" rel="noreferrer">Immersive Web: WebXR Hand Input explainer</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRHand" target="_blank" rel="noreferrer">MDN: XRHand</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-15_html_hand_pinch_intent_gateboard.html" loading="lazy" title="Hand Pinch Intent Gateboard"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

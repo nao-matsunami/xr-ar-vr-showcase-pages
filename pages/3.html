@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 98</span>
+        <span>days: 99</span>
         <span>page: 3 / 9</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -321,6 +321,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-09-21">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.21</p>
+              <h2>XR session context を保存して初期 trust に渡す</h2>
+              <p class="card-subtitle">Saving XR session context and passing it into initial trust</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-21" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API、MDN `enabledFeatures`、Immersive Web Anchors Module、WebXR Samples proposals、WebXR Layers API の一次情報を参照し、feature / layer / scene contract row を IndexedDB に保存する本命サンプルと、その JSON を初期 trust score として再判定する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking the WebXR Device API, MDN `enabledFeatures`, the Immersive Web Anchors Module, WebXR proposal samples, and the WebXR Layers API, today's original work adds a main sample that stores feature / layer / scene contract rows in IndexedDB, plus a derivative sample that replays that JSON as an initial trust score.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-09-21.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-09-21_html_session_context_merge_store.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-09-20">
           <div class="card-top">
             <div>
@@ -570,29 +593,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-09-10.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-09-10_html_layer_redraw_recovery_console.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-07">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.07</p>
-              <h2>保存済み anchor 台帳を re-hit replay へつなぐ</h2>
-              <p class="card-subtitle">Connecting saved anchor ledgers to re-hit replay</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-07" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Anchors Module、WebXR Hit Test Module、WebXR Device API、MDN、Immersive Web Samples を参照し、保存済み input / hit / anchor ledger を日跨ぎで再生して restore 失敗時に re-hit する本命サンプルと、persistent UUID map の保持・削除 budget を見る派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Anchors Module, WebXR Hit Test Module, WebXR Device API, MDN, and Immersive Web Samples, today's original work adds a main sample that replays saved input / hit / anchor ledgers across days and re-hits when restore fails, plus a derivative sample for persistent UUID map retention and pruning budgets.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-09-07.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-09-07_html_anchor_rehit_replay_bridge.html">代表サンプル / Sample</a>
           </div>
         </article>
       
