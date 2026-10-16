@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-16",
+  "headline": "手関節 pose と select event を同じ XR ログへつなぐ",
+  "headlineEn": "Connecting hand-joint poses and select events in one XR log",
+  "summary": "WebXR Hand Input の `getJointPose()` と hand-tracking feature、Meta の hands 実装を参考に、実フレームまたは synthetic fallback から手の tip pose と select event を1行にする本命試作と、その row を端末別しきい値で再生する派生試作を追加しました。",
+  "summaryEn": "Using WebXR Hand Input getJointPose(), the hand-tracking feature, and Meta's hands implementation as references, today adds an original main prototype that logs tip poses and select events in one row plus a derivative that replays the row with device-specific thresholds.",
+  "keyTopics": [
+    "WebXR Hand Input は `hand-tracking` feature を要求した session で、XRInputSource の25関節を pose として取得できます。",
+    "`XRFrame.getJointPose()` は frame 時刻の pose を返し、追跡がない時は null になりうるため、欠落を通常のピンチと同じ扱いにしない設計が必要です。",
+    "Meta WebXR Hands では hands は controller と並ぶ XRInputSource で、通常ピンチとシステム予約の palm pinch を区別します。",
+    "短い連続 frame window と duplicate guard を置くと、jitter や再発見で select candidate が連打されるのを防げます。"
+  ],
+  "keyTopicsEn": [
+    "WebXR Hand Input exposes 25 hand-joint poses through XRInputSource in sessions requesting the hand-tracking feature.",
+    "XRFrame.getJointPose() returns a pose at the frame time and can return null, so tracking loss needs a different route from a regular pinch.",
+    "Meta WebXR Hands presents hands alongside controllers and distinguishes regular pinch from system-reserved palm pinch.",
+    "A short consecutive-frame window plus a duplicate guard prevents repeated select candidates during jitter or reacquisition."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Hand Joint Event Logbook",
+      "url": "../outputs/2026-10-16_html_hand_joint_event_logbook.html"
+    },
+    {
+      "label": "Today's derivative sample: Hand Log Threshold Replayer",
+      "url": "../outputs/2026-10-16_html_hand_log_threshold_replayer.html"
+    },
+    {
+      "label": "W3C: WebXR Hand Input Module",
+      "url": "https://www.w3.org/TR/webxr-hand-input-1/"
+    },
+    {
+      "label": "Immersive Web: Hand Input Editor's Draft",
+      "url": "https://immersive-web.github.io/webxr-hand-input/"
+    },
+    {
+      "label": "MDN: XRFrame.getJointPose()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRFrame/getJointPose"
+    },
+    {
+      "label": "Meta: WebXR Hands",
+      "url": "https://developers.meta.com/vr/documentation/web/webxr-hands/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "W3C の Hand Input は手の骨格を高レベル gesture ではなく joint pose として渡します。Meta は通常ピンチを emulated gamepad の button press として扱いつつ palm pinch を system 用に予約します。本命はこの両者の間を埋め、pose の有無・tip gap・stability・event を説明可能な1 rowへ変換します。",
+      "bodyEn": "W3C Hand Input exposes hand skeletons as joint poses rather than high-level gestures. Meta treats regular pinch as an emulated gamepad press while reserving palm pinch for the system. The main sample turns pose availability, tip gap, stability, and events into one explainable row.",
+      "links": [
+        {
+          "label": "WebXR Hand Input Module",
+          "url": "https://www.w3.org/TR/webxr-hand-input-1/"
+        },
+        {
+          "label": "Meta WebXR Hands",
+          "url": "https://developers.meta.com/vr/documentation/web/webxr-hands/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命 `Hand Joint Event Logbook` は XR 開始ボタンで immersive VR と `hand-tracking` を optional 要求し、index/thumb tip の gap を読む経路を持ちます。機材がない時は synthetic row を記録できます。派生 `Hand Log Threshold Replayer` はその row と clean / bounce / loss / reserved の8 frameを重ね、端末別に commit をいつ許すかを可視化します。",
+      "bodyEn": "The main Hand Joint Event Logbook optionally requests immersive VR and hand-tracking and includes a path to read index/thumb tip gaps. Without hardware it records synthetic rows. The derivative overlays that row with eight clean, bounce, loss, or reserved frames to visualize device-specific commit timing."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "最小 schema は `timestamp`、`event`、`tipGapMm`、`jointTracking`、`stability`、`systemReserved`、`confidence`、`route`、`reason` です。実機では `inputSource.hand.get('index-finger-tip')` と `thumb-tip` を `frame.getJointPose()` で読み、null は `reacquire` に落とします。session の `select` event は同じ ledger へ入れ、ポーズの観測結果と action との時差を後から見られるようにします。",
+      "bodyEn": "The minimal schema is timestamp, event, tipGapMm, jointTracking, stability, systemReserved, confidence, route, and reason. On device, read index-finger-tip and thumb-tip with frame.getJointPose(), route null to reacquire, and store session select events in the same ledger."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の row は10月15日の pinch intent gate と8月末〜9月初頭の input event / commit-window workをつなぎます。tip gap の短い履歴を音の attack、AR annotation の preview、展示照明、AI が要約する操作ログへ送ると、確定前の意図を可視化できます。",
+      "bodyEn": "Today's row connects the October 15 pinch intent gate with late-August to early-September input-event and commit-window work. Short tip-gap histories can feed audio attacks, AR annotation previews, installation lighting, or AI-summarized interaction logs."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR Hand Input の editor's draft と issue、Meta の hand interaction guidance、hand/controller coexistence、`fillPoses()` の利用例を継続して確認します。自作側では IndexedDB に実 session の row を保存し、日跨ぎで端末名・照明条件・pose 欠落率を比較します。",
+      "bodyEn": "Continue watching the WebXR Hand Input editor's draft and issues, Meta hand guidance, hand/controller coexistence, and fillPoses() examples. Next, store real session rows in IndexedDB and compare device, lighting condition, and pose-loss rate across days."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で `clean pinch`、`jitter / preview`、`joint loss`、`system-reserved` を選び、route と reason の差を見てください。`synthetic row を記録` の後に派生で `本命の最新 row を読む` を押し、noisy camera preset と clean preset の commit frame を比べます。",
+      "bodyEn": "In the main sample, select clean pinch, jitter/preview, joint loss, and system-reserved to compare route and reason. Record a synthetic row, load it in the derivative, then compare commit frames between noisy-camera and clean presets."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C Hand Input、Immersive Web editor's draft、MDN getJointPose、Meta WebXR Hands を確認。設計: 1本目は pose/event ledger、2本目は device threshold replay。実装: outputs 2本とこの report を追加し、日付ページ・一覧・pages を再生成して公開します。",
+      "bodyEn": "Research checked W3C Hand Input, the Immersive Web editor's draft, MDN getJointPose, and Meta WebXR Hands. The design is a pose/event ledger followed by device-threshold replay. Implementation adds two outputs and this report, then regenerates and publishes the gallery."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "昨日は pinching の意図を gate にしました。今日はその gate の入力を合成値ではなく、frame 時刻の joint pose と select event に近づけました。次の段階は、端末ごとの実測ログをためて `18mm` のような単一の閾値を固定せず、誤発火と取りこぼしのバランスを再生で選べるようにすることです。",
+      "bodyEn": "Yesterday made pinch intention into a gate. Today moves its input closer to frame-time joint poses and select events instead of purely synthetic values. Next is collecting device-specific logs so replay can choose the tradeoff between false positives and misses rather than fixing one threshold like 18mm."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Hand Joint Event Logbook` を実装しました。何が動くか: XR hand frame または synthetic fallback から tip gap、tracking、event、route を1 rowにし、コピーできます。次に足すなら IndexedDB 保存と複数sessionの JSON export です。派生 `Hand Log Threshold Replayer` も実装しました。何が動くか: 本命 row を読み、端末別の gap/stability と8 frame patternから一度だけ commit します。次に足すなら実測 row の一括 import と端末別比較表です。",
+      "bodyEn": "The main Hand Joint Event Logbook is implemented. It turns XR hand frames or synthetic fallback into a copyable row with tip gap, tracking, event, and route; next add IndexedDB and multi-session JSON export. The derivative Hand Log Threshold Replayer is also implemented. It reads the main row and commits once from device-specific gap/stability thresholds plus an eight-frame pattern; next add bulk measured-row import and a device comparison table."
+    }
+  ]
+}

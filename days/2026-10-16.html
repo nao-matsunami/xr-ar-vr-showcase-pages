@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>手関節 pose と select event を同じ XR ログへつなぐ | 2026-10-16</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.16</p>
+      <h1>手関節 pose と select event を同じ XR ログへつなぐ</h1>
+      <p class="hero-subtitle">Connecting hand-joint poses and select events in one XR log</p>
+      <p>WebXR Hand Input の `getJointPose()` と hand-tracking feature、Meta の hands 実装を参考に、実フレームまたは synthetic fallback から手の tip pose と select event を1行にする本命試作と、その row を端末別しきい値で再生する派生試作を追加しました。</p>
+      <p class="en-copy">Using WebXR Hand Input getJointPose(), the hand-tracking feature, and Meta's hands implementation as references, today adds an original main prototype that logs tip poses and select events in one row plus a derivative that replays the row with device-specific thresholds.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-16_html_hand_joint_event_logbook.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-10-15.html">← 2026.10.15</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Hand Joint Event Logbook</h3>
+              <p>WebXR Hand Input の index/thumb tip pose、`select` event、入力所有を1行の観測ログへまとめる自作試作です。XR 非対応環境でも synthetic row を生成して、保存・派生検証の流れを確認できます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-16_html_hand_joint_event_logbook.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Hand Log Threshold Replayer</h3>
+              <p>本命 sample の観測 row を貼り、端末別の tip gap と安定性しきい値で短い commit window を再生する派生試作です。1回のピンチで select candidate を何度も出さない duplicate guard も見えます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-16_html_hand_log_threshold_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Hand Input は `hand-tracking` feature を要求した session で、XRInputSource の25関節を pose として取得できます。</span>
+              <span class="en-copy">WebXR Hand Input exposes 25 hand-joint poses through XRInputSource in sessions requesting the hand-tracking feature.</span>
+            </li>
+          
+            <li>
+              <span>`XRFrame.getJointPose()` は frame 時刻の pose を返し、追跡がない時は null になりうるため、欠落を通常のピンチと同じ扱いにしない設計が必要です。</span>
+              <span class="en-copy">XRFrame.getJointPose() returns a pose at the frame time and can return null, so tracking loss needs a different route from a regular pinch.</span>
+            </li>
+          
+            <li>
+              <span>Meta WebXR Hands では hands は controller と並ぶ XRInputSource で、通常ピンチとシステム予約の palm pinch を区別します。</span>
+              <span class="en-copy">Meta WebXR Hands presents hands alongside controllers and distinguishes regular pinch from system-reserved palm pinch.</span>
+            </li>
+          
+            <li>
+              <span>短い連続 frame window と duplicate guard を置くと、jitter や再発見で select candidate が連打されるのを防げます。</span>
+              <span class="en-copy">A short consecutive-frame window plus a duplicate guard prevents repeated select candidates during jitter or reacquisition.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>W3C の Hand Input は手の骨格を高レベル gesture ではなく joint pose として渡します。Meta は通常ピンチを emulated gamepad の button press として扱いつつ palm pinch を system 用に予約します。本命はこの両者の間を埋め、pose の有無・tip gap・stability・event を説明可能な1 rowへ変換します。</p>
+          <p class="en-copy">W3C Hand Input exposes hand skeletons as joint poses rather than high-level gestures. Meta treats regular pinch as an emulated gamepad press while reserving palm pinch for the system. The main sample turns pose availability, tip gap, stability, and events into one explainable row.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr-hand-input-1/" target="_blank" rel="noreferrer">WebXR Hand Input Module</a></li>
+          
+            <li><a href="https://developers.meta.com/vr/documentation/web/webxr-hands/" target="_blank" rel="noreferrer">Meta WebXR Hands</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命 `Hand Joint Event Logbook` は XR 開始ボタンで immersive VR と `hand-tracking` を optional 要求し、index/thumb tip の gap を読む経路を持ちます。機材がない時は synthetic row を記録できます。派生 `Hand Log Threshold Replayer` はその row と clean / bounce / loss / reserved の8 frameを重ね、端末別に commit をいつ許すかを可視化します。</p>
+          <p class="en-copy">The main Hand Joint Event Logbook optionally requests immersive VR and hand-tracking and includes a path to read index/thumb tip gaps. Without hardware it records synthetic rows. The derivative overlays that row with eight clean, bounce, loss, or reserved frames to visualize device-specific commit timing.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>最小 schema は `timestamp`、`event`、`tipGapMm`、`jointTracking`、`stability`、`systemReserved`、`confidence`、`route`、`reason` です。実機では `inputSource.hand.get('index-finger-tip')` と `thumb-tip` を `frame.getJointPose()` で読み、null は `reacquire` に落とします。session の `select` event は同じ ledger へ入れ、ポーズの観測結果と action との時差を後から見られるようにします。</p>
+          <p class="en-copy">The minimal schema is timestamp, event, tipGapMm, jointTracking, stability, systemReserved, confidence, route, and reason. On device, read index-finger-tip and thumb-tip with frame.getJointPose(), route null to reacquire, and store session select events in the same ledger.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>今日の row は10月15日の pinch intent gate と8月末〜9月初頭の input event / commit-window workをつなぎます。tip gap の短い履歴を音の attack、AR annotation の preview、展示照明、AI が要約する操作ログへ送ると、確定前の意図を可視化できます。</p>
+          <p class="en-copy">Today's row connects the October 15 pinch intent gate with late-August to early-September input-event and commit-window work. Short tip-gap histories can feed audio attacks, AR annotation previews, installation lighting, or AI-summarized interaction logs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>WebXR Hand Input の editor's draft と issue、Meta の hand interaction guidance、hand/controller coexistence、`fillPoses()` の利用例を継続して確認します。自作側では IndexedDB に実 session の row を保存し、日跨ぎで端末名・照明条件・pose 欠落率を比較します。</p>
+          <p class="en-copy">Continue watching the WebXR Hand Input editor's draft and issues, Meta hand guidance, hand/controller coexistence, and fillPoses() examples. Next, store real session rows in IndexedDB and compare device, lighting condition, and pose-loss rate across days.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で `clean pinch`、`jitter / preview`、`joint loss`、`system-reserved` を選び、route と reason の差を見てください。`synthetic row を記録` の後に派生で `本命の最新 row を読む` を押し、noisy camera preset と clean preset の commit frame を比べます。</p>
+          <p class="en-copy">In the main sample, select clean pinch, jitter/preview, joint loss, and system-reserved to compare route and reason. Record a synthetic row, load it in the derivative, then compare commit frames between noisy-camera and clean presets.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C Hand Input、Immersive Web editor's draft、MDN getJointPose、Meta WebXR Hands を確認。設計: 1本目は pose/event ledger、2本目は device threshold replay。実装: outputs 2本とこの report を追加し、日付ページ・一覧・pages を再生成して公開します。</p>
+          <p class="en-copy">Research checked W3C Hand Input, the Immersive Web editor's draft, MDN getJointPose, and Meta WebXR Hands. The design is a pose/event ledger followed by device-threshold replay. Implementation adds two outputs and this report, then regenerates and publishes the gallery.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>昨日は pinching の意図を gate にしました。今日はその gate の入力を合成値ではなく、frame 時刻の joint pose と select event に近づけました。次の段階は、端末ごとの実測ログをためて `18mm` のような単一の閾値を固定せず、誤発火と取りこぼしのバランスを再生で選べるようにすることです。</p>
+          <p class="en-copy">Yesterday made pinch intention into a gate. Today moves its input closer to frame-time joint poses and select events instead of purely synthetic values. Next is collecting device-specific logs so replay can choose the tradeoff between false positives and misses rather than fixing one threshold like 18mm.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `Hand Joint Event Logbook` を実装しました。何が動くか: XR hand frame または synthetic fallback から tip gap、tracking、event、route を1 rowにし、コピーできます。次に足すなら IndexedDB 保存と複数sessionの JSON export です。派生 `Hand Log Threshold Replayer` も実装しました。何が動くか: 本命 row を読み、端末別の gap/stability と8 frame patternから一度だけ commit します。次に足すなら実測 row の一括 import と端末別比較表です。</p>
+          <p class="en-copy">The main Hand Joint Event Logbook is implemented. It turns XR hand frames or synthetic fallback into a copyable row with tip gap, tracking, event, and route; next add IndexedDB and multi-session JSON export. The derivative Hand Log Threshold Replayer is also implemented. It reads the main row and commits once from device-specific gap/stability thresholds plus an eight-frame pattern; next add bulk measured-row import and a device comparison table.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-16_html_hand_joint_event_logbook.html" target="_blank" rel="noreferrer">Today's main sample: Hand Joint Event Logbook</a></li>
+          
+            <li><a href="../outputs/2026-10-16_html_hand_log_threshold_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Hand Log Threshold Replayer</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-hand-input-1/" target="_blank" rel="noreferrer">W3C: WebXR Hand Input Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-hand-input/" target="_blank" rel="noreferrer">Immersive Web: Hand Input Editor's Draft</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRFrame/getJointPose" target="_blank" rel="noreferrer">MDN: XRFrame.getJointPose()</a></li>
+          
+            <li><a href="https://developers.meta.com/vr/documentation/web/webxr-hands/" target="_blank" rel="noreferrer">Meta: WebXR Hands</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-16_html_hand_joint_event_logbook.html" loading="lazy" title="Hand Joint Event Logbook"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
