@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR Layers の redraw を優先キューとして扱う | 2026-10-17</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.17</p>
+      <h1>WebXR Layers の redraw を優先キューとして扱う</h1>
+      <p class="hero-subtitle">Treating WebXR Layers redraw as an explainable priority queue</p>
+      <p>WebXR Layers API の composition layer、`depth-sorted-layers`、redraw を参照し、表示順・更新量・可読性から次に描き直す layer を選ぶ本命試作と、その row を8 frame の予算で再生する派生試作を追加しました。</p>
+      <p class="en-copy">Referencing WebXR composition layers, depth-sorted-layers, and redraw, this adds an original priority composer and an eight-frame budget replayer.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-17_html_layer_redraw_priority_composer.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-10-16.html">← 2026.10.16</a>
+      <a class="day-link" href="../days/2026-10-18.html">2026.10.18 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Layer Redraw Priority Composer</h3>
+              <p>WebXR composition layer の「表示順」と「次フレームに描き直すべきか」を、深度・更新圧・読ませたい重要度から1本の優先キューへ変換する自作試作です。実機 API を置き換えるものではなく、`layers` / `depth-sorted-layers` / redraw を設計前に検証するための小さなモデルです。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-17_html_layer_redraw_priority_composer.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Redraw Queue Budget Replayer</h3>
+              <p>本命が保存した layer row を読み、8 frame の更新圧で redraw をいつ許可するかを再生する派生試作です。静的 HUD を毎 frame 描き直さない一方、可読性に影響する更新を落とさないための budget 検証に使えます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-17_html_redraw_queue_budget_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Layers は immersive VR / AR session の composition layer を扱い、projection layer は常に利用可能です。</span>
+              <span class="en-copy">WebXR Layers manages composition layers for immersive sessions.</span>
+            </li>
+          
+            <li>
+              <span>`depth-sorted-layers` を要求すると projection / quad / cylinder layer は配列順でなく深度に基づき表示されます。</span>
+              <span class="en-copy">depth-sorted-layers changes projection, quad, and cylinder ordering to depth-based ordering.</span>
+            </li>
+          
+            <li>
+              <span>Layer は texture を毎 frame 更新する必要がなく、更新要求と可読性を分けて予算化できます。</span>
+              <span class="en-copy">Texture refresh can be budgeted separately from layer presentation.</span>
+            </li>
+          
+            <li>
+              <span>公式 Layers Samples は quad、cylinder、depth、space warp などを小さな機能単位で検証しています。</span>
+              <span class="en-copy">Official samples isolate layer behavior into small feature-focused pages.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>Layers API は text や map を高解像度の別 layer に置き、compositor がアプリ更新より高い頻度で提示できる余地を作ります。最新草案の `depth-sorted-layers` は配列順だけに依存しないため、UI を『先に描いた順』ではなく『空間内でどう読ませるか』として設計できる点が面白いです。</p>
+          <p class="en-copy">Layers let essential text or maps live at a separate resolution, while depth-sorted-layers makes presentation a spatial decision rather than only an array-order decision.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Layers Samples</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命は HUD text、world note、ambient media を3つの layer として置き、距離・内容変化・重要度から redraw の順を可視化します。派生は保存した row を8 frame の update pressure に通すので、字幕の1文字更新を最優先にしつつ背景 media の更新は再利用する、といった演出を短時間で比べられます。</p>
+          <p class="en-copy">The main models three layers; the derivative replays its row against eight frames of update pressure.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装時は `requestSession('immersive-vr', { optionalFeatures: ['layers', 'depth-sorted-layers'] })` の成否を記録し、実 layer の `needsRedraw` と `redraw` event を row に残します。`depth-sorted-layers` は全 layer に一律ではなく projection / quad / cylinder に関係する点、inline session では Layers が使えない点も fallback 条件にします。</p>
+          <p class="en-copy">Record session feature outcomes, needsRedraw, and redraw events; keep the layer-type and inline-session constraints in the fallback route.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>priority、depth、contentDelta、budget、verdict は、文字起こし字幕、地図、ライブカメラ、展示の環境音、業務 HUD の更新ログと組み合わせられます。AI には『次の一秒で読まれる要素』の優先度を提案させ、人は replay でちらつきと遅延の交換条件を確認できます。</p>
+          <p class="en-copy">Priority, depth, content delta, budget, and verdict can join captions, maps, cameras, audio installations, and operational HUD logs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>W3C Layers draft の `redraw`、`needsRedraw`、quality、space warp 周辺と、公式 Samples の layer-vs-non-layer / input selection space warp を継続確認します。実機では視線移動時の readability、GPU timing、texture upload が queue とどれだけ相関するかを採ります。</p>
+          <p class="en-copy">Watch redraw, needsRedraw, quality, space warp, and the relevant official samples; measure readability and GPU timing on device.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で `layers array order` と `depth-sorted-layers` を切り替え、HUD の contentDelta を上げてください。row を保存後、派生で `HUD update pulse` と `media update storm` を比較すると、同じ更新量でも優先レイヤーが変わることが分かります。</p>
+          <p class="en-copy">Toggle ordering modes, save a row, then compare HUD pulses against a media update storm.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C Layers、Immersive Web draft と公式 samples、MDN を確認。設計: 表示順と描画更新を別軸にした priority row。実装: 本命 composer と派生 replayer、レポートを追加。公開: gallery を再生成し GitHub Pages へ publish します。</p>
+          <p class="en-copy">Research informs a priority row; the composer and replayer are implemented, then the gallery is regenerated and published.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>直近は WebGPU/XR capability と hand input の『起動・入力の確度』を扱いました。今日はそれらが通った後に、限られたフレーム予算をどの視覚要素に使うかへ焦点を移しています。次は実 layer event と実 GPU timing をこの抽象 row に戻す段階です。</p>
+          <p class="en-copy">After capability and hand-input certainty, today moves to how a limited frame budget is spent; next is replacing modeled values with device observations.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `Layer Redraw Priority Composer` を実装しました。何が動くか: 3 layer の深度・変化量・重要度と budget から redraw queue を作り、JSON row を保存します。次に足すなら実 `needsRedraw` / redraw event と GPU timestamp です。派生 `Redraw Queue Budget Replayer` も実装しました。何が動くか: 本命 row を読み、8 frame の更新圧で redraw / reuse を再生します。次に足すなら複数 session row の比較です。</p>
+          <p class="en-copy">The main composer saves an explainable redraw queue. The derivative reads it and replays redraw or reuse across eight frames; next add real events, GPU timing, and multi-session comparisons.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-17_html_layer_redraw_priority_composer.html" target="_blank" rel="noreferrer">Today's main sample: Layer Redraw Priority Composer</a></li>
+          
+            <li><a href="../outputs/2026-10-17_html_redraw_queue_budget_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Redraw Queue Budget Replayer</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">Immersive Web: Layers Editor's Draft</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: Layers Samples</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API" target="_blank" rel="noreferrer">MDN: WebXR Device API</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-17_html_layer_redraw_priority_composer.html" loading="lazy" title="Layer Redraw Priority Composer"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

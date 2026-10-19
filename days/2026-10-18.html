@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR Layers の quality を寿命として設計する | 2026-10-18</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.18</p>
+      <h1>WebXR Layers の quality を寿命として設計する</h1>
+      <p class="hero-subtitle">Designing WebXR Layers quality as a lifecycle</p>
+      <p>WebXR Layers API の `quality`、`needsRedraw`、layer の破棄を参照し、GPU 圧に応じて composition layer を keep / degrade / redraw / destroy へ説明可能に分ける本命試作と、8 frame の遷移を再生する派生試作を追加しました。</p>
+      <p class="en-copy">This adds an original composition-layer lifecycle console and an eight-frame transition replayer informed by quality, redraw, and destruction in WebXR Layers.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-18_html_layer_quality_lifecycle_console.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-10-17.html">← 2026.10.17</a>
+      <a class="day-link" href="../days/2026-10-19.html">2026.10.19 →</a>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>WebXR Layer Quality Lifecycle Console</h3>
+              <p>WebXR Layers の quality と needsRedraw を手がかりに、各 composition layer を保持・品質低下・再描画・破棄へ説明可能に振り分ける自作モデルです。API 実装の代替ではなく、限られた GPU 予算で UI の寿命を設計するための試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-18_html_layer_quality_lifecycle_console.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Layer Quality Transition Replayer</h3>
+              <p>本命が保存した lifecycle row を読む派生試作です。8 frame の GPU 圧を再生し、同じ layer がいつ keep / degrade / redraw / destroy に変わるかを確認します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-18_html_layer_quality_transition_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Layers は composition layer を compositor 側で提示し、アプリの更新頻度と表示を分けられます。</span>
+              <span class="en-copy">Composition layers separate compositor presentation from application update cadence.</span>
+            </li>
+          
+            <li>
+              <span>`XRCompositionLayer` には quality、`needsRedraw`、`destroy()` があり、更新・品質・寿命を別々に設計できます。</span>
+              <span class="en-copy">Quality, needsRedraw, and destroy separate update, fidelity, and lifetime decisions.</span>
+            </li>
+          
+            <li>
+              <span>Layers は immersive VR / AR session 用で、inline session では使えないため projection-layer fallback が必要です。</span>
+              <span class="en-copy">Layers require immersive sessions, so an inline-safe fallback matters.</span>
+            </li>
+          
+            <li>
+              <span>公式 Layers Samples は layer type ごとの最小検証を提供し、実機差を切り分ける出発点になります。</span>
+              <span class="en-copy">Official samples isolate feature behavior for device testing.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>W3C Layers API は layer を compositor が提示できるため、毎フレーム texture を作り直す前提から離れられます。`needsRedraw` と quality を一つの『高画質か低画質か』ではなく、読むべき HUD は保持し、背景 media は低品質化または終了できる寿命設計へ変える点が面白いです。</p>
+          <p class="en-copy">Layers make lifetime choices possible: keep a readable HUD while degrading or ending less important media.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web Layers Samples</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命は pin HUD、spatial note、media panorama の3層を content pressure と GPU budget で分類します。派生は保存 row を HUD pulse、thermal pressure、recovery ramp に通すため、熱・電力制約時でも『何を読ませ続けるか』を時間軸で比較できます。</p>
+          <p class="en-copy">The main ranks three layers; the derivative replays them through pulse, thermal, and recovery patterns.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では `optionalFeatures: ['layers']` の結果を記録し、`XRCompositionLayer.needsRedraw`、redraw event、quality、texture size、GPU timestamp を layer 単位で収集します。Layers が不可の session、特に inline では projection layer または通常の canvas に戻し、`destroy()` は render state から外す手順と対にして扱います。</p>
+          <p class="en-copy">Log feature negotiation, redraw signals, quality, texture size, and GPU timestamps per layer; keep a projection or canvas fallback.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>lifecycle row は字幕、地図、遠隔支援の注釈、360度動画、展示の ambient 映像の更新ログと結び付けられます。AI に重要度案を出させても、replay で quality を落とす対象と読みやすさを人が確認できるため、制御の根拠を残せます。</p>
+          <p class="en-copy">Lifecycle rows can connect captions, maps, remote annotations, 360 media, and installation visuals while preserving human review of fidelity tradeoffs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>Layers 草案の quality、redraw、destroy、WebGPU binding の更新と、公式 samples の projection / quad / media / space-warp を継続確認します。実機では texture upload、GPU timestamp、head motion、可読性を同じ row に採り、モデルの閾値を置き換えます。</p>
+          <p class="en-copy">Watch quality, redraw, destroy, WebGPU binding, and official layer samples; replace modeled thresholds with device measurements.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で GPU budget を `critical pressure` にし、media panorama の pressure を下げてください。media だけが destroy、pin HUD は redraw または keep へ残ることを確認した後、row を保存して派生の `thermal pressure` を再生します。</p>
+          <p class="en-copy">Set critical pressure, lower media pressure, save the row, then replay the thermal pattern.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C Layers / Device API、MDN、Immersive Web samples を確認。設計: 更新、品質、寿命を別々の route に分離。実装: lifecycle console と transition replayer を追加。公開: gallery を再生成して GitHub Pages publish を実行します。</p>
+          <p class="en-copy">Research informed separate update, quality, and lifetime routes; the console and replayer are added before gallery regeneration and publishing.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>10月前半は WebGPU capability、hand input、redraw priority を扱いました。今日は priority queue の次として、更新しない layer をどう低品質化・終了するかへ焦点を移しています。次は抽象 row を実 `needsRedraw`、GPU timing、view stability に接続する段階です。</p>
+          <p class="en-copy">After capability, hand input, and redraw priority, today focuses on degrading or ending layers; next is real device telemetry.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `Layer Quality Lifecycle Console` を実装しました。何が動くか: 3 layer の重要度・圧・budget から keep / degrade / redraw / destroy と JSON row を出して保存します。次に足すなら実 `needsRedraw`、redraw event、GPU timestamp です。派生 `Layer Quality Transition Replayer` も実装しました。何が動くか: 保存 row を読み、8 frame の負荷パターンで遷移を再生します。次に足すなら複数端末の row 比較です。</p>
+          <p class="en-copy">The main saves an explainable lifecycle row. The derivative reads it and replays eight frames; next add real signals and cross-device comparisons.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-18_html_layer_quality_lifecycle_console.html" target="_blank" rel="noreferrer">Today's main sample: Layer Quality Lifecycle Console</a></li>
+          
+            <li><a href="../outputs/2026-10-18_html_layer_quality_transition_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Layer Quality Transition Replayer</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: Layers Samples</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLBinding/getViewSubImage" target="_blank" rel="noreferrer">MDN: XRWebGLBinding getViewSubImage</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-18_html_layer_quality_lifecycle_console.html" loading="lazy" title="WebXR Layer Quality Lifecycle Console"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

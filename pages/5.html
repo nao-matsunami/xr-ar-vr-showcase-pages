@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 100</span>
+        <span>days: 103</span>
         <span>page: 5 / 9</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -321,6 +321,75 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-08-30">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.30</p>
+              <h2>XRInputSource.gamepad の frame poll 安定化と input event 差分検査を自作サンプル化</h2>
+              <p class="card-subtitle">Original samples for XRInputSource.gamepad frame-poll stability and input-event diff inspection</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-30" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Device API、W3C WebXR Gamepads Module、MDN の XRInputSource.gamepad / input guide、Immersive Web Samples の Controller State / Input Selection を確認し、実 inline probe と合成フレームで gamepad poll を安定化する本命サンプルと、select event と frame poll の時刻差を検査する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the W3C WebXR Device API, W3C WebXR Gamepads Module, MDN XRInputSource.gamepad/input guidance, and Immersive Web Controller State/Input Selection samples, today's original work adds a main sample for stabilizing gamepad frame polling with an inline probe plus synthetic frames, and a derivative sample for inspecting timing differences between select events and frame polling.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-08-30.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-08-30_html_xr_gamepad_frame_poller_stability_lab.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-08-29">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.29</p>
+              <h2>WebXR Input Profile component mapping cache と xr-standard slot replay を自作サンプル化</h2>
+              <p class="card-subtitle">Original samples for WebXR Input Profile component mapping cache and xr-standard slot replay</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-29" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Gamepads Module、WebXR Device API、Immersive Web の Input Profiles / motion-controllers、Immersive Web Samples の Controller State / Input Selection を確認し、profile component を `xr-standard` の button / axes slot へ割り当てる本命サンプルと、slot 値から semantic action をリプレイする派生サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the W3C WebXR Gamepads Module, WebXR Device API, Immersive Web Input Profiles and motion-controllers, and the Immersive Web Controller State and Input Selection samples, today's original work adds a main sample that maps profile components onto `xr-standard` button/axes slots plus a derivative replay pad that turns slot values into semantic actions.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-08-29.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-08-29_html_profile_component_mapping_cache.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-08-28">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.28</p>
+              <h2>WebXR Input Profiles Registry fetch と inline input log を自作サンプル化</h2>
+              <p class="card-subtitle">Original samples for WebXR Input Profiles Registry fetching and inline input logging</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-28" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">Immersive Web の WebXR Input Profiles Registry / motion-controllers、MDN の `XRInputSource.profiles` と WebXR input guide、W3C WebXR Device API、Immersive Web Samples の Controller State を確認し、実 Registry fetch の失敗や fallback を可視化する本命サンプルと、inline session で `profiles` が空になる制約を実ログ / synthetic log で切り分ける派生サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing Immersive Web's WebXR Input Profiles Registry and motion-controllers package, MDN's `XRInputSource.profiles` and WebXR input guide, the W3C WebXR Device API, and Immersive Web's Controller State sample, today's original work adds a main sample that visualizes real Registry fetch failures and fallback plus a derivative logger that separates real and synthetic inline-session events where `profiles` is empty.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-08-28.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-08-28_html_input_profile_registry_fetch_probe.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-08-27">
           <div class="card-top">
             <div>
@@ -524,75 +593,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-08-19.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-08-19_html_anchor_undo_overlay_queue.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-18">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.18</p>
-              <h2>DOM Overlay と world anchor の select 衝突を入力ゲートで分ける</h2>
-              <p class="card-subtitle">Separate DOM Overlay and world-anchor select collisions with an input gate</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-18" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR DOM Overlays Module、WebXR Device API、WebXR Anchors Module、MDN の `XRHitTestResult.createAnchor()`、Immersive Web の anchors / hit-test samples を確認し、overlay 操作が `beforexrselect` で XR select を抑止するか、world anchor 操作へ通すかを可視化する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR DOM Overlays Module, WebXR Device API, WebXR Anchors Module, MDN `XRHitTestResult.createAnchor()`, and Immersive Web anchors / hit-test samples, today's original HTML sample visualizes whether overlay interaction suppresses XR select through `beforexrselect` or passes input through to a world anchor.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-18.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-18_html_dom_overlay_anchor_select_gate.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-17">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.17</p>
-              <h2>Anchor の drift と locate 不能から再 hit-test 判断へつなぐ</h2>
-              <p class="card-subtitle">Route anchor drift and unlocatable frames into re-hit-test decisions</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-17" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Anchors Module、WebXR Hit Test Module、WebXR Device API、MDN の `XRFrame.getHitTestResults()`、Immersive Web の anchors / hit-test samples を確認し、配置済み anchor が drift した時に keep / warn / re-hit-test / hide + wait / delete を選ぶ自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Anchors Module, WebXR Hit Test Module, WebXR Device API, MDN `XRFrame.getHitTestResults()`, and Immersive Web anchors / hit-test samples, today's original HTML sample chooses keep / warn / re-hit-test / hide + wait / delete when a placed anchor drifts or becomes unlocatable.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-17.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-17_html_anchor_drift_rehit_planner.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-16">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.16</p>
-              <h2>Hit-test 結果を anchor 作成前に安定度でふるい分ける</h2>
-              <p class="card-subtitle">Gate hit-test results by stability before creating anchors</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-16" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Hit Test Module、WebXR Anchors Module、WebXR Device API、MDN の `getHitTestResults()`、Immersive Web の hit-test / anchors samples を確認し、疑似 hit-test 結果を距離・傾き・履歴安定度・触覚 cue で評価して anchor commit を許可/保留する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Hit Test Module, WebXR Anchors Module, WebXR Device API, MDN `getHitTestResults()`, and Immersive Web hit-test / anchors samples, today's original HTML sample evaluates simulated hit-test results by distance, tilt, history stability, and haptic cue before allowing or holding anchor commits.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-16.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-16_html_hit_test_anchor_commit_gate.html">代表サンプル / Sample</a>
           </div>
         </article>
       

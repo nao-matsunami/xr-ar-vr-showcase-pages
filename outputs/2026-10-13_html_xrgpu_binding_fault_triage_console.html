@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XRGPUBinding Fault Triage Console</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101315;
+      --panel: #1c2428;
+      --panel2: #29343a;
+      --line: #718087;
+      --text: #f7f2e9;
+      --muted: #c9d1d4;
+      --cyan: #88d9ff;
+      --green: #a6dd90;
+      --gold: #ecc46f;
+      --red: #ee8177;
+      --ink: rgba(4, 8, 10, 0.62);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(145deg, rgba(136, 217, 255, 0.13), transparent 34%),
+        linear-gradient(310deg, rgba(236, 196, 111, 0.1), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(28, 36, 40, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 50px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric, .gate, .row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--ink);
+    }
+    .metric { padding: 10px; }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+    .gates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; min-height: 318px; }
+    .gate { padding: 12px; display: grid; gap: 8px; align-content: start; }
+    .gate b { font-size: 15px; }
+    .gate small { color: var(--muted); line-height: 1.45; }
+    .bar { height: 12px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+    .fill { height: 100%; width: 0; transition: width 0.18s ease; background: var(--green); }
+    .fill.warn { background: var(--gold); }
+    .fill.bad { background: var(--red); }
+    .toolbar { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    button, select, input, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    label { display: grid; gap: 4px; color: var(--muted); font-size: 13px; }
+    label input[type="checkbox"] { min-height: auto; accent-color: var(--cyan); justify-self: start; }
+    label input[type="range"] { padding: 0; accent-color: var(--cyan); }
+    button { cursor: pointer; background: #24485b; border-color: #86cdeb; }
+    textarea { width: 100%; min-height: 220px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .rows { display: grid; gap: 8px; }
+    .row { padding: 10px; color: var(--muted); overflow-wrap: anywhere; }
+    @media (max-width: 940px) {
+      header, .toolbar, .metrics, .gates { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>XRGPUBinding Fault Triage Console</h1>
+        <p>WebXR-WebGPU Binding の起動手順を、secure context、WebGPU adapter、XR session mode、XRGPUBinding、projection layer、subimage readiness の診断 row に分解する本命試作です。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>route</span><strong id="routeMetric">-</strong></div>
+          <div class="metric"><span>readiness</span><strong id="readyMetric">0%</strong></div>
+          <div class="metric"><span>first fault</span><strong id="faultMetric">-</strong></div>
+          <div class="metric"><span>recovery</span><strong id="recoveryMetric">-</strong></div>
+        </div>
+        <div id="gates" class="gates" aria-label="xrgpu binding triage gates"></div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <select id="profileSelect">
+        <option value="runtime">runtime probe</option>
+        <option value="meta152">meta 152.1 target</option>
+        <option value="adapterFault">adapter fault</option>
+        <option value="bindingFault">binding fault</option>
+      </select>
+      <select id="modeSelect">
+        <option value="immersive-vr">immersive-vr</option>
+        <option value="immersive-ar">immersive-ar</option>
+        <option value="inline">inline</option>
+      </select>
+      <label>native scale <input id="scaleRange" type="range" min="0.6" max="1.5" value="1" step="0.05"></label>
+      <label><input id="depthToggle" type="checkbox" checked> depth values</label>
+      <label><input id="quadToggle" type="checkbox" checked> quad layer</label>
+      <button id="copyButton" type="button">Copy row</button>
+    </div>
+
+    <section>
+      <h2>Decision notes</h2>
+      <div id="notes" class="rows"></div>
+    </section>
+
+    <section>
+      <h2>Export binding triage row</h2>
+      <textarea id="rowBox" spellcheck="false"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function policyAllows(feature) {
+      const policy = document.permissionsPolicy || document.featurePolicy;
+      if (!policy || typeof policy.allowsFeature !== "function") return null;
+      try {
+        return policy.allowsFeature(feature);
+      } catch {
+        return null;
+      }
+    }
+
+    function runtimeSeed() {
+      return {
+        secureContext: window.isSecureContext,
+        webgpu: "gpu" in navigator,
+        xr: "xr" in navigator,
+        xrGpuBinding: "XRGPUBinding" in window,
+        projectionLayer: "XRProjectionLayer" in window,
+        quadLayer: "XRQuadLayer" in window,
+        xrSpatialPolicy: policyAllows("xr-spatial-tracking") !== false
+      };
+    }
+
+    function seedProfile(name) {
+      const profiles = {
+        runtime: runtimeSeed(),
+        meta152: { secureContext: true, webgpu: true, xr: true, xrGpuBinding: true, projectionLayer: true, quadLayer: true, xrSpatialPolicy: true },
+        adapterFault: { secureContext: true, webgpu: true, xr: true, xrGpuBinding: true, projectionLayer: true, quadLayer: true, xrSpatialPolicy: true, xrCompatibleAdapter: false },
+        bindingFault: { secureContext: true, webgpu: true, xr: true, xrGpuBinding: false, projectionLayer: true, quadLayer: true, xrSpatialPolicy: true, xrCompatibleAdapter: true }
+      };
+      return profiles[name];
+    }
+
+    function buildRow() {
+      const source = $("profileSelect").value;
+      const mode = $("modeSelect").value;
+      const seed = seedProfile(source);
+      const nativeScale = Number($("scaleRange").value);
+      const wantsDepth = $("depthToggle").checked;
+      const wantsQuad = $("quadToggle").checked;
+      const xrCompatibleAdapter = seed.xrCompatibleAdapter ?? (seed.webgpu && seed.xr);
+      const gates = [
+        { id: "secure-context", ok: seed.secureContext, impact: "requestSession and WebGPU device are only useful from a secure context", fix: "serve over HTTPS or localhost" },
+        { id: "xr-policy", ok: seed.xr && seed.xrSpatialPolicy, impact: "XR session request and spatial tracking permission policy gate the launch", fix: "use preview mode or adjust iframe allow / headers" },
+        { id: "webgpu-adapter", ok: seed.webgpu && xrCompatibleAdapter, impact: "requestAdapter({ xrCompatible: true }) must return a compatible adapter", fix: "retry WebGL projection route" },
+        { id: "xrgpu-binding", ok: seed.xrGpuBinding, impact: "XRGPUBinding(session, device) is the WebGPU entry point", fix: "keep WebGL layer route active" },
+        { id: "projection-layer", ok: seed.projectionLayer, impact: "createProjectionLayer is required before subimage rendering", fix: "fall back to XRWebGLLayer" },
+        { id: "optional-layers", ok: (!wantsQuad || seed.quadLayer) && (!wantsDepth || seed.xrGpuBinding), impact: "quad HUD and depth values should degrade independently", fix: "move HUD to DOM overlay or hold depth row" }
+      ];
+      const readiness = gates.filter((gate) => gate.ok).length / gates.length;
+      const firstFault = gates.find((gate) => !gate.ok);
+      let route = "commit-webgpu-xr-binding";
+      if (firstFault?.id === "secure-context") route = "block-insecure-context";
+      else if (firstFault?.id === "xr-policy") route = mode === "inline" ? "inline-preview-only" : "screen-preview-only";
+      else if (["webgpu-adapter", "xrgpu-binding", "projection-layer"].includes(firstFault?.id)) route = "webgl-projection-fallback";
+      else if (firstFault?.id === "optional-layers") route = "native-projection-reduced-layers";
+      const recovery = firstFault ? firstFault.fix : "log subimage size and continue";
+      return {
+        id: "xrgpu-binding-triage",
+        timestamp: new Date().toISOString(),
+        source,
+        mode,
+        nativeScale,
+        wantsDepth,
+        wantsQuad,
+        fields: seed,
+        gates: gates.map((gate) => ({ id: gate.id, ok: gate.ok, impact: gate.impact, fix: gate.fix })),
+        readiness: Number(readiness.toFixed(3)),
+        firstFault: firstFault ? firstFault.id : "none",
+        route,
+        recovery,
+        nextStep: "feed this row into a subimage fault replay and record real getSubImage exception names"
+      };
+    }
+
+    function render() {
+      const row = buildRow();
+      $("routeMetric").textContent = row.route;
+      $("readyMetric").textContent = `${Math.round(row.readiness * 100)}%`;
+      $("faultMetric").textContent = row.firstFault;
+      $("recoveryMetric").textContent = row.recovery;
+      $("gates").innerHTML = row.gates.map((gate) => {
+        const width = gate.ok ? 100 : 32;
+        const state = gate.ok ? "" : gate.id === "optional-layers" ? "warn" : "bad";
+        return `
+          <div class="gate">
+            <b>${gate.id}</b>
+            <div class="bar"><div class="fill ${state}" style="width:${width}%"></div></div>
+            <small>${gate.ok ? "pass" : "fault"} / ${gate.impact}</small>
+            <small>recovery: ${gate.ok ? "continue" : gate.fix}</small>
+          </div>
+        `;
+      }).join("");
+      $("notes").innerHTML = [
+        `profile=${row.source}, mode=${row.mode}, nativeScale=${row.nativeScale}`,
+        `first actionable fault: ${row.firstFault}`,
+        `next: ${row.nextStep}`
+      ].map((note) => `<div class="row">${note}</div>`).join("");
+      $("rowBox").value = JSON.stringify(row, null, 2);
+    }
+
+    ["profileSelect", "modeSelect", "scaleRange", "depthToggle", "quadToggle"].forEach((id) => {
+      $(id).addEventListener("input", render);
+    });
+    $("copyButton").addEventListener("click", async () => {
+      $("rowBox").select();
+      try { await navigator.clipboard.writeText($("rowBox").value); } catch {}
+    });
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+{
+  "date": "2026-10-12",
+  "headline": "WebGPU composition layer を layer plan row にする",
+  "headlineEn": "Turning WebGPU composition layers into layer plan rows",
+  "summary": "Meta Browser 152.1 の experimental WebGPU composition layers、WebXR-WebGPU Binding、Immersive Web WebGPU samples、WebXR Layers / Device API を確認し、projection / depth / motion vector / quad HUD を起動直前の layer plan として判定する本命サンプルと、その row を8 frameの swapchain pressure として再生する派生サンプルを追加しました。",
+  "summaryEn": "After checking Meta Browser 152.1 experimental WebGPU composition layers, WebXR-WebGPU Binding, Immersive Web WebGPU samples, and the WebXR Layers / Device APIs, today's original work adds a main sample that scores projection / depth / motion vector / quad HUD as a pre-session layer plan and a derivative sample that replays that row as eight frames of swapchain pressure.",
+  "keyTopics": [
+    "Meta Browser 152.1 release notes は experimental WebGPU composition layers を明記しており、昨日の depth projection row を layer plan へ広げる材料になります。",
+    "WebXR-WebGPU Binding draft / explainer は `XRGPUBinding` と WebGPU-compatible `XRSession`、projection layer の組み合わせを扱うため、起動前に WebGPU route と fallback route を分けやすいです。",
+    "Immersive Web WebGPU samples は `immersive-vr` / `immersive-ar` と WebGPU の最小確認点で、composition layer の smoke test として使えます。",
+    "WebXR Layers API は projection / quad / media layer の設計前提を与え、HUD や depth attachment をどの順で degrade するか考えやすくします。",
+    "WebXR Device API 2026-06-09 Candidate Recommendation Draft は session / feature descriptor / render state の基礎なので、layer plan row の必須列を定義する土台です。"
+  ],
+  "keyTopicsEn": [
+    "Meta Browser 152.1 release notes explicitly mention experimental WebGPU composition layers, which expands yesterday's depth projection row into a broader layer plan.",
+    "The WebXR-WebGPU Binding draft / explainer covers `XRGPUBinding`, WebGPU-compatible `XRSession`, and projection layers, making it natural to separate WebGPU routes from fallback routes before launch.",
+    "Immersive Web WebGPU samples are the minimal smoke test for `immersive-vr` / `immersive-ar` with WebGPU, so they are useful references for composition layer readiness.",
+    "The WebXR Layers API gives the projection / quad / media layer assumptions needed to decide the degradation order for HUD and depth attachments.",
+    "The WebXR Device API 2026-06-09 Candidate Recommendation Draft anchors sessions, feature descriptors, and render state, so it defines the required columns in the layer plan row."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: WebGPU Composition Layer Plan Console",
+      "url": "../outputs/2026-10-12_html_webgpu_composition_layer_plan_console.html"
+    },
+    {
+      "label": "Today's derivative sample: Layer Swapchain Pressure Replayer",
+      "url": "../outputs/2026-10-12_html_layer_swapchain_pressure_replayer.html"
+    },
+    {
+      "label": "Meta Horizon OS release notes: Browser 152.1",
+      "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+    },
+    {
+      "label": "Immersive Web: WebXR WebGPU Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding draft",
+      "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding explainer",
+      "url": "https://github.com/immersive-web/WebXR-WebGPU-Binding/blob/main/explainer.md"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Meta Browser 152.1 の release notes は experimental WebGPU composition layers に触れており、WebGPU XR の関心が `XRGPUBinding があるか` から `projection / depth / motion vector / HUD layer をどの memory budget で並べるか` へ進んでいます。WebXR-WebGPU Binding draft では WebGPU-compatible session と `XRGPUBinding` が中心なので、今日の自作サンプルでは layer を作る直前の plan row と degrade 順に絞りました。",
+      "bodyEn": "Meta Browser 152.1 release notes mention experimental WebGPU composition layers, moving WebGPU XR from `is XRGPUBinding present` toward `how do projection, depth, motion vector, and HUD layers fit the memory budget`. The WebXR-WebGPU Binding draft centers on WebGPU-compatible sessions and `XRGPUBinding`, so today's original samples focus on the layer plan row and degradation order just before layer creation.",
+      "links": [
+        {
+          "label": "Meta Horizon OS release notes",
+          "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+        },
+        {
+          "label": "WebXR-WebGPU Binding draft",
+          "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+        },
+        {
+          "label": "WebXR WebGPU Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `WebGPU Composition Layer Plan Console` は runtime / quest 152.1 target / webgpu layer ready / webgl fallback の4 profile を切り替え、scale、memory cap、quad HUD、depth の要求を layer plan と route に変換します。派生サンプル `Layer Swapchain Pressure Replayer` は、その row を貼り付けて8 frame分の memory pressure と layer degradation を再生します。",
+      "bodyEn": "The main sample, `WebGPU Composition Layer Plan Console`, switches among runtime, Quest 152.1 target, WebGPU layer ready, and WebGL fallback profiles, then converts scale, memory cap, quad HUD, and depth requirements into a layer plan and route. The derivative sample, `Layer Swapchain Pressure Replayer`, accepts that row and replays eight frames of memory pressure and layer degradation."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "最小 row は `secureContext`、`webgpu`、`xr`、`xrGpuBinding`、`projectionLayer`、`quadLayer`、`xrSpatialPolicy`、`viewport`、`memoryCapMb`、`layers`、`route` です。実機へ進める時は `navigator.gpu.requestAdapter({ xrCompatible: true })`、`XRGPUBinding(session, gpuDevice)`、projection / quad layer 作成時の例外、swapchain resize、`getViewSubImage()` の attachment 実サイズを同じ row に足します。",
+      "bodyEn": "The minimal row is `secureContext`, `webgpu`, `xr`, `xrGpuBinding`, `projectionLayer`, `quadLayer`, `xrSpatialPolicy`, `viewport`, `memoryCapMb`, `layers`, and `route`. On a real device, add `navigator.gpu.requestAdapter({ xrCompatible: true })`, `XRGPUBinding(session, gpuDevice)`, projection / quad layer creation exceptions, swapchain resize, and real attachment sizes from `getViewSubImage()` into the same row."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の layer plan row は10月11日の depth projection readiness、10月10日の WebGPU probe store、10月6日の foveation / space-warp budget、10月5日の depth motion vector budget とつなげられます。`layers[].bytesMb` と `pressure` を共通列にすると、color は残す、HUD は DOM に落とす、motion vector を synthetic row にする、depth だけ遅延保持する、といった fallback を同じ UI で比較できます。",
+      "bodyEn": "Today's layer plan row connects to the October 11 depth projection readiness, October 10 WebGPU probe store, October 6 foveation / space-warp budget, and October 5 depth motion vector budget. Sharing `layers[].bytesMb` and `pressure` columns lets one UI compare keeping color, moving HUD to DOM, replacing motion vectors with synthetic rows, or retaining delayed depth."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Meta Browser の WebGPU composition layer / depth projection release notes、WebXR-WebGPU Binding の projection layer / subimage、Immersive Web WebGPU samples、WebXR Layers の quad / media layer、Depth Sensing / Space Warp 周辺の attachment 表現を継続します。自作側では、今日の row を IndexedDB に保存し、派生 sample が最新 row を自動 import する流れを作ると重複が少ないです。",
+      "bodyEn": "Keep watching Meta Browser WebGPU composition layer / depth projection release notes, WebXR-WebGPU Binding projection layers / subimages, Immersive Web WebGPU samples, WebXR Layers quad / media layers, and attachment wording around Depth Sensing / Space Warp. On the original side, the clean next step is saving today's row into IndexedDB and auto-importing the latest row into the derivative sample."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`WebGPU Composition Layer Plan Console` で profile を `quest 152.1 target` と `webgl fallback` に切り替え、scale と memory cap を動かして route が `reduce-scale-before-session` へ落ちる境目を見てください。出力 JSON を `Layer Swapchain Pressure Replayer` に貼ると、8 frame のどこで HUD / motion vector / depth が degrade するか確認できます。",
+      "bodyEn": "In `WebGPU Composition Layer Plan Console`, switch between `quest 152.1 target` and `webgl fallback`, then move scale and memory cap to find where the route drops to `reduce-scale-before-session`. Paste the output JSON into `Layer Swapchain Pressure Replayer` to inspect where HUD, motion vector, or depth degrades across eight frames.",
+      "links": [
+        {
+          "label": "Open WebGPU Composition Layer Plan Console",
+          "url": "../outputs/2026-10-12_html_webgpu_composition_layer_plan_console.html"
+        },
+        {
+          "label": "Open Layer Swapchain Pressure Replayer",
+          "url": "../outputs/2026-10-12_html_layer_swapchain_pressure_replayer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Meta Browser 152.1、WebXR-WebGPU Binding draft / explainer、Immersive Web WebGPU samples、WebXR Layers、WebXR Device API を確認。設計: 1本目は composition layer plan console、2本目は swapchain pressure replayer。実装: `outputs/2026-10-12_html_webgpu_composition_layer_plan_console.html` と `outputs/2026-10-12_html_layer_swapchain_pressure_replayer.html` を追加。検証: JSON parse、HTML script 構文、日付ページ / index / pages 再生成、publish を行う。",
+      "bodyEn": "Research: checked Meta Browser 152.1, WebXR-WebGPU Binding draft / explainer, Immersive Web WebGPU samples, WebXR Layers, and the WebXR Device API. Design: make the first sample a composition layer plan console and the second a swapchain pressure replayer. Implementation: add `outputs/2026-10-12_html_webgpu_composition_layer_plan_console.html` and `outputs/2026-10-12_html_layer_swapchain_pressure_replayer.html`. Validation: parse JSON, check embedded scripts, regenerate day / index / pages, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月前半の流れは、prediction / visibility / foveation / telemetry / WebGPU probe / depth projection から、composition layer の運用単位へ移っています。今日の役割は、`WebGPU composition layers に対応` という大きい yes/no を、projection color、depth、motion vector、quad HUD、memory cap の小さい列へ分解し、将来の実機ログや shader route へ渡せる形にすることです。",
+      "bodyEn": "Early October has moved from prediction / visibility / foveation / telemetry / WebGPU probes / depth projection toward operational units for composition layers. Today's role is to split the large yes/no of `WebGPU composition layers supported` into smaller projection color, depth, motion vector, quad HUD, and memory cap columns that future device logs and shader routes can consume."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `WebGPU Composition Layer Plan Console` です。何が動くか: browser / target profile、scale、memory cap、quad HUD / depth の要求から `layers`、memory pressure、readiness、risk、route を作ります。次に足すなら、実 `requestAdapter({ xrCompatible: true })` と `XRGPUBinding`、projection / quad layer 作成例外、IndexedDB 保存を row に入れます。派生として `Layer Swapchain Pressure Replayer` も実装しました。何が動くか: 1本目の row を貼り付け、8 frame の swapchain pressure で HUD / motion vector / depth の degrade 順を再生します。次に足すなら、実 headset profile 別に pressure trace を保存し、Depth Sensing / Space Warp の有無で shader route を切り替えます。",
+      "bodyEn": "The selected main prototype is `WebGPU Composition Layer Plan Console`. What it does: builds `layers`, memory pressure, readiness, risk, and route from a browser / target profile, scale, memory cap, and quad HUD / depth requirements. Next addition: include real `requestAdapter({ xrCompatible: true })`, `XRGPUBinding`, projection / quad layer creation exceptions, and IndexedDB storage in the row. The derivative `Layer Swapchain Pressure Replayer` was also implemented. What it does: pastes the first row and replays HUD / motion vector / depth degradation across eight frames of swapchain pressure. Next addition: save pressure traces per real headset profile and switch shader routes based on Depth Sensing / Space Warp availability."
+    }
+  ]
+}

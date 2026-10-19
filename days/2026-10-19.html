@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR static layer の再描画を receipt として扱う | 2026-10-19</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.19</p>
+      <h1>WebXR static layer の再描画を receipt として扱う</h1>
+      <p class="hero-subtitle">Treating WebXR static-layer redraw as a receipt</p>
+      <p>WebXR Layers の `needsRedraw`、redraw event、static layer、WebGPU texture lifetime を参照し、再描画要求から GPU submit / compositor handoff までを記録する本命試作と、8 frame の texture handoff を再生する派生試作を追加しました。</p>
+      <p class="en-copy">Today's original work records redraw-to-handoff receipts for static layers and replays an eight-frame texture handoff.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-19_html_static_layer_redraw_receipt_console.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-10-18.html">← 2026.10.18</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Static Layer Redraw Receipt Console</h3>
+              <p>Composition layer の needsRedraw を単なる警告で終わらせず、次フレームで描画したか、texture を compositor へ渡せたかを receipt として残す自作の最小コンソールです。実 API を模した判断モデルであり、非対応ブラウザでも操作できます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-19_html_static_layer_redraw_receipt_console.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Redraw Texture Handoff Replayer</h3>
+              <p>本命が保存した redraw receipt を読み、描画・queue submit・compositor handoff・texture release の順を8 frame で再生する派生試作です。WebGPU binding の texture lifetime を『いつ描いたか』だけでなく『いつ渡し終えたか』として観察します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-19_html_redraw_texture_handoff_replayer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>`needsRedraw` は layer を次の XR animation frame で再描画すべきことを示します。</span>
+              <span class="en-copy">needsRedraw asks for next-frame rendering.</span>
+            </li>
+          
+            <li>
+              <span>リソース喪失や再投影不能時、non-projection layer には redraw event が発火し得ます。</span>
+              <span class="en-copy">Redraw events can expose lost resources.</span>
+            </li>
+          
+            <li>
+              <span>`isStatic` は needsRedraw が true の時だけ描画する最適化の意図を表せます。</span>
+              <span class="en-copy">Static layers can draw only on demand.</span>
+            </li>
+          
+            <li>
+              <span>WebGPU-backed layer は submit 完了と compositor が texture を使い終える時点を区別する必要があります。</span>
+              <span class="en-copy">WebGPU texture submission and release are distinct.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>Layers 仕様では `needsRedraw` は次の XR frame での再描画要求です。ここで大事なのは、要求を受けた事実と GPU に描画を submit して compositor が読める状態にした事実は別、という点です。本命はこの間を receipt にして、単なる品質スライダーでは見えない失敗点を扱います。</p>
+          <p class="en-copy">A redraw request and a completed compositor handoff are separate facts; the main sample makes that boundary visible.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">WebXR Layers API</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>静的 pin HUD、更新の多い route map、ambient panorama を同じ queue に置きます。resource loss や GPU submit 遅延を切り替えると、読ませ続ける HUD は redraw を予約し、背景は延期または fallback へ回る様子を比較できます。派生はその receipt を8 frame の handoff timeline に変換します。</p>
+          <p class="en-copy">Three layer roles reveal which content must redraw and which can defer; the derivative turns the receipt into a timeline.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実機では `XRCompositionLayer.needsRedraw` と redraw event を layer ID、XR frame timestamp、描画開始・GPU submit・fence/queue 完了、subimage viewport と同じ row に残します。`isStatic` は redraw 時にだけ書き込み、WebGPU の texture は compositor が使い終える前に再利用・破棄しないようにします。</p>
+          <p class="en-copy">Record redraw signals, frame timestamps, submit/completion, and subimage viewport together; do not reuse textures before compositor release.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>Layers の quality / redraw / destroy、WebXR-WebGPU Binding の static layer と texture expiry、Layers Samples の destroy / projection / multiview を追います。実機では GPU timestamp と head motion 下の読解性を receipt に接続します。</p>
+          <p class="en-copy">Watch lifecycle and WebGPU texture-expiry changes, then replace modeled timing with device telemetry.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で `resource lost` と `texture unavailable` を選び、静的 HUD の receipt が hold になることを確認して保存してください。派生で `late GPU submit` を再生すると、handoff 前に完了扱いにしない理由が見えます。</p>
+          <p class="en-copy">Simulate resource loss and unavailable texture, save the receipt, then replay a late submit.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C Layers / Device API、Immersive Web WebGPU Binding、Layers Samples を確認。設計: redraw 要求、GPU submit、compositor handoff、release を分離。実装: receipt console と handoff replayer を追加。公開: gallery を再生成し publish を実行します。</p>
+          <p class="en-copy">Research informed a split between request, submit, handoff, and release; two samples are added before publishing.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>10月中旬は hand input、layer redraw priority、layer quality lifecycle を扱いました。今日は lifecycle の次の粒度として、再描画の『完了』を GPU と compositor の境目まで追います。次は実 `getSubImage()` と timing 計測を保存して、端末差を replay する段階です。</p>
+          <p class="en-copy">After priority and lifecycle, today follows redraw completion through the GPU/compositor boundary.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `Static Layer Redraw Receipt Console` を実装しました。何が動くか: redraw / resource loss と GPU 状態から各 layer の redraw、hold、fallback、receipt を出し保存します。次に足すなら実 needsRedraw と GPU timing です。派生 `Redraw Texture Handoff Replayer` も実装しました。何が動くか: 保存 JSON を読み、submit・handoff・release を8 frameで再生します。次に足すなら実 XRGPUBinding の subimage 計測です。</p>
+          <p class="en-copy">The main saves redraw receipts; the derivative replays submit, handoff, and release. Next add real subimage timing.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-19_html_static_layer_redraw_receipt_console.html" target="_blank" rel="noreferrer">Today's main sample: Static Layer Redraw Receipt Console</a></li>
+          
+            <li><a href="../outputs/2026-10-19_html_redraw_texture_handoff_replayer.html" target="_blank" rel="noreferrer">Today's derivative sample: Redraw Texture Handoff Replayer</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxrlayers-1/" target="_blank" rel="noreferrer">W3C: WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs" target="_blank" rel="noreferrer">Immersive Web: WebXR-WebGPU Binding draft</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/" target="_blank" rel="noreferrer">Immersive Web: Layers Samples</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-19_html_static_layer_redraw_receipt_console.html" loading="lazy" title="Static Layer Redraw Receipt Console"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

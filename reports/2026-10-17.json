@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-17",
+  "headline": "WebXR Layers の redraw を優先キューとして扱う",
+  "headlineEn": "Treating WebXR Layers redraw as an explainable priority queue",
+  "summary": "WebXR Layers API の composition layer、`depth-sorted-layers`、redraw を参照し、表示順・更新量・可読性から次に描き直す layer を選ぶ本命試作と、その row を8 frame の予算で再生する派生試作を追加しました。",
+  "summaryEn": "Referencing WebXR composition layers, depth-sorted-layers, and redraw, this adds an original priority composer and an eight-frame budget replayer.",
+  "keyTopics": [
+    "WebXR Layers は immersive VR / AR session の composition layer を扱い、projection layer は常に利用可能です。",
+    "`depth-sorted-layers` を要求すると projection / quad / cylinder layer は配列順でなく深度に基づき表示されます。",
+    "Layer は texture を毎 frame 更新する必要がなく、更新要求と可読性を分けて予算化できます。",
+    "公式 Layers Samples は quad、cylinder、depth、space warp などを小さな機能単位で検証しています。"
+  ],
+  "keyTopicsEn": [
+    "WebXR Layers manages composition layers for immersive sessions.",
+    "depth-sorted-layers changes projection, quad, and cylinder ordering to depth-based ordering.",
+    "Texture refresh can be budgeted separately from layer presentation.",
+    "Official samples isolate layer behavior into small feature-focused pages."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Layer Redraw Priority Composer",
+      "url": "../outputs/2026-10-17_html_layer_redraw_priority_composer.html"
+    },
+    {
+      "label": "Today's derivative sample: Redraw Queue Budget Replayer",
+      "url": "../outputs/2026-10-17_html_redraw_queue_budget_replayer.html"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "Immersive Web: Layers Editor's Draft",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "Immersive Web: Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    },
+    {
+      "label": "MDN: WebXR Device API",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Layers API は text や map を高解像度の別 layer に置き、compositor がアプリ更新より高い頻度で提示できる余地を作ります。最新草案の `depth-sorted-layers` は配列順だけに依存しないため、UI を『先に描いた順』ではなく『空間内でどう読ませるか』として設計できる点が面白いです。",
+      "bodyEn": "Layers let essential text or maps live at a separate resolution, while depth-sorted-layers makes presentation a spatial decision rather than only an array-order decision.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://www.w3.org/TR/webxrlayers-1/"
+        },
+        {
+          "label": "Layers Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命は HUD text、world note、ambient media を3つの layer として置き、距離・内容変化・重要度から redraw の順を可視化します。派生は保存した row を8 frame の update pressure に通すので、字幕の1文字更新を最優先にしつつ背景 media の更新は再利用する、といった演出を短時間で比べられます。",
+      "bodyEn": "The main models three layers; the derivative replays its row against eight frames of update pressure."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は `requestSession('immersive-vr', { optionalFeatures: ['layers', 'depth-sorted-layers'] })` の成否を記録し、実 layer の `needsRedraw` と `redraw` event を row に残します。`depth-sorted-layers` は全 layer に一律ではなく projection / quad / cylinder に関係する点、inline session では Layers が使えない点も fallback 条件にします。",
+      "bodyEn": "Record session feature outcomes, needsRedraw, and redraw events; keep the layer-type and inline-session constraints in the fallback route."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "priority、depth、contentDelta、budget、verdict は、文字起こし字幕、地図、ライブカメラ、展示の環境音、業務 HUD の更新ログと組み合わせられます。AI には『次の一秒で読まれる要素』の優先度を提案させ、人は replay でちらつきと遅延の交換条件を確認できます。",
+      "bodyEn": "Priority, depth, content delta, budget, and verdict can join captions, maps, cameras, audio installations, and operational HUD logs."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "W3C Layers draft の `redraw`、`needsRedraw`、quality、space warp 周辺と、公式 Samples の layer-vs-non-layer / input selection space warp を継続確認します。実機では視線移動時の readability、GPU timing、texture upload が queue とどれだけ相関するかを採ります。",
+      "bodyEn": "Watch redraw, needsRedraw, quality, space warp, and the relevant official samples; measure readability and GPU timing on device."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で `layers array order` と `depth-sorted-layers` を切り替え、HUD の contentDelta を上げてください。row を保存後、派生で `HUD update pulse` と `media update storm` を比較すると、同じ更新量でも優先レイヤーが変わることが分かります。",
+      "bodyEn": "Toggle ordering modes, save a row, then compare HUD pulses against a media update storm."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C Layers、Immersive Web draft と公式 samples、MDN を確認。設計: 表示順と描画更新を別軸にした priority row。実装: 本命 composer と派生 replayer、レポートを追加。公開: gallery を再生成し GitHub Pages へ publish します。",
+      "bodyEn": "Research informs a priority row; the composer and replayer are implemented, then the gallery is regenerated and published."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "直近は WebGPU/XR capability と hand input の『起動・入力の確度』を扱いました。今日はそれらが通った後に、限られたフレーム予算をどの視覚要素に使うかへ焦点を移しています。次は実 layer event と実 GPU timing をこの抽象 row に戻す段階です。",
+      "bodyEn": "After capability and hand-input certainty, today moves to how a limited frame budget is spent; next is replacing modeled values with device observations."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Layer Redraw Priority Composer` を実装しました。何が動くか: 3 layer の深度・変化量・重要度と budget から redraw queue を作り、JSON row を保存します。次に足すなら実 `needsRedraw` / redraw event と GPU timestamp です。派生 `Redraw Queue Budget Replayer` も実装しました。何が動くか: 本命 row を読み、8 frame の更新圧で redraw / reuse を再生します。次に足すなら複数 session row の比較です。",
+      "bodyEn": "The main composer saves an explainable redraw queue. The derivative reads it and replays redraw or reuse across eight frames; next add real events, GPU timing, and multi-session comparisons."
+    }
+  ]
+}

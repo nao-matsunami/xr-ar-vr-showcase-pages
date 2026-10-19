@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Layer Swapchain Pressure Replayer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #121413;
+      --panel: #202624;
+      --panel2: #2c3532;
+      --line: #6d7874;
+      --text: #f8f1e8;
+      --muted: #cbd3ce;
+      --cyan: #8fd7ff;
+      --green: #a8dc8f;
+      --gold: #efca74;
+      --red: #ef8178;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(239, 202, 116, 0.11), transparent 36%),
+        linear-gradient(315deg, rgba(143, 215, 255, 0.11), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(32, 38, 36, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 10px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 48px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric, .frame, .row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(5, 8, 8, 0.62);
+    }
+    .metric { padding: 10px; }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+    .frames { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; min-height: 316px; }
+    .frame { padding: 10px; display: grid; gap: 8px; align-content: start; }
+    .frame b { font-size: 14px; }
+    .frame small { color: var(--muted); line-height: 1.4; }
+    .bar { height: 12px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+    .fill { height: 100%; width: 0; background: var(--green); }
+    .fill.warn { background: var(--gold); }
+    .fill.bad { background: var(--red); }
+    .toolbar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    button, select, input, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    label { display: grid; gap: 4px; color: var(--muted); font-size: 13px; }
+    label input[type="range"] { padding: 0; accent-color: var(--cyan); }
+    button { cursor: pointer; background: #24495d; border-color: #86cdeb; }
+    textarea { width: 100%; min-height: 190px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .rows { display: grid; gap: 8px; }
+    .row { padding: 10px; color: var(--muted); overflow-wrap: anywhere; }
+    @media (max-width: 940px) {
+      header, .toolbar, .metrics, .frames { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>Layer Swapchain Pressure Replayer</h1>
+        <p>本命サンプルの composition layer plan row を貼り付け、8 frame の swapchain / memory pressure と layer degradation の順番を再生する派生試作です。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>policy</span><strong id="policyMetric">balanced</strong></div>
+          <div class="metric"><span>peak</span><strong id="peakMetric">0 MB</strong></div>
+          <div class="metric"><span>fallbacks</span><strong id="fallbackMetric">0</strong></div>
+          <div class="metric"><span>final</span><strong id="finalMetric">-</strong></div>
+        </div>
+        <div id="frames" class="frames" aria-label="swapchain replay frames"></div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <select id="policySelect">
+        <option value="balanced">balanced</option>
+        <option value="strict">strict</option>
+        <option value="forgiving">forgiving</option>
+      </select>
+      <label>pressure drift <input id="driftRange" type="range" min="0" max="0.38" value="0.18" step="0.02"></label>
+      <button id="seedButton" type="button">Load seed</button>
+      <button id="runButton" type="button">Replay</button>
+    </div>
+
+    <section>
+      <h2>Import layer plan row</h2>
+      <textarea id="importBox" spellcheck="false"></textarea>
+    </section>
+
+    <section>
+      <h2>Replay notes</h2>
+      <div id="notes" class="rows"></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const seedRow = {
+      id: "composition-plan-seed",
+      timestamp: new Date().toISOString(),
+      source: "quest152",
+      viewport: { width: 1924, height: 2016, scale: 1.05 },
+      memoryCapMb: 256,
+      memoryTotalMb: 124.8,
+      pressure: 0.488,
+      readiness: 1,
+      risk: 0,
+      route: "commit-webgpu-composition-layers",
+      layers: [
+        { id: "gpu-projection-color", status: "native", bytesMb: 31.1 },
+        { id: "depth-projection", status: "native", bytesMb: 31.1 },
+        { id: "motion-vector", status: "native-candidate", bytesMb: 7.8 },
+        { id: "quad-hud", status: "native", bytesMb: 3.5 }
+      ],
+      nextStep: "replay this row as swapchain pressure frames and decide which layer degrades first"
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function parseRow() {
+      try {
+        const row = JSON.parse($("importBox").value);
+        if (!Array.isArray(row.layers)) throw new Error("missing layers");
+        return row;
+      } catch {
+        return seedRow;
+      }
+    }
+
+    function policyLimit(policy) {
+      if (policy === "strict") return 0.78;
+      if (policy === "forgiving") return 1.08;
+      return 0.92;
+    }
+
+    function chooseDrop(layers, frameIndex, pressure, limit) {
+      const order = ["quad-hud", "motion-vector", "depth-projection", "gpu-projection-color"];
+      if (pressure <= limit) return "keep-all";
+      const hit = order.find((id) => layers.some((layer) => layer.id === id));
+      if (!hit) return "screen-fallback";
+      if (hit === "gpu-projection-color") return "projection-fallback";
+      return `degrade-${hit}`;
+    }
+
+    function replay() {
+      const row = parseRow();
+      const policy = $("policySelect").value;
+      const drift = Number($("driftRange").value);
+      const limit = policyLimit(policy);
+      const base = row.memoryTotalMb || row.layers.reduce((sum, layer) => sum + (layer.bytesMb || 0), 0);
+      const cap = row.memoryCapMb || 256;
+      const frames = Array.from({ length: 8 }, (_, index) => {
+        const warmup = index < 2 ? 0.12 - index * 0.05 : 0;
+        const wave = Math.sin(index * 0.86) * drift;
+        const pressure = clamp(base / cap + warmup + wave, 0.05, 1.6);
+        const action = chooseDrop(row.layers, index, pressure, limit);
+        const visibleLayers = action === "keep-all" ? row.layers.length : Math.max(1, row.layers.length - 1);
+        return {
+          frame: index + 1,
+          pressure: Number(pressure.toFixed(3)),
+          memoryMb: Number((pressure * cap).toFixed(1)),
+          action,
+          visibleLayers,
+          route: action === "keep-all" ? row.route : action
+        };
+      });
+      render(row, frames, policy, limit);
+    }
+
+    function render(row, frames, policy, limit) {
+      const peak = frames.reduce((max, frame) => Math.max(max, frame.memoryMb), 0);
+      const fallbacks = frames.filter((frame) => frame.action !== "keep-all").length;
+      const final = frames[frames.length - 1];
+      $("policyMetric").textContent = policy;
+      $("peakMetric").textContent = `${peak.toFixed(1)} MB`;
+      $("fallbackMetric").textContent = String(fallbacks);
+      $("finalMetric").textContent = final.route;
+      $("frames").innerHTML = frames.map((frame) => {
+        const state = frame.pressure > limit + 0.12 ? "bad" : frame.pressure > limit ? "warn" : "";
+        return `
+          <div class="frame">
+            <b>frame ${frame.frame}</b>
+            <div class="bar"><div class="fill ${state}" style="width:${Math.round(clamp(frame.pressure, 0, 1) * 100)}%"></div></div>
+            <small>${frame.memoryMb} MB / pressure ${frame.pressure}</small>
+            <small>${frame.route}</small>
+            <small>visible layers: ${frame.visibleLayers}</small>
+          </div>
+        `;
+      }).join("");
+      $("notes").innerHTML = [
+        `source ${row.source || "unknown"}: ${row.layers.map((layer) => layer.id + "=" + layer.status).join(", ")}`,
+        `policy ${policy}: pressure limit ${limit}, fallback frames ${fallbacks}/8`,
+        final.action === "keep-all" ? "next: attach real XR frame timestamp and swapchain resize rows" : `next: test ${final.action} before entering the immersive session`
+      ].map((note) => `<div class="row">${note}</div>`).join("");
+    }
+
+    $("seedButton").addEventListener("click", () => {
+      $("importBox").value = JSON.stringify(seedRow, null, 2);
+      replay();
+    });
+    $("runButton").addEventListener("click", replay);
+    ["policySelect", "driftRange"].forEach((id) => $(id).addEventListener("input", replay));
+    $("importBox").value = JSON.stringify(seedRow, null, 2);
+    replay();
+  </script>
+</body>
+</html>

@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 100</span>
+        <span>days: 103</span>
         <span>page: 6 / 9</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -321,6 +321,75 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-08-18">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.18</p>
+              <h2>DOM Overlay と world anchor の select 衝突を入力ゲートで分ける</h2>
+              <p class="card-subtitle">Separate DOM Overlay and world-anchor select collisions with an input gate</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-18" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR DOM Overlays Module、WebXR Device API、WebXR Anchors Module、MDN の `XRHitTestResult.createAnchor()`、Immersive Web の anchors / hit-test samples を確認し、overlay 操作が `beforexrselect` で XR select を抑止するか、world anchor 操作へ通すかを可視化する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR DOM Overlays Module, WebXR Device API, WebXR Anchors Module, MDN `XRHitTestResult.createAnchor()`, and Immersive Web anchors / hit-test samples, today's original HTML sample visualizes whether overlay interaction suppresses XR select through `beforexrselect` or passes input through to a world anchor.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-08-18.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-08-18_html_dom_overlay_anchor_select_gate.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-08-17">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.17</p>
+              <h2>Anchor の drift と locate 不能から再 hit-test 判断へつなぐ</h2>
+              <p class="card-subtitle">Route anchor drift and unlocatable frames into re-hit-test decisions</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-17" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Anchors Module、WebXR Hit Test Module、WebXR Device API、MDN の `XRFrame.getHitTestResults()`、Immersive Web の anchors / hit-test samples を確認し、配置済み anchor が drift した時に keep / warn / re-hit-test / hide + wait / delete を選ぶ自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Anchors Module, WebXR Hit Test Module, WebXR Device API, MDN `XRFrame.getHitTestResults()`, and Immersive Web anchors / hit-test samples, today's original HTML sample chooses keep / warn / re-hit-test / hide + wait / delete when a placed anchor drifts or becomes unlocatable.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-08-17.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-08-17_html_anchor_drift_rehit_planner.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-08-16">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.08.16</p>
+              <h2>Hit-test 結果を anchor 作成前に安定度でふるい分ける</h2>
+              <p class="card-subtitle">Gate hit-test results by stability before creating anchors</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-08-16" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Hit Test Module、WebXR Anchors Module、WebXR Device API、MDN の `getHitTestResults()`、Immersive Web の hit-test / anchors samples を確認し、疑似 hit-test 結果を距離・傾き・履歴安定度・触覚 cue で評価して anchor commit を許可/保留する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing the WebXR Hit Test Module, WebXR Anchors Module, WebXR Device API, MDN `getHitTestResults()`, and Immersive Web hit-test / anchors samples, today's original HTML sample evaluates simulated hit-test results by distance, tilt, history stability, and haptic cue before allowing or holding anchor commits.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-08-16.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-08-16_html_hit_test_anchor_commit_gate.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-08-15">
           <div class="card-top">
             <div>
@@ -524,75 +593,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-08-07.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-08-07_html_plane_semantic_anchor_router.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-06">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.06</p>
-              <h2>Raw Camera Access の前に consent ladder を置く</h2>
-              <p class="card-subtitle">Putting a consent ladder before Raw Camera Access</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-06" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Raw Camera Access、Depth Sensing、Mesh Detection、Layers API、Immersive Web Samples を確認し、camera-access を即要求せず、manual / plane / depth / mesh / camera の順に必要性を評価する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing WebXR Raw Camera Access, Depth Sensing, Mesh Detection, the Layers API, and Immersive Web Samples, today's original HTML sample evaluates manual, plane, depth, mesh, and camera routes before asking for camera-access.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-06.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-06_html_camera_access_consent_ladder.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-05">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.05</p>
-              <h2>Depth と Mesh で raw camera 前の環境理解を絞る</h2>
-              <p class="card-subtitle">Narrowing environment understanding with Depth and Mesh before raw camera access</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-05" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Depth Sensing Module、Mesh Detection Module、Raw Camera Access、Immersive Web proposal samples を確認し、raw camera pixels を読む前に Depth Sensing の点距離と Mesh Detection の粗い面情報で足りるかを比較する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Depth Sensing Module, Mesh Detection Module, Raw Camera Access, and Immersive Web proposal samples, today's original HTML sample compares whether point depth and coarse mesh surfaces are sufficient before reading raw camera pixels.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-05.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-05_html_depth_mesh_privacy_sampler.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-08-04">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.08.04</p>
-              <h2>Raw Camera Access を要求する前の露出 crop gate を試す</h2>
-              <p class="card-subtitle">Testing an exposure crop gate before requesting Raw Camera Access</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-08-04" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Raw Camera Access Module、Depth Sensing、DOM Overlays、Immersive Web の公式サンプルを確認し、`camera-access` を required / optional / fallback のどれで扱うか、raw pixels をどの範囲だけ露出するかを可視化する自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Raw Camera Access Module, Depth Sensing, DOM Overlays, and Immersive Web sample pages, today's original HTML sample visualizes whether `camera-access` should be required, optional, or avoided, and how much of the raw pixel surface should be exposed.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-08-04.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-08-04_html_raw_camera_exposure_crop_gate.html">代表サンプル / Sample</a>
           </div>
         </article>
       

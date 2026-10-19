@@ -1,0 +1,101 @@
+{
+  "date": "2026-10-19",
+  "headline": "WebXR static layer の再描画を receipt として扱う",
+  "headlineEn": "Treating WebXR static-layer redraw as a receipt",
+  "summary": "WebXR Layers の `needsRedraw`、redraw event、static layer、WebGPU texture lifetime を参照し、再描画要求から GPU submit / compositor handoff までを記録する本命試作と、8 frame の texture handoff を再生する派生試作を追加しました。",
+  "summaryEn": "Today's original work records redraw-to-handoff receipts for static layers and replays an eight-frame texture handoff.",
+  "keyTopics": [
+    "`needsRedraw` は layer を次の XR animation frame で再描画すべきことを示します。",
+    "リソース喪失や再投影不能時、non-projection layer には redraw event が発火し得ます。",
+    "`isStatic` は needsRedraw が true の時だけ描画する最適化の意図を表せます。",
+    "WebGPU-backed layer は submit 完了と compositor が texture を使い終える時点を区別する必要があります。"
+  ],
+  "keyTopicsEn": [
+    "needsRedraw asks for next-frame rendering.",
+    "Redraw events can expose lost resources.",
+    "Static layers can draw only on demand.",
+    "WebGPU texture submission and release are distinct."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Static Layer Redraw Receipt Console",
+      "url": "../outputs/2026-10-19_html_static_layer_redraw_receipt_console.html"
+    },
+    {
+      "label": "Today's derivative sample: Redraw Texture Handoff Replayer",
+      "url": "../outputs/2026-10-19_html_redraw_texture_handoff_replayer.html"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding draft",
+      "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+    },
+    {
+      "label": "Immersive Web: Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Layers 仕様では `needsRedraw` は次の XR frame での再描画要求です。ここで大事なのは、要求を受けた事実と GPU に描画を submit して compositor が読める状態にした事実は別、という点です。本命はこの間を receipt にして、単なる品質スライダーでは見えない失敗点を扱います。",
+      "bodyEn": "A redraw request and a completed compositor handoff are separate facts; the main sample makes that boundary visible.",
+      "links": [
+        {
+          "label": "WebXR Layers API",
+          "url": "https://www.w3.org/TR/webxrlayers-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "静的 pin HUD、更新の多い route map、ambient panorama を同じ queue に置きます。resource loss や GPU submit 遅延を切り替えると、読ませ続ける HUD は redraw を予約し、背景は延期または fallback へ回る様子を比較できます。派生はその receipt を8 frame の handoff timeline に変換します。",
+      "bodyEn": "Three layer roles reveal which content must redraw and which can defer; the derivative turns the receipt into a timeline."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機では `XRCompositionLayer.needsRedraw` と redraw event を layer ID、XR frame timestamp、描画開始・GPU submit・fence/queue 完了、subimage viewport と同じ row に残します。`isStatic` は redraw 時にだけ書き込み、WebGPU の texture は compositor が使い終える前に再利用・破棄しないようにします。",
+      "bodyEn": "Record redraw signals, frame timestamps, submit/completion, and subimage viewport together; do not reuse textures before compositor release."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Layers の quality / redraw / destroy、WebXR-WebGPU Binding の static layer と texture expiry、Layers Samples の destroy / projection / multiview を追います。実機では GPU timestamp と head motion 下の読解性を receipt に接続します。",
+      "bodyEn": "Watch lifecycle and WebGPU texture-expiry changes, then replace modeled timing with device telemetry."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で `resource lost` と `texture unavailable` を選び、静的 HUD の receipt が hold になることを確認して保存してください。派生で `late GPU submit` を再生すると、handoff 前に完了扱いにしない理由が見えます。",
+      "bodyEn": "Simulate resource loss and unavailable texture, save the receipt, then replay a late submit."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C Layers / Device API、Immersive Web WebGPU Binding、Layers Samples を確認。設計: redraw 要求、GPU submit、compositor handoff、release を分離。実装: receipt console と handoff replayer を追加。公開: gallery を再生成し publish を実行します。",
+      "bodyEn": "Research informed a split between request, submit, handoff, and release; two samples are added before publishing."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月中旬は hand input、layer redraw priority、layer quality lifecycle を扱いました。今日は lifecycle の次の粒度として、再描画の『完了』を GPU と compositor の境目まで追います。次は実 `getSubImage()` と timing 計測を保存して、端末差を replay する段階です。",
+      "bodyEn": "After priority and lifecycle, today follows redraw completion through the GPU/compositor boundary."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Static Layer Redraw Receipt Console` を実装しました。何が動くか: redraw / resource loss と GPU 状態から各 layer の redraw、hold、fallback、receipt を出し保存します。次に足すなら実 needsRedraw と GPU timing です。派生 `Redraw Texture Handoff Replayer` も実装しました。何が動くか: 保存 JSON を読み、submit・handoff・release を8 frameで再生します。次に足すなら実 XRGPUBinding の subimage 計測です。",
+      "bodyEn": "The main saves redraw receipts; the derivative replays submit, handoff, and release. Next add real subimage timing."
+    }
+  ]
+}

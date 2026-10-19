@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 100</span>
+        <span>days: 103</span>
         <span>page: 8 / 9</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -321,6 +321,75 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-07-25">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.25</p>
+              <h2>DOM 操作中もアンカー更新を止めない選択ゲート</h2>
+              <p class="card-subtitle">A selection gate that keeps anchor refresh running during DOM interaction</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-25" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR DOM Overlays、Anchors、Hit Test、Depth Sensing、Immersive Web 公式 samples を確認し、今日は overlay 上の UI 操作で world select を保留しながら、stale depth と anchor drift の更新キューだけを継続する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing WebXR DOM Overlays, Anchors, Hit Test, Depth Sensing, and the Immersive Web official samples, today's original HTML sample keeps stale-depth and anchor-drift refresh scheduling alive while DOM overlay interaction holds world selection.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-25.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-25_html_overlay_anchor_refresh_queue.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-07-24">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.24</p>
+              <h2>DOM Overlay と transient hit test の選択衝突を分ける</h2>
+              <p class="card-subtitle">Separating DOM Overlay and transient hit-test selection conflicts</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-24" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Hit Test、DOM Overlays、Hand Input、Input Profiles、Immersive Web 公式 samples を確認し、今日は DOM UI 操作と XR ワールド選択が重なる場面で、`beforexrselect` と transient input hit test の判断を可視化する自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing WebXR Hit Test, DOM Overlays, Hand Input, Input Profiles, and the Immersive Web official samples, today's original HTML sample visualizes how `beforexrselect` and transient input hit tests arbitrate between DOM UI interaction and XR world selection.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-24.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-24_html_dom_overlay_transient_select_gate.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-07-23">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.07.23</p>
+              <h2>foveation と depth stale を同じ予算表で見る</h2>
+              <p class="card-subtitle">Mixing foveation and stale depth in one budget view</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-07-23" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Layers、Depth Sensing、Anchors、Device API、Immersive Web 公式 samples を確認し、今日は視線位置・head motion・depth の古さ・layer 更新コストから、どの layer / anchor を更新するかを決める自作 HTML サンプルを追加しました。</p>
+          <p class="description en-copy">After reviewing WebXR Layers, Depth Sensing, Anchors, the Device API, and Immersive Web official samples, today's original HTML sample chooses which layers and anchors to refresh from gaze position, head motion, stale depth, and layer update cost.</p>
+          <p class="card-subtitle">samples: 1</p>
+          <div class="tags"><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-07-23.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-07-23_html_foveated_depth_budget_mixer.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-07-22">
           <div class="card-top">
             <div>
@@ -524,75 +593,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-07-14.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-07-14_html_equirect_media_annotation_deck.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-07-13">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.07.13</p>
-              <h2>Cylinder Layer で曲面 UI の可読性を観察する</h2>
-              <p class="card-subtitle">Observing curved UI readability with cylinder-layer ideas</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-07-13" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Layers API、XRCylinderLayer、XRQuadLayer、公式 WebXR Samples を確認し、今日は曲面 UI の視線角、半径、stereo offset、手前カードとの depth sorting を操作できる自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Layers API, XRCylinderLayer, XRQuadLayer, and the official WebXR Samples, today's original HTML sample explores curved UI readability through viewer yaw, radius, stereo offset, and depth sorting against a nearer card.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-07-13.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-07-13_html_curved_layer_readability_tunnel.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-07-12">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.07.12</p>
-              <h2>Layers と Hand/Depth を重ねた遮蔽 UI を試す</h2>
-              <p class="card-subtitle">Testing occluded UI by combining Layers with Hand and Depth cues</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-07-12" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Layers API、Depth Sensing、Hand Input、Lighting Estimation の一次情報を確認し、今日は高精細 quad layer が手前の手で隠れ、pinch と照明で状態が変わる自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing primary sources for the WebXR Layers API, Depth Sensing, Hand Input, and Lighting Estimation, today's original HTML sample simulates a high-fidelity quad layer that is occluded by a nearer hand and changes state through pinch and lighting controls.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-07-12.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-07-12_html_layered_hand_occlusion_stage.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-07-11">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.07.11</p>
-              <h2>Hand Input の 25 joint で近接パネルを試す</h2>
-              <p class="card-subtitle">Testing a proximity panel with 25 Hand Input joints</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-07-11" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Hand Input Module と公式 WebXR Samples を確認し、今日は 25 joint、指先 radius、pinch 距離、index-tip と空間パネルの近接状態を HMD なしで観察できる自作 HTML サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Hand Input Module and official WebXR Samples, today's original HTML sample visualizes 25 joints, fingertip radius, pinch distance, and index-tip proximity to a spatial panel without requiring a headset.</p>
-          <p class="card-subtitle">samples: 1</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-07-11.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-07-11_html_hand_joint_proximity_panel.html">代表サンプル / Sample</a>
           </div>
         </article>
       

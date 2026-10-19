@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XRGPUSubImage Fault Recovery Replayer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #121413;
+      --panel: #202722;
+      --panel2: #2d362f;
+      --line: #707c72;
+      --text: #f8f1e8;
+      --muted: #cad3cd;
+      --cyan: #8bd8ff;
+      --green: #a7dc8e;
+      --gold: #efc66f;
+      --red: #ef8178;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(167, 220, 142, 0.12), transparent 36%),
+        linear-gradient(315deg, rgba(139, 216, 255, 0.11), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100vw - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    header { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 14px; margin-bottom: 14px; }
+    .panel, .stage, section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(32, 39, 34, 0.96);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
+    }
+    .panel, section { padding: 18px; }
+    .stage { padding: 16px; display: grid; gap: 10px; }
+    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 48px); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .metric, .frame, .row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(5, 8, 8, 0.62);
+    }
+    .metric { padding: 10px; }
+    .metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric strong { display: block; font-size: 18px; overflow-wrap: anywhere; }
+    .frames { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; min-height: 316px; }
+    .frame { padding: 10px; display: grid; gap: 8px; align-content: start; }
+    .frame b { font-size: 14px; }
+    .frame small { color: var(--muted); line-height: 1.4; }
+    .bar { height: 12px; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+    .fill { height: 100%; width: 0; background: var(--green); }
+    .fill.warn { background: var(--gold); }
+    .fill.bad { background: var(--red); }
+    .toolbar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    button, select, input, textarea {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel2);
+      color: var(--text);
+      font: inherit;
+      padding: 0 12px;
+      min-width: 0;
+    }
+    label { display: grid; gap: 4px; color: var(--muted); font-size: 13px; }
+    label input[type="range"] { padding: 0; accent-color: var(--cyan); }
+    button { cursor: pointer; background: #24485b; border-color: #86cdeb; }
+    textarea { width: 100%; min-height: 190px; padding: 12px; resize: vertical; line-height: 1.45; }
+    .rows { display: grid; gap: 8px; }
+    .row { padding: 10px; color: var(--muted); overflow-wrap: anywhere; }
+    @media (max-width: 940px) {
+      header, .toolbar, .metrics, .frames { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="panel">
+        <h1>XRGPUSubImage Fault Recovery Replayer</h1>
+        <p>本命サンプルの binding triage row を貼り付け、`getSubImage()` / `getViewSubImage()` 相当の失敗を8 frameで再生し、復帰策を選ぶ派生試作です。</p>
+      </div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="metric"><span>policy</span><strong id="policyMetric">balanced</strong></div>
+          <div class="metric"><span>faults</span><strong id="faultMetric">0</strong></div>
+          <div class="metric"><span>held frames</span><strong id="holdMetric">0</strong></div>
+          <div class="metric"><span>final</span><strong id="finalMetric">-</strong></div>
+        </div>
+        <div id="frames" class="frames" aria-label="subimage recovery frames"></div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <select id="policySelect">
+        <option value="balanced">balanced</option>
+        <option value="strict">strict</option>
+        <option value="forgiving">forgiving</option>
+      </select>
+      <label>fault bias <input id="biasRange" type="range" min="0" max="0.45" value="0.18" step="0.03"></label>
+      <button id="seedButton" type="button">Load seed</button>
+      <button id="runButton" type="button">Replay</button>
+    </div>
+
+    <section>
+      <h2>Import binding triage row</h2>
+      <textarea id="importBox" spellcheck="false"></textarea>
+    </section>
+
+    <section>
+      <h2>Recovery notes</h2>
+      <div id="notes" class="rows"></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const seedRow = {
+      id: "xrgpu-binding-triage",
+      timestamp: new Date().toISOString(),
+      source: "meta152",
+      mode: "immersive-vr",
+      nativeScale: 1,
+      wantsDepth: true,
+      wantsQuad: true,
+      readiness: 1,
+      firstFault: "none",
+      route: "commit-webgpu-xr-binding",
+      recovery: "log subimage size and continue",
+      gates: [
+        { id: "secure-context", ok: true },
+        { id: "xr-policy", ok: true },
+        { id: "webgpu-adapter", ok: true },
+        { id: "xrgpu-binding", ok: true },
+        { id: "projection-layer", ok: true },
+        { id: "optional-layers", ok: true }
+      ],
+      nextStep: "record real getSubImage exception names"
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function parseRow() {
+      try {
+        const row = JSON.parse($("importBox").value);
+        if (!Array.isArray(row.gates)) throw new Error("missing gates");
+        return row;
+      } catch {
+        return seedRow;
+      }
+    }
+
+    function policyThreshold(policy) {
+      if (policy === "strict") return 0.2;
+      if (policy === "forgiving") return 0.46;
+      return 0.32;
+    }
+
+    function classifyFault(row, risk, index) {
+      if (row.route && row.route.includes("fallback")) return "binding-unavailable";
+      if (row.firstFault && row.firstFault !== "none") return row.firstFault;
+      const cycle = ["ok", "view-resize", "stale-frame", "wrong-eye", "ok", "texture-lifetime", "visibility-hidden", "ok"];
+      if (risk < 0.18) return "ok";
+      return cycle[index] || "ok";
+    }
+
+    function actionFor(fault, policy) {
+      if (fault === "ok") return "render-current-subimage";
+      if (fault === "view-resize") return policy === "strict" ? "recreate-projection-layer" : "resize-attachment-cache";
+      if (fault === "stale-frame") return policy === "forgiving" ? "hold-last-good-subimage" : "skip-frame";
+      if (fault === "wrong-eye") return "request-eye-specific-subimage";
+      if (fault === "texture-lifetime") return "drop-cached-texture-reference";
+      if (fault === "visibility-hidden") return "pause-layer-updates";
+      return "webgl-or-screen-fallback";
+    }
+
+    function replay() {
+      const row = parseRow();
+      const policy = $("policySelect").value;
+      const bias = Number($("biasRange").value);
+      const threshold = policyThreshold(policy);
+      const baseRisk = 1 - (row.readiness ?? 0.72);
+      const frames = Array.from({ length: 8 }, (_, index) => {
+        const pulse = Math.max(0, Math.sin(index * 0.9)) * bias;
+        const risk = clamp(baseRisk + pulse + (index === 5 ? bias * 0.8 : 0), 0, 1);
+        const fault = risk > threshold ? classifyFault(row, risk, index) : "ok";
+        const action = actionFor(fault, policy);
+        return {
+          frame: index + 1,
+          risk: Number(risk.toFixed(3)),
+          fault,
+          action,
+          held: action.includes("hold") || action.includes("pause") || action.includes("skip")
+        };
+      });
+      render(row, frames, policy, threshold);
+    }
+
+    function render(row, frames, policy, threshold) {
+      const faults = frames.filter((frame) => frame.fault !== "ok").length;
+      const held = frames.filter((frame) => frame.held).length;
+      const final = frames[frames.length - 1];
+      $("policyMetric").textContent = policy;
+      $("faultMetric").textContent = String(faults);
+      $("holdMetric").textContent = String(held);
+      $("finalMetric").textContent = final.action;
+      $("frames").innerHTML = frames.map((frame) => {
+        const state = frame.fault === "ok" ? "" : frame.risk > threshold + 0.18 ? "bad" : "warn";
+        return `
+          <div class="frame">
+            <b>frame ${frame.frame}</b>
+            <div class="bar"><div class="fill ${state}" style="width:${Math.round(frame.risk * 100)}%"></div></div>
+            <small>risk ${frame.risk} / fault ${frame.fault}</small>
+            <small>${frame.action}</small>
+            <small>${frame.held ? "hold presentation" : "render path open"}</small>
+          </div>
+        `;
+      }).join("");
+      $("notes").innerHTML = [
+        `source row route: ${row.route}`,
+        `policy threshold: ${threshold}`,
+        faults ? `first recovery: ${frames.find((frame) => frame.fault !== "ok").action}` : "no simulated subimage fault",
+        "next: replace simulated faults with real exception names and attachment sizes"
+      ].map((note) => `<div class="row">${note}</div>`).join("");
+    }
+
+    $("seedButton").addEventListener("click", () => {
+      $("importBox").value = JSON.stringify(seedRow, null, 2);
+      replay();
+    });
+    ["policySelect", "biasRange"].forEach((id) => $(id).addEventListener("input", replay));
+    $("runButton").addEventListener("click", replay);
+    $("importBox").value = JSON.stringify(seedRow, null, 2);
+    replay();
+  </script>
+</body>
+</html>

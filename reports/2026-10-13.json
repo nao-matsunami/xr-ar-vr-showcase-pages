@@ -1,0 +1,135 @@
+{
+  "date": "2026-10-13",
+  "headline": "XRGPUBinding の故障診断を起動前 row にする",
+  "headlineEn": "Turning XRGPUBinding faults into pre-launch rows",
+  "summary": "Meta Browser 152.1 の experimental WebGPU composition layers、WebXR-WebGPU Binding、Immersive Web WebGPU samples、W3C WebXR Layers / Device API を確認し、`XRGPUBinding` 起動前の故障診断 row を作る本命サンプルと、その row から subimage 周辺の復帰策を8 frameで再生する派生サンプルを追加しました。",
+  "summaryEn": "After checking Meta Browser 152.1 experimental WebGPU composition layers, WebXR-WebGPU Binding, Immersive Web WebGPU samples, and the W3C WebXR Layers / Device APIs, today's original work adds a main sample that turns pre-launch `XRGPUBinding` faults into a triage row and a derivative sample that replays subimage recovery across eight frames.",
+  "keyTopics": [
+    "Meta Browser release notes は 2026-10-02 付近で experimental WebGPU composition layers と WebXR depth projection support を示しており、WebGPU XR の検証対象が単純な対応有無から layer / binding / attachment の運用へ移っています。",
+    "WebXR-WebGPU Binding draft は `XRGPUBinding`、`nativeProjectionScaleFactor`、`usesDepthValues`、projection / quad / cylinder / equirect / cube layer 作成、`getSubImage()` を定義しており、起動前診断 row に分解しやすいです。",
+    "Binding explainer は `navigator.gpu.requestAdapter({ xrCompatible: true })` と WebGPU-compatible `XRSession` を強調しているため、adapter fault と binding fault を別々に扱う必要があります。",
+    "Immersive Web WebGPU samples は barebones VR / AR、input selection、benchmark、hands などを WebGPU XR の最小 smoke test として提供しており、自作サンプルの診断列を考える参考になります。",
+    "W3C WebXR Layers API は composition layer と subimage の lifecycle を考える土台になり、projection layer を作れた後も resize、eye、texture lifetime、visibility の復帰設計が必要です。"
+  ],
+  "keyTopicsEn": [
+    "Meta Browser release notes around 2026-10-02 mention experimental WebGPU composition layers and WebXR depth projection support, moving WebGPU XR validation from simple support checks toward layer, binding, and attachment operations.",
+    "The WebXR-WebGPU Binding draft defines `XRGPUBinding`, `nativeProjectionScaleFactor`, `usesDepthValues`, projection / quad / cylinder / equirect / cube layer creation, and `getSubImage()`, which map naturally into pre-launch triage rows.",
+    "The binding explainer emphasizes `navigator.gpu.requestAdapter({ xrCompatible: true })` and a WebGPU-compatible `XRSession`, so adapter faults and binding faults should be separated.",
+    "Immersive Web WebGPU samples provide minimal smoke tests for barebones VR / AR, input selection, benchmark scenes, and hands, helping shape the diagnostic columns in the original samples.",
+    "The W3C WebXR Layers API is the base for composition layer and subimage lifecycle thinking, and recovery still matters after a projection layer exists: resize, eye selection, texture lifetime, and visibility can all fail."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: XRGPUBinding Fault Triage Console",
+      "url": "../outputs/2026-10-13_html_xrgpu_binding_fault_triage_console.html"
+    },
+    {
+      "label": "Today's derivative sample: XRGPUSubImage Fault Recovery Replayer",
+      "url": "../outputs/2026-10-13_html_xrgpu_subimage_fault_recovery_replayer.html"
+    },
+    {
+      "label": "Meta Horizon OS release notes: Browser",
+      "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+    },
+    {
+      "label": "Immersive Web: WebXR WebGPU Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding draft",
+      "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding explainer",
+      "url": "https://github.com/immersive-web/WebXR-WebGPU-Binding/blob/main/explainer.md"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Meta Browser release notes の experimental WebGPU composition layers と、WebXR-WebGPU Binding の `XRGPUBinding` / `XRGPUSubImage` は、WebGPU XR を `使えるか` だけでなく `どこで失敗して、何へ復帰するか` として見る段階に入ったことを示しています。今日の自作サンプルでは、起動前の adapter / binding / projection layer の失敗を row 化し、派生サンプルで subimage の resize、stale frame、wrong eye、texture lifetime を短い復帰シナリオにしました。",
+      "bodyEn": "Meta Browser release notes around experimental WebGPU composition layers and the WebXR-WebGPU Binding's `XRGPUBinding` / `XRGPUSubImage` suggest that WebGPU XR should be treated not just as `supported or not`, but as `where can it fail and what route recovers`. Today's original samples turn adapter / binding / projection layer failures into pre-launch rows, then replay subimage resize, stale frame, wrong eye, and texture lifetime recovery scenarios.",
+      "links": [
+        {
+          "label": "Meta Horizon OS release notes",
+          "url": "https://developers.meta.com/vr/release-notes/?search_key=browser"
+        },
+        {
+          "label": "WebXR-WebGPU Binding draft",
+          "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+        },
+        {
+          "label": "WebXR WebGPU Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/webgpu/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命サンプル `XRGPUBinding Fault Triage Console` は runtime / Meta 152.1 target / adapter fault / binding fault の profile を切り替え、secure context、XR policy、xrCompatible adapter、`XRGPUBinding`、projection layer、optional layers を gate として可視化します。派生サンプル `XRGPUSubImage Fault Recovery Replayer` は、その row を貼り付けて8 frame の subimage fault と復帰策を再生します。",
+      "bodyEn": "The main sample, `XRGPUBinding Fault Triage Console`, switches among runtime, Meta 152.1 target, adapter fault, and binding fault profiles, visualizing secure context, XR policy, xrCompatible adapter, `XRGPUBinding`, projection layer, and optional layers as gates. The derivative sample, `XRGPUSubImage Fault Recovery Replayer`, accepts that row and replays eight frames of subimage faults and recovery actions."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "最小 row は `secureContext`、`webgpu`、`xr`、`xrSpatialPolicy`、`xrCompatibleAdapter`、`xrGpuBinding`、`projectionLayer`、`quadLayer`、`nativeScale`、`firstFault`、`route`、`recovery` です。実機では `requestAdapter({ xrCompatible: true })` の成否、`XRGPUBinding(session, device)` の例外名、`createProjectionLayer()` の init、`getSubImage()` の texture / viewport / eye、visibility state を同じ row に足すと、WebGL fallback と scale down の判断に使えます。",
+      "bodyEn": "The minimal row is `secureContext`, `webgpu`, `xr`, `xrSpatialPolicy`, `xrCompatibleAdapter`, `xrGpuBinding`, `projectionLayer`, `quadLayer`, `nativeScale`, `firstFault`, `route`, and `recovery`. On a device, add the result of `requestAdapter({ xrCompatible: true })`, exception names from `XRGPUBinding(session, device)`, `createProjectionLayer()` init values, `getSubImage()` texture / viewport / eye data, and visibility state into the same row so it can drive WebGL fallback and scale-down decisions."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "今日の binding triage row は10月12日の composition layer plan、10月11日の depth projection readiness、10月10日の WebGPU probe store、10月8日の frame telemetry schema と接続できます。`firstFault` と `route` を共通列にすると、WebGPU adapter、XR feature negotiation、projection attachment、depth / motion vector / HUD の degrade を同じ daily log として扱えます。",
+      "bodyEn": "Today's binding triage row connects to the October 12 composition layer plan, October 11 depth projection readiness, October 10 WebGPU probe store, and October 8 frame telemetry schema. Sharing `firstFault` and `route` columns lets WebGPU adapter checks, XR feature negotiation, projection attachments, and depth / motion vector / HUD degradation live in one daily log."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Meta Browser の WebGPU composition layer / depth projection notes、WebXR-WebGPU Binding の issue と `XRGPUSubImage` texture lifetime、Immersive Web WebGPU samples の source 更新、WebXR Layers の projection / quad layer lifecycle、WebXR Device API の session feature descriptor を継続して見ます。自作側では、今日の row を IndexedDB に保存し、実 `getSubImage()` 例外名と viewport size を派生 replayer に読み込ませると発展します。",
+      "bodyEn": "Keep watching Meta Browser WebGPU composition layer / depth projection notes, WebXR-WebGPU Binding issues and `XRGPUSubImage` texture lifetime, Immersive Web WebGPU sample source updates, WebXR Layers projection / quad layer lifecycle, and WebXR Device API session feature descriptors. On the original side, the next useful step is saving today's row into IndexedDB and loading real `getSubImage()` exception names plus viewport sizes into the derivative replayer."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "`XRGPUBinding Fault Triage Console` で profile を `adapter fault` と `binding fault` に切り替え、route が `webgl-projection-fallback` へ落ちる違いを見てください。出力 row を `XRGPUSubImage Fault Recovery Replayer` に貼ると、subimage resize / stale frame / texture lifetime の復帰順を policy 別に確認できます。",
+      "bodyEn": "In `XRGPUBinding Fault Triage Console`, switch between `adapter fault` and `binding fault` and inspect how the route drops to `webgl-projection-fallback`. Paste the output row into `XRGPUSubImage Fault Recovery Replayer` to compare subimage resize, stale frame, and texture lifetime recovery under different policies.",
+      "links": [
+        {
+          "label": "Open XRGPUBinding Fault Triage Console",
+          "url": "../outputs/2026-10-13_html_xrgpu_binding_fault_triage_console.html"
+        },
+        {
+          "label": "Open XRGPUSubImage Fault Recovery Replayer",
+          "url": "../outputs/2026-10-13_html_xrgpu_subimage_fault_recovery_replayer.html"
+        }
+      ]
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Meta Browser release notes、WebXR-WebGPU Binding draft / explainer、Immersive Web WebGPU samples、W3C WebXR Layers / Device API を確認。設計: 1本目は XRGPUBinding fault triage、2本目は subimage fault recovery replay。実装: `outputs/2026-10-13_html_xrgpu_binding_fault_triage_console.html` と `outputs/2026-10-13_html_xrgpu_subimage_fault_recovery_replayer.html` を追加。検証: JSON parse、HTML script 構文、日付ページ / index / pages 再生成、publish を行う。",
+      "bodyEn": "Research: checked Meta Browser release notes, WebXR-WebGPU Binding draft / explainer, Immersive Web WebGPU samples, and W3C WebXR Layers / Device API. Design: make the first sample an XRGPUBinding fault triage console and the second a subimage fault recovery replay. Implementation: add `outputs/2026-10-13_html_xrgpu_binding_fault_triage_console.html` and `outputs/2026-10-13_html_xrgpu_subimage_fault_recovery_replayer.html`. Validation: parse JSON, check embedded scripts, regenerate day / index / pages, and publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月前半の流れは、visibility / prediction / foveation / WebGPU probe / depth projection / composition layer plan から、WebGPU XR の故障境界を小さく分ける段階へ進みました。今日の役割は、`WebGPU composition layers がある` を喜んで終わらせず、adapter、binding、projection layer、subimage の各点で fallback と recovery を持つ形にすることです。",
+      "bodyEn": "Early October has moved from visibility / prediction / foveation / WebGPU probes / depth projection / composition layer plans toward smaller fault boundaries for WebGPU XR. Today's role is to avoid stopping at `WebGPU composition layers exist` and instead give adapter, binding, projection layer, and subimage stages their own fallback and recovery routes."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命として採用した候補は `XRGPUBinding Fault Triage Console` です。何が動くか: runtime / Meta 152.1 target / adapter fault / binding fault を切り替え、WebGPU XR 起動前の gate、first fault、route、recovery を JSON row として出します。次に足すなら、実 `requestAdapter({ xrCompatible: true })`、`requestSession()`、`XRGPUBinding` constructor、`createProjectionLayer()` の例外名を IndexedDB に保存します。派生として `XRGPUSubImage Fault Recovery Replayer` も実装しました。何が動くか: 1本目の row を貼り付け、8 frame の subimage fault と recovery action を policy 別に再生します。次に足すなら、実 `getSubImage()` / `getViewSubImage()` の viewport、texture lifetime、eye、visibility を読み込んで replay します。",
+      "bodyEn": "The selected main prototype is `XRGPUBinding Fault Triage Console`. What it does: switches runtime / Meta 152.1 target / adapter fault / binding fault profiles and outputs pre-launch WebGPU XR gates, first fault, route, and recovery as a JSON row. Next addition: save real exception names from `requestAdapter({ xrCompatible: true })`, `requestSession()`, the `XRGPUBinding` constructor, and `createProjectionLayer()` into IndexedDB. The derivative `XRGPUSubImage Fault Recovery Replayer` was also implemented. What it does: accepts the first row and replays eight frames of subimage faults and recovery actions by policy. Next addition: import real `getSubImage()` / `getViewSubImage()` viewport, texture lifetime, eye, and visibility data."
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-18",
+  "headline": "WebXR Layers の quality を寿命として設計する",
+  "headlineEn": "Designing WebXR Layers quality as a lifecycle",
+  "summary": "WebXR Layers API の `quality`、`needsRedraw`、layer の破棄を参照し、GPU 圧に応じて composition layer を keep / degrade / redraw / destroy へ説明可能に分ける本命試作と、8 frame の遷移を再生する派生試作を追加しました。",
+  "summaryEn": "This adds an original composition-layer lifecycle console and an eight-frame transition replayer informed by quality, redraw, and destruction in WebXR Layers.",
+  "keyTopics": [
+    "WebXR Layers は composition layer を compositor 側で提示し、アプリの更新頻度と表示を分けられます。",
+    "`XRCompositionLayer` には quality、`needsRedraw`、`destroy()` があり、更新・品質・寿命を別々に設計できます。",
+    "Layers は immersive VR / AR session 用で、inline session では使えないため projection-layer fallback が必要です。",
+    "公式 Layers Samples は layer type ごとの最小検証を提供し、実機差を切り分ける出発点になります。"
+  ],
+  "keyTopicsEn": [
+    "Composition layers separate compositor presentation from application update cadence.",
+    "Quality, needsRedraw, and destroy separate update, fidelity, and lifetime decisions.",
+    "Layers require immersive sessions, so an inline-safe fallback matters.",
+    "Official samples isolate feature behavior for device testing."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Layer Quality Lifecycle Console",
+      "url": "../outputs/2026-10-18_html_layer_quality_lifecycle_console.html"
+    },
+    {
+      "label": "Today's derivative sample: Layer Quality Transition Replayer",
+      "url": "../outputs/2026-10-18_html_layer_quality_transition_replayer.html"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    },
+    {
+      "label": "MDN: XRWebGLBinding getViewSubImage",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLBinding/getViewSubImage"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "W3C Layers API は layer を compositor が提示できるため、毎フレーム texture を作り直す前提から離れられます。`needsRedraw` と quality を一つの『高画質か低画質か』ではなく、読むべき HUD は保持し、背景 media は低品質化または終了できる寿命設計へ変える点が面白いです。",
+      "bodyEn": "Layers make lifetime choices possible: keep a readable HUD while degrading or ending less important media.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://www.w3.org/TR/webxrlayers-1/"
+        },
+        {
+          "label": "Immersive Web Layers Samples",
+          "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命は pin HUD、spatial note、media panorama の3層を content pressure と GPU budget で分類します。派生は保存 row を HUD pulse、thermal pressure、recovery ramp に通すため、熱・電力制約時でも『何を読ませ続けるか』を時間軸で比較できます。",
+      "bodyEn": "The main ranks three layers; the derivative replays them through pulse, thermal, and recovery patterns."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では `optionalFeatures: ['layers']` の結果を記録し、`XRCompositionLayer.needsRedraw`、redraw event、quality、texture size、GPU timestamp を layer 単位で収集します。Layers が不可の session、特に inline では projection layer または通常の canvas に戻し、`destroy()` は render state から外す手順と対にして扱います。",
+      "bodyEn": "Log feature negotiation, redraw signals, quality, texture size, and GPU timestamps per layer; keep a projection or canvas fallback."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "lifecycle row は字幕、地図、遠隔支援の注釈、360度動画、展示の ambient 映像の更新ログと結び付けられます。AI に重要度案を出させても、replay で quality を落とす対象と読みやすさを人が確認できるため、制御の根拠を残せます。",
+      "bodyEn": "Lifecycle rows can connect captions, maps, remote annotations, 360 media, and installation visuals while preserving human review of fidelity tradeoffs."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Layers 草案の quality、redraw、destroy、WebGPU binding の更新と、公式 samples の projection / quad / media / space-warp を継続確認します。実機では texture upload、GPU timestamp、head motion、可読性を同じ row に採り、モデルの閾値を置き換えます。",
+      "bodyEn": "Watch quality, redraw, destroy, WebGPU binding, and official layer samples; replace modeled thresholds with device measurements."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で GPU budget を `critical pressure` にし、media panorama の pressure を下げてください。media だけが destroy、pin HUD は redraw または keep へ残ることを確認した後、row を保存して派生の `thermal pressure` を再生します。",
+      "bodyEn": "Set critical pressure, lower media pressure, save the row, then replay the thermal pattern."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C Layers / Device API、MDN、Immersive Web samples を確認。設計: 更新、品質、寿命を別々の route に分離。実装: lifecycle console と transition replayer を追加。公開: gallery を再生成して GitHub Pages publish を実行します。",
+      "bodyEn": "Research informed separate update, quality, and lifetime routes; the console and replayer are added before gallery regeneration and publishing."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月前半は WebGPU capability、hand input、redraw priority を扱いました。今日は priority queue の次として、更新しない layer をどう低品質化・終了するかへ焦点を移しています。次は抽象 row を実 `needsRedraw`、GPU timing、view stability に接続する段階です。",
+      "bodyEn": "After capability, hand input, and redraw priority, today focuses on degrading or ending layers; next is real device telemetry."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Layer Quality Lifecycle Console` を実装しました。何が動くか: 3 layer の重要度・圧・budget から keep / degrade / redraw / destroy と JSON row を出して保存します。次に足すなら実 `needsRedraw`、redraw event、GPU timestamp です。派生 `Layer Quality Transition Replayer` も実装しました。何が動くか: 保存 row を読み、8 frame の負荷パターンで遷移を再生します。次に足すなら複数端末の row 比較です。",
+      "bodyEn": "The main saves an explainable lifecycle row. The derivative reads it and replays eight frames; next add real signals and cross-device comparisons."
+    }
+  ]
+}
