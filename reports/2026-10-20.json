@@ -1,0 +1,107 @@
+{
+  "date": "2026-10-20",
+  "headline": "WebXR layer 属性の commit と提示を分けて考える",
+  "headlineEn": "Separating WebXR layer property commit from presentation",
+  "summary": "Composition Layer の quality / opacity / forceMonoPresentation は、属性を書いた時点ではなく XR frame 終端の commit を経て次の compositor presentation で効くことに着目し、状態を分けて操作・再生できる自作サンプル2本を追加しました。",
+  "summaryEn": "Two original samples separate layer-property writes, end-of-frame commit, and the next compositor presentation.",
+  "keyTopics": [
+    "WebXR Layers は compositor の native refresh と異なる解像度を使い、文字などの可読性を独立に保てます。",
+    "quality は default / text-optimized / graphics-optimized を表し、追加処理が性能へ影響し得ます。",
+    "書換え可能な layer 属性は XR animation frame callback の終端で compositor に送られ、次の presentation で適用されます。",
+    "layers は immersive-vr / immersive-ar 向けの optional feature であり、inline session には対応しません。"
+  ],
+  "keyTopicsEn": [
+    "Layers can preserve legibility independently.",
+    "Quality is a compositor hint with a performance tradeoff.",
+    "Writable properties commit at frame end and apply on the next presentation.",
+    "Layers target immersive AR and VR sessions."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Layer Property Commit Console",
+      "url": "../outputs/2026-10-20_html_layer_property_commit_console.html"
+    },
+    {
+      "label": "Today's derivative sample: Layer Presentation State Replayer",
+      "url": "../outputs/2026-10-20_html_layer_presentation_state_replayer.html"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding draft",
+      "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Layers では、アプリの描画レートが compositor の native refresh に届かなくても、既存の描画を再投影して滑らかさを保てます。さらに writable な属性は rAF callback の終端で compositor に送られ、次に提示される frame で効きます。本命はこの『JS の値』『pending commit』『見えている値』の混同を避けるための小さな計器です。",
+      "bodyEn": "Layers decouple application work from native compositor presentation; the main sample makes property-write, commit, and visible state distinct.",
+      "links": [
+        {
+          "label": "WebXR Layers API",
+          "url": "https://www.w3.org/TR/webxrlayers-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "pin HUD は text-optimized、空間シーンは graphics-optimized、comfort veil は opacity を主に使い、同じ操作でも役割別に異なる commit row を作ります。派生では clean / late application frame / rapid property flip を切り替え、表示値が即時に変わらないことを8 frame で再生できます。",
+      "bodyEn": "Role-specific HUD, scene, and comfort layers make the commit boundary visible; the derivative replays clean, late, and flipping updates."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機では session を optionalFeatures: ['layers'] で要求し、XRWebGLBinding または対応 binding から layer を作ります。属性変更は XR frame timestamp、layer ID、quality、opacity、forceMonoPresentation、commit を送った frame、実際に観察した presentation frame と一緒に記録します。quality hint は追加処理を招くため、可読性が必要な層に絞ります。",
+      "bodyEn": "Request layers as an optional feature and record property writes with frame timestamps and observed presentation; use costly quality hints selectively."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "本命が保存する requested property と row は、手追跡で固定した UI、カメラ映像に重ねる AR 注釈、音量に反応する comfort veil、運用画面の品質切替履歴と結び付けられます。派生の frame 列を展示用のタイムライン、端末比較、AI による quality policy の説明ログへ変換できます。",
+      "bodyEn": "Saved requested properties and frame rows can join hand-pinned UI, AR annotations, audio-reactive veils, operational logs, and policy explanations."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Layers の quality / needsRedraw / destroy、WebXR-WebGPU Binding の subimage と texture lifetime、Layers Samples の projection / multiview 実装を追います。実端末では quality hint が可読性、GPU 時間、発熱にどう効くかを記録します。",
+      "bodyEn": "Watch layer lifecycle and WebGPU subimages, then measure readability, GPU time, and thermal behavior on device."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で text-optimized、force mono、opacity 72% を選んで保存し、派生で late application frame を再生してください。commit と presentation を別段階として扱う意味が一度に見えます。",
+      "bodyEn": "Save a text-optimized, mono, 72% row and replay a late frame to see why commit and presentation are distinct."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C Layers / Device API、WebGPU Binding、Layers Samples を確認。設計: write、frame-end commit、presentation を分離。実装: property console と state replayer を追加。公開: gallery を再生成し、指定の publish コマンドを実行します。",
+      "bodyEn": "Research informed a three-stage model; the console and replayer are built before regenerating and publishing the gallery."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月後半は redraw priority、quality lifecycle、texture handoff を扱ってきました。今日は『属性の変更はいつ視覚化されるか』へ粒度を下げ、次は実 XR frame と GPU completion の行を記録して、端末差を比較する段階です。",
+      "bodyEn": "After redraw priority, lifecycle, and handoff, today focuses on when an attribute becomes visible; next is real device timing comparison."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Layer Property Commit Console` を実装しました。何が動くか: quality / mono / opacity を役割別 layer row に変換し、write・commit・presentation を JSON として保存します。次に足すなら実 XR layer 属性と frame timestamp です。派生 `Layer Presentation State Replayer` も実装しました。何が動くか: 保存 row または貼付 JSON を読み、clean / late / flip の8 frame を再生します。次に足すなら端末ごとの実 presentation 遅延比較です。",
+      "bodyEn": "The main saves property-commit rows; the derivative replays their eight-frame presentation state. Next add device timings."
+    }
+  ]
+}
