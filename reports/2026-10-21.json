@@ -1,0 +1,101 @@
+{
+  "date": "2026-10-21",
+  "headline": "WebXR Layer の提示遅延を receipt として記録・比較する",
+  "headlineEn": "Recording and comparing WebXR layer presentation timing receipts",
+  "summary": "Composition Layer の属性書換え、XR frame 終端の commit、compositor presentation を時系列 receipt に分け、端末プロファイルごとの遅延・可読性・熱リスクを比較する自作サンプル2本を追加しました。",
+  "summaryEn": "Two original samples record layer write-to-presentation receipts and compare timing risks across device profiles.",
+  "keyTopics": [
+    "WebXR Layers の writable 属性は XR animation frame callback の終端で compositor に送られ、次の提示で反映されます。",
+    "Composition Layers は immersive-vr / immersive-ar に限られ、追加 layer は `layers` feature の交渉が必要です。",
+    "quality は compositor への hint であり、可読性と追加処理・電力のトレードオフを端末ごとに測る必要があります。",
+    "WebGPU-backed layer の texture resource は GPUDevice の resource limit に属するため、時間とメモリを別々に記録します。"
+  ],
+  "keyTopicsEn": [
+    "Writable layer properties commit at animation-frame end and apply at the next presentation.",
+    "Composition Layers are immersive-session features.",
+    "Quality hints need device-specific readability and power measurements.",
+    "WebGPU layer resources belong to GPU device limits."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Layer Timing Receipt Lab",
+      "url": "../outputs/2026-10-21_html_layer_timing_receipt_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Layer Receipt Device Comparator",
+      "url": "../outputs/2026-10-21_html_layer_receipt_device_comparator.html"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding draft",
+      "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Layers API は、属性をセットした瞬間と画面で見える瞬間を同一視しないモデルです。仕様上、書換え可能属性は rAF callback の終端で compositor へ送られ、その frame が次に提示される時に適用されます。本命はこの差を操作可能な receipt に縮めました。",
+      "bodyEn": "The main sample makes property write, end-of-frame commit, and visible presentation distinct."
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "手に固定した HUD は text-optimized、世界固定の注釈は default、視界全体の演出は graphics-optimized と役割を分け、opacity と遅延を同じ台帳で扱えます。派生は receipt を8 frameに展開して端末差を展示できます。",
+      "bodyEn": "Role-specific layers become a compact, explainable timing display."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機では optionalFeatures: ['layers'] で交渉し、XR rAF timestamp、書いた layer 属性、subimage 取得、GPU queue completion、実際に観察した次の presentation、可読性評価を同じ row に残します。未観測の presentation は推定値として明記します。",
+      "bodyEn": "Record rAF, attributes, GPU completion, observed presentation, and readability in one row."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "receipt は既存の redraw queue、hand-pinch UI、camera overlay、foveation tile と組み合わせられます。端末・発熱・quality hint・表示役割をキーにすれば、再現しやすい品質ポリシーの訓練データになります。",
+      "bodyEn": "Receipts can join redraw, hand UI, camera, and foveation records."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Layers の needsRedraw / redraw event / destroy、WebXR-WebGPU Binding の subimage lifetime、WebGPU queue completion と GPU timestamp の利用可否を追います。実端末で presentation 観察値と主観可読性を集めます。",
+      "bodyEn": "Watch layer lifecycle and measure actual device timing and readability."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で Pin HUD、text-optimized、opacity 78%、delay 12 ms の receipt を保存し、派生で Busy GPU scene を選んでください。属性値だけでは品質判断できない理由を一度に確認できます。",
+      "bodyEn": "Save a HUD receipt, then replay it under the busy GPU profile."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Layers / Device API / WebGPU Binding / Samples を確認。設計: write・commit・presentation と観察値を分離。実装: receipt lab と端末比較器を追加。公開: gallery を再生成し指定 publish を実行します。",
+      "bodyEn": "Research led to a timing model, a receipt lab, and a comparator before publish."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月後半の redraw priority、quality lifecycle、texture handoff、property commit を受け、今日は『その効果をいつ観察できたか』を保存単位にしました。次段階は synthetic delay を実機の XR frame と GPU completion に置換することです。",
+      "bodyEn": "Today turns timing observation into a reusable record; next is real device telemetry."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Layer Timing Receipt Lab` を実装しました。何が動くか: layer role、quality、opacity、遅延を write・commit・presentation receipt に変換し、ローカル保存・JSON export します。次に足すなら実 XR layer と GPU completion です。派生 `Layer Receipt Device Comparator` も実装しました。何が動くか: 本命の receipt を読み、8 frame の端末別遅延・可読性・thermal risk を比較します。次に足すなら実機の読み戻しと主観評価です。",
+      "bodyEn": "The main saves timing receipts; the derivative compares eight-frame device profiles. Next add real device observations."
+    }
+  ]
+}
