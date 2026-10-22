@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 105</span>
+        <span>days: 106</span>
         <span>page: 1 / 9</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -321,6 +321,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-10-22">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.22</p>
+              <h2>WebXR Layer の texture lease と再利用リスクを可視化する</h2>
+              <p class="card-subtitle">Visualizing WebXR layer texture leases and reuse risk</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-22" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">Composition Layer の redraw 要求を、WebGPU submit 完了と compositor の texture 利用終了までを含む lease として扱う自作サンプル2本を追加しました。</p>
+          <p class="description en-copy">Two original samples model redraw, GPU completion, compositor usage, and safe texture reuse as one layer lease.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-10-22.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-10-22_html_layer_resource_lease_console.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-10-21">
           <div class="card-top">
             <div>
@@ -570,29 +593,6 @@
           <div class="actions">
             <a class="primary" href="days/2026-10-11.html">その日のページ / Day</a>
             <a class="secondary-link" href="outputs/2026-10-11_html_depth_projection_readiness_console.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-10-10">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.10.10</p>
-              <h2>WebGPU / WebXR probe を保存可能な telemetry row にする</h2>
-              <p class="card-subtitle">Turning WebGPU / WebXR probes into storable telemetry rows</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-10-10" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR-WebGPU Binding、Immersive Web WebGPU samples、W3C WebXR / Layers / Depth Sensing、Meta Browser の WebGPU space-warp 情報を確認し、実ブラウザで読める capability probe を IndexedDB 保存 row にする本命サンプルと、その row を schema / route / retry queue に再判定する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking WebXR-WebGPU Binding, Immersive Web WebGPU samples, W3C WebXR / Layers / Depth Sensing, and Meta Browser WebGPU space-warp notes, today's original work adds a main sample that stores runtime capability probes as IndexedDB rows and a derivative sample that replays those rows through schema, route, and retry-queue checks.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-10-10.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-10-10_html_xr_webgpu_probe_store_console.html">代表サンプル / Sample</a>
           </div>
         </article>
       

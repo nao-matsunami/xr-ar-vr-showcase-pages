@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-22",
+  "headline": "WebXR Layer の texture lease と再利用リスクを可視化する",
+  "headlineEn": "Visualizing WebXR layer texture leases and reuse risk",
+  "summary": "Composition Layer の redraw 要求を、WebGPU submit 完了と compositor の texture 利用終了までを含む lease として扱う自作サンプル2本を追加しました。",
+  "summaryEn": "Two original samples model redraw, GPU completion, compositor usage, and safe texture reuse as one layer lease.",
+  "keyTopics": [
+    "WebXR Layers の needsRedraw は resource loss や compositor が再投影できない時に次の XR frame での描画を求めます。",
+    "非 projection の composition layer は redraw event を受けられ、static layer は作成後または redraw 後に描画します。",
+    "WebXR-WebGPU Binding では、compositor が texture set を使い終えるまで backing resource を解放しません。",
+    "Layers は解像度や静的 content の扱いを分けられるため、HUD の可読性と scene の GPU 負荷を別々に最適化できます。"
+  ],
+  "keyTopicsEn": [
+    "needsRedraw requests a next-frame redraw.",
+    "Static non-projection layers react to redraw lifecycle.",
+    "WebGPU textures remain leased until compositor access ends.",
+    "Layers separate HUD legibility from scene GPU cost."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Layer Resource Lease Console",
+      "url": "../outputs/2026-10-22_html_layer_resource_lease_console.html"
+    },
+    {
+      "label": "Today's derivative sample: Texture Reuse Risk Replayer",
+      "url": "../outputs/2026-10-22_html_texture_reuse_risk_replayer.html"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "Immersive Web: Layers API source",
+      "url": "https://github.com/immersive-web/layers/blob/main/webxrlayers-1.bs"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding draft",
+      "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+    },
+    {
+      "label": "Immersive Web: Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Layers Samples は静的 quad layer、destroy、media、projection layer の分離を実例化しています。仕様の重要点は、needsRedraw が単なる UI 更新通知ではなく、underlying resources の損失や再投影不能を描画側へ戻す lifecycle 信号であることです。本命はその信号を texture の返却時刻まで追う操作画面にしました。",
+      "bodyEn": "The main turns redraw from a flag into a texture-lifetime receipt."
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "pin HUD は静的・高可読性、spatial note は世界固定、media panorama は頻繁更新という役割に分け、各々の texture lease を時間バーで表現できます。resource loss は赤い保持区間として表示し、消える HUD を説明可能な表現に変えます。",
+      "bodyEn": "Role-specific layer leases make a hidden lifecycle legible."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は layers を optional feature として交渉し、non-projection layer の redraw event、needsRedraw、最後の GPUQueue.submit、GPU queue completion、subimage を使った frame、そして presentation 観察時刻を同じ receipt に保存します。destroy 後の texture は使用しません。",
+      "bodyEn": "Record redraw, submissions, queue completion, subimage frame, and observed presentation together."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR-WebGPU Binding の texture expiration / release 手順、Layers の destroy と pending render state、needsRedraw の端末差、WebGPU timestamp と fence 相当の観測可否を追います。",
+      "bodyEn": "Watch texture expiration, layer destruction, redraw behavior, and measurable queue completion."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で Static pin HUD、GPU 5 ms、compositor hold 8 ms を保存し、派生で Busy GPU と Resource loss を切り替えてください。『描画済み』と『再利用可能』が別の判断であることを確認できます。",
+      "bodyEn": "Save a low-latency HUD receipt, then replay busy GPU and loss scenarios."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Layers と WebXR-WebGPU Binding の resource lifetime を確認。設計: redraw、GPU、compositor、recycle を4段階化。実装: lease console と8 frame replayer を追加。公開: gallery を再生成して Pages publish を実行します。",
+      "bodyEn": "Research led to a four-stage lease model, console, and replay tool."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月後半の property commit・timing receipt を受け、今日は『表示された』後にも残る texture lifetime に焦点を移しました。次段階は synthetic delay を実 XR rAF / WebGPU queue / presentation 観察値へ置換することです。",
+      "bodyEn": "Today extends timing receipts into the texture lifetime after presentation."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Layer Resource Lease Console` を実装しました。何が動くか: GPU submit、compositor hold、resource loss、static layer を変更して redraw / hold / recycle を表示・保存します。次に足すなら実 XR layer と queue completion です。派生 `Texture Reuse Risk Replayer` も実装しました。何が動くか: 本命 receipt を読み、stable / busy / loss の8 frameで texture reuse を再生します。次に足すなら実 device receipt の比較です。",
+      "bodyEn": "The main saves lease receipts; the derivative replays them under three risk profiles."
+    }
+  ]
+}
