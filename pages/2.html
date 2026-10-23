@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 106</span>
+        <span>days: 107</span>
         <span>page: 2 / 9</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -321,6 +321,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-10-11">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.11</p>
+              <h2>WebGPU depth projection を projection attachment row にする</h2>
+              <p class="card-subtitle">Turning WebGPU depth projection into projection attachment rows</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-11" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">Meta Browser 152.1 の experimental WebGPU and WebXR depth projection support、WebXR-WebGPU Binding、Immersive Web WebGPU samples、WebXR Layers / Device API を確認し、depth projection / motion vector / foveation を起動前 row として判定する本命サンプルと、その row を6 frameの attachment plan に再配置する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking Meta Browser 152.1 experimental WebGPU and WebXR depth projection support, WebXR-WebGPU Binding, Immersive Web WebGPU samples, and the WebXR Layers / Device APIs, today's original work adds a main sample that scores depth projection / motion vector / foveation as a pre-start row and a derivative sample that replays that row into a six-frame attachment plan.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">html-surface</span><span class="tag">xr</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-10-11.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-10-11_html_depth_projection_readiness_console.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-10-10">
           <div class="card-top">
             <div>
@@ -570,29 +593,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-09-30.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-09-30_html_subimage_viewport_indexeddb_bridge.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-29">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.29</p>
-              <h2>XR viewport の crop guard を frame row として保存する</h2>
-              <p class="card-subtitle">Saving XR viewport crop guards as frame rows</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-29" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR Device API、WebXR Layers API Level 1、MDN の WebXR rendering guide、XRWebGLLayer.getViewport、Immersive Web Layers samples を参照し、viewport / texture rect / foveation を crop guard row として保存する本命サンプルと、その row を tile foveation policy へ戻す派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking the W3C WebXR Device API, WebXR Layers API Level 1, MDN's WebXR rendering guide and XRWebGLLayer.getViewport, plus Immersive Web Layers samples, today's original work adds a main sample that stores viewport / texture rect / foveation as crop-guard rows, plus a derivative sample that replays those rows into tile foveation policy.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span><span class="tag">frequency-bands</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-09-29.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-09-29_html_viewport_crop_guard_logger.html">代表サンプル / Sample</a>
           </div>
         </article>
       

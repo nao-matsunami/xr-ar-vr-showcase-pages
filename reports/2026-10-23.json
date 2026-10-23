@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-23",
+  "headline": "WebXR layer receipt を capability と実測に分けて保存する",
+  "headlineEn": "Separating WebXR layer capability receipts from runtime observations",
+  "summary": "WebXR / WebGPU の安全な capability probe と frame 観測を保存する本命、観測の鮮度から起動 route を再生する派生の自作サンプル2本を追加しました。",
+  "summaryEn": "Two original samples record safe WebXR/WebGPU capability observations and replay routes based on receipt freshness.",
+  "keyTopics": [
+    "WebXR Device API は XRSystem を secure context の navigator.xr として公開し、session support は開始前に確認できます。",
+    "WebXR Layers は rendering layer を projection layer と分け、静的 layer の redraw と resource lifecycle を扱います。",
+    "WebXR-WebGPU Binding は WebGPU texture を XR compositor に結びますが、capability probe は texture の解放時刻を示しません。",
+    "device capability、active session、GPU completion、compositor presentation は別の観測として保存する必要があります。"
+  ],
+  "keyTopicsEn": [
+    "WebXR support can be probed without starting a session.",
+    "Layers separate composition lifecycle from projection rendering.",
+    "WebGPU capability is not texture-release evidence.",
+    "Capability, session, GPU completion, and presentation need distinct receipts."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Device Layer Receipt Probe",
+      "url": "../outputs/2026-10-23_html_device_layer_receipt_probe.html"
+    },
+    {
+      "label": "Today's derivative sample: Receipt Freshness Route Replayer",
+      "url": "../outputs/2026-10-23_html_receipt_freshness_route_replayer.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C: WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding draft",
+      "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+    },
+    {
+      "label": "Immersive Web: WebXR Layers Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "WebXR Device API の isSessionSupported() は没入 session を始めずに support を確認でき、Layers / WebGPU を含む起動前 UI に使えます。一方で Layers の texture lifetime は compositor 側の lifecycle なので、能力値だけで『再利用可能』と判断しないことが重要です。",
+      "bodyEn": "Safe support probes are useful, but do not prove compositor resource release."
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "capability、frame、GPU、presentation を4色の receipt として横に置き、古い観測は灰色、未観測の presentation は amber にします。ユーザーは『使える』と『今この frame で安全』の差を短い timeline で読めます。",
+      "bodyEn": "Color-coded receipts distinguish capability from current-frame safety."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "起動前には secure context、navigator.xr、isSessionSupported、navigator.gpu を保存し、ユーザー操作で session を開始した後に XR rAF、layer の needsRedraw / redraw、最後の submit、queue completion、presentation 観察を別 timestamp で追います。",
+      "bodyEn": "Record preflight probes separately from active-session lifecycle timestamps."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "WebXR-WebGPU Binding の subimage / texture expiration、Layers の redraw lifecycle、実機で観測可能な GPU completion、XR frame と compositor presentation の差を追います。",
+      "bodyEn": "Watch subimage expiration, redraw lifecycle, GPU completion, and presentation lag."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で capability を調べて保存し、派生で fresh と stale を切り替えてください。stale receipt は再交渉を促すだけで、既存 texture の再利用許可にはならないことを確認できます。",
+      "bodyEn": "Compare fresh and stale receipts; neither authorizes texture reuse."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Device API、Layers、WebGPU Binding を確認。設計: capability と runtime lifecycle を分離。実装: device receipt probe と freshness replayer。公開: gallery 再生成と Pages publish を実行します。",
+      "bodyEn": "Research separated capability from runtime lifecycle, yielding a probe and replayer."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月後半の property commit・timing・texture lease の流れを、今回は実端末へ持ち出せる観測 schema に接続しました。次段階は synthetic の GPU / compositor 時刻を active XR session の実測で埋めることです。",
+      "bodyEn": "This turns recent lifecycle models into an on-device observation schema."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Device Layer Receipt Probe` を実装しました。何が動くか: WebXR / WebGPU capability と window frame 時刻を表示・保存・JSON export します。次に足すなら active XR session の redraw / queue / presentation です。派生 `Receipt Freshness Route Replayer` も実装しました。何が動くか: 保存 receipt を読み fresh / stale / incomplete の8 frame route を再生します。次に足すなら実 device receipt の比較です。",
+      "bodyEn": "The main records capability receipts; the derivative replays fresh, stale, and incomplete routes."
+    }
+  ]
+}
