@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 107</span>
+        <span>days: 108</span>
         <span>page: 4 / 9</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -321,6 +321,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-09-18">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.18</p>
+              <h2>immersive-ar の feature negotiation を fallback row として保存する</h2>
+              <p class="card-subtitle">Saving immersive-ar feature negotiation as fallback rows</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-18" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API、MDN の requestSession / enabledFeatures、Anchors Module、Plane Detection、Mesh Detection、Immersive Web Samples を参照し、実 `immersive-ar` の起動前後に required / optional feature を整理してログ化する本命サンプルと、その export JSON を fallback policy で再判定する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking the WebXR Device API, MDN requestSession / enabledFeatures, the Anchors Module, Plane Detection, Mesh Detection, and Immersive Web Samples, today's original work adds a main sample that logs required / optional feature negotiation around a real immersive-ar request and a derivative sample that replays the exported JSON through fallback policies.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-09-18.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-09-18_html_immersive_ar_feature_negotiation_logger.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-09-17">
           <div class="card-top">
             <div>
@@ -570,29 +593,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-09-05.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-09-05_html_transient_hit_group_router.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-04">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.04</p>
-              <h2>Permissions Policy と hit-test / camera gate を同じ commit window で見る</h2>
-              <p class="card-subtitle">Viewing Permissions Policy, hit-test, and camera gates in one commit window</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-04" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR Device API、WebXR Hit Test Module、Permissions Policy、Immersive Web Raw Camera Access、Immersive Web Samples を参照し、`xr-spatial-tracking`、`camera-access`、hit-test pose を起動前から同じ判断表で扱う本命サンプルと、`document.permissionsPolicy.allowsFeature()` の実チェックを含む派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the W3C WebXR Device API, WebXR Hit Test Module, Permissions Policy, Immersive Web Raw Camera Access, and Immersive Web Samples, today's original work adds a main sample that puts `xr-spatial-tracking`, `camera-access`, and hit-test pose into one launch/commit gate, plus a derivative sample that includes real `document.permissionsPolicy.allowsFeature()` checks.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-09-04.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-09-04_html_policy_hit_camera_commit_gate.html">代表サンプル / Sample</a>
           </div>
         </article>
       

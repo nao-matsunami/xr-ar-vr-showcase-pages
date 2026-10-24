@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-24",
+  "headline": "ユーザー操作から XR frame までを分離して記録する",
+  "headlineEn": "Recording the path from user activation to the first XR frame",
+  "summary": "WebXR の support probe、ユーザー操作、session 取得、最初の XR frame を混同しない自作サンプルと、欠落・拒否・遅延を再生する派生サンプルを追加しました。",
+  "summaryEn": "Two original samples separate support, activation, session acquisition, and the first XR frame, then replay missing, rejected, and late paths.",
+  "keyTopics": [
+    "WebXR Device API は immersive session を transient activation 内で requestSession() する流れを示しています。",
+    "XRSession.requestAnimationFrame() は tracking state と frame の主要な観測点で、window rAF と交換できません。",
+    "predictedDisplayTime は表示対象の予測時刻であり、アプリの render budget を直接示す値ではありません。",
+    "WebXR-WebGPU Binding の subimage は frame 内の render target なので、session frame の後に別 receipt として記録します。"
+  ],
+  "keyTopicsEn": [
+    "Immersive sessions are requested within transient user activation.",
+    "XRSession rAF, not window rAF, is the session frame observation.",
+    "predictedDisplayTime is not a render-budget measurement.",
+    "WebGPU subimages belong to a subsequent frame-scoped receipt."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Immersive Session Activation Receipt",
+      "url": "../outputs/2026-10-24_html_immersive_session_activation_receipt.html"
+    },
+    {
+      "label": "Today's derivative sample: Activation to XRFrame Route Replayer",
+      "url": "../outputs/2026-10-24_html_activation_to_xrframe_route_replayer.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Web: WebXR-WebGPU Binding draft",
+      "url": "https://github.com/immersive-web/webxr-webgpu-binding/blob/main/index.bs"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "W3C の基本 flow は、isSessionSupported() で表示可否を調べ、ユーザーの transient activation を待って requestSession() し、成功後に XRSession rAF を回します。ここで capability、開始意図、active session、frame 観測を同じ「XR が使える」という一語に畳まないことが、説明可能な fallback UI につながります。",
+      "bodyEn": "The standard flow separates support, activation, session acquisition, and XR frames; the UI should too.",
+      "links": [
+        {
+          "label": "W3C WebXR application flow",
+          "url": "https://www.w3.org/TR/webxr/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "開始ボタンの押下、permission / session の解決、最初の XR frame を3色の receipt にし、frame 到着前は 2D loading を残します。拒否なら赤い failure card を短く出し、通常表示の操作をそのまま継続できる構成です。",
+      "bodyEn": "Three receipts make activation, session resolution, and the first frame legible while keeping a 2D fallback alive."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "isSessionSupported() は session を開始しない probe、requestSession() は user activation から呼ぶ操作、XRSession.requestAnimationFrame() は session 専用の frame loop です。immersive frame の predictedDisplayTime は表示予定時刻で、レンダリング可能時間の推測には使いません。",
+      "bodyEn": "Keep support probing, session creation, and XR frame timing in distinct fields."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "activation / session / XR frame の時刻と失敗名は、端末別の起動成功率、展示の導入導線、業務端末の fallback copy、QA の再現ログに再利用できます。次段階では hand input や layer redraw、GPU queue completion を同じ session ID に紐づけ、画面録画や thermal telemetry と照合できます。",
+      "bodyEn": "Activation and frame receipts can feed device rollout, UX fallback, and QA logs."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "active XR session 内の reference space、visibility change、Layers の needsRedraw / redraw、XRGPUBinding の subimage、GPU queue completion、compositor presentation を追います。",
+      "bodyEn": "Watch reference spaces, visibility, layer redraw, subimages, queue completion, and presentation."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で supported mode を選び、開始ボタンから session を試してください。非対応環境では合成 receipt で派生を動かし、window rAF だけでは XR frame active にならないことを確認できます。",
+      "bodyEn": "Try the activation button, then compare its receipt to the synthetic fallback."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Device API の application flow と WebGPU Binding を確認。設計: activation と XR rAF を分離。実装: session receipt と route replayer。次: 実 layer / GPU lifecycle receipt を追加。",
+      "bodyEn": "Research led to an activation receipt and a route replayer; layer/GPU lifecycle comes next."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月後半の layer property、timing、lease、device capability の流れを、今回はその前提である「session が本当に active か」へ接続しました。実 frame が届くまで texture / compositor の状態は推測しない、という境界を保ちます。",
+      "bodyEn": "This grounds recent layer-lifecycle work in the prerequisite of an observed active session."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Immersive Session Activation Receipt` を実装しました。何が動くか: support probe、ユーザー操作での session 要求、最初の XR frame、拒否理由を別 timestamp で表示・保存・JSON export します。次に足すなら session 内の Layers / WebGPU receipt です。派生 `Activation to XRFrame Route Replayer` も実装しました。何が動くか: 本命の保存値またはシナリオから activation 欠落・拒否・遅延・正常 frame を8段階で再生します。次に足すなら実端末ログの横比較です。",
+      "bodyEn": "The main records the session path; the derivative replays normal, missing, rejected, and late routes."
+    }
+  ]
+}

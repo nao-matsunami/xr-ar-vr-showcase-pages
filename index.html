@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 107</span>
+        <span>days: 108</span>
         <span>page: 1 / 9</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -321,6 +321,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-10-24">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.24</p>
+              <h2>ユーザー操作から XR frame までを分離して記録する</h2>
+              <p class="card-subtitle">Recording the path from user activation to the first XR frame</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-24" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR の support probe、ユーザー操作、session 取得、最初の XR frame を混同しない自作サンプルと、欠落・拒否・遅延を再生する派生サンプルを追加しました。</p>
+          <p class="description en-copy">Two original samples separate support, activation, session acquisition, and the first XR frame, then replay missing, rejected, and late paths.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-10-24.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-10-24_html_immersive_session_activation_receipt.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-10-23">
           <div class="card-top">
             <div>
@@ -570,29 +593,6 @@
           <div class="actions">
             <a class="primary" href="days/2026-10-13.html">その日のページ / Day</a>
             <a class="secondary-link" href="outputs/2026-10-13_html_xrgpu_binding_fault_triage_console.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-10-12">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.10.12</p>
-              <h2>WebGPU composition layer を layer plan row にする</h2>
-              <p class="card-subtitle">Turning WebGPU composition layers into layer plan rows</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-10-12" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">Meta Browser 152.1 の experimental WebGPU composition layers、WebXR-WebGPU Binding、Immersive Web WebGPU samples、WebXR Layers / Device API を確認し、projection / depth / motion vector / quad HUD を起動直前の layer plan として判定する本命サンプルと、その row を8 frameの swapchain pressure として再生する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After checking Meta Browser 152.1 experimental WebGPU composition layers, WebXR-WebGPU Binding, Immersive Web WebGPU samples, and the WebXR Layers / Device APIs, today's original work adds a main sample that scores projection / depth / motion vector / quad HUD as a pre-session layer plan and a derivative sample that replays that row as eight frames of swapchain pressure.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-10-12.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-10-12_html_webgpu_composition_layer_plan_console.html">代表サンプル / Sample</a>
           </div>
         </article>
       
