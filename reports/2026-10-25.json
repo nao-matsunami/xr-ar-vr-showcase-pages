@@ -1,0 +1,97 @@
+{
+  "date": "2026-10-25",
+  "headline": "アンカーの生成完了と追跡開始を分けて配置を確定する",
+  "headlineEn": "Separating anchor creation from tracked placement commitment",
+  "summary": "WebXR Anchors の Promise 解決と trackedAnchors 観測を別 receipt にする本命と、restore / loss の route を再生する派生の自作サンプル2本を追加しました。",
+  "summaryEn": "Two original samples separate anchor creation from tracked observation and replay restore and tracking-loss routes.",
+  "keyTopics": [
+    "WebXR Anchors は session 作成時に anchors feature を要求し、inline session は anchors capable と扱われません。",
+    "XRFrame.createAnchor() や XRHitTestResult.createAnchor() の Promise 解決は、次 frame の trackedAnchors 観測と同義ではありません。",
+    "native anchor の pose は一時的に unlocatable になり得るため、古い pose を確定値として使わない hold route が必要です。",
+    "persistent handle は origin に閉じた UUID ですが、UA は保存済み entries を削除できるため restore を保証しません。"
+  ],
+  "keyTopicsEn": [
+    "Anchors are a negotiated session feature.",
+    "Creation resolution and tracked observation are separate receipts.",
+    "Anchor poses can temporarily become unlocatable.",
+    "Persistent handles do not guarantee restoration."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Anchor Materialization Receipt Lab",
+      "url": "../outputs/2026-10-25_html_anchor_materialization_receipt_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Anchor Restore Route Replayer",
+      "url": "../outputs/2026-10-25_html_anchor_restore_route_replayer.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "Immersive Web: Anchors sample",
+      "url": "https://immersive-web.github.io/webxr-samples/anchors.html"
+    },
+    {
+      "label": "Immersive Web: Hit Test with Anchors sample",
+      "url": "https://immersive-web.github.io/webxr-samples/hit-test-anchors.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "公式 Anchors sample と Hit Test with Anchors sample は、現実空間の位置に virtual object を留める基本を示します。仕様の重要な境界は createAnchor の Promise が解決しても、anchor が trackedAnchors に現れるまで属性が完全に使えるとは限らない点です。本命ではこの短い待ちを preview と commit に分けました。",
+      "bodyEn": "Anchor creation and tracked observation are intentionally distinct UI states.",
+      "links": [
+        {
+          "label": "Anchors module",
+          "url": "https://immersive-web.github.io/anchors/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "置く前は半透明の preview、tracked receipt を得た後だけ色の濃い commit marker にします。tracking が途切れたら marker を消さず amber の hold にし、復帰か re-hit が起きるまで操作結果を増やさないことで、空間の理解が変わる瞬間を説明可能にします。",
+      "bodyEn": "Use preview, committed, and hold states rather than one binary placed state."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "immersive-ar session で anchors を requiredFeatures に要求し、frame 内で createAnchor または hit result の createAnchor を呼びます。解決後は次の XR frame の trackedAnchors を確認し、anchorSpace を getPose へ渡します。pose が null の frame は既存 pose を新しい確定値として保存せず、保持または再取得へ送ります。",
+      "bodyEn": "Request anchors, create in an XR frame, then commit only after a tracked frame and usable pose."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "persistent handle の restore 成功率、hit-test / plane 由来 anchor の materialization 遅延、trackedAnchors から消えた直後の UI、re-hit の二重配置防止、origin ごとの retention を追います。",
+      "bodyEn": "Watch restore success, materialization delay, loss UI, duplicate prevention, and retention."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で「合成 anchor を作成」後、Promise 解決時点では preview のままになることを見てから「次 frame で追跡を観測」を押してください。派生では tracking loss を選ぶと、loss を commit と誤認せず hold に送る流れを確認できます。",
+      "bodyEn": "Compare resolved-only, tracked, and lost anchor states."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Anchors specification と公式 samples を確認。設計: create / resolve / tracked / loss の4 receipt。実装: materialization lab と restore route replayer。次: 実 session の hit-test、UUID restore、pose log を追加。",
+      "bodyEn": "Research yielded a four-stage anchor receipt and a restore replayer."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "9月の hit-test、anchor restore、plane placement の流れを、10月の receipt / lifecycle 観測方針へつなぎ直しました。空間固定の見た目は、API が作成を返した瞬間ではなく、継続追跡を観測できた時だけ確定する、という境界です。",
+      "bodyEn": "Spatial persistence should be committed from observed tracking, not creation alone."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Anchor Materialization Receipt Lab` を実装しました。何が動くか: anchors negotiation、create、Promise resolve、tracked、loss、persistent handle を別時刻で可視化・保存・export します。次に足すなら実 hit-test 由来の anchor を加えます。派生 `Anchor Restore Route Replayer` も実装しました。何が動くか: 本命 receipt を読み、clean / loss / restore miss の8 frame route を再生します。次に足すなら端末別 pose 欠落率の比較です。",
+      "bodyEn": "The main records anchor materialization; the derivative replays clean, loss, and restore-miss routes."
+    }
+  ]
+}
