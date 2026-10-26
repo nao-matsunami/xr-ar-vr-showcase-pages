@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-26",
+  "headline": "Hit Test から Anchor を確定するまでの二重配置ガード",
+  "headlineEn": "Guarding hit-test anchors from duplicate placement",
+  "summary": "hit result、anchor 作成要求、Promise 解決、trackedAnchors 観測を別 receipt にし、追跡前・tracking loss・restore miss で二重配置しない自作サンプル2本を追加しました。",
+  "summaryEn": "Two original samples separate hit, creation, resolution, and tracked observation to prevent duplicate anchor placement.",
+  "keyTopics": [
+    "XRHitTestResult.createAnchor() は hit result に結びついた anchor を非同期で作成する。",
+    "Promise 解決後でも anchor の属性は trackedAnchors に現れるまで確定扱いにしない。",
+    "getPose(anchorSpace) が null の frame は新しい placement の根拠にせず hold へ送る。",
+    "restore miss 時の re-hit は、既存 marker を残したまま一度だけ許可する。"
+  ],
+  "keyTopicsEn": [
+    "Hit-test anchors are asynchronous.",
+    "Resolution is not tracked observation.",
+    "A null pose should not commit placement.",
+    "Re-hit needs a duplicate guard."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Hit Anchor Commit Ledger",
+      "url": "../outputs/2026-10-26_html_hit_anchor_commit_ledger.html"
+    },
+    {
+      "label": "Today's derivative sample: Anchor Duplicate Guard Replayer",
+      "url": "../outputs/2026-10-26_html_anchor_duplicate_guard_replayer.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "Immersive Web: Hit Test with Anchors sample",
+      "url": "https://immersive-web.github.io/webxr-samples/hit-test-anchors.html"
+    },
+    {
+      "label": "MDN: XRFrame.createAnchor()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRFrame/createAnchor"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Immersive Web の Hit Test with Anchors は、表面 hit と空間固定を結ぶ基本例です。Anchors explainer は、Promise が解決しても anchor が fully materialized ではなく、tracked anchors に現れて初めて属性が有効になる可能性を明記します。本命ではこの境界を UI の preview と commit にそのまま反映しました。",
+      "bodyEn": "The sample and explainer distinguish creation from usable tracked observation.",
+      "links": [
+        {
+          "label": "Anchors explainer",
+          "url": "https://github.com/immersive-web/anchors/blob/main/explainer.md"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "reticle は cyan、Promise 解決直後の anchor は薄い amber、tracked pose を得た marker だけを緑にします。tracking loss は削除や再配置ではなく点滅 hold にし、利用者が空間理解の再計算中であることを読めるようにします。",
+      "bodyEn": "Make preview, committed, and held spatial states visually distinct."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "immersive-ar session では hit-test と anchors を feature negotiation し、active XRFrame 中の XRHitTestResult.createAnchor() を使います。Promise 解決後は frame.trackedAnchors と frame.getPose(anchor.anchorSpace, referenceSpace) を確認して初めて placement を確定します。pose null や untracked は既存 visual を hold し、re-hit へ進む場合も marker ID ごとに一度だけ許可します。",
+      "bodyEn": "Create in an active frame, then commit only after tracked membership and a usable pose."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "receipt の時刻、route、pose 可否、re-hit 回数は IndexedDB に保存すれば、会場の照明・面素材・端末別に placement の失敗傾向を比較できます。カメラ映像、plane label、depth confidence、作業手順 UI と組み合わせると、固定注釈の信頼度を利用者へ説明するレイヤーになります。",
+      "bodyEn": "Receipts can be correlated with device, environment, and content confidence."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "XRHitTestResult.createAnchor() と XRFrame.createAnchor() の選択、persistent handle restore の失敗理由、trackedAnchors から消えた marker の UI、plane / depth confidence と re-hit 閾値の接続を追います。",
+      "bodyEn": "Watch creation routes, restore failures, loss UI, and confidence thresholds."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で 1〜4 を順に押すと、Promise resolved の段階では marker が緑にならず、tracked + pose 後にだけ commit されることを確認できます。派生で restore miss → re-hit once を選ぶと、既存 marker を消して複製しない route を追えます。",
+      "bodyEn": "Compare resolved-only state with tracked commitment, then replay a restore miss."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Anchors / Hit Test の仕様と公式 sample。設計: hit→request→resolved→tracked→loss の receipt。実装: 台帳と duplicate guard replay。次: 実 immersive-ar の hit result、pose null 率、persistent restore を保存する。",
+      "bodyEn": "Research led to a receipt ledger and a duplicate-safe replayer."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "10月の activation receipt、anchor materialization receipt を、実際の表面 hit に接続しました。空間配置では「作った」より「その frame で追跡可能だった」が強い事実です。この差を UI とログに残すと、再探索と二重配置を抑えられます。",
+      "bodyEn": "Observed tracking is stronger evidence than creation completion."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Hit Anchor Commit Ledger` を実装しました。何が動くか: hit、create request、Promise resolve、tracked pose、loss を操作・保存・JSON export できます。次に足すなら実 immersive-ar session の hit result を記録します。派生 `Anchor Duplicate Guard Replayer` も実装しました。何が動くか: clean / loss / restore miss の8 frame routeを再生し、re-hit を1回に制限します。次に足すなら persistent UUID ごとの retry budget です。",
+      "bodyEn": "The main records anchor commitment; the derivative replays duplicate-safe recovery routes."
+    }
+  ]
+}
