@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-27",
+  "headline": "Persistent Anchor を再配置せず復元するための証跡と retry budget",
+  "headlineEn": "Persistent-anchor evidence and retry budgets without duplicate placement",
+  "summary": "persistent handle、restore、tracked pose を別の証跡にし、pose gap と restore miss で二重配置しない自作サンプル2本を追加しました。",
+  "summaryEn": "Two original samples separate persistent handles, restoration, and tracked poses to prevent duplicate placement.",
+  "keyTopics": [
+    "persistent handle は origin 内の persistent anchor を識別する値であり、再配置の成功を保証しない。",
+    "restore が object を返しても trackedAnchors と getPose() を観測するまで復元を確定しない。",
+    "一時的な pose null は hold にし、re-hit の retry budget を消費しない。",
+    "restore miss では既存 marker を残し、再配置は識別子ごとに一度だけ許可する。"
+  ],
+  "keyTopicsEn": [
+    "A persistent handle is identity, not placement proof.",
+    "Restore resolution is not a tracked pose.",
+    "Null poses should hold rather than retry.",
+    "A restore miss needs a bounded re-hit."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Persistent Anchor Evidence Journal",
+      "url": "../outputs/2026-10-27_html_persistent_anchor_evidence_journal.html"
+    },
+    {
+      "label": "Today's derivative sample: Anchor Retry Budget Comparator",
+      "url": "../outputs/2026-10-27_html_anchor_retry_budget_comparator.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "Immersive Web: Hit Test with Anchors sample",
+      "url": "https://immersive-web.github.io/webxr-samples/hit-test-anchors.html"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Immersive Web の Hit Test with Anchors は、表面上の hit と空間固定を結ぶ最小例です。Anchors Module は persistent handle を origin 内で管理する一方、追跡位置が一時的に不明な frame と、もう追跡されない状態を分けます。本命はこの非対称性を restore 成功ではなく evidence の積み上げとして可視化します。",
+      "bodyEn": "The main sample turns the distinction between restoration and tracked evidence into a visible journal.",
+      "links": [
+        {
+          "label": "WebXR Anchors Module",
+          "url": "https://immersive-web.github.io/anchors/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "handle 発行は amber、tracked pose が揃った marker は緑、pose gap は脈動する amber にします。赤い retry block は失敗表示ではなく、空間理解が揺れた直後に marker を増やさないための安全弁です。",
+      "bodyEn": "Color separates identity, commitment, temporary hold, and retry blocking."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "immersive-ar session で anchors を required / optional feature として交渉し、XRAnchor.requestPersistentHandle() の解決値を保存します。次回は XRSession.restorePersistentAnchor(uuid) の object 解決、frame.trackedAnchors の所属、frame.getPose(anchor.anchorSpace, referenceSpace) の可否を同一 receipt に記録します。pose null は hold、restore reject は再 hit の候補ですが、UUID 単位の retry budget を設けます。",
+      "bodyEn": "Persist the handle, then require restoration, tracked membership, and a usable pose before commitment."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "handle の年齢、restore route、pose null の連続数、re-hit 回数を IndexedDB に保存すれば、端末・照度・面種別ごとに復元の成功率を比較できます。カメラ映像、plane label、depth confidence、作業手順や展示注釈と合わせると、固定情報を再発見するタイミングを説明する UI になります。",
+      "bodyEn": "Evidence receipts can be correlated with environment, device, and content confidence."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実機での requestPersistentHandle / restorePersistentAnchor の可用性、persistentAnchors の上限や削除、reference space reset、plane / mesh と anchor の関係、IndexedDB に保存した retry budget の端末別比較を追います。",
+      "bodyEn": "Watch practical availability, retention limits, resets, and per-device retry budgets."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で Handle → Restore → tracked + pose を順に押すと、object を得ただけでは marker が緑にならないことを確認できます。派生で restore miss route を再生すると、re-hit が一度だけで二重 marker を増やさない流れを追えます。",
+      "bodyEn": "Compare restore resolution with tracked commitment, then replay a bounded re-hit."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Anchors Module / WebXR samples。設計: handle→restore→tracked pose→hold/miss の証跡。実装: journal と retry budget comparator。次: 実 immersive-ar の UUID、frame timestamp、pose null 率を IndexedDB で端末別に保存する。",
+      "bodyEn": "Research led to an evidence journal and a bounded-retry comparator."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "空間コンテンツでは「前回置いた」ことと「今この frame で置ける」ことは別です。persistent handle は記憶を与え、tracked pose は現在性を与えます。両者の間を UI とログで残すほど、復元体験は静かで信頼できるものになります。",
+      "bodyEn": "Persistent identity remembers; tracked pose proves the present."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Persistent Anchor Evidence Journal` を実装しました。何が動くか: handle・restore・tracked pose・pose gap・miss を操作し、localStorage 保存と JSON export ができます。次に足すなら実 immersive-ar の persistent UUID を記録します。派生 `Anchor Retry Budget Comparator` も実装しました。何が動くか: stable / pose gap / restore miss の8 frame routeを比較し、re-hit を一度に制限します。次に足すなら IndexedDB 集計と端末別しきい値です。",
+      "bodyEn": "The main journals evidence; the derivative compares bounded retry routes."
+    }
+  ]
+}

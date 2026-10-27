@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Persistent Anchor を再配置せず復元するための証跡と retry budget | 2026-10-27</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.27</p>
+      <h1>Persistent Anchor を再配置せず復元するための証跡と retry budget</h1>
+      <p class="hero-subtitle">Persistent-anchor evidence and retry budgets without duplicate placement</p>
+      <p>persistent handle、restore、tracked pose を別の証跡にし、pose gap と restore miss で二重配置しない自作サンプル2本を追加しました。</p>
+      <p class="en-copy">Two original samples separate persistent handles, restoration, and tracked poses to prevent duplicate placement.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-27_html_persistent_anchor_evidence_journal.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-10-26.html">← 2026.10.26</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Persistent Anchor Evidence Journal</h3>
+              <p>自作の最小試作。persistent handle を「次回も置ける保証」ではなく復元判断の手掛かりとして記録し、restore・tracked 観測・pose の3つがそろうまで再配置しません。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-27_html_persistent_anchor_evidence_journal.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Anchor Retry Budget Comparator</h3>
+              <p>本命の journal と組み合わせる派生試作。復元失敗のたびに再配置せず、環境ごとの retry budget を8 frameで比較します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-27_html_anchor_retry_budget_comparator.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>persistent handle は origin 内の persistent anchor を識別する値であり、再配置の成功を保証しない。</span>
+              <span class="en-copy">A persistent handle is identity, not placement proof.</span>
+            </li>
+          
+            <li>
+              <span>restore が object を返しても trackedAnchors と getPose() を観測するまで復元を確定しない。</span>
+              <span class="en-copy">Restore resolution is not a tracked pose.</span>
+            </li>
+          
+            <li>
+              <span>一時的な pose null は hold にし、re-hit の retry budget を消費しない。</span>
+              <span class="en-copy">Null poses should hold rather than retry.</span>
+            </li>
+          
+            <li>
+              <span>restore miss では既存 marker を残し、再配置は識別子ごとに一度だけ許可する。</span>
+              <span class="en-copy">A restore miss needs a bounded re-hit.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>Immersive Web の Hit Test with Anchors は、表面上の hit と空間固定を結ぶ最小例です。Anchors Module は persistent handle を origin 内で管理する一方、追跡位置が一時的に不明な frame と、もう追跡されない状態を分けます。本命はこの非対称性を restore 成功ではなく evidence の積み上げとして可視化します。</p>
+          <p class="en-copy">The main sample turns the distinction between restoration and tracked evidence into a visible journal.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">WebXR Anchors Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>handle 発行は amber、tracked pose が揃った marker は緑、pose gap は脈動する amber にします。赤い retry block は失敗表示ではなく、空間理解が揺れた直後に marker を増やさないための安全弁です。</p>
+          <p class="en-copy">Color separates identity, commitment, temporary hold, and retry blocking.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>immersive-ar session で anchors を required / optional feature として交渉し、XRAnchor.requestPersistentHandle() の解決値を保存します。次回は XRSession.restorePersistentAnchor(uuid) の object 解決、frame.trackedAnchors の所属、frame.getPose(anchor.anchorSpace, referenceSpace) の可否を同一 receipt に記録します。pose null は hold、restore reject は再 hit の候補ですが、UUID 単位の retry budget を設けます。</p>
+          <p class="en-copy">Persist the handle, then require restoration, tracked membership, and a usable pose before commitment.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>handle の年齢、restore route、pose null の連続数、re-hit 回数を IndexedDB に保存すれば、端末・照度・面種別ごとに復元の成功率を比較できます。カメラ映像、plane label、depth confidence、作業手順や展示注釈と合わせると、固定情報を再発見するタイミングを説明する UI になります。</p>
+          <p class="en-copy">Evidence receipts can be correlated with environment, device, and content confidence.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>実機での requestPersistentHandle / restorePersistentAnchor の可用性、persistentAnchors の上限や削除、reference space reset、plane / mesh と anchor の関係、IndexedDB に保存した retry budget の端末別比較を追います。</p>
+          <p class="en-copy">Watch practical availability, retention limits, resets, and per-device retry budgets.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で Handle → Restore → tracked + pose を順に押すと、object を得ただけでは marker が緑にならないことを確認できます。派生で restore miss route を再生すると、re-hit が一度だけで二重 marker を増やさない流れを追えます。</p>
+          <p class="en-copy">Compare restore resolution with tracked commitment, then replay a bounded re-hit.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Anchors Module / WebXR samples。設計: handle→restore→tracked pose→hold/miss の証跡。実装: journal と retry budget comparator。次: 実 immersive-ar の UUID、frame timestamp、pose null 率を IndexedDB で端末別に保存する。</p>
+          <p class="en-copy">Research led to an evidence journal and a bounded-retry comparator.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>空間コンテンツでは「前回置いた」ことと「今この frame で置ける」ことは別です。persistent handle は記憶を与え、tracked pose は現在性を与えます。両者の間を UI とログで残すほど、復元体験は静かで信頼できるものになります。</p>
+          <p class="en-copy">Persistent identity remembers; tracked pose proves the present.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `Persistent Anchor Evidence Journal` を実装しました。何が動くか: handle・restore・tracked pose・pose gap・miss を操作し、localStorage 保存と JSON export ができます。次に足すなら実 immersive-ar の persistent UUID を記録します。派生 `Anchor Retry Budget Comparator` も実装しました。何が動くか: stable / pose gap / restore miss の8 frame routeを比較し、re-hit を一度に制限します。次に足すなら IndexedDB 集計と端末別しきい値です。</p>
+          <p class="en-copy">The main journals evidence; the derivative compares bounded retry routes.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-27_html_persistent_anchor_evidence_journal.html" target="_blank" rel="noreferrer">Today's main sample: Persistent Anchor Evidence Journal</a></li>
+          
+            <li><a href="../outputs/2026-10-27_html_anchor_retry_budget_comparator.html" target="_blank" rel="noreferrer">Today's derivative sample: Anchor Retry Budget Comparator</a></li>
+          
+            <li><a href="https://immersive-web.github.io/anchors/" target="_blank" rel="noreferrer">Immersive Web: WebXR Anchors Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/hit-test-anchors.html" target="_blank" rel="noreferrer">Immersive Web: Hit Test with Anchors sample</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-27_html_persistent_anchor_evidence_journal.html" loading="lazy" title="Persistent Anchor Evidence Journal"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
