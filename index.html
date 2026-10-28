@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 111</span>
+        <span>days: 112</span>
         <span>page: 1 / 10</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -325,6 +325,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-10-28">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.28</p>
+              <h2>短命な XR 入力の hit receipt を source ごとに隔離する</h2>
+              <p class="card-subtitle">Isolating transient XR hit receipts by input source</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-28" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">transient input の hit、select、anchor 化を別の証跡として扱い、touch・gaze・controller が混ざって誤配置しないための自作サンプル2本を追加しました。</p>
+          <p class="description en-copy">Two original samples isolate transient hit, select, and anchor receipts to prevent cross-source placement.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-10-28.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-10-28_html_transient_hit_receipt_studio.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-10-27">
           <div class="card-top">
             <div>
@@ -574,29 +597,6 @@
           <div class="actions">
             <a class="primary" href="days/2026-10-17.html">その日のページ / Day</a>
             <a class="secondary-link" href="outputs/2026-10-17_html_layer_redraw_priority_composer.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-10-16">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.10.16</p>
-              <h2>手関節 pose と select event を同じ XR ログへつなぐ</h2>
-              <p class="card-subtitle">Connecting hand-joint poses and select events in one XR log</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-10-16" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Hand Input の `getJointPose()` と hand-tracking feature、Meta の hands 実装を参考に、実フレームまたは synthetic fallback から手の tip pose と select event を1行にする本命試作と、その row を端末別しきい値で再生する派生試作を追加しました。</p>
-          <p class="description en-copy">Using WebXR Hand Input getJointPose(), the hand-tracking feature, and Meta's hands implementation as references, today adds an original main prototype that logs tip poses and select events in one row plus a derivative that replays the row with device-specific thresholds.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-10-16.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-10-16_html_hand_joint_event_logbook.html">代表サンプル / Sample</a>
           </div>
         </article>
       

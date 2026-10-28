@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 111</span>
+        <span>days: 112</span>
         <span>page: 2 / 10</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -325,6 +325,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-10-16">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.16</p>
+              <h2>手関節 pose と select event を同じ XR ログへつなぐ</h2>
+              <p class="card-subtitle">Connecting hand-joint poses and select events in one XR log</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-16" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Hand Input の `getJointPose()` と hand-tracking feature、Meta の hands 実装を参考に、実フレームまたは synthetic fallback から手の tip pose と select event を1行にする本命試作と、その row を端末別しきい値で再生する派生試作を追加しました。</p>
+          <p class="description en-copy">Using WebXR Hand Input getJointPose(), the hand-tracking feature, and Meta's hands implementation as references, today adds an original main prototype that logs tip poses and select events in one row plus a derivative that replays the row with device-specific thresholds.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-10-16.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-10-16_html_hand_joint_event_logbook.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-10-15">
           <div class="card-top">
             <div>
@@ -574,29 +597,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-10-05.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-10-05_html_depth_motion_vector_budget_console.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-10-04">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.10.04</p>
-              <h2>可視マスクを予測 row と miss 復帰 timeline へ進める</h2>
-              <p class="card-subtitle">Advancing visibility masks into prediction rows and miss-recovery timelines</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-10-04" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">Chrome 144 の XRVisibilityMaskChange、W3C WebXR Device API、W3C WebXR Layers API、Immersive Web Samples を確認し、昨日の再投影 drift から次フレームの予測 mask と、外れた時の rollback / recovery を扱う自作サンプル2本を追加しました。</p>
-          <p class="description en-copy">After checking Chrome 144's XRVisibilityMaskChange, the W3C WebXR Device API, the W3C WebXR Layers API, and Immersive Web Samples, today's original work extends yesterday's reprojection drift into next-frame predictive masks and rollback / recovery when prediction misses.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">frequency-bands</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-10-04.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-10-04_html_predictive_visibility_mask_console.html">代表サンプル / Sample</a>
           </div>
         </article>
       

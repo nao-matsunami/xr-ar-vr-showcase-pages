@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-28",
+  "headline": "短命な XR 入力の hit receipt を source ごとに隔離する",
+  "headlineEn": "Isolating transient XR hit receipts by input source",
+  "summary": "transient input の hit、select、anchor 化を別の証跡として扱い、touch・gaze・controller が混ざって誤配置しないための自作サンプル2本を追加しました。",
+  "summaryEn": "Two original samples isolate transient hit, select, and anchor receipts to prevent cross-source placement.",
+  "keyTopics": [
+    "XRTransientInputHitTestResult は XRInputSource ごとに hit 結果をまとめる。",
+    "短命 input source は操作中だけ存在し得るため、前 frame の source を placement 根拠にしない。",
+    "hit は候補、select は意図、anchor は空間への commit として分離する。",
+    "hit test は secure context と feature negotiation が必要で、環境把握に関する privacy 制約もある。"
+  ],
+  "keyTopicsEn": [
+    "Transient hit results are grouped by XRInputSource.",
+    "Transient sources must not leak across frames.",
+    "Hit, intent, and spatial commitment are different receipts.",
+    "Hit tests require secure, privacy-aware feature negotiation."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Transient Hit Receipt Studio",
+      "url": "../outputs/2026-10-28_html_transient_hit_receipt_studio.html"
+    },
+    {
+      "label": "Today's derivative sample: Input Intent Isolation Board",
+      "url": "../outputs/2026-10-28_html_input_intent_isolation_board.html"
+    },
+    {
+      "label": "Immersive Web: WebXR Hit Test Module",
+      "url": "https://immersive-web.github.io/hit-test/"
+    },
+    {
+      "label": "W3C: WebXR Device API",
+      "url": "https://immersive-web.github.io/webxr/"
+    },
+    {
+      "label": "Immersive Web: WebXR samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Hit Test Module は transient input の結果を XRInputSource 単位に束ねます。公式 Samples の Hit Test は viewer 起点の最小例ですが、短命な touch / gaze intent を扱う UI では「どの source が出した hit か」も重要です。本命ではその帰属を receipt として前面に出しました。",
+      "bodyEn": "The Hit Test Module groups transient results by source; this sample makes that provenance visible.",
+      "links": [
+        {
+          "label": "WebXR Hit Test Module",
+          "url": "https://immersive-web.github.io/hit-test/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "cyan の ray を source、amber の ring を hit 候補、green の pin を spatial commit として色分けします。touch と gaze で ray の角度を変え、同じ見た目の reticle でも provenance を失わない設計にします。",
+      "bodyEn": "Color and motion expose source, hit candidate, and spatial commitment."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "immersive-ar を requiredFeatures: ['local','hit-test'] で要求した後、session.requestHitTestSourceForTransientInput({ profile, offsetRay }) を作成します。各 frame の getHitTestResultsForTransientInput(source) は inputSource と results を含むので、select event.source と同一性を確認してから result.createAnchor() を呼びます。session 終了時は source.cancel() を明示します。",
+      "bodyEn": "Request a transient source, pair its per-frame result with the same select source, then create an anchor and cancel on teardown."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "source 種別、hit 数、select までの frame 数、commit / block 理由を匿名ログにすれば、端末別の誤操作率を比較できます。展示の選択 UI、作業支援の安全確認、手・視線・音声を組み合わせるマルチモーダル入力で、意図の競合を説明する材料になります。",
+      "bodyEn": "Anonymous source and decision logs can reveal input conflicts across devices and contexts."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "generic-touchscreen や transient-pointer の可用性、profile ごとの実装差、select / selectend の順序、hit test entityTypes の絞り込み、anchor 作成失敗時の UI を実機で確認します。",
+      "bodyEn": "Watch profile availability, event order, entity filtering, and anchor failures on devices."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で gaze を到着させて hit→select→anchor と進め、途中で別 source を始めると新しい receipt からやり直す感覚を確認してください。派生では touch と gaze をそれぞれ select まで進めてから混在確定を押すと block が出ます。",
+      "bodyEn": "Complete one route, then compare it with an intentionally mixed-source decision."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Hit Test Module、Device API、公式 Samples。設計: source→hit→select→anchor の4段 receipt。実装: studio と isolation board。次: 実機の frame timestamp、profile、anchor 成否を IndexedDB に記録し、再生可能な検証ログにする。",
+      "bodyEn": "Research became two receipt-focused prototypes; next is device evidence capture."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の pointer は見えている reticle そのものではなく、その瞬間に成立した入力の文脈です。配置を一回の click に畳まず、hit・意図・空間固定を分けるほど、入力方式が増えても UI は説明可能になります。",
+      "bodyEn": "A reticle is input context, not just a cursor; separate its evidence to keep XR explainable."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Transient Hit Receipt Studio` を実装しました。何が動くか: touch / gaze source、frame hit、select、anchor を順に操作し、JSON export と WebXR 対応 probe ができます。次に足すなら実 immersive-ar の source / timestamp を保存します。派生 `Input Intent Isolation Board` も実装しました。何が動くか: 3種の route を独立に進め、混在した placement を block します。次に足すなら hand pinch と音声 intent の receipt です。",
+      "bodyEn": "The main replays receipts; the derivative blocks cross-source placement."
+    }
+  ]
+}

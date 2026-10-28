@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 111</span>
+        <span>days: 112</span>
         <span>page: 4 / 10</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -325,6 +325,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-09-22">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.22</p>
+              <h2>XR bootstrap probe を context row と trust floor に渡す</h2>
+              <p class="card-subtitle">Passing an XR bootstrap probe into a context row and trust floor</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-22" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR Device API、W3C WebXR standards index、MDN `XRSession.enabledFeatures`、Immersive Web samples / Layers samples を参照し、実 `navigator.xr` の軽い probe と手動の feature coverage を session context row にまとめる本命サンプルと、その context JSON を frame logger の最低 trust floor として注入する派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking the W3C WebXR Device API, the W3C WebXR standards index, MDN `XRSession.enabledFeatures`, and Immersive Web samples / Layers samples, today's original work adds a main sample that combines a lightweight `navigator.xr` probe and manual feature coverage into a session context row, plus a derivative sample that injects that context JSON as a minimum trust floor for frame logger rows.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-09-22.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-09-22_html_xr_bootstrap_probe_context_recorder.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-09-21">
           <div class="card-top">
             <div>
@@ -574,29 +597,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-09-11.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-09-11_html_depth_sensing_confidence_gate.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-10">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.10</p>
-              <h2>WebXR layer の redraw と hit proxy を運用目線で切り分ける</h2>
-              <p class="card-subtitle">Separating WebXR layer redraw and hit-proxy operations</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-10" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Device API、WebXR Layers API、MDN XRQuadLayer、Immersive Web Layers Samples を参照し、composition layer の redraw 復旧判断を可視化する本命サンプルと、quad layer UI 用の透明 proxy 密度を調整する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the WebXR Device API, WebXR Layers API, MDN XRQuadLayer, and Immersive Web Layers Samples, today's original work adds a main sample that visualizes composition-layer redraw recovery decisions and a derivative sample for tuning transparent proxy density around quad-layer UI.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-09-10.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-09-10_html_layer_redraw_recovery_console.html">代表サンプル / Sample</a>
           </div>
         </article>
       

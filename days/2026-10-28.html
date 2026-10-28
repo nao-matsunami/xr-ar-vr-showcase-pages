@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>短命な XR 入力の hit receipt を source ごとに隔離する | 2026-10-28</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.28</p>
+      <h1>短命な XR 入力の hit receipt を source ごとに隔離する</h1>
+      <p class="hero-subtitle">Isolating transient XR hit receipts by input source</p>
+      <p>transient input の hit、select、anchor 化を別の証跡として扱い、touch・gaze・controller が混ざって誤配置しないための自作サンプル2本を追加しました。</p>
+      <p class="en-copy">Two original samples isolate transient hit, select, and anchor receipts to prevent cross-source placement.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-28_html_transient_hit_receipt_studio.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-10-27.html">← 2026.10.27</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Transient Hit Receipt Studio</h3>
+              <p>自作の最小試作。短命な入力 source ごとの hit 結果を「描画候補」として残し、選択の確定と anchor 化を別 receipt にします。実機 API に依存せず、どのブラウザでも手順を再生できます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-28_html_transient_hit_receipt_studio.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Input Intent Isolation Board</h3>
+              <p>派生の自作試作。touch・gaze・controller の「いまの intent」を混ぜず、hit receipt がある source だけを placement 候補にします。ボタンでフレームを進め、誤った source の確定が block される様子を確認できます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-28_html_input_intent_isolation_board.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>XRTransientInputHitTestResult は XRInputSource ごとに hit 結果をまとめる。</span>
+              <span class="en-copy">Transient hit results are grouped by XRInputSource.</span>
+            </li>
+          
+            <li>
+              <span>短命 input source は操作中だけ存在し得るため、前 frame の source を placement 根拠にしない。</span>
+              <span class="en-copy">Transient sources must not leak across frames.</span>
+            </li>
+          
+            <li>
+              <span>hit は候補、select は意図、anchor は空間への commit として分離する。</span>
+              <span class="en-copy">Hit, intent, and spatial commitment are different receipts.</span>
+            </li>
+          
+            <li>
+              <span>hit test は secure context と feature negotiation が必要で、環境把握に関する privacy 制約もある。</span>
+              <span class="en-copy">Hit tests require secure, privacy-aware feature negotiation.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>Hit Test Module は transient input の結果を XRInputSource 単位に束ねます。公式 Samples の Hit Test は viewer 起点の最小例ですが、短命な touch / gaze intent を扱う UI では「どの source が出した hit か」も重要です。本命ではその帰属を receipt として前面に出しました。</p>
+          <p class="en-copy">The Hit Test Module groups transient results by source; this sample makes that provenance visible.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/hit-test/" target="_blank" rel="noreferrer">WebXR Hit Test Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>cyan の ray を source、amber の ring を hit 候補、green の pin を spatial commit として色分けします。touch と gaze で ray の角度を変え、同じ見た目の reticle でも provenance を失わない設計にします。</p>
+          <p class="en-copy">Color and motion expose source, hit candidate, and spatial commitment.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>immersive-ar を requiredFeatures: ['local','hit-test'] で要求した後、session.requestHitTestSourceForTransientInput({ profile, offsetRay }) を作成します。各 frame の getHitTestResultsForTransientInput(source) は inputSource と results を含むので、select event.source と同一性を確認してから result.createAnchor() を呼びます。session 終了時は source.cancel() を明示します。</p>
+          <p class="en-copy">Request a transient source, pair its per-frame result with the same select source, then create an anchor and cancel on teardown.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>source 種別、hit 数、select までの frame 数、commit / block 理由を匿名ログにすれば、端末別の誤操作率を比較できます。展示の選択 UI、作業支援の安全確認、手・視線・音声を組み合わせるマルチモーダル入力で、意図の競合を説明する材料になります。</p>
+          <p class="en-copy">Anonymous source and decision logs can reveal input conflicts across devices and contexts.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>generic-touchscreen や transient-pointer の可用性、profile ごとの実装差、select / selectend の順序、hit test entityTypes の絞り込み、anchor 作成失敗時の UI を実機で確認します。</p>
+          <p class="en-copy">Watch profile availability, event order, entity filtering, and anchor failures on devices.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で gaze を到着させて hit→select→anchor と進め、途中で別 source を始めると新しい receipt からやり直す感覚を確認してください。派生では touch と gaze をそれぞれ select まで進めてから混在確定を押すと block が出ます。</p>
+          <p class="en-copy">Complete one route, then compare it with an intentionally mixed-source decision.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Hit Test Module、Device API、公式 Samples。設計: source→hit→select→anchor の4段 receipt。実装: studio と isolation board。次: 実機の frame timestamp、profile、anchor 成否を IndexedDB に記録し、再生可能な検証ログにする。</p>
+          <p class="en-copy">Research became two receipt-focused prototypes; next is device evidence capture.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>XR の pointer は見えている reticle そのものではなく、その瞬間に成立した入力の文脈です。配置を一回の click に畳まず、hit・意図・空間固定を分けるほど、入力方式が増えても UI は説明可能になります。</p>
+          <p class="en-copy">A reticle is input context, not just a cursor; separate its evidence to keep XR explainable.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `Transient Hit Receipt Studio` を実装しました。何が動くか: touch / gaze source、frame hit、select、anchor を順に操作し、JSON export と WebXR 対応 probe ができます。次に足すなら実 immersive-ar の source / timestamp を保存します。派生 `Input Intent Isolation Board` も実装しました。何が動くか: 3種の route を独立に進め、混在した placement を block します。次に足すなら hand pinch と音声 intent の receipt です。</p>
+          <p class="en-copy">The main replays receipts; the derivative blocks cross-source placement.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-28_html_transient_hit_receipt_studio.html" target="_blank" rel="noreferrer">Today's main sample: Transient Hit Receipt Studio</a></li>
+          
+            <li><a href="../outputs/2026-10-28_html_input_intent_isolation_board.html" target="_blank" rel="noreferrer">Today's derivative sample: Input Intent Isolation Board</a></li>
+          
+            <li><a href="https://immersive-web.github.io/hit-test/" target="_blank" rel="noreferrer">Immersive Web: WebXR Hit Test Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr/" target="_blank" rel="noreferrer">W3C: WebXR Device API</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-28_html_transient_hit_receipt_studio.html" loading="lazy" title="Transient Hit Receipt Studio"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
