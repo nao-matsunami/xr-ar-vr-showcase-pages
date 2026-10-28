@@ -135,11 +135,13 @@ async function main() {
   const gitPushArgs = ["-c", `http.https://github.com/.extraheader=AUTHORIZATION: basic ${basic}`];
 
   try {
-    await run("git", [...gitPushArgs, "push", "origin", "main"], targetDir);
+    // The publish checkout uses a dated working branch, so publish its HEAD
+    // explicitly instead of the unrelated local `main` branch.
+    await run("git", [...gitPushArgs, "push", "origin", "HEAD:main"], targetDir);
   } catch {
     await run("git", [...gitPushArgs, "fetch", "origin", "main"], targetDir);
     await run("git", ["rebase", "origin/main"], targetDir);
-    await run("git", [...gitPushArgs, "push", "origin", "main"], targetDir);
+    await run("git", [...gitPushArgs, "push", "origin", "HEAD:main"], targetDir);
   }
 }
 
