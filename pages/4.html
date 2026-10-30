@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 112</span>
+        <span>days: 113</span>
         <span>page: 4 / 10</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -325,6 +325,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-09-23">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.09.23</p>
+              <h2>DOM Overlay の select 競合を arbitration row にする</h2>
+              <p class="card-subtitle">Turning DOM Overlay select conflicts into arbitration rows</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-09-23" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">W3C WebXR DOM Overlays Module、MDN `beforexrselect`、MDN WebXR input guide、W3C WebXR Hand Input Module、Immersive Web samples を参照し、DOM UI と XR world select の二重発火を防ぐ本命サンプルと、hand joint / controller / gaze 入力を overlay 安全域へ割り振る派生サンプルを追加しました。</p>
+          <p class="description en-copy">After checking the W3C WebXR DOM Overlays Module, MDN `beforexrselect`, the MDN WebXR input guide, the W3C WebXR Hand Input Module, and Immersive Web samples, today's original work adds a main sample that prevents duplicate DOM UI and XR world select actions, plus a derivative sample that routes hand joint / controller / gaze input into overlay-safe envelopes.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">html-surface</span><span class="tag">xr</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-09-23.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-09-23_html_dom_overlay_select_arbitration_logger.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-09-22">
           <div class="card-top">
             <div>
@@ -574,29 +597,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-09-12.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-09-12_html_plane_detection_lifecycle_ledger.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-09-11">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.09.11</p>
-              <h2>WebXR Depth Sensing を occlusion に渡す前の信頼度ゲートにする</h2>
-              <p class="card-subtitle">Turning WebXR Depth Sensing into a confidence gate before occlusion</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-09-11" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR Depth Sensing Module、MDN の depth interfaces、Immersive Web の depth proposal samples を参照し、depth frame を commit / patch / hold / block に分ける本命サンプルと、occlusion shader の threshold / feather / bias を調整する派生サンプルを追加しました。</p>
-          <p class="description en-copy">After reviewing the W3C WebXR Depth Sensing Module, MDN depth interfaces, and Immersive Web depth proposal samples, today's original work adds a main sample that classifies depth frames as commit / patch / hold / block and a derivative sample for tuning occlusion shader threshold, feather, and bias behavior.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span><span class="tag">shader</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-09-11.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-09-11_html_depth_sensing_confidence_gate.html">代表サンプル / Sample</a>
           </div>
         </article>
       

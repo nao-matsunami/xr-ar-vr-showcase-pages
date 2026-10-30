@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 112</span>
+        <span>days: 113</span>
         <span>page: 1 / 10</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -325,6 +325,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-10-31">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.31</p>
+              <h2>WebXR Layers の redraw を再描画要求の証跡として扱う</h2>
+              <p class="card-subtitle">Treating WebXR Layers redraw as evidence for a render submission</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-31" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Layers の再投影と redraw event を題材に、無条件の毎 frame 描画を避ける本命・派生の自作サンプル2本を追加しました。</p>
+          <p class="description en-copy">Two original samples distinguish compositor reprojection from evidence-backed layer redraw work.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-10-31.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-10-31_html_layer_redraw_evidence_console.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-10-28">
           <div class="card-top">
             <div>
@@ -574,29 +597,6 @@
           <div class="actions">
             <a class="primary" href="days/2026-10-18.html">その日のページ / Day</a>
             <a class="secondary-link" href="outputs/2026-10-18_html_layer_quality_lifecycle_console.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-10-17">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.10.17</p>
-              <h2>WebXR Layers の redraw を優先キューとして扱う</h2>
-              <p class="card-subtitle">Treating WebXR Layers redraw as an explainable priority queue</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-10-17" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR Layers API の composition layer、`depth-sorted-layers`、redraw を参照し、表示順・更新量・可読性から次に描き直す layer を選ぶ本命試作と、その row を8 frame の予算で再生する派生試作を追加しました。</p>
-          <p class="description en-copy">Referencing WebXR composition layers, depth-sorted-layers, and redraw, this adds an original priority composer and an eight-frame budget replayer.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-10-17.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-10-17_html_layer_redraw_priority_composer.html">代表サンプル / Sample</a>
           </div>
         </article>
       

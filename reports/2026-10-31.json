@@ -1,0 +1,107 @@
+{
+  "date": "2026-10-31",
+  "headline": "WebXR Layers の redraw を再描画要求の証跡として扱う",
+  "headlineEn": "Treating WebXR Layers redraw as evidence for a render submission",
+  "summary": "WebXR Layers の再投影と redraw event を題材に、無条件の毎 frame 描画を避ける本命・派生の自作サンプル2本を追加しました。",
+  "summaryEn": "Two original samples distinguish compositor reprojection from evidence-backed layer redraw work.",
+  "keyTopics": [
+    "XRQuadLayer は 3D 空間に置く厚みのない矩形 layer で、layers feature が必要。",
+    "XRCompositionLayer の redraw は compositor が再投影できない時に次の XR frame で内容を描き直す合図。",
+    "head motion と application content の変更を混同せず、描画理由を receipt 化すると負荷の説明がしやすい。",
+    "Layers API は experimental かつ対応差があるため capability probe と fallback が必要。"
+  ],
+  "keyTopicsEn": [
+    "XRQuadLayer is a flat spatial layer requiring the layers feature.",
+    "redraw signals that content must be submitted again on an XR frame.",
+    "Render receipts separate head motion from application content changes.",
+    "Layers need probing and fallbacks due to uneven availability."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Layer Redraw Evidence Console",
+      "url": "../outputs/2026-10-31_html_layer_redraw_evidence_console.html"
+    },
+    {
+      "label": "Today's derivative sample: Redraw Budget Route Board",
+      "url": "../outputs/2026-10-31_html_redraw_budget_route_board.html"
+    },
+    {
+      "label": "WebXR Layers API Level 1",
+      "url": "https://immersive-web.github.io/layers/"
+    },
+    {
+      "label": "MDN: XRQuadLayer",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRQuadLayer"
+    },
+    {
+      "label": "Immersive Web: WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Layers API は WebGL / media layer を compositor に渡します。XRQuadLayer の redraw event は、既存 texture を再投影できないと compositor が判断した際の明示的な合図です。公式 Samples の Layers 系を参照しつつ、本命ではこの合図を UI 上の evidence として可視化しました。",
+      "bodyEn": "Layers expose compositor-managed surfaces; the main sample turns redraw into visible evidence.",
+      "links": [
+        {
+          "label": "WebXR Layers API Level 1",
+          "url": "https://immersive-web.github.io/layers/"
+        },
+        {
+          "label": "Official WebXR samples",
+          "url": "https://immersive-web.github.io/webxr-samples/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "cyan は再投影できる提出済み layer、amber は redraw が必要な stale layer、green は予算内で再提出できた route として扱います。head motion を押しても再描画にならず、redraw event 後だけ texture version が進むため、ユーザーにも renderer の判断が読めます。",
+      "bodyEn": "Color distinguishes reprojectable, stale, and accepted render routes."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では immersive-vr を requiredFeatures: ['layers'] で要求し、XRWebGLBinding.createQuadLayer() の結果を session.updateRenderState({layers}) に入れます。layer の redraw listener で dirty flag を立て、XR frame 中に binding.getSubImage() の framebuffer へ描画します。対応しない端末は XRWebGLLayer の通常描画へ落とします。",
+      "bodyEn": "Negotiate layers, mark redraw as dirty, submit a subimage on an XR frame, and fall back to XRWebGLLayer."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "redraw の理由、layer 種別、描画 cost、defer 回数を匿名テレメトリーにすると、HUD・字幕・動画のどれが frame budget を押しているか比較できます。ライブ字幕、空間作業手順、360 動画、カメラ映像を組み合わせれば、情報の鮮度と表示負荷を同じ timeline に載せられます。",
+      "bodyEn": "Reason and cost receipts can expose which spatial content consumes the budget."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "各 browser の layers feature 可用性、redraw 発火条件、WebGL と media layer の差、session end 時の resource 解放、foveation / viewport scale と layer 解像度の組み合わせを実機で確認します。",
+      "bodyEn": "Watch availability, redraw behavior, media differences, teardown, and resolution policy."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で head motion を押した後は render が skip され、redraw event の後だけ再描画できることを確認してください。派生で全 layer の要求を出すと、予算1では字幕だけが通り、残りが defer されます。",
+      "bodyEn": "Compare head-motion skip with event-driven redraw, then observe budget deferral."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Layers API、MDN、公式 Samples。設計: reprojection と redraw を別 receipt にする。実装: evidence console と budget board。次: 実機 session の redraw timestamp・subimage size・GPU timer を保存し、品質制御と結ぶ。",
+      "bodyEn": "Research led to two receipt-driven prototypes; next is device timing capture."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の表示更新は「画面が動いた」だけで決めるより、「compositor が既存の提出物を使えるか」で分ける方が強いです。redraw を例外的な根拠として残すと、性能最適化は品質を落とす操作ではなく、責任ある再提出の設計になります。",
+      "bodyEn": "Compositor usability is a stronger redraw boundary than apparent motion."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Layer Redraw Evidence Console` を実装しました。何が動くか: 通常 frame、head motion、redraw event、再描画を順に操作し、texture version と負荷 receipt を確認できます。次に足すなら実 XRQuadLayer の subimage 描画です。派生 `Redraw Budget Route Board` も実装しました。何が動くか: HUD・字幕・動画の redraw 要求を予算1で仕分けます。次に足すなら実 GPU timer と優先度ポリシーです。",
+      "bodyEn": "The main exposes evidence-backed redraw; the derivative routes requests through a tiny budget."
+    }
+  ]
+}

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR Layers の redraw を再描画要求の証跡として扱う | 2026-10-31</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.10.31</p>
+      <h1>WebXR Layers の redraw を再描画要求の証跡として扱う</h1>
+      <p class="hero-subtitle">Treating WebXR Layers redraw as evidence for a render submission</p>
+      <p>WebXR Layers の再投影と redraw event を題材に、無条件の毎 frame 描画を避ける本命・派生の自作サンプル2本を追加しました。</p>
+      <p class="en-copy">Two original samples distinguish compositor reprojection from evidence-backed layer redraw work.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-10-31_html_layer_redraw_evidence_console.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-10-28.html">← 2026.10.28</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Layer Redraw Evidence Console</h3>
+              <p>自作の最小試作。静的な quad layer は毎 frame 描き直す前提にせず、compositor が再投影できない redraw を「内容を再提出する根拠」として扱います。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-31_html_layer_redraw_evidence_console.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Redraw Budget Route Board</h3>
+              <p>派生の自作試作。HUD、字幕、動画の三つを「更新頻度」ではなく redraw の根拠と予算で仕分けます。毎 frame の一括描画を避ける判断を触って確認できます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-10-31_html_redraw_budget_route_board.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>XRQuadLayer は 3D 空間に置く厚みのない矩形 layer で、layers feature が必要。</span>
+              <span class="en-copy">XRQuadLayer is a flat spatial layer requiring the layers feature.</span>
+            </li>
+          
+            <li>
+              <span>XRCompositionLayer の redraw は compositor が再投影できない時に次の XR frame で内容を描き直す合図。</span>
+              <span class="en-copy">redraw signals that content must be submitted again on an XR frame.</span>
+            </li>
+          
+            <li>
+              <span>head motion と application content の変更を混同せず、描画理由を receipt 化すると負荷の説明がしやすい。</span>
+              <span class="en-copy">Render receipts separate head motion from application content changes.</span>
+            </li>
+          
+            <li>
+              <span>Layers API は experimental かつ対応差があるため capability probe と fallback が必要。</span>
+              <span class="en-copy">Layers need probing and fallbacks due to uneven availability.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>Layers API は WebGL / media layer を compositor に渡します。XRQuadLayer の redraw event は、既存 texture を再投影できないと compositor が判断した際の明示的な合図です。公式 Samples の Layers 系を参照しつつ、本命ではこの合図を UI 上の evidence として可視化しました。</p>
+          <p class="en-copy">Layers expose compositor-managed surfaces; the main sample turns redraw into visible evidence.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Official WebXR samples</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>cyan は再投影できる提出済み layer、amber は redraw が必要な stale layer、green は予算内で再提出できた route として扱います。head motion を押しても再描画にならず、redraw event 後だけ texture version が進むため、ユーザーにも renderer の判断が読めます。</p>
+          <p class="en-copy">Color distinguishes reprojectable, stale, and accepted render routes.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では immersive-vr を requiredFeatures: ['layers'] で要求し、XRWebGLBinding.createQuadLayer() の結果を session.updateRenderState({layers}) に入れます。layer の redraw listener で dirty flag を立て、XR frame 中に binding.getSubImage() の framebuffer へ描画します。対応しない端末は XRWebGLLayer の通常描画へ落とします。</p>
+          <p class="en-copy">Negotiate layers, mark redraw as dirty, submit a subimage on an XR frame, and fall back to XRWebGLLayer.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>redraw の理由、layer 種別、描画 cost、defer 回数を匿名テレメトリーにすると、HUD・字幕・動画のどれが frame budget を押しているか比較できます。ライブ字幕、空間作業手順、360 動画、カメラ映像を組み合わせれば、情報の鮮度と表示負荷を同じ timeline に載せられます。</p>
+          <p class="en-copy">Reason and cost receipts can expose which spatial content consumes the budget.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>各 browser の layers feature 可用性、redraw 発火条件、WebGL と media layer の差、session end 時の resource 解放、foveation / viewport scale と layer 解像度の組み合わせを実機で確認します。</p>
+          <p class="en-copy">Watch availability, redraw behavior, media differences, teardown, and resolution policy.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で head motion を押した後は render が skip され、redraw event の後だけ再描画できることを確認してください。派生で全 layer の要求を出すと、予算1では字幕だけが通り、残りが defer されます。</p>
+          <p class="en-copy">Compare head-motion skip with event-driven redraw, then observe budget deferral.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Layers API、MDN、公式 Samples。設計: reprojection と redraw を別 receipt にする。実装: evidence console と budget board。次: 実機 session の redraw timestamp・subimage size・GPU timer を保存し、品質制御と結ぶ。</p>
+          <p class="en-copy">Research led to two receipt-driven prototypes; next is device timing capture.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>XR の表示更新は「画面が動いた」だけで決めるより、「compositor が既存の提出物を使えるか」で分ける方が強いです。redraw を例外的な根拠として残すと、性能最適化は品質を落とす操作ではなく、責任ある再提出の設計になります。</p>
+          <p class="en-copy">Compositor usability is a stronger redraw boundary than apparent motion.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `Layer Redraw Evidence Console` を実装しました。何が動くか: 通常 frame、head motion、redraw event、再描画を順に操作し、texture version と負荷 receipt を確認できます。次に足すなら実 XRQuadLayer の subimage 描画です。派生 `Redraw Budget Route Board` も実装しました。何が動くか: HUD・字幕・動画の redraw 要求を予算1で仕分けます。次に足すなら実 GPU timer と優先度ポリシーです。</p>
+          <p class="en-copy">The main exposes evidence-backed redraw; the derivative routes requests through a tiny budget.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-10-31_html_layer_redraw_evidence_console.html" target="_blank" rel="noreferrer">Today's main sample: Layer Redraw Evidence Console</a></li>
+          
+            <li><a href="../outputs/2026-10-31_html_redraw_budget_route_board.html" target="_blank" rel="noreferrer">Today's derivative sample: Redraw Budget Route Board</a></li>
+          
+            <li><a href="https://immersive-web.github.io/layers/" target="_blank" rel="noreferrer">WebXR Layers API Level 1</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRQuadLayer" target="_blank" rel="noreferrer">MDN: XRQuadLayer</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web: WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-10-31_html_layer_redraw_evidence_console.html" loading="lazy" title="Layer Redraw Evidence Console"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
