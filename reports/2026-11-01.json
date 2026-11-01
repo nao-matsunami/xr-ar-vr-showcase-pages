@@ -1,0 +1,107 @@
+{
+  "date": "2026-11-01",
+  "headline": "WebXR Anchors を配置ではなくライフサイクルとして扱う",
+  "headlineEn": "Treating WebXR Anchors as a lifecycle, not just placement",
+  "summary": "アンカーの hit・生成・追跡喪失・削除と、品質低下時の handoff を分けて操作できる自作サンプル2本を追加しました。",
+  "summaryEn": "Two original prototypes separate anchor lifecycle receipts from confidence-based handoff decisions.",
+  "keyTopics": [
+    "WebXR Anchors は XRFrame.createAnchor() で生成し、XRAnchor.anchorSpace を基準に内容を配置できる。",
+    "アンカーは追跡できない frame を前提に、pose 不在と削除を通常の状態として扱う必要がある。",
+    "Hit Test と Anchors の公式サンプルは、surface 候補と長期配置の役割を分けて確認できる。",
+    "品質が落ちた時の表示移動は自動化せず、候補・確認・handoff の順にすると空間UIの意味を守りやすい。"
+  ],
+  "keyTopicsEn": [
+    "Anchors are created in an XR frame and expose an anchor space.",
+    "Missing poses and deletion are normal lifecycle states.",
+    "Official samples distinguish surface hits from persistent placement.",
+    "Candidate and confirmation preserve spatial meaning during handoff."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Anchor Lifecycle Receipt Lab",
+      "url": "../outputs/2026-11-01_html_anchor_lifecycle_receipt_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Anchor Confidence Handoff Board",
+      "url": "../outputs/2026-11-01_html_anchor_confidence_handoff_board.html"
+    },
+    {
+      "label": "WebXR Anchors Module",
+      "url": "https://immersive-web.github.io/anchors/"
+    },
+    {
+      "label": "MDN: XRAnchor",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRAnchor"
+    },
+    {
+      "label": "Official WebXR samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Immersive Web の公式 Samples は Anchors、Hit Test、Hit Test with Anchors を別ページとして示しています。これは、面を見つける瞬間と、その後の内容を空間に留める責任を混ぜない設計です。本命ではこの境界を hit / create / pose / delete の receipt にして、失敗も操作可能な状態として見せました。",
+      "bodyEn": "Official samples separate hits, anchors, and their combination; the main sample makes each lifecycle boundary explicit.",
+      "links": [
+        {
+          "label": "Official anchors sample",
+          "url": "https://immersive-web.github.io/webxr-samples/anchors.html"
+        },
+        {
+          "label": "Official hit-test anchors sample",
+          "url": "https://immersive-web.github.io/webxr-samples/hit-test-anchors.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "mint は追跡中、amber は pose が得られない一時状態、rose は削除済み handle とし、色ではなく次に可能な操作で意味を分けます。派生では confidence が下がってもラベルを勝手に動かさず、候補 B とユーザー確認を通して handoff します。",
+      "bodyEn": "Color and controls distinguish tracked, unavailable, and deleted states; handoff waits for confirmation."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装時は immersive-ar session で anchors feature を交渉し、XRFrame.createAnchor(anchorPose, referenceSpace) または XRHitTestResult.createAnchor() を frame 中に呼びます。XRAnchor.anchorSpace を getPose() し、null の frame は古い pose を真実として使わず描画保留にします。不要な anchor は delete() し、session 終了時にも参照を外します。",
+      "bodyEn": "Negotiate anchors, create them in-frame, accept null poses, and release handles deliberately."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "hit candidate、生成時刻、pose 欠落、削除、handoff 確認を匿名ログにすれば、空間ラベル・博物館展示・現場手順・カメラARのどこで意味が切れるかを比較できます。音声案内、画像認識、共有作業UIと組み合わせる場合も、コンテンツIDと anchor handle を別に保つと復元方針を選べます。",
+      "bodyEn": "Lifecycle logs can reveal where spatial meaning breaks across labels, guides, and operational tools."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "browser ごとの anchors feature 可用性、hit result からの anchor 生成の差、tracking が途切れた際の UX、session restart 後の再配置方針、永続化や共有に関わる privacy 境界を実機で確認します。",
+      "bodyEn": "Watch support, creation paths, loss UX, restart policy, and privacy boundaries."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で hit → create → tracking loss → recover → delete を順に押し、削除済み handle を再利用できないことを確認してください。派生では品質を下げ、B を候補にしてから handoff を確定すると、ラベルが確認前には動かないことを確認できます。",
+      "bodyEn": "Walk the lifecycle, then verify that a confidence handoff does not move a label before confirmation."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Anchors Module、MDN、公式 Samples。設計: 空間配置を lifecycle receipt に分解。実装: lifecycle lab と confidence handoff board。次: 実機の hit pose・anchor pose・欠落 frame を記録し、復帰時の表示ポリシーを比較します。",
+      "bodyEn": "Research informed receipt-driven lifecycle and handoff prototypes; next is device evidence capture."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "アンカーは「置いた」という一回の成功ではなく、「いまどの座標を信じてよいか」を毎 frame 問う契約です。生成だけを華やかにせず、喪失・削除・再配置の説明を先に設計すると、ARの空間的な約束を守りやすくなります。",
+      "bodyEn": "An anchor is an ongoing trust contract, not a one-time placement success."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Anchor Lifecycle Receipt Lab` を実装しました。何が動くか: surface hit、anchor 生成、tracking loss / recover、delete を操作し、各 receipt を確認できます。次に足すなら実機 XRFrame の pose 記録です。派生 `Anchor Confidence Handoff Board` も実装しました。何が動くか: 信頼度低下から候補 B、確認済み handoff までを操作できます。次に足すなら実 anchor 間のクロスフェードとユーザー入力です。",
+      "bodyEn": "The main operates the anchor lifecycle; the derivative gates a confidence handoff behind confirmation."
+    }
+  ]
+}
