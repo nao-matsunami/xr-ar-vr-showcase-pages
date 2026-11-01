@@ -465,7 +465,7 @@ function renderListPage(days, currentPage, totalPages, basePath, totalItems) {
       line-height: 1.6;
     }
   </style>
-</head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GD2PHJX65F"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GD2PHJX65F');</script></head>
 <body>
   <main class="shell">
     <section class="hero">
@@ -802,7 +802,7 @@ function renderDetailPage(day, allDays, pageNumberMap) {
       }
     }
   </style>
-</head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GD2PHJX65F"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GD2PHJX65F');</script></head>
 <body>
   <main class="shell">
     <section class="hero">
