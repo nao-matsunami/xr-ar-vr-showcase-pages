@@ -256,7 +256,7 @@
       line-height: 1.6;
     }
   </style>
-</head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GD2PHJX65F"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GD2PHJX65F');</script></head>
 <body>
   <main class="shell">
     <section class="hero">
@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 114</span>
+        <span>days: 115</span>
         <span>page: 2 / 10</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -325,6 +325,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-10-19">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.19</p>
+              <h2>WebXR static layer の再描画を receipt として扱う</h2>
+              <p class="card-subtitle">Treating WebXR static-layer redraw as a receipt</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-19" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Layers の `needsRedraw`、redraw event、static layer、WebGPU texture lifetime を参照し、再描画要求から GPU submit / compositor handoff までを記録する本命試作と、8 frame の texture handoff を再生する派生試作を追加しました。</p>
+          <p class="description en-copy">Today's original work records redraw-to-handoff receipts for static layers and replays an eight-frame texture handoff.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-10-19.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-10-19_html_static_layer_redraw_receipt_console.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-10-18">
           <div class="card-top">
             <div>
@@ -574,29 +597,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-10-08.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-10-08_html_frame_telemetry_schema_mapper.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-10-07">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.10.07</p>
-              <h2>予測フレーム予算で Space Warp 復帰を先読みする</h2>
-              <p class="card-subtitle">Reading Space Warp recovery through a predictive frame budget</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-10-07" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">W3C WebXR Layers / Depth、Meta の WebXR Space Warp と WebGPU foveation、Immersive Web WebGPU samples を参照し、次フレームの描画 route を先読みする自作サンプル2本を追加しました。</p>
-          <p class="description en-copy">After checking W3C WebXR Layers / Depth, Meta WebXR Space Warp and WebGPU foveation notes, and Immersive Web WebGPU samples, today's original work adds two samples for predicting next-frame rendering routes.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-10-07.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-10-07_html_predictive_frame_budget_governor.html">代表サンプル / Sample</a>
           </div>
         </article>
       

@@ -1,0 +1,103 @@
+{
+  "date": "2026-11-02",
+  "headline": "WebXR Plane Detection を形状更新と pose 更新に分けて扱う",
+  "headlineEn": "Separating WebXR plane geometry updates from pose updates",
+  "summary": "平面ポリゴンの更新、毎 frame の pose、追跡集合からの除外を台帳化する本命と、環境形状の開示粒度を比較する派生の自作サンプル2本を追加しました。",
+  "summaryEn": "Two original prototypes separate plane lifecycle receipts and compare geometry disclosure levels.",
+  "keyTopics": [
+    "Plane Detection は immersive AR session で plane-detection feature を要求し、XRFrame.detectedPlanes から取得する。",
+    "XRPlane.lastChangedTime は polygon 等の属性更新の時刻であり、planeSpace の pose 変化は含まれない。",
+    "plane が detectedPlanes から消えたら、アプリ側の台帳から除外する。",
+    "polygon と semanticLabel は実環境の情報になり得るため、粒度低減・量子化・非公開が privacy の選択肢になる。"
+  ],
+  "keyTopicsEn": [
+    "Plane detection is negotiated for immersive AR and read from XRFrame.detectedPlanes.",
+    "lastChangedTime tracks attributes, not plane-space pose changes.",
+    "Missing planes should be removed from the app ledger.",
+    "Geometry and labels require deliberate privacy choices."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Plane Change Ledger Lab",
+      "url": "../outputs/2026-11-02_html_plane_change_ledger_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Plane Privacy Detail Mixer",
+      "url": "../outputs/2026-11-02_html_plane_privacy_detail_mixer.html"
+    },
+    {
+      "label": "WebXR Plane Detection Module",
+      "url": "https://immersive-web.github.io/plane-detection/"
+    },
+    {
+      "label": "Official WebXR plane detection sample",
+      "url": "https://immersive-web.github.io/webxr-samples/proposals/plane-detection.html"
+    },
+    {
+      "label": "WebXR Device API",
+      "url": "https://immersive-web.github.io/webxr/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Immersive Web の公式 plane-detection sample は平面データを使った JavaScript の hit test と Anchors を結びます。一方、仕様は polygon の属性更新と pose の更新を明確に別扱いにしています。本命ではこの見落としやすい差を、geometry / pose / removed の receipt として個別に操作できるようにしました。",
+      "bodyEn": "The official sample combines plane data, hit testing, and anchors; this prototype makes geometry, pose, and removal independent receipts.",
+      "links": [
+        {
+          "label": "Official plane detection sample",
+          "url": "https://immersive-web.github.io/webxr-samples/proposals/plane-detection.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "mint は追跡中の形状、amber は polygon 更新、cyan の点は形状を変えない pose の移動として見せます。派生では同じ平面を high / mid / low detail に切り替え、精密さを単なる品質ではなく利用目的に応じた開示契約として扱います。",
+      "bodyEn": "Color separates tracked geometry, polygon revisions, and pose-only movement; the derivative treats detail as a disclosure contract."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では requestSession('immersive-ar', {requiredFeatures:['plane-detection']}) を試し、各 XRFrame の detectedPlanes を前 frame の Map と比較します。新規 plane は lastChangedTime と polygon をキャッシュし、時刻が進んだものだけ再メッシュします。ただし getPose(plane.planeSpace, referenceSpace) は毎 frame 求め、null なら描画を保留します。",
+      "bodyEn": "Diff detectedPlanes for identity and geometry, but query plane poses every frame and tolerate null poses."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "polygon の頂点数、更新頻度、orientation、semanticLabel の有無、pose 欠落を匿名化して残せば、展示AR、作業支援、室内ナビで必要な粒度を比較できます。カメラ画像や AI の物体認識と組み合わせる際も、用途ごとに形状を丸める・label を落とす方針を別レイヤーに置くと安全です。",
+      "bodyEn": "Anonymized geometry change metrics can compare appropriate detail across exhibitions, guidance, and operational AR."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "各ブラウザの plane-detection 対応、initiateRoomCapture() の可用性、plane identity の消失・再発見、semantic label の実装差、Anchors と組み合わせた時の privacy 境界を実機で観察します。",
+      "bodyEn": "Watch support, room capture, identity churn, semantic labels, and anchor privacy boundaries."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で detect → polygon update → pose only → remove を順に押してください。pose の移動で polygon 更新が発生しないことを確認できます。派生では用途を切り替え、同じ面でも必要な頂点数と semantic 情報が変わることを decision log で確かめてください。",
+      "bodyEn": "Walk the ledger sequence, then compare disclosure decisions in the derivative."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Plane Detection Module、Device API、公式 proposal sample。設計: geometry と pose の独立、privacy の粒度。実装: change ledger と detail mixer。次: 実機で frame ごとの plane diff を収集し、anchor 生成の前後で必要な情報量を測ります。",
+      "bodyEn": "Research led to separate geometry/pose and privacy prototypes; next is device-side frame-diff capture."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "plane detection は部屋をそのまま取り込む API ではなく、変化する近似形状を渡す契約です。描画の効率だけでなく、何を更新とみなし、どの形状まで公開するかを設計に含めると、AR はより説明可能になります。",
+      "bodyEn": "Plane detection is a contract for changing approximations, so update semantics and disclosure belong in the design."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Plane Change Ledger Lab` を実装しました。何が動くか: plane の検出、polygon 更新、pose のみの移動、追跡集合からの除外を別 receipt として操作できます。次に足すなら実機 XRFrame の polygon diff と pose を記録します。派生 `Plane Privacy Detail Mixer` も実装しました。何が動くか: 平面の high / mid / low detail と semantic 情報を用途別に切り替え、判断ログを生成します。次に足すなら実際の polygon 簡略化アルゴリズムと同意UIです。",
+      "bodyEn": "The main separates plane lifecycle receipts; the derivative compares disclosure detail and exports a decision log."
+    }
+  ]
+}
