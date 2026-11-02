@@ -1,0 +1,103 @@
+{
+  "date": "2026-11-03",
+  "headline": "WebXR Mesh Detection を形状改訂と信頼度の窓として扱う",
+  "headlineEn": "Treating WebXR mesh detection as geometry revisions and confidence windows",
+  "summary": "環境メッシュの topology 更新と pose 更新を分ける本命、および信頼度で配置操作を制限する派生の自作サンプル2本を追加しました。",
+  "summaryEn": "Two original prototypes separate mesh revisions from pose updates and gate placement by confidence.",
+  "keyTopics": [
+    "Mesh Detection は immersive AR で mesh-detection feature を交渉し、XRFrame.detectedMeshes から読む。",
+    "XRMesh の vertices / indices と lastChangedTime は形状の更新を示し、meshSpace の pose は別途毎 frame 求める。",
+    "detectedMeshes から消えた identity の GPU/CPU cache はアプリ側で解放する。",
+    "提案段階の Mesh Detection は対応差を前提に、hit-test 等の縮退導線を設計する。"
+  ],
+  "keyTopicsEn": [
+    "Mesh detection is negotiated for immersive AR and read from XRFrame.detectedMeshes.",
+    "Geometry revisions and mesh-space pose updates are distinct.",
+    "Disappearing mesh identities require cache cleanup.",
+    "The proposal needs capability-aware fallbacks."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Mesh Revision Ledger Lab",
+      "url": "../outputs/2026-11-03_html_mesh_revision_ledger_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Mesh Confidence Window",
+      "url": "../outputs/2026-11-03_html_mesh_confidence_window.html"
+    },
+    {
+      "label": "WebXR Mesh Detection Module",
+      "url": "https://immersive-web.github.io/real-world-meshing/"
+    },
+    {
+      "label": "Official WebXR mesh detection sample",
+      "url": "https://immersive-web.github.io/webxr-samples/proposals/mesh-detection.html"
+    },
+    {
+      "label": "WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Immersive Web の公式 Mesh Detection sample は取得した mesh を JavaScript 側の hit test と Anchors に結びます。ここで重要なのは、面らしく見えるものを一度だけ取得するのではなく、形状バッファと座標 pose が別々に変わることです。本命はその差を geometry / pose / removed の receipt として個別に操作できます。",
+      "bodyEn": "The official sample links detected meshes with hit testing and anchors; the main prototype separates geometry, pose, and removal receipts.",
+      "links": [
+        {
+          "label": "Official mesh detection sample",
+          "url": "https://immersive-web.github.io/webxr-samples/proposals/mesh-detection.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "mint は追跡中の mesh、amber は topology の改訂、移動は geometry を変えない pose receipt として見せます。派生では high / mid / low の信頼度の窓で place、preview、block を切り替え、精密さの見た目ではなく許可する行為を変えます。",
+      "bodyEn": "Color separates tracking, topology revisions, and pose-only motion; the derivative maps confidence to allowed actions."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機では requestSession('immersive-ar', {requiredFeatures:['mesh-detection']}) を試し、XRFrame.detectedMeshes を前 frame の Map と比較します。新規または lastChangedTime が進んだ mesh だけ vertices / indices を再アップロードし、getPose(mesh.meshSpace, referenceSpace) は毎 frame 求めます。null pose は古い座標を真実として描かず、保留状態にします。",
+      "bodyEn": "Diff mesh identities and geometry revisions, but query mesh-space pose every frame and tolerate null poses."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "頂点数、三角形数、更新頻度、pose 欠落、配置を許可した confidence window を匿名ログにすれば、展示AR・保守支援・室内ナビで何を環境形状に任せるか比較できます。深度、画像認識、音声案内と組み合わせる際も、mesh を確定した真実ではなく入力の一つとして扱えます。",
+      "bodyEn": "Anonymized revision and confidence logs can compare mesh policy across guidance, exhibits, and operational AR."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "各ランタイムの mesh-detection 対応、vertices / indices の型と更新頻度、identity の消失・再発見、Anchors と組み合わせた時の安全な配置条件、深度検知との役割分担を実機で観察します。",
+      "bodyEn": "Watch support, buffer churn, identity changes, anchor safety, and the division of labor with depth sensing."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で detect → topology revision → pose only → remove を順に押してください。形状を更新しない移動で buffer を作り直さない方針を確認できます。派生では mid で preview してから commit し、low では commit が止まることを確認してください。",
+      "bodyEn": "Walk the revision sequence, then verify that low-confidence geometry blocks placement."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Mesh Detection Module、Device API、公式 proposal sample。設計: geometry と pose の分離、confidence による操作制御。実装: revision ledger と confidence window。次: 実機 frame の buffer 更新量と pose 欠落を記録し、hit test / anchor の利用条件を比較します。",
+      "bodyEn": "Research led to revision and confidence prototypes; next is recording device-side buffer and pose evidence."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "環境メッシュは部屋の完成モデルではなく、変化する近似へのアクセスです。更新を無差別に再描画するより、何が形状改訂で何が座標変化かを分け、信頼度に応じて許可する操作を狭めると、AR の約束を説明しやすくなります。",
+      "bodyEn": "An environment mesh is access to a changing approximation, so revision semantics and action policy should be explicit."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Mesh Revision Ledger Lab` を実装しました。何が動くか: mesh の検出、vertices / indices の改訂、pose のみの移動、追跡集合からの除外を別 receipt として操作できます。次に足すなら実機 XRFrame の geometry diff と再アップロード計測です。派生 `Mesh Confidence Window` も実装しました。何が動くか: high / mid / low の信頼度で配置・preview・block を切り替え、decision をコピーできます。次に足すなら実際の深度品質、アンカー生成、確認UIの統合です。",
+      "bodyEn": "The main operates mesh lifecycle receipts; the derivative gates placement by a confidence window and exports the decision."
+    }
+  ]
+}
