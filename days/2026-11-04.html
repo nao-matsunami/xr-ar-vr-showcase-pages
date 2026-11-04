@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR Depth Sensing を安全マージンと鮮度で扱う | 2026-11-04</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GD2PHJX65F"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GD2PHJX65F');</script></head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.11.04</p>
+      <h1>WebXR Depth Sensing を安全マージンと鮮度で扱う</h1>
+      <p class="hero-subtitle">Treating WebXR depth sensing with safety margins and freshness</p>
+      <p>深度の前後判定に安全マージンを加える本命と、深度の capture 鮮度で配置操作を制御する派生の自作サンプル2本を追加しました。</p>
+      <p class="en-copy">Two original prototypes add safety margins to occlusion and gate placement by depth freshness.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-11-04_html_depth_margin_occlusion_lab.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-11-03.html">← 2026.11.03</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Depth Margin Occlusion Lab</h3>
+              <p>自作の最小試作。深度を「物体より手前か」だけで決めず、測定値・仮想物までの距離・安全マージンを receipt として分離し、境界でのちらつきを保留にします。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-04_html_depth_margin_occlusion_lab.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Depth Freshness Gate</h3>
+              <p>派生の自作試作。深度の値があっても capture 時刻と現在の表示時刻が離れれば、配置の確定を preview / block に落とします。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-04_html_depth_freshness_gate.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>Depth Sensing は immersive XR session の depth-sensing feature と深度 type / usage / format の組合せで交渉する。</span>
+              <span class="en-copy">Depth sensing is negotiated with feature, type, usage, and format preferences.</span>
+            </li>
+          
+            <li>
+              <span>XRWebGLDepthInformation の raw depth は rawValueToMeters でメートル換算し、normDepthBufferFromNormView を通して座標を対応させる。</span>
+              <span class="en-copy">Raw depth needs meter conversion and normalized-view coordinate mapping.</span>
+            </li>
+          
+            <li>
+              <span>深度情報は animation frame 中だけアクセスでき、取得できない・古い・境界に近い値を確定した遮蔽として扱わない。</span>
+              <span class="en-copy">Missing, stale, and boundary-adjacent depth should not become certain occlusion.</span>
+            </li>
+          
+            <li>
+              <span>公式の GPU / CPU depth sample は提案中の機能であり、対応可否と縮退導線を先に設計する。</span>
+              <span class="en-copy">Depth proposals need capability-aware fallbacks.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>Immersive Web の公式 sample には CPU で深度を読むものと、projection layer で簡易遮蔽を行うものがあります。面白いのは、深度が単なる衝突判定ではなく、表示物を現実の奥へ退かせるレンダリング入力になる点です。本命はこの判断を depth 値・仮想物の深度・margin の receipt に分け、境界で即座に表示/非表示を反転させません。</p>
+          <p class="en-copy">Official samples show CPU depth access and simple projection-layer occlusion; the main prototype exposes the margin decision rather than making depth binary.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/proj-multiview-occlusion.html" target="_blank" rel="noreferrer">Official projection-layer occlusion sample</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>mint の物体は表示可能、amber は深度境界の保留、red は遮蔽または stale depth による停止として示します。派生は同じ配置マーカーを、fresh なら commit、aging なら preview + confirm、stale なら block に遷移させます。深度の精度を数値だけで見せず、ユーザーに許す行為を変える表現です。</p>
+          <p class="en-copy">Color encodes show, hold, and stop; the derivative turns depth age into different allowed actions.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実機では immersive-ar の optionalFeatures に depth-sensing を置き、depthSensing の usagePreference / dataFormatPreference を指定して session.depthUsage と depthDataFormat を確認します。XRWebGLBinding.getDepthInformation(view) は XR animation frame 内で呼び、rawValueToMeters と normDepthBufferFromNormView を shader に渡します。値が null、座標が未対応、または時刻差が大きいときは、遮蔽を断定せずフェード・保留・再取得に落とします。</p>
+          <p class="en-copy">Negotiate depth sensing, access it inside the XR animation frame, pass conversion data to the shader, and degrade safely for absent or stale depth.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>本日の receipt は環境深度、仮想物深度、margin、capture の鮮度、最終 action を持ちます。匿名化した集計なら、展示ARの説明札、遠隔支援の注意領域、ゲームの遮蔽物、カメラ映像や空間音響の演出で、どの安全策が視覚的なちらつきや誤配置を減らすか比較できます。深度を恒久的な室内モデルとして保存せず、用途に必要な判定ログだけに絞る設計にもつながります。</p>
+          <p class="en-copy">Margin, age, and action receipts can evaluate safe depth policy without retaining a persistent room model.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>depth-sensing の実装対応、raw / smooth の見た目差、CPU / GPU usage のレイテンシー、ビューごとの座標変換、depthActive が false になる場面、frame capture と表示の時刻差を実機で観察します。Hit Test、Anchors、Mesh / Plane Detection のどれを優先して配置を許可するかも比較対象です。</p>
+          <p class="en-copy">Watch runtime support, raw versus smooth output, CPU/GPU latency, transforms, inactive depth, and cross-feature placement policy.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で「現実面を手前へ」→「境界 + margin」→「現実面を奥へ」を順に押してください。非表示・保留・表示が変わり、境界では決め打ちしないことを確認できます。派生では stale 244 ms を選んで commit が止まること、fresh 18 ms では通ることを比べてください。</p>
+          <p class="en-copy">Walk the main sample through occlude, hold, and show, then compare a blocked stale commit with a fresh one.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Depth Sensing Module と公式 CPU / occlusion sample。設計: meter 換算、view-to-depth transform、margin、freshness を別の判断材料にする。実装: margin occlusion と freshness gate。次: 実機の depth frame を shader に渡し、hit test / anchor の確定条件へ接続します。</p>
+          <p class="en-copy">Research led to margin and freshness prototypes; next is real depth-frame shader use plus hit-test and anchor policy.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>深度は現実の正解画像ではなく、特定時刻・特定viewで得た測定です。遮蔽が少し不安定でも、保留やフェードを明示すれば、誤って現実物を貫通して見せるより体験の約束を保ちやすくなります。XRでは見た目の即応性と測定の不確かさを同じUIで扱うことが重要です。</p>
+          <p class="en-copy">Depth is a time- and view-bound measurement, so explicit uncertainty can be more trustworthy than brittle occlusion.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `Depth Margin Occlusion Lab` を実装しました。何が動くか: 現実面の深度を手前・境界・奥へ切り替え、margin に基づく occlude / hold / show を確認でき、WebXR availability probe と receipt コピーも行えます。次に足すなら実機の XRWebGLDepthInformation を shader に接続します。派生 `Depth Freshness Gate` も実装しました。何が動くか: 18 / 86 / 244 ms の深度 age に応じて commit / preview / block を切り替えます。次に足すなら実測タイムスタンプ、アンカー作成、ユーザー確認UIを統合します。</p>
+          <p class="en-copy">The main tests margin-based occlusion; the derivative gates placement by depth age. Next: real depth data, timestamps, anchors, and confirmation.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-11-04_html_depth_margin_occlusion_lab.html" target="_blank" rel="noreferrer">Today's main sample: Depth Margin Occlusion Lab</a></li>
+          
+            <li><a href="../outputs/2026-11-04_html_depth_freshness_gate.html" target="_blank" rel="noreferrer">Today's derivative sample: Depth Freshness Gate</a></li>
+          
+            <li><a href="https://immersive-web.github.io/depth-sensing/" target="_blank" rel="noreferrer">WebXR Depth Sensing Module</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/proposals/phone-ar-depth.html" target="_blank" rel="noreferrer">Official AR Depth API CPU sample</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/layers-samples/proj-multiview-occlusion.html" target="_blank" rel="noreferrer">Official projection-layer occlusion sample</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-11-04_html_depth_margin_occlusion_lab.html" loading="lazy" title="Depth Margin Occlusion Lab"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

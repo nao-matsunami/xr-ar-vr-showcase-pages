@@ -1,0 +1,103 @@
+{
+  "date": "2026-11-04",
+  "headline": "WebXR Depth Sensing を安全マージンと鮮度で扱う",
+  "headlineEn": "Treating WebXR depth sensing with safety margins and freshness",
+  "summary": "深度の前後判定に安全マージンを加える本命と、深度の capture 鮮度で配置操作を制御する派生の自作サンプル2本を追加しました。",
+  "summaryEn": "Two original prototypes add safety margins to occlusion and gate placement by depth freshness.",
+  "keyTopics": [
+    "Depth Sensing は immersive XR session の depth-sensing feature と深度 type / usage / format の組合せで交渉する。",
+    "XRWebGLDepthInformation の raw depth は rawValueToMeters でメートル換算し、normDepthBufferFromNormView を通して座標を対応させる。",
+    "深度情報は animation frame 中だけアクセスでき、取得できない・古い・境界に近い値を確定した遮蔽として扱わない。",
+    "公式の GPU / CPU depth sample は提案中の機能であり、対応可否と縮退導線を先に設計する。"
+  ],
+  "keyTopicsEn": [
+    "Depth sensing is negotiated with feature, type, usage, and format preferences.",
+    "Raw depth needs meter conversion and normalized-view coordinate mapping.",
+    "Missing, stale, and boundary-adjacent depth should not become certain occlusion.",
+    "Depth proposals need capability-aware fallbacks."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Depth Margin Occlusion Lab",
+      "url": "../outputs/2026-11-04_html_depth_margin_occlusion_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Depth Freshness Gate",
+      "url": "../outputs/2026-11-04_html_depth_freshness_gate.html"
+    },
+    {
+      "label": "WebXR Depth Sensing Module",
+      "url": "https://immersive-web.github.io/depth-sensing/"
+    },
+    {
+      "label": "Official AR Depth API CPU sample",
+      "url": "https://immersive-web.github.io/webxr-samples/proposals/phone-ar-depth.html"
+    },
+    {
+      "label": "Official projection-layer occlusion sample",
+      "url": "https://immersive-web.github.io/webxr-samples/layers-samples/proj-multiview-occlusion.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Immersive Web の公式 sample には CPU で深度を読むものと、projection layer で簡易遮蔽を行うものがあります。面白いのは、深度が単なる衝突判定ではなく、表示物を現実の奥へ退かせるレンダリング入力になる点です。本命はこの判断を depth 値・仮想物の深度・margin の receipt に分け、境界で即座に表示/非表示を反転させません。",
+      "bodyEn": "Official samples show CPU depth access and simple projection-layer occlusion; the main prototype exposes the margin decision rather than making depth binary.",
+      "links": [
+        {
+          "label": "Official projection-layer occlusion sample",
+          "url": "https://immersive-web.github.io/webxr-samples/layers-samples/proj-multiview-occlusion.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "mint の物体は表示可能、amber は深度境界の保留、red は遮蔽または stale depth による停止として示します。派生は同じ配置マーカーを、fresh なら commit、aging なら preview + confirm、stale なら block に遷移させます。深度の精度を数値だけで見せず、ユーザーに許す行為を変える表現です。",
+      "bodyEn": "Color encodes show, hold, and stop; the derivative turns depth age into different allowed actions."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機では immersive-ar の optionalFeatures に depth-sensing を置き、depthSensing の usagePreference / dataFormatPreference を指定して session.depthUsage と depthDataFormat を確認します。XRWebGLBinding.getDepthInformation(view) は XR animation frame 内で呼び、rawValueToMeters と normDepthBufferFromNormView を shader に渡します。値が null、座標が未対応、または時刻差が大きいときは、遮蔽を断定せずフェード・保留・再取得に落とします。",
+      "bodyEn": "Negotiate depth sensing, access it inside the XR animation frame, pass conversion data to the shader, and degrade safely for absent or stale depth."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "本日の receipt は環境深度、仮想物深度、margin、capture の鮮度、最終 action を持ちます。匿名化した集計なら、展示ARの説明札、遠隔支援の注意領域、ゲームの遮蔽物、カメラ映像や空間音響の演出で、どの安全策が視覚的なちらつきや誤配置を減らすか比較できます。深度を恒久的な室内モデルとして保存せず、用途に必要な判定ログだけに絞る設計にもつながります。",
+      "bodyEn": "Margin, age, and action receipts can evaluate safe depth policy without retaining a persistent room model."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "depth-sensing の実装対応、raw / smooth の見た目差、CPU / GPU usage のレイテンシー、ビューごとの座標変換、depthActive が false になる場面、frame capture と表示の時刻差を実機で観察します。Hit Test、Anchors、Mesh / Plane Detection のどれを優先して配置を許可するかも比較対象です。",
+      "bodyEn": "Watch runtime support, raw versus smooth output, CPU/GPU latency, transforms, inactive depth, and cross-feature placement policy."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で「現実面を手前へ」→「境界 + margin」→「現実面を奥へ」を順に押してください。非表示・保留・表示が変わり、境界では決め打ちしないことを確認できます。派生では stale 244 ms を選んで commit が止まること、fresh 18 ms では通ることを比べてください。",
+      "bodyEn": "Walk the main sample through occlude, hold, and show, then compare a blocked stale commit with a fresh one."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Depth Sensing Module と公式 CPU / occlusion sample。設計: meter 換算、view-to-depth transform、margin、freshness を別の判断材料にする。実装: margin occlusion と freshness gate。次: 実機の depth frame を shader に渡し、hit test / anchor の確定条件へ接続します。",
+      "bodyEn": "Research led to margin and freshness prototypes; next is real depth-frame shader use plus hit-test and anchor policy."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "深度は現実の正解画像ではなく、特定時刻・特定viewで得た測定です。遮蔽が少し不安定でも、保留やフェードを明示すれば、誤って現実物を貫通して見せるより体験の約束を保ちやすくなります。XRでは見た目の即応性と測定の不確かさを同じUIで扱うことが重要です。",
+      "bodyEn": "Depth is a time- and view-bound measurement, so explicit uncertainty can be more trustworthy than brittle occlusion."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Depth Margin Occlusion Lab` を実装しました。何が動くか: 現実面の深度を手前・境界・奥へ切り替え、margin に基づく occlude / hold / show を確認でき、WebXR availability probe と receipt コピーも行えます。次に足すなら実機の XRWebGLDepthInformation を shader に接続します。派生 `Depth Freshness Gate` も実装しました。何が動くか: 18 / 86 / 244 ms の深度 age に応じて commit / preview / block を切り替えます。次に足すなら実測タイムスタンプ、アンカー作成、ユーザー確認UIを統合します。",
+      "bodyEn": "The main tests margin-based occlusion; the derivative gates placement by depth age. Next: real depth data, timestamps, anchors, and confirmation."
+    }
+  ]
+}
