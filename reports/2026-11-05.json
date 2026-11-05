@@ -1,0 +1,103 @@
+{
+  "date": "2026-11-05",
+  "headline": "WebXR Lighting Estimation を鮮度と開示粒度で扱う",
+  "headlineEn": "Treating WebXR lighting estimation through freshness and disclosure detail",
+  "summary": "光推定を現実照明の断定ではなく、推定値の鮮度と反射の開示粒度として扱う自作サンプル2本を追加しました。",
+  "summaryEn": "Two original prototypes treat lighting as an estimate with freshness and reflection-disclosure policy.",
+  "keyTopics": [
+    "Lighting Estimation は immersive AR session で light-estimation feature を要求し、XRSession.requestLightProbe() と XRFrame.getLightEstimate() で利用する。",
+    "primaryLightDirection / primaryLightIntensity は最も目立つ光の影などに使えるが、推定値はフレームと環境に依存する。",
+    "reflection cube map は現実環境の情報を含み得るため、仕様は低空間周波数・低時間周波数、必要に応じた量子化を促す。",
+    "未対応・未取得・古い推定値では、写実性の主張を下げて中立素材と既定ライトへ縮退する。"
+  ],
+  "keyTopicsEn": [
+    "Lighting estimation is requested as a feature and queried through a light probe and XR frame.",
+    "Primary light values can support shadows, but remain environment- and frame-bound estimates.",
+    "Reflection cube maps can reveal environmental detail, so the spec encourages low-frequency and quantized output.",
+    "Unavailable or stale estimates should degrade to neutral material and default lighting."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Light Probe Confidence Lab",
+      "url": "../outputs/2026-11-05_html_light_probe_confidence_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Reflection Privacy Budget",
+      "url": "../outputs/2026-11-05_html_reflection_privacy_budget.html"
+    },
+    {
+      "label": "WebXR Lighting Estimation API Level 1",
+      "url": "https://www.w3.org/TR/webxr-lighting-estimation-1/"
+    },
+    {
+      "label": "Lighting Estimation Editor's Draft",
+      "url": "https://immersive-web.github.io/lighting-estimation/"
+    },
+    {
+      "label": "Lighting Estimation explainer",
+      "url": "https://github.com/immersive-web/lighting-estimation/blob/main/lighting-estimation-explainer.md"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "W3C の Lighting Estimation API は、現実の光へ仮想物を近づけるために、light probe と frame ごとの XRLightEstimate を分けています。primary light は影に、reflection cube map は image based lighting に使えます。面白いのは、見た目を豪華にする値であると同時に、周囲環境に関する推定でもある点です。本命は光量の数値を正解として固定せず、estimate age によって live / hold / neutral へ描画方針を変えます。",
+      "bodyEn": "The API separates a light probe from per-frame estimates; the main prototype changes rendering policy as an estimate ages instead of treating it as ground truth.",
+      "links": [
+        {
+          "label": "WebXR Lighting Estimation API Level 1",
+          "url": "https://www.w3.org/TR/webxr-lighting-estimation-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命では mint を新しい推定、amber を古くなった推定、red を未取得として、球体の拡散光・影・光線の強さを変えます。派生では同じ反射を coarse / balanced / detailed に分け、詳細モードだけを追加同意の対象にします。写実性のスライダーを、ユーザーが受け取る空間情報の粒度と結び付ける表現です。",
+      "bodyEn": "Freshness drives visual confidence, while the derivative turns reflection fidelity into a disclosure policy with consent for detailed output."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機では immersive-ar の optionalFeatures または requiredFeatures に light-estimation を含め、session.requestLightProbe({reflectionFormat: session.preferredReflectionFormat}) を試します。XR animation frame 内で frame.getLightEstimate(probe) を読み、null の場合は既定ライトを維持します。primaryLightDirection は単位ベクトルとして影の向きへ、primaryLightIntensity は HDR 強度として使えます。reflection cube map は更新頻度と解像度を抑え、カメラ権限・表示目的・保存の有無を明示します。",
+      "bodyEn": "Request the feature, create a light probe, query inside the XR frame, handle null safely, and budget reflection resolution and cadence."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "本日の receipt は estimate age、primary light の利用方針、反射の空間詳細・更新頻度・同意状態を持ちます。展示ARでは時刻や天候の演出、EC の製品試着では素材の見え方比較、業務支援では読みやすさ優先の中立照明、空間音響では光の方向と注意喚起の同期に転用できます。環境テクスチャ自体を記録せず、選択された方針と匿名化した品質指標だけを残す構成も可能です。",
+      "bodyEn": "Receipts can combine with exhibit, commerce, operational, and audio experiences while storing policy rather than environmental texture."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "light-estimation の実装対応、requestLightProbe の失敗理由、estimate が null になる頻度、primary light の方向量子化、reflection format、カメラ許可時と非許可時の差を実機で観察します。Depth Sensing、Anchors、Plane / Mesh Detection と組み合わせたとき、どの測定が古いかを一つの confidence UI にまとめることも追います。",
+      "bodyEn": "Watch support, probe failures, null estimates, quantization, reflection formats, camera-permission behavior, and cross-feature confidence UI."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で fresh → aging → no estimate を順に押してください。光線と素材の鮮やかさが変わり、古い推定で反射を更新しない設計を確認できます。派生では coarse と detailed + consent を比べ、詳細反射が単なる品質設定でなく追加開示を伴う選択であることを確かめてください。",
+      "bodyEn": "Compare fresh, aging, and missing estimates, then compare coarse reflection against consent-gated detailed reflection."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C の Lighting Estimation spec と explainer。設計: light probe、estimate age、primary light、reflection detail を別々に扱う。実装: confidence lab と privacy budget。次: 実機で XRLightProbe を作成し、PBR material、影、depth / anchor の確定条件と同じ receipt に統合します。",
+      "bodyEn": "Research led to separate light, age, and reflection policy prototypes; next is live probe data, PBR materials, and unified spatial receipts."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "現実らしい影や反射は、XR の存在感を大きく上げますが、センシング結果をそのまま真実の画像として扱う理由にはなりません。鮮度、粒度、利用目的を UI とレンダリングの両方で見せれば、機能未対応の端末にも安全に縮退しながら、表現とプライバシーの設計を同時に進められます。",
+      "bodyEn": "Lighting improves presence, but freshness, detail, and purpose should remain explicit so rendering and privacy can degrade together."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Light Probe Confidence Lab` を実装しました。何が動くか: fresh / aging / no estimate を切り替え、primary light、estimate age、live / hold / fallback の方針を可視化し、WebXR probe と receipt コピーを行えます。次に足すなら実機の XRLightProbe と PBR shader を接続します。派生 `Reflection Privacy Budget` も実装しました。何が動くか: coarse / balanced / detailed の反射方針を切り替え、detailed は同意ダイアログを経て適用します。次に足すなら実際の cube map 更新頻度と consent UI を接続します。",
+      "bodyEn": "The main visualizes fresh, aging, and absent light estimates; the derivative applies consent-aware reflection policies. Next: live probes, PBR shaders, cube-map cadence, and consent UI."
+    }
+  ]
+}
