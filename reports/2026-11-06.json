@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-06",
+  "headline": "WebXR Hand Input を頻度の希望と意図分離で扱う",
+  "headlineEn": "Treating WebXR Hand Input through cadence requests and intent separation",
+  "summary": "手追跡の high frequency hint を保証と見なさず、鮮度・揺れ・追跡欠落を分ける本命と、ピンチ／握りの重複を一意に振り分ける派生試作を追加しました。",
+  "summaryEn": "Two original prototypes separate hand-tracking cadence confidence from pinch/grasp intent routing.",
+  "keyTopics": [
+    "Hand Input Module の 2026年10月29日 Working Draft は handTracking.frequencyHint に default / high を定義する。",
+    "high は応答性を望む hint であり、実装は電力・熱・プライバシーなどにより無視または変更できる。",
+    "XRFrame.getJointPose() は frame 時点の関節 pose を返し、利用不能なら null になり得る。",
+    "ピンチは select と squeeze の双方に重なり得るため、対象距離と確認で一意の route を設計する。",
+    "手追跡は明示同意と匿名化を必要とし、high 指定でも保護は緩和されない。"
+  ],
+  "keyTopicsEn": [
+    "The October 29 draft defines default and high hand-tracking frequency hints.",
+    "High is a request, not a guaranteed rate.",
+    "Joint poses are frame-bound and may be null.",
+    "Pinch can overlap select and squeeze, so routing must be explicit.",
+    "Consent and anonymization remain required."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Hand Cadence Confidence Lab",
+      "url": "../outputs/2026-11-06_html_hand_cadence_confidence_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Pinch / Grasp Intent Router",
+      "url": "../outputs/2026-11-06_html_pinch_grasp_intent_router.html"
+    },
+    {
+      "label": "W3C WebXR Hand Input Module - Level 1",
+      "url": "https://www.w3.org/TR/webxr-hand-input-1/"
+    },
+    {
+      "label": "Immersive Web Hand Input Editor's Draft",
+      "url": "https://immersive-web.github.io/webxr-hand-input/"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "W3C の Hand Input Module は、articulated hand pose を WebXR 入力として扱い、最新の draft では frequencyHint を default / high で表します。興味深いのは high が追加サンプルを要求する命令ではなく、応答性・安定性・電力のトレードオフを UA に伝える希望である点です。本命はその不確実性を隠さず、sample age、jitter budget、pose の欠落を別々に見せます。",
+      "bodyEn": "The module treats high frequency as a preference rather than an instruction; the main prototype exposes age, jitter, and missing pose separately.",
+      "links": [
+        {
+          "label": "WebXR Hand Input Module - Level 1",
+          "url": "https://www.w3.org/TR/webxr-hand-input-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命では mint を安定した既定 cadence、amber を high 要望時の device-dependent な揺れ、red を pose 不可として描きます。派生では far pinch を select、near pinch を grasp、曖昧な距離を confirm に一意に振り分けます。視覚的には一つの手の閉じ動作でも、アプリの意味付けは一度しか実行しない設計です。",
+      "bodyEn": "The main maps confidence to color; the derivative routes one closure to exactly one action."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機では immersive-vr / immersive-ar requestSession の requiredFeatures に hand-tracking を含め、必要なら handTracking:{frequencyHint:'high'} を渡します。各 XRInputSource.hand を確認し、XRFrame 内で getJointPose(joint, referenceSpace) を読む際は null を通常の状態として扱います。提示頻度は保証されないため、選択には dwell、距離しきい値、release、明示確認を組み合わせます。",
+      "bodyEn": "Request hand-tracking, treat null pose normally, and combine dwell, thresholds, release, and confirmation."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "receipt は frequency hint、sample age、jitter の扱い、対象距離、最終 route だけを残します。展示では手の存在を抽象的な光に置換し、トレーニングでは意図分離ログを振り返り、業務ARでは確認が必要な操作だけをハイライトできます。関節座標列そのものを保存しないため、演出・分析・安全UIをつなぎつつ個人性の高い生データを避けられます。",
+      "bodyEn": "Policy receipts can power exhibits, training, and operational AR without storing joint-coordinate histories."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "端末ごとの hand-tracking 対応、actual cadence の揺れ、joint radius の欠落時の当たり判定、select / squeeze / generic-hand-select-grasp の実装差、追跡消失から復帰する際の target hold を実機で観察します。ハンドの匿名化・丸めと、アクセシビリティ用 controller fallback の並行設計も追います。",
+      "bodyEn": "Watch device support, actual cadence, radii, profile differences, recovery, anonymization, and controller fallback."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で default → high request → tracking lost を順に押し、high が成功状態ではなく応答性の希望であることを確認してください。派生では far / near / ambiguous を順に押し、同じピンチが select と grasp の両方を増やさないことを確かめてください。",
+      "bodyEn": "Compare cadence states, then verify that each gesture produces one route only."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Hand Input の最新 Working Draft、editor's draft、公式 sample index。設計: cadence と action route を分離。実装: confidence lab と intent router。次: 実機 XRHand の thumb-tip / index-finger-tip 距離、XRJointPose.radius、controller fallback を同じ receipt へ接続します。",
+      "bodyEn": "Research informed separate cadence and action-route prototypes; next is live joint distance, radius, and fallback integration."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "手追跡は自然な入力に見えますが、観測の頻度・欠落・意味付けは端末とアプリが共同で決める部分です。フレームごとの値を即時の確定操作に直結せず、追跡品質と意図の分岐を見える化すれば、XR の身体性と誤操作への強さを両立できます。",
+      "bodyEn": "Visible uncertainty and intent routing make embodied input more resilient than immediate commit."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Hand Cadence Confidence Lab` を実装しました。何が動くか: default / high request / tracking lost を切り替え、sample age、jitter budget、preview / hold 方針を可視化し、マウスで疑似手を動かせます。次に足すなら実機 XRHand と joint pose の記録を接続します。派生 `Pinch / Grasp Intent Router` も実装しました。何が動くか: far / near / ambiguous のピンチを select / grasp / confirm の一つへ振り分け、回数と receipt をコピーできます。次に足すなら実際の thumb-index 距離、release hysteresis、controller fallback を接続します。",
+      "bodyEn": "The main visualizes cadence confidence; the derivative ensures each pinch has one route. Next: live joints, hysteresis, and controller fallback."
+    }
+  ]
+}
