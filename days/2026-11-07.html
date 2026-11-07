@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR DOM Overlay を入力境界と可視性の引き継ぎとして設計する | 2026-11-07</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GD2PHJX65F"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GD2PHJX65F');</script></head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.11.07</p>
+      <h1>WebXR DOM Overlay を入力境界と可視性の引き継ぎとして設計する</h1>
+      <p class="hero-subtitle">Designing WebXR DOM overlays as input boundaries and visibility handoffs</p>
+      <p>DOM Overlay の最前面性と入力境界を可視化する本命、visible / blurred / hidden 時の描画・音・操作の扱いを分ける派生試作を追加しました。</p>
+      <p class="en-copy">Two original prototypes make DOM-overlay input routing and XR visibility handoffs explicit.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-11-07_html_dom_overlay_input_gate_lab.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-11-06.html">← 2026.11.06</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>DOM Overlay Input Gate Lab</h3>
+              <p>自作の最小試作。DOM Overlay を「空間に置く看板」ではなく、XR描画の最前面にある一枚の操作面として扱い、各入力を XR へ渡すか DOM が消費するかを明示します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-07_html_dom_overlay_input_gate_lab.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Visibility Media Handoff Board</h3>
+              <p>自作の派生試作。XR session の visible / visible-blurred / hidden を、単なる画面色ではなく、音・操作・レンダリングの引き継ぎ方針として検証します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-07_html_visibility_media_handoff_board.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>DOM Overlay は immersive session で単一の DOM 要素を透明背景の2D操作面として重ねる機構である。</span>
+              <span class="en-copy">DOM Overlay presents one DOM element as a transparent 2D control surface in immersive sessions.</span>
+            </li>
+          
+            <li>
+              <span>dom-overlay は feature と domOverlay.root を伴って要求し、表示はXR描画やパススルーより前面になる。</span>
+              <span class="en-copy">It is requested with the feature and a domOverlay root and is composited above XR content.</span>
+            </li>
+          
+            <li>
+              <span>DOM操作に対する XR の選択は beforexrselect で抑止でき、同じ入力を二重に確定させない。</span>
+              <span class="en-copy">beforexrselect prevents one DOM interaction from committing an XR selection too.</span>
+            </li>
+          
+            <li>
+              <span>クロスオリジンの重なりでは pose と gamepad が制限され、select を送らない保護が定義される。</span>
+              <span class="en-copy">Cross-origin overlay content limits pose/gamepad data and cancels selection.</span>
+            </li>
+          
+            <li>
+              <span>visibilityState の visible-blurred と hidden では、フレーム頻度・pose精度・入力を通常前提にしない。</span>
+              <span class="en-copy">Blurred and hidden visibility states require a degraded-frame and input plan.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>DOM Overlays は、没入セッション中に一つのDOM要素を透明な2D面として表示するための仕様です。これはワールド固定のUIではなく、設定、説明、確認のような画面固定の操作面に向きます。本命では、透明部分を通る world target、overlay が消費する操作、クロスオリジン境界を別の receipt に分け、見た目の重なりを操作権限の重なりにしない設計を試します。</p>
+          <p class="en-copy">DOM Overlay is a screen-relative control surface, not world-relative UI; the main prototype separates pass-through, DOM-owned, and protected inputs.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/dom-overlays/" target="_blank" rel="noreferrer">DOM Overlays specification</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命は mint をXRターゲットへの通過、amber をDOMが受け持つ確認、red をクロスオリジン保護として描きます。派生は visible を青い生映像、visible-blurred を淡い残像、hidden を遮光として表し、同じシーンが消えても安全な片付け方針を残します。UIを空間物体の上に安易に重ねず、入力の行き先を色と記録で見せる表現です。</p>
+          <p class="en-copy">Color maps input ownership, while the derivative treats visibility as an explicit media and interaction choreography.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実機では requestSession の requiredFeatures または optionalFeatures に dom-overlay を入れ、domOverlay:{root: element} を渡します。overlay 内の操作で world selection を起こしたくない場合は beforexrselect を listen して preventDefault します。XRSession の visibilitychange では visible-blurred を低頻度・入力なしの状態として扱い、hidden では poseを読んだり音を鳴らしたりせず、end と同じ停止処理へ流します。</p>
+          <p class="en-copy">Request dom-overlay with a root, prevent XR select for overlay-owned actions, and treat blurred/hidden as explicit degraded states.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>両試作の receipt は、入力の宛先、XR側へ渡したか、visibilityState、停止したメディアだけを保存します。展示では壁面の説明パネルと空間作品の操作衝突を検証でき、業務ARでは確認UIと設置操作を切り分けられます。カメラ映像やAIの説明を足す場合も、生の視線・姿勢・ゲームパッド列を記録せず、意思決定の境界だけを監査可能にできます。</p>
+          <p class="en-copy">Routing and handoff receipts support exhibits and operational AR without retaining raw pose or controller histories.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>端末ごとの dom-overlay 対応、:xr-overlay によるスタイル差、beforexrselect の発火条件、DOM 内 iframe の実装差、visible-blurred 中の実測フレーム頻度と音声制御を確認します。VRヘッドセット、ハンドヘルドAR、外部モニター併用で、同一UIが二重表示されないかも追います。</p>
+          <p class="en-copy">Watch support, styling, event behavior, iframe handling, real cadence, media, and multi-display behavior.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で world target → overlay control → cross-origin zone を順に押し、確認ボタンが配置操作も同時に確定しないことを確認してください。派生では visible → visible-blurred → hidden を切り替え、hidden で「画面が暗い」だけではなく、音・入力・pose読み取りの方針も停止側になることを見てください。</p>
+          <p class="en-copy">Verify that one overlay action cannot also place an XR object, then compare the three visibility handoffs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: DOM Overlays仕様、WebXR visibility解説、公式sample index。設計: 画面固定UIとワールド入力を分離。実装: Input Gate Lab と Visibility Media Handoff Board。次: 実機 session に dom-overlay、beforexrselect、visibilitychange、音声とセッション終了時の共通cleanupを接続します。</p>
+          <p class="en-copy">Research led to separate routing and visibility prototypes; next is a live session with unified cleanup.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>XRのUIは「目の前に出せる」ことと「空間の対象を操作できる」ことを同じにしない方が強くなります。DOM Overlayは情報を読みやすくしますが、最前面であるぶん入力・プライバシー・可視性の境界を設計する責任も増えます。状態変化を演出ではなく契約として可視化すると、端末差の大きいXRでも安全に拡張できます。</p>
+          <p class="en-copy">Frontmost UI improves readability but makes input, privacy, and visibility boundaries first-class design contracts.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `DOM Overlay Input Gate Lab` を実装しました。何が動くか: world target / overlay control / cross-origin zone を選び、イベントの宛先、XR pose・gamepadの扱い、select結果を可視化してreceiptをコピーできます。次に足すなら実機で dom-overlay と beforexrselect を接続します。派生 `Visibility Media Handoff Board` も実装しました。何が動くか: visible / visible-blurred / hidden を切り替え、描画・音・操作・復帰条件を一緒に表示して計画をコピーできます。次に足すなら実測frame timestamp、音声、session end時のcleanupを接続します。</p>
+          <p class="en-copy">The main visualizes input ownership; the derivative turns visibility into a media and interaction handoff plan. Next: live session events and cleanup.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-11-07_html_dom_overlay_input_gate_lab.html" target="_blank" rel="noreferrer">Today's main sample: DOM Overlay Input Gate Lab</a></li>
+          
+            <li><a href="../outputs/2026-11-07_html_visibility_media_handoff_board.html" target="_blank" rel="noreferrer">Today's derivative sample: Visibility Media Handoff Board</a></li>
+          
+            <li><a href="https://immersive-web.github.io/dom-overlays/" target="_blank" rel="noreferrer">Immersive Web DOM Overlays specification</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr/explainer.html" target="_blank" rel="noreferrer">WebXR Device API visibility explainer</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-11-07_html_dom_overlay_input_gate_lab.html" loading="lazy" title="DOM Overlay Input Gate Lab"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

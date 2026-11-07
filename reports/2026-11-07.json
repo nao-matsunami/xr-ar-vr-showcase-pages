@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-07",
+  "headline": "WebXR DOM Overlay を入力境界と可視性の引き継ぎとして設計する",
+  "headlineEn": "Designing WebXR DOM overlays as input boundaries and visibility handoffs",
+  "summary": "DOM Overlay の最前面性と入力境界を可視化する本命、visible / blurred / hidden 時の描画・音・操作の扱いを分ける派生試作を追加しました。",
+  "summaryEn": "Two original prototypes make DOM-overlay input routing and XR visibility handoffs explicit.",
+  "keyTopics": [
+    "DOM Overlay は immersive session で単一の DOM 要素を透明背景の2D操作面として重ねる機構である。",
+    "dom-overlay は feature と domOverlay.root を伴って要求し、表示はXR描画やパススルーより前面になる。",
+    "DOM操作に対する XR の選択は beforexrselect で抑止でき、同じ入力を二重に確定させない。",
+    "クロスオリジンの重なりでは pose と gamepad が制限され、select を送らない保護が定義される。",
+    "visibilityState の visible-blurred と hidden では、フレーム頻度・pose精度・入力を通常前提にしない。"
+  ],
+  "keyTopicsEn": [
+    "DOM Overlay presents one DOM element as a transparent 2D control surface in immersive sessions.",
+    "It is requested with the feature and a domOverlay root and is composited above XR content.",
+    "beforexrselect prevents one DOM interaction from committing an XR selection too.",
+    "Cross-origin overlay content limits pose/gamepad data and cancels selection.",
+    "Blurred and hidden visibility states require a degraded-frame and input plan."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: DOM Overlay Input Gate Lab",
+      "url": "../outputs/2026-11-07_html_dom_overlay_input_gate_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Visibility Media Handoff Board",
+      "url": "../outputs/2026-11-07_html_visibility_media_handoff_board.html"
+    },
+    {
+      "label": "Immersive Web DOM Overlays specification",
+      "url": "https://immersive-web.github.io/dom-overlays/"
+    },
+    {
+      "label": "WebXR Device API visibility explainer",
+      "url": "https://immersive-web.github.io/webxr/explainer.html"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "DOM Overlays は、没入セッション中に一つのDOM要素を透明な2D面として表示するための仕様です。これはワールド固定のUIではなく、設定、説明、確認のような画面固定の操作面に向きます。本命では、透明部分を通る world target、overlay が消費する操作、クロスオリジン境界を別の receipt に分け、見た目の重なりを操作権限の重なりにしない設計を試します。",
+      "bodyEn": "DOM Overlay is a screen-relative control surface, not world-relative UI; the main prototype separates pass-through, DOM-owned, and protected inputs.",
+      "links": [
+        {
+          "label": "DOM Overlays specification",
+          "url": "https://immersive-web.github.io/dom-overlays/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命は mint をXRターゲットへの通過、amber をDOMが受け持つ確認、red をクロスオリジン保護として描きます。派生は visible を青い生映像、visible-blurred を淡い残像、hidden を遮光として表し、同じシーンが消えても安全な片付け方針を残します。UIを空間物体の上に安易に重ねず、入力の行き先を色と記録で見せる表現です。",
+      "bodyEn": "Color maps input ownership, while the derivative treats visibility as an explicit media and interaction choreography."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機では requestSession の requiredFeatures または optionalFeatures に dom-overlay を入れ、domOverlay:{root: element} を渡します。overlay 内の操作で world selection を起こしたくない場合は beforexrselect を listen して preventDefault します。XRSession の visibilitychange では visible-blurred を低頻度・入力なしの状態として扱い、hidden では poseを読んだり音を鳴らしたりせず、end と同じ停止処理へ流します。",
+      "bodyEn": "Request dom-overlay with a root, prevent XR select for overlay-owned actions, and treat blurred/hidden as explicit degraded states."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "両試作の receipt は、入力の宛先、XR側へ渡したか、visibilityState、停止したメディアだけを保存します。展示では壁面の説明パネルと空間作品の操作衝突を検証でき、業務ARでは確認UIと設置操作を切り分けられます。カメラ映像やAIの説明を足す場合も、生の視線・姿勢・ゲームパッド列を記録せず、意思決定の境界だけを監査可能にできます。",
+      "bodyEn": "Routing and handoff receipts support exhibits and operational AR without retaining raw pose or controller histories."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "端末ごとの dom-overlay 対応、:xr-overlay によるスタイル差、beforexrselect の発火条件、DOM 内 iframe の実装差、visible-blurred 中の実測フレーム頻度と音声制御を確認します。VRヘッドセット、ハンドヘルドAR、外部モニター併用で、同一UIが二重表示されないかも追います。",
+      "bodyEn": "Watch support, styling, event behavior, iframe handling, real cadence, media, and multi-display behavior."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で world target → overlay control → cross-origin zone を順に押し、確認ボタンが配置操作も同時に確定しないことを確認してください。派生では visible → visible-blurred → hidden を切り替え、hidden で「画面が暗い」だけではなく、音・入力・pose読み取りの方針も停止側になることを見てください。",
+      "bodyEn": "Verify that one overlay action cannot also place an XR object, then compare the three visibility handoffs."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: DOM Overlays仕様、WebXR visibility解説、公式sample index。設計: 画面固定UIとワールド入力を分離。実装: Input Gate Lab と Visibility Media Handoff Board。次: 実機 session に dom-overlay、beforexrselect、visibilitychange、音声とセッション終了時の共通cleanupを接続します。",
+      "bodyEn": "Research led to separate routing and visibility prototypes; next is a live session with unified cleanup."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XRのUIは「目の前に出せる」ことと「空間の対象を操作できる」ことを同じにしない方が強くなります。DOM Overlayは情報を読みやすくしますが、最前面であるぶん入力・プライバシー・可視性の境界を設計する責任も増えます。状態変化を演出ではなく契約として可視化すると、端末差の大きいXRでも安全に拡張できます。",
+      "bodyEn": "Frontmost UI improves readability but makes input, privacy, and visibility boundaries first-class design contracts."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `DOM Overlay Input Gate Lab` を実装しました。何が動くか: world target / overlay control / cross-origin zone を選び、イベントの宛先、XR pose・gamepadの扱い、select結果を可視化してreceiptをコピーできます。次に足すなら実機で dom-overlay と beforexrselect を接続します。派生 `Visibility Media Handoff Board` も実装しました。何が動くか: visible / visible-blurred / hidden を切り替え、描画・音・操作・復帰条件を一緒に表示して計画をコピーできます。次に足すなら実測frame timestamp、音声、session end時のcleanupを接続します。",
+      "bodyEn": "The main visualizes input ownership; the derivative turns visibility into a media and interaction handoff plan. Next: live session events and cleanup."
+    }
+  ]
+}
