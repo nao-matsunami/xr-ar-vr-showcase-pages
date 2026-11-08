@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-08",
+  "headline": "WebXR マーカー追跡を配置状態とコンテンツ公開の境界として設計する",
+  "headlineEn": "Designing WebXR marker tracking as stateful placement and content-reveal boundaries",
+  "summary": "不安定な画像／マーカー追跡で、実測・推定・不在を混ぜない本命と、認識結果から詳細コンテンツを自動解放しない派生試作を追加しました。",
+  "summaryEn": "Two original prototypes separate tracking states from placement commitment and consented content reveal.",
+  "keyTopics": [
+    "WebXR Marker Tracking Module は指定した2D画像セットを検出し、現実空間内の姿勢追跡を拡張する開発中のAPIである。",
+    "仕様は不安定で、マーカー／画像追跡を対応前提にせず capability と実機の結果を分けて扱う必要がある。",
+    "空間の pose は XRFrame 時点の値であり、前フレームの姿勢を新しい配置確定の根拠にしない。",
+    "追跡状態の実測と推定継続では、表示の残し方と新規コミットの可否を分けると誤配置を抑えられる。",
+    "画像の存在・内容は機微になり得るため、認識、詳細表示、保存、利用者同意を別々に設計する。"
+  ],
+  "keyTopicsEn": [
+    "The developing Marker Tracking Module detects specified 2D images and tracks poses.",
+    "Capability and observed results must be separate because the API is unstable.",
+    "Spatial poses are frame-specific evidence, not durable commit proof.",
+    "Measured and emulated tracking need distinct presentation and commit policies.",
+    "Recognition, reveal, retention, and consent need separate privacy boundaries."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Marker State Receipt Lab",
+      "url": "../outputs/2026-11-08_html_marker_state_receipt_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Marker Reveal Consent Board",
+      "url": "../outputs/2026-11-08_html_marker_reveal_consent_board.html"
+    },
+    {
+      "label": "WebXR Marker Tracking Module (draft)",
+      "url": "https://immersive-web.github.io/image-tracking/"
+    },
+    {
+      "label": "W3C WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "WebXR Marker Tracking Module は、指定した2D画像を検出して現実空間で追跡するための開発中の拡張です。画像を見つけた瞬間にコンテンツを確定するのではなく、今日の本命では実測 tracked、推定 emulated、結果なしを別の receipt にし、表示とコミットの責務を切り分けます。",
+      "bodyEn": "The developing module motivates a state-aware prototype that separates measured tracking, emulation, and no result.",
+      "links": [
+        {
+          "label": "Marker Tracking Module",
+          "url": "https://immersive-web.github.io/image-tracking/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命は、実測を mint のラベル、推定継続を amber の残像、不在を消灯として表します。派生は同じ認識を粗い手がかり、説明、詳細解放に段階化し、詳細は明示同意なしに表示しません。追跡の強さを華やかな確定演出にせず、利用者が判断できる状態表現にします。",
+      "bodyEn": "Measured, emulated, and absent states get distinct visual policies, while reveal depth is gated by consent."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機では session request で対応可否を確認し、画像追跡の結果と pose をその XRFrame 内の一時的な根拠として扱います。前フレームの姿勢で新規アンカーを確定せず、推定中は表示を保持しても新規コミットは止めます。WebXR Device API の通常フローどおり、isSessionSupported の後に利用者操作から session を開始します。",
+      "bodyEn": "Use frame-bound evidence, block new commitments during emulation, and start supported sessions from user activation."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "両試作は、追跡状態、配置方針、公開粒度、同意だけを receipt 化します。博物館・商品パッケージ・保守現場では、認識した画像そのものやカメラ映像を保存せず、説明を開いたか・確定を保留したかを監査できます。音声ガイド、生成AIの要約、既存CMSと組み合わせる場合も、詳細は同意時だけ取得する境界を保てます。",
+      "bodyEn": "Receipts retain decisions rather than camera imagery, supporting exhibitions and operational AR with auditable boundaries."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "Marker Tracking Module の仕様変更、実装対応、追跡状態のイベント／結果形式、参照画像の物理サイズ指定、低照度・斜視・複数画像時の挙動を追います。あわせて画像の存在が見えること自体のリスクと、端末上だけで完結する説明導線を検証します。",
+      "bodyEn": "Watch specification changes, support, image sizing, difficult-view behavior, and privacy-safe on-device flows."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で tracked → emulated → no result を順に押し、推定中にラベルは残っても新規コミットが止まることを確認してください。派生では詳細を選んだまま consent を off/on し、追跡結果だけでは詳細が開かないことを確認してください。",
+      "bodyEn": "Compare tracking states, then verify that detailed content cannot open from recognition alone."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Marker Tracking Module、WebXR Device API、公式 sample index。設計: 追跡根拠と配置コミット、認識と公開同意を分離。実装: Marker State Receipt Lab と Marker Reveal Consent Board。次: 実機の frame result、物理サイズ、アンカー候補、端末内同意UIを接続します。",
+      "bodyEn": "Research led to two boundary-focused prototypes; next is live frame evidence and device-local consent UI."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "画像追跡は「見えたら出す」機能ではなく、現実の目印を一時的な空間根拠へ変換する機能です。根拠の鮮度と公開の粒度を別軸にすると、追跡揺れには誠実に、コンテンツには慎重に対応できます。未成熟なAPIほど、失敗時の表示と撤回を最初から作品の一部にする価値があります。",
+      "bodyEn": "Treat recognition as temporary spatial evidence and keep evidence freshness independent from content-reveal depth."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Marker State Receipt Lab` を実装しました。何が動くか: tracked / emulated / no result を切り替えると、ラベル表示、配置ポリシー、commit可否が変わり、receiptをコピーできます。次に足すなら実機のXRFrame結果とアンカー候補を接続します。派生 `Marker Reveal Consent Board` も実装しました。何が動くか: 粗い手がかり・説明・詳細を切り替え、詳細は同意なしでは block されます。次に足すなら端末内の期限付き同意と実コンテンツの遅延取得を足します。",
+      "bodyEn": "The main separates tracking states from commitment; the derivative gates detailed reveal with consent. Next: live results, anchors, and expiring device-local consent."
+    }
+  ]
+}

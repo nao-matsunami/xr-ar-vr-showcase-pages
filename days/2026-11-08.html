@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR マーカー追跡を配置状態とコンテンツ公開の境界として設計する | 2026-11-08</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GD2PHJX65F"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GD2PHJX65F');</script></head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.11.08</p>
+      <h1>WebXR マーカー追跡を配置状態とコンテンツ公開の境界として設計する</h1>
+      <p class="hero-subtitle">Designing WebXR marker tracking as stateful placement and content-reveal boundaries</p>
+      <p>不安定な画像／マーカー追跡で、実測・推定・不在を混ぜない本命と、認識結果から詳細コンテンツを自動解放しない派生試作を追加しました。</p>
+      <p class="en-copy">Two original prototypes separate tracking states from placement commitment and consented content reveal.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-11-08_html_marker_state_receipt_lab.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-11-07.html">← 2026.11.07</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Marker State Receipt Lab</h3>
+              <p>自作の最小試作。画像／マーカー追跡を「見つけた」だけで確定せず、実測追跡・推定継続・不在を別の配置ポリシーとして扱います。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-08_html_marker_state_receipt_lab.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Marker Reveal Consent Board</h3>
+              <p>派生試作。参照画像の認識結果を、ただちに詳細コンテンツの解放と結びつけず、公開範囲と同意を分けて扱います。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-08_html_marker_reveal_consent_board.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Marker Tracking Module は指定した2D画像セットを検出し、現実空間内の姿勢追跡を拡張する開発中のAPIである。</span>
+              <span class="en-copy">The developing Marker Tracking Module detects specified 2D images and tracks poses.</span>
+            </li>
+          
+            <li>
+              <span>仕様は不安定で、マーカー／画像追跡を対応前提にせず capability と実機の結果を分けて扱う必要がある。</span>
+              <span class="en-copy">Capability and observed results must be separate because the API is unstable.</span>
+            </li>
+          
+            <li>
+              <span>空間の pose は XRFrame 時点の値であり、前フレームの姿勢を新しい配置確定の根拠にしない。</span>
+              <span class="en-copy">Spatial poses are frame-specific evidence, not durable commit proof.</span>
+            </li>
+          
+            <li>
+              <span>追跡状態の実測と推定継続では、表示の残し方と新規コミットの可否を分けると誤配置を抑えられる。</span>
+              <span class="en-copy">Measured and emulated tracking need distinct presentation and commit policies.</span>
+            </li>
+          
+            <li>
+              <span>画像の存在・内容は機微になり得るため、認識、詳細表示、保存、利用者同意を別々に設計する。</span>
+              <span class="en-copy">Recognition, reveal, retention, and consent need separate privacy boundaries.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>WebXR Marker Tracking Module は、指定した2D画像を検出して現実空間で追跡するための開発中の拡張です。画像を見つけた瞬間にコンテンツを確定するのではなく、今日の本命では実測 tracked、推定 emulated、結果なしを別の receipt にし、表示とコミットの責務を切り分けます。</p>
+          <p class="en-copy">The developing module motivates a state-aware prototype that separates measured tracking, emulation, and no result.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://immersive-web.github.io/image-tracking/" target="_blank" rel="noreferrer">Marker Tracking Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命は、実測を mint のラベル、推定継続を amber の残像、不在を消灯として表します。派生は同じ認識を粗い手がかり、説明、詳細解放に段階化し、詳細は明示同意なしに表示しません。追跡の強さを華やかな確定演出にせず、利用者が判断できる状態表現にします。</p>
+          <p class="en-copy">Measured, emulated, and absent states get distinct visual policies, while reveal depth is gated by consent.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実機では session request で対応可否を確認し、画像追跡の結果と pose をその XRFrame 内の一時的な根拠として扱います。前フレームの姿勢で新規アンカーを確定せず、推定中は表示を保持しても新規コミットは止めます。WebXR Device API の通常フローどおり、isSessionSupported の後に利用者操作から session を開始します。</p>
+          <p class="en-copy">Use frame-bound evidence, block new commitments during emulation, and start supported sessions from user activation.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>両試作は、追跡状態、配置方針、公開粒度、同意だけを receipt 化します。博物館・商品パッケージ・保守現場では、認識した画像そのものやカメラ映像を保存せず、説明を開いたか・確定を保留したかを監査できます。音声ガイド、生成AIの要約、既存CMSと組み合わせる場合も、詳細は同意時だけ取得する境界を保てます。</p>
+          <p class="en-copy">Receipts retain decisions rather than camera imagery, supporting exhibitions and operational AR with auditable boundaries.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>Marker Tracking Module の仕様変更、実装対応、追跡状態のイベント／結果形式、参照画像の物理サイズ指定、低照度・斜視・複数画像時の挙動を追います。あわせて画像の存在が見えること自体のリスクと、端末上だけで完結する説明導線を検証します。</p>
+          <p class="en-copy">Watch specification changes, support, image sizing, difficult-view behavior, and privacy-safe on-device flows.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で tracked → emulated → no result を順に押し、推定中にラベルは残っても新規コミットが止まることを確認してください。派生では詳細を選んだまま consent を off/on し、追跡結果だけでは詳細が開かないことを確認してください。</p>
+          <p class="en-copy">Compare tracking states, then verify that detailed content cannot open from recognition alone.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: Marker Tracking Module、WebXR Device API、公式 sample index。設計: 追跡根拠と配置コミット、認識と公開同意を分離。実装: Marker State Receipt Lab と Marker Reveal Consent Board。次: 実機の frame result、物理サイズ、アンカー候補、端末内同意UIを接続します。</p>
+          <p class="en-copy">Research led to two boundary-focused prototypes; next is live frame evidence and device-local consent UI.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>画像追跡は「見えたら出す」機能ではなく、現実の目印を一時的な空間根拠へ変換する機能です。根拠の鮮度と公開の粒度を別軸にすると、追跡揺れには誠実に、コンテンツには慎重に対応できます。未成熟なAPIほど、失敗時の表示と撤回を最初から作品の一部にする価値があります。</p>
+          <p class="en-copy">Treat recognition as temporary spatial evidence and keep evidence freshness independent from content-reveal depth.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `Marker State Receipt Lab` を実装しました。何が動くか: tracked / emulated / no result を切り替えると、ラベル表示、配置ポリシー、commit可否が変わり、receiptをコピーできます。次に足すなら実機のXRFrame結果とアンカー候補を接続します。派生 `Marker Reveal Consent Board` も実装しました。何が動くか: 粗い手がかり・説明・詳細を切り替え、詳細は同意なしでは block されます。次に足すなら端末内の期限付き同意と実コンテンツの遅延取得を足します。</p>
+          <p class="en-copy">The main separates tracking states from commitment; the derivative gates detailed reveal with consent. Next: live results, anchors, and expiring device-local consent.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-11-08_html_marker_state_receipt_lab.html" target="_blank" rel="noreferrer">Today's main sample: Marker State Receipt Lab</a></li>
+          
+            <li><a href="../outputs/2026-11-08_html_marker_reveal_consent_board.html" target="_blank" rel="noreferrer">Today's derivative sample: Marker Reveal Consent Board</a></li>
+          
+            <li><a href="https://immersive-web.github.io/image-tracking/" target="_blank" rel="noreferrer">WebXR Marker Tracking Module (draft)</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C WebXR Device API</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-11-08_html_marker_state_receipt_lab.html" loading="lazy" title="Marker State Receipt Lab"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
