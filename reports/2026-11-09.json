@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-09",
+  "headline": "WebXR の安全境界を reset と移動意図に応答する体験として設計する",
+  "headlineEn": "Designing WebXR safety boundaries around resets and locomotion intent",
+  "summary": "bounded-floor の境界を静的な線で終わらせず、参照空間の不連続と境界越えの意図に応じて移動・表示・再確認を切り替える自作試作2本を追加しました。",
+  "summaryEn": "Two original prototypes turn bounded-floor safety boundaries into reset-aware and intent-aware interaction policies.",
+  "keyTopics": [
+    "WebXR Device API の bounded-floor は安全に動ける範囲を boundsGeometry で示す XRBoundedReferenceSpace である。",
+    "XRReferenceSpace の reset は原点と環境の対応に不連続が生じたことを示す。",
+    "参照空間は immutable で、オフセット移動は新しい reference space を作って扱う。",
+    "境界を取得できない場合は、境界があるように振る舞わず定点向け体験へ縮退する。",
+    "境界付近の移動は警告一色にせず、余裕・確認・停止という段階にすると意図を保ちやすい。"
+  ],
+  "keyTopicsEn": [
+    "bounded-floor exposes a safe perimeter through XRBoundedReferenceSpace.",
+    "A reset signals a discontinuity between origin and environment.",
+    "Reference spaces are immutable; offsets yield new spaces.",
+    "Missing boundaries need an honest stationary fallback.",
+    "Near-boundary movement benefits from graded intent handling."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Bounded Space Reset Lab",
+      "url": "../outputs/2026-11-09_html_bounded_space_reset_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Boundary Crossing Intent Board",
+      "url": "../outputs/2026-11-09_html_boundary_crossing_intent_board.html"
+    },
+    {
+      "label": "W3C WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "MDN XRReferenceSpace",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRReferenceSpace"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "WebXR Device API は bounded-floor を、利用者が安全に動ける所定の境界を持つ XRBoundedReferenceSpace として定義します。今日の本命はこの境界を単なる床の輪郭ではなく、reset 時に古い前提をいったん止めて再確認へ導く状態機械として扱います。公式 sample index は機能ごとの最小実装を参照する入口として有用ですが、公開カードの主役はこの自作の操作可能な状態検証です。",
+      "bodyEn": "The main prototype turns bounded-floor into a reset-aware safety state machine.",
+      "links": [
+        {
+          "label": "WebXR Device API reference spaces",
+          "url": "https://www.w3.org/TR/webxr/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命では live を mint の穏やかな囲い、reset を amber の再較正 cue、境界なしを赤い定点モードとして表します。派生では境界までの距離を余裕・0.35m・越境に分け、移動を allow / preview + confirm / block と段階化します。安全性を大きな警告だけにせず、利用者の移動意図と確認の余地を演出にします。",
+      "bodyEn": "Visual cues distinguish live, reset, and missing boundaries; crossing intent gets graded policies."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機では利用者操作から session を開始し、requestReferenceSpace('bounded-floor') を試します。取得できれば boundsGeometry を描画し、reference space の reset を購読します。reset では既存の world-space 仮定を再検証し、必要なら新しい reference space とオフセットを用意します。対応しない端末では local-floor で定点向け UI に縮退します。",
+      "bodyEn": "Request bounded-floor from user activation, observe reset, and use a stationary fallback when unavailable."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "両試作は境界形状そのものを保存せず、距離帯・reset・移動許可・確認という判断 receipt だけを扱います。展示では音響の強さや照明を境界近傍で柔らかく変えられ、業務ARでは危険エリアへの誘導を confirm に置き換えられます。アンカー、ハンド入力、音声ガイドと組み合わせても、空間の詳細を外部へ出さない設計を保てます。",
+      "bodyEn": "Decision receipts combine with audio, anchors, and guidance without retaining room geometry."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "XRBoundedReferenceSpace の実装対応、boundsGeometry が変わる条件、reset の端末差、guardian／room setup との相互作用を追います。境界の可視化が恐怖や没入阻害にならない距離・音・色も実機で観察します。",
+      "bodyEn": "Watch support, geometry changes, reset behavior, and comfort effects across devices."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で live → reset → 境界なしを順に選び、reset では移動が pause になり、境界なしでは定点へ縮退することを確認してください。次に派生で余裕あり → 0.35m → 越境を選び、確認を経ずに越境移動しないことを見ます。",
+      "bodyEn": "Compare reset and missing states, then verify graded movement at the edge."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API、MDN XRReferenceSpace、Immersive Web sample index。設計: 境界の更新と越境意図を分離。実装: Bounded Space Reset Lab と Boundary Crossing Intent Board。次: 実機 boundsGeometry、reset、ハプティクスとアンカー再配置を接続します。",
+      "bodyEn": "Research informed two boundary prototypes; next is live geometry, resets, haptics, and anchor recovery."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "安全境界は「ここから先はだめ」という線より、空間の前提がまだ有効かを利用者と共有する対話です。追跡や部屋設定は変わり得るため、変化を隠して連続性を偽装するより、短い pause と再確認を体験のリズムに入れるほうが信頼を作れます。",
+      "bodyEn": "A boundary is a dialogue about whether spatial assumptions remain valid, not merely a prohibition line."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Bounded Space Reset Lab` を実装しました。何が動くか: live / reset / 境界なしを切り替えると、参照空間、移動方針、comfort cue が変わり receipt をコピーできます。次に足すなら実機の boundsGeometry と reset をつなぎます。派生 `Boundary Crossing Intent Board` も実装しました。何が動くか: 余裕・境界 0.35m・越境を切り替えると allow / preview + confirm / block が変わります。次に足すなら実測距離、ハプティクス、リセンター操作を足します。",
+      "bodyEn": "The main responds to boundary resets; the derivative grades crossing intent. Next: live geometry, distance, haptics, and recentering."
+    }
+  ]
+}
