@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-10",
+  "headline": "WebXR の固定フォービエーションを周辺品質と可読性の設計として扱う",
+  "headlineEn": "Treating WebXR fixed foveation as a design for peripheral quality and legibility",
+  "summary": "固定フォービエーションの対応可否、周辺の品質低下、中心に守るUIを混同しない本命と、負荷別に周辺コンテンツの優先度を切り替える派生試作を追加しました。",
+  "summaryEn": "Two original prototypes separate foveation capability from peripheral quality policy and content priority.",
+  "keyTopics": [
+    "XRWebGLLayer.fixedFoveation はXRコンポジタが周辺を低解像度で描く度合いで、0から1の値を持つ。",
+    "対応しない端末では getter が null となり、設定は no-op なので、実行したふりをしないフォールバックが必要である。",
+    "効果は次の XRFrame から反映され得るが、数値の解釈や刻みは user agent に委ねられる。",
+    "固定フォービエーションは低コントラストな背景には向く一方、文字や細部を周辺へ置く用途には不向きである。",
+    "負荷対策は解像度だけでなく、周辺の装飾、地図、字幕を中心品質へ寄せる優先度設計と組み合わせる。"
+  ],
+  "keyTopicsEn": [
+    "fixedFoveation controls compositor peripheral resolution between 0 and 1.",
+    "Unsupported layers return null, requiring an honest fallback.",
+    "User agents determine the interpretation and granularity of levels.",
+    "Foveation suits low-contrast backgrounds better than edge text.",
+    "Performance policy should also prioritize content placement and simplification."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Foveation Quality Receipt Lab",
+      "url": "../outputs/2026-11-10_html_foveation_quality_receipt_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Periphery Priority Mixer",
+      "url": "../outputs/2026-11-10_html_periphery_priority_mixer.html"
+    },
+    {
+      "label": "WebXR Device API",
+      "url": "https://immersive-web.github.io/webxr/"
+    },
+    {
+      "label": "MDN XRWebGLLayer.fixedFoveation",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLLayer/fixedFoveation"
+    },
+    {
+      "label": "Immersive Web WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "WebXR Device API の fixedFoveation は、中心を高品質に保ちながら周辺の描画解像度を下げてGPU負荷を抑えるための compositor 側の値です。MDN は背景のような低コントラストなテクスチャには有用だが、文字や精細画像には不向きと整理しています。本命では数値設定、端末の対応可否、周辺へ何を置くかを別々の receipt とし、公式資料を参考にしつつ公開の中心は自作の操作可能な検証に置きます。",
+      "bodyEn": "The main prototype separates the compositor setting, support state, and content-placement policy.",
+      "links": [
+        {
+          "label": "MDN fixedFoveation",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLLayer/fixedFoveation"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命は 0.00、0.33、0.67、未対応を選ぶと、中心／周辺の表現とHUD方針が変わります。派生は calm / busy / critical を選び、装飾粒子を薄める、地図を内側へ寄せる、重要指示だけを残す順に変化します。品質低下を単なるぼかしとして隠すのでなく、コンテンツの役割を組み替えるインタラクションにします。",
+      "bodyEn": "The two prototypes turn peripheral quality into visible content-priority decisions."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機ではWebGLの baseLayer を得た後に fixedFoveation を読み、null なら未対応として扱います。値は0〜1ですが、UAが連続値をどのように解釈するかは保証されず、変更は次のXRFrameから反映されます。まず低・中・高の粗い段階で比較し、HUDや字幕は周辺へ固定配置しないこと、未対応時には scene complexity や viewport scale といった別の負荷対策へ落とすことが実装しやすいです。",
+      "bodyEn": "Read null defensively, use coarse levels, protect central UI, and provide a non-foveation fallback."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "この2本は、設定値、対応可否、周辺の扱い、可読性方針だけを receipt として残します。展示なら音響の密度や背景の粒子を視線周辺で調整でき、作業ARなら警告と手順を中心品質へ寄せられます。視線追跡を使う場合も、視線そのものを保存せず、UIを中心保護に切り替えたという判断だけを運用ログへ送る設計にできます。",
+      "bodyEn": "Policy receipts can drive exhibition, work-AR, and gaze-aware layouts without retaining gaze traces."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "ブラウザ／端末ごとの fixedFoveation 対応、取得値の段階、実際のGPU余裕、文字の周辺可読性を追います。dynamic viewport scaling や recommendedViewportScale と併用したとき、二重に品質を下げすぎない制御も検証対象です。",
+      "bodyEn": "Watch support, actual quality steps, GPU headroom, legibility, and interaction with viewport scaling."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で 0.00 → 0.33 → 0.67 → unsupported を順に選び、高い値では周辺文字を置かないこと、未対応では別方針になることを確認してください。派生では calm → busy → critical と進め、負荷が高いほど装飾より中心の指示が守られることを見ます。",
+      "bodyEn": "Compare foveation levels and then verify that critical guidance wins over decoration."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Device API、MDN fixedFoveation、Immersive Web samples。設計: capability、品質、可読性を分離。実装: Foveation Quality Receipt Lab と Periphery Priority Mixer。次: 実機のGPU timing、viewport scale、XR layer のUI保護をつなぎます。",
+      "bodyEn": "Research produced two priority-aware prototypes; next is live GPU timing, viewport scale, and layer UI protection."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "フォービエーションは「画質を落とす」機能ではなく、どの情報を利用者の確かな視野に置き続けるかを選ぶ機能です。性能が苦しいときほど、周辺の華やかさを守るより、中心の意味・安全・読める指示を守る優先順位が体験の信頼を決めます。",
+      "bodyEn": "Foveation is a choice about which information remains dependable in the user's view."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Foveation Quality Receipt Lab` を実装しました。何が動くか: full / low / high / unsupported を切り替えると、周辺表現、HUD方針、fallback が変わり、WebXR probe と receipt copy が使えます。次に足すなら実機の baseLayer.fixedFoveation とGPU timingを接続します。派生 `Periphery Priority Mixer` も実装しました。何が動くか: calm / busy / critical で字幕・粒子・地図の優先度が変わります。次に足すなら実際のframe budgetと viewport scale を結びます。",
+      "bodyEn": "The main models foveation capability and policy; the derivative prioritizes central content under load. Next: live layer values and frame budgets."
+    }
+  ]
+}

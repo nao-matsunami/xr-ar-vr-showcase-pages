@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR の固定フォービエーションを周辺品質と可読性の設計として扱う | 2026-11-10</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GD2PHJX65F"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GD2PHJX65F');</script></head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.11.10</p>
+      <h1>WebXR の固定フォービエーションを周辺品質と可読性の設計として扱う</h1>
+      <p class="hero-subtitle">Treating WebXR fixed foveation as a design for peripheral quality and legibility</p>
+      <p>固定フォービエーションの対応可否、周辺の品質低下、中心に守るUIを混同しない本命と、負荷別に周辺コンテンツの優先度を切り替える派生試作を追加しました。</p>
+      <p class="en-copy">Two original prototypes separate foveation capability from peripheral quality policy and content priority.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-11-10_html_foveation_quality_receipt_lab.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-11-09.html">← 2026.11.09</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Foveation Quality Receipt Lab</h3>
+              <p>自作の最小試作。固定フォービエーションを単一の「軽量化」ではなく、対応状況・周辺品質・UI保護を分けて判断します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-10_html_foveation_quality_receipt_lab.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Periphery Priority Mixer</h3>
+              <p>派生の自作試作。周辺品質を下げるとき、何を中心へ寄せ、何を簡略化し、何を止めるかを比較します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-10_html_periphery_priority_mixer.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>XRWebGLLayer.fixedFoveation はXRコンポジタが周辺を低解像度で描く度合いで、0から1の値を持つ。</span>
+              <span class="en-copy">fixedFoveation controls compositor peripheral resolution between 0 and 1.</span>
+            </li>
+          
+            <li>
+              <span>対応しない端末では getter が null となり、設定は no-op なので、実行したふりをしないフォールバックが必要である。</span>
+              <span class="en-copy">Unsupported layers return null, requiring an honest fallback.</span>
+            </li>
+          
+            <li>
+              <span>効果は次の XRFrame から反映され得るが、数値の解釈や刻みは user agent に委ねられる。</span>
+              <span class="en-copy">User agents determine the interpretation and granularity of levels.</span>
+            </li>
+          
+            <li>
+              <span>固定フォービエーションは低コントラストな背景には向く一方、文字や細部を周辺へ置く用途には不向きである。</span>
+              <span class="en-copy">Foveation suits low-contrast backgrounds better than edge text.</span>
+            </li>
+          
+            <li>
+              <span>負荷対策は解像度だけでなく、周辺の装飾、地図、字幕を中心品質へ寄せる優先度設計と組み合わせる。</span>
+              <span class="en-copy">Performance policy should also prioritize content placement and simplification.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>WebXR Device API の fixedFoveation は、中心を高品質に保ちながら周辺の描画解像度を下げてGPU負荷を抑えるための compositor 側の値です。MDN は背景のような低コントラストなテクスチャには有用だが、文字や精細画像には不向きと整理しています。本命では数値設定、端末の対応可否、周辺へ何を置くかを別々の receipt とし、公式資料を参考にしつつ公開の中心は自作の操作可能な検証に置きます。</p>
+          <p class="en-copy">The main prototype separates the compositor setting, support state, and content-placement policy.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLLayer/fixedFoveation" target="_blank" rel="noreferrer">MDN fixedFoveation</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命は 0.00、0.33、0.67、未対応を選ぶと、中心／周辺の表現とHUD方針が変わります。派生は calm / busy / critical を選び、装飾粒子を薄める、地図を内側へ寄せる、重要指示だけを残す順に変化します。品質低下を単なるぼかしとして隠すのでなく、コンテンツの役割を組み替えるインタラクションにします。</p>
+          <p class="en-copy">The two prototypes turn peripheral quality into visible content-priority decisions.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実機ではWebGLの baseLayer を得た後に fixedFoveation を読み、null なら未対応として扱います。値は0〜1ですが、UAが連続値をどのように解釈するかは保証されず、変更は次のXRFrameから反映されます。まず低・中・高の粗い段階で比較し、HUDや字幕は周辺へ固定配置しないこと、未対応時には scene complexity や viewport scale といった別の負荷対策へ落とすことが実装しやすいです。</p>
+          <p class="en-copy">Read null defensively, use coarse levels, protect central UI, and provide a non-foveation fallback.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>この2本は、設定値、対応可否、周辺の扱い、可読性方針だけを receipt として残します。展示なら音響の密度や背景の粒子を視線周辺で調整でき、作業ARなら警告と手順を中心品質へ寄せられます。視線追跡を使う場合も、視線そのものを保存せず、UIを中心保護に切り替えたという判断だけを運用ログへ送る設計にできます。</p>
+          <p class="en-copy">Policy receipts can drive exhibition, work-AR, and gaze-aware layouts without retaining gaze traces.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>ブラウザ／端末ごとの fixedFoveation 対応、取得値の段階、実際のGPU余裕、文字の周辺可読性を追います。dynamic viewport scaling や recommendedViewportScale と併用したとき、二重に品質を下げすぎない制御も検証対象です。</p>
+          <p class="en-copy">Watch support, actual quality steps, GPU headroom, legibility, and interaction with viewport scaling.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で 0.00 → 0.33 → 0.67 → unsupported を順に選び、高い値では周辺文字を置かないこと、未対応では別方針になることを確認してください。派生では calm → busy → critical と進め、負荷が高いほど装飾より中心の指示が守られることを見ます。</p>
+          <p class="en-copy">Compare foveation levels and then verify that critical guidance wins over decoration.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Device API、MDN fixedFoveation、Immersive Web samples。設計: capability、品質、可読性を分離。実装: Foveation Quality Receipt Lab と Periphery Priority Mixer。次: 実機のGPU timing、viewport scale、XR layer のUI保護をつなぎます。</p>
+          <p class="en-copy">Research produced two priority-aware prototypes; next is live GPU timing, viewport scale, and layer UI protection.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>フォービエーションは「画質を落とす」機能ではなく、どの情報を利用者の確かな視野に置き続けるかを選ぶ機能です。性能が苦しいときほど、周辺の華やかさを守るより、中心の意味・安全・読める指示を守る優先順位が体験の信頼を決めます。</p>
+          <p class="en-copy">Foveation is a choice about which information remains dependable in the user's view.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `Foveation Quality Receipt Lab` を実装しました。何が動くか: full / low / high / unsupported を切り替えると、周辺表現、HUD方針、fallback が変わり、WebXR probe と receipt copy が使えます。次に足すなら実機の baseLayer.fixedFoveation とGPU timingを接続します。派生 `Periphery Priority Mixer` も実装しました。何が動くか: calm / busy / critical で字幕・粒子・地図の優先度が変わります。次に足すなら実際のframe budgetと viewport scale を結びます。</p>
+          <p class="en-copy">The main models foveation capability and policy; the derivative prioritizes central content under load. Next: live layer values and frame budgets.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-11-10_html_foveation_quality_receipt_lab.html" target="_blank" rel="noreferrer">Today's main sample: Foveation Quality Receipt Lab</a></li>
+          
+            <li><a href="../outputs/2026-11-10_html_periphery_priority_mixer.html" target="_blank" rel="noreferrer">Today's derivative sample: Periphery Priority Mixer</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr/" target="_blank" rel="noreferrer">WebXR Device API</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRWebGLLayer/fixedFoveation" target="_blank" rel="noreferrer">MDN XRWebGLLayer.fixedFoveation</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/" target="_blank" rel="noreferrer">Immersive Web WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-11-10_html_foveation_quality_receipt_lab.html" loading="lazy" title="Foveation Quality Receipt Lab"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
