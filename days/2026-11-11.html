@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR の連続入力を意図と触覚キューに分けて扱う | 2026-11-11</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GD2PHJX65F"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GD2PHJX65F');</script></head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.11.11</p>
+      <h1>WebXR の連続入力を意図と触覚キューに分けて扱う</h1>
+      <p class="hero-subtitle">Separating continuous WebXR input from intent and haptic cues</p>
+      <p>WebXR の gamepad 入力を連続値のまま実行へ結ばず、preview / commit と触覚の可否を分ける本命と、少ない触覚キューを優先度で配分する派生試作を追加しました。</p>
+      <p class="en-copy">Two original prototypes separate input intensity, intent, and haptic availability, then budget sparse cues by priority.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-11-11_html_input_haptic_intent_lab.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-11-10.html">← 2026.11.10</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Input Haptic Intent Lab</h3>
+              <p>自作の最小試作。押下の連続値をそのまま実行せず、入力意図・強度・触覚の可否を別々の receipt にします。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-11_html_input_haptic_intent_lab.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Haptic Cue Budget Board</h3>
+              <p>派生試作。触覚を「何でも鳴らす確認音」ではなく、緊急度と直近の提示回数に応じて抑制する空間的な合図として検証します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-11_html_haptic_cue_budget_board.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR Gamepads Module は XRInputSource に関連するボタン、トリガー、スティック、タッチパッドの値を扱うための仕様である。</span>
+              <span class="en-copy">The WebXR Gamepads Module exposes controller input associated with XRInputSource.</span>
+            </li>
+          
+            <li>
+              <span>入力の value、pressed、touched は状態であり、アプリ側では preview と commit の閾値・解除条件を明示する必要がある。</span>
+              <span class="en-copy">Value, pressed, and touched are state; apps must define preview and commit rules.</span>
+            </li>
+          
+            <li>
+              <span>入力源や実装によって gamepad や振動出力は利用できないため、未対応を成功扱いにしないフォールバックが必要である。</span>
+              <span class="en-copy">Gamepads and vibration output are optional, so fallbacks must be honest.</span>
+            </li>
+          
+            <li>
+              <span>触覚は確認音を増やす用途より、方向・確定・境界警告を少数の区別できる合図として設計すると過剰通知を避けやすい。</span>
+              <span class="en-copy">Sparse directional, confirmation, and boundary cues avoid alert fatigue.</span>
+            </li>
+          
+            <li>
+              <span>重要な停止や境界警告は触覚だけに依存せず、視覚・音・安全な操作中断を組み合わせる。</span>
+              <span class="en-copy">Critical warnings need visual, audio, and safe-stop paths as well as haptics.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>W3C の WebXR Gamepads Module は、XRInputSource に結び付く gamepad からボタン、トリガー、スティック、タッチパッドの状態を取得する土台です。公式 Controller State サンプルは入力を読み取る入口として有用ですが、本日の公開面は外部デモの一覧ではなく自作の判断実験に置きます。本命では value を 0.25 / 0.58 / 1.00 と変え、値そのものではなく preview と commit、さらに触覚が利用できたかを別々に表示します。</p>
+          <p class="en-copy">The main prototype turns raw input values into explicit preview, commit, and haptic-availability receipts.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr-gamepads-module-1/" target="_blank" rel="noreferrer">WebXR Gamepads Module</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命は軽い押下で ghost marker を見せ、閾値を越えたときだけ marker を確定する構成です。触覚を試す操作では、実機の actuator が見つかれば小さな要求を送り、見つからなければ画面の pulse に正直に落とします。派生は GUIDE、CONFIRM、WARNING をクリックして cue の残り予算を消費します。urgent では案内を抑え、境界警告の1枠を残すため、触覚を単なる装飾ではなく注意資源として扱えます。</p>
+          <p class="en-copy">One prototype gates a placement commit; the other reserves sparse tactile attention for critical cues.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実機の XRFrame では inputSources を走査し、XRInputSource.gamepad が存在する入力源だけを読む設計にします。buttons の value / pressed / touched と targetRayMode、handedness、select 系イベントを混同せず、入力源ごとの短い状態機械にします。振動は Gamepad API 側の actuator が公開される場合だけ試行し、Promise の成功を体験の成功と見なさず、OS・端末・ブラウザの方針で出力されない前提にします。</p>
+          <p class="en-copy">Read only exposed gamepads, keep per-source state machines, and treat actuator results as capability evidence rather than guaranteed sensation.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>この2本から再利用できるのは、入力強度そのものではなく、preview→commit、cue の種類、抑制理由、出力可否という小さな receipt です。作業ARなら固定手順の確定と危険域警告、展示なら方向案内と音のアクセント、遠隔支援なら通信遅延時に触覚を減らして画面表示を優先するポリシーに接続できます。個人の手の動きの生ログを保存せず判断だけを残せる点も扱いやすいです。</p>
+          <p class="en-copy">Decision receipts can support work AR, installations, and remote assistance without retaining raw hand-motion logs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>入力プロファイル差で buttons / axes の並びがどう変わるか、hand tracking と controller の切替時に古い入力をどう失効させるか、select と pinch の二重発火をどう避けるかを追います。触覚については、WebXR と Gamepad API の公開範囲、アクセシビリティ設定、再生頻度の上限、警告を視覚と音へ冗長化する効果を実機で検証します。</p>
+          <p class="en-copy">Watch profile variance, controller-hand handoff, duplicate select/pinch signals, and accessible redundant warnings.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で 0.25 → 0.58 → 1.00 を順に押し、半押しでは preview に留まり、確定だけが marker を置くことを確認してください。次に「触覚を試す」を押し、actuator がない環境でも視覚 pulse と receipt が残ることを見ます。派生では normal で GUIDE と CONFIRM を使った後に WARNING が抑制される状態と、urgent で WARNING だけを残す状態を比較してください。</p>
+          <p class="en-copy">Compare preview versus commit, then compare normal and urgent cue budgets.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: WebXR Gamepads Module、公式 Controller State sample、GamepadHapticActuator。設計: 入力値、意図、触覚可否を分離。実装: Input Haptic Intent Lab と Haptic Cue Budget Board。次: 実機 XRInputSource、input profiles、手とコントローラの引継ぎ、境界 haptics を接続します。</p>
+          <p class="en-copy">Research produced two intent-aware cue prototypes; next is live sources, profiles, hand/controller handoff, and boundary feedback.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>XR の入力はボタンの値だけでは体験の意図を表しません。押し込み、見通し、手の切替、解除、環境の安全性をまたいで初めて「実行してよい」状態になります。触覚もまた、鳴らせるかではなく、限られた注意をいつ残すかという設計です。少ない合図を明確な意味に結び、未対応なら静かに別の感覚へ渡すことが、端末差の大きいWebXRで信頼を作ります。</p>
+          <p class="en-copy">Input and haptics are intent and attention design, not merely hardware capability.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `Input Haptic Intent Lab` を実装しました。何が動くか: 0.25 / 0.58 / 1.00 の入力で idle / preview / committed を切り替え、確定だけが marker 配置になり、Gamepad actuator を試すか視覚 pulse へフォールバックします。次に足すなら実機 XRInputSource のボタン値と source 固有の解除条件です。派生 `Haptic Cue Budget Board` も実装しました。何が動くか: GUIDE / CONFIRM / WARNING の cue を予算内で提案し、urgent では warning を保護します。次に足すなら実機の短い触覚パターン、レート制限、視覚・音の冗長提示です。</p>
+          <p class="en-copy">The main gates an action by intent; the derivative budgets semantic cues. Next: live source values and rate-limited multimodal feedback.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-11-11_html_input_haptic_intent_lab.html" target="_blank" rel="noreferrer">Today's main sample: Input Haptic Intent Lab</a></li>
+          
+            <li><a href="../outputs/2026-11-11_html_haptic_cue_budget_board.html" target="_blank" rel="noreferrer">Today's derivative sample: Haptic Cue Budget Board</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-gamepads-module-1/" target="_blank" rel="noreferrer">W3C WebXR Gamepads Module — Level 1</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/controller-state.html" target="_blank" rel="noreferrer">Immersive Web WebXR Samples — Controller State</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/GamepadHapticActuator" target="_blank" rel="noreferrer">MDN GamepadHapticActuator</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-11-11_html_input_haptic_intent_lab.html" loading="lazy" title="Input Haptic Intent Lab"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

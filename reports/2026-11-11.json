@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-11",
+  "headline": "WebXR の連続入力を意図と触覚キューに分けて扱う",
+  "headlineEn": "Separating continuous WebXR input from intent and haptic cues",
+  "summary": "WebXR の gamepad 入力を連続値のまま実行へ結ばず、preview / commit と触覚の可否を分ける本命と、少ない触覚キューを優先度で配分する派生試作を追加しました。",
+  "summaryEn": "Two original prototypes separate input intensity, intent, and haptic availability, then budget sparse cues by priority.",
+  "keyTopics": [
+    "WebXR Gamepads Module は XRInputSource に関連するボタン、トリガー、スティック、タッチパッドの値を扱うための仕様である。",
+    "入力の value、pressed、touched は状態であり、アプリ側では preview と commit の閾値・解除条件を明示する必要がある。",
+    "入力源や実装によって gamepad や振動出力は利用できないため、未対応を成功扱いにしないフォールバックが必要である。",
+    "触覚は確認音を増やす用途より、方向・確定・境界警告を少数の区別できる合図として設計すると過剰通知を避けやすい。",
+    "重要な停止や境界警告は触覚だけに依存せず、視覚・音・安全な操作中断を組み合わせる。"
+  ],
+  "keyTopicsEn": [
+    "The WebXR Gamepads Module exposes controller input associated with XRInputSource.",
+    "Value, pressed, and touched are state; apps must define preview and commit rules.",
+    "Gamepads and vibration output are optional, so fallbacks must be honest.",
+    "Sparse directional, confirmation, and boundary cues avoid alert fatigue.",
+    "Critical warnings need visual, audio, and safe-stop paths as well as haptics."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Input Haptic Intent Lab",
+      "url": "../outputs/2026-11-11_html_input_haptic_intent_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Haptic Cue Budget Board",
+      "url": "../outputs/2026-11-11_html_haptic_cue_budget_board.html"
+    },
+    {
+      "label": "W3C WebXR Gamepads Module — Level 1",
+      "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+    },
+    {
+      "label": "Immersive Web WebXR Samples — Controller State",
+      "url": "https://immersive-web.github.io/webxr-samples/controller-state.html"
+    },
+    {
+      "label": "MDN GamepadHapticActuator",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/GamepadHapticActuator"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "W3C の WebXR Gamepads Module は、XRInputSource に結び付く gamepad からボタン、トリガー、スティック、タッチパッドの状態を取得する土台です。公式 Controller State サンプルは入力を読み取る入口として有用ですが、本日の公開面は外部デモの一覧ではなく自作の判断実験に置きます。本命では value を 0.25 / 0.58 / 1.00 と変え、値そのものではなく preview と commit、さらに触覚が利用できたかを別々に表示します。",
+      "bodyEn": "The main prototype turns raw input values into explicit preview, commit, and haptic-availability receipts.",
+      "links": [
+        {
+          "label": "WebXR Gamepads Module",
+          "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命は軽い押下で ghost marker を見せ、閾値を越えたときだけ marker を確定する構成です。触覚を試す操作では、実機の actuator が見つかれば小さな要求を送り、見つからなければ画面の pulse に正直に落とします。派生は GUIDE、CONFIRM、WARNING をクリックして cue の残り予算を消費します。urgent では案内を抑え、境界警告の1枠を残すため、触覚を単なる装飾ではなく注意資源として扱えます。",
+      "bodyEn": "One prototype gates a placement commit; the other reserves sparse tactile attention for critical cues."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実機の XRFrame では inputSources を走査し、XRInputSource.gamepad が存在する入力源だけを読む設計にします。buttons の value / pressed / touched と targetRayMode、handedness、select 系イベントを混同せず、入力源ごとの短い状態機械にします。振動は Gamepad API 側の actuator が公開される場合だけ試行し、Promise の成功を体験の成功と見なさず、OS・端末・ブラウザの方針で出力されない前提にします。",
+      "bodyEn": "Read only exposed gamepads, keep per-source state machines, and treat actuator results as capability evidence rather than guaranteed sensation."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "この2本から再利用できるのは、入力強度そのものではなく、preview→commit、cue の種類、抑制理由、出力可否という小さな receipt です。作業ARなら固定手順の確定と危険域警告、展示なら方向案内と音のアクセント、遠隔支援なら通信遅延時に触覚を減らして画面表示を優先するポリシーに接続できます。個人の手の動きの生ログを保存せず判断だけを残せる点も扱いやすいです。",
+      "bodyEn": "Decision receipts can support work AR, installations, and remote assistance without retaining raw hand-motion logs."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "入力プロファイル差で buttons / axes の並びがどう変わるか、hand tracking と controller の切替時に古い入力をどう失効させるか、select と pinch の二重発火をどう避けるかを追います。触覚については、WebXR と Gamepad API の公開範囲、アクセシビリティ設定、再生頻度の上限、警告を視覚と音へ冗長化する効果を実機で検証します。",
+      "bodyEn": "Watch profile variance, controller-hand handoff, duplicate select/pinch signals, and accessible redundant warnings."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で 0.25 → 0.58 → 1.00 を順に押し、半押しでは preview に留まり、確定だけが marker を置くことを確認してください。次に「触覚を試す」を押し、actuator がない環境でも視覚 pulse と receipt が残ることを見ます。派生では normal で GUIDE と CONFIRM を使った後に WARNING が抑制される状態と、urgent で WARNING だけを残す状態を比較してください。",
+      "bodyEn": "Compare preview versus commit, then compare normal and urgent cue budgets."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Gamepads Module、公式 Controller State sample、GamepadHapticActuator。設計: 入力値、意図、触覚可否を分離。実装: Input Haptic Intent Lab と Haptic Cue Budget Board。次: 実機 XRInputSource、input profiles、手とコントローラの引継ぎ、境界 haptics を接続します。",
+      "bodyEn": "Research produced two intent-aware cue prototypes; next is live sources, profiles, hand/controller handoff, and boundary feedback."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の入力はボタンの値だけでは体験の意図を表しません。押し込み、見通し、手の切替、解除、環境の安全性をまたいで初めて「実行してよい」状態になります。触覚もまた、鳴らせるかではなく、限られた注意をいつ残すかという設計です。少ない合図を明確な意味に結び、未対応なら静かに別の感覚へ渡すことが、端末差の大きいWebXRで信頼を作ります。",
+      "bodyEn": "Input and haptics are intent and attention design, not merely hardware capability."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Input Haptic Intent Lab` を実装しました。何が動くか: 0.25 / 0.58 / 1.00 の入力で idle / preview / committed を切り替え、確定だけが marker 配置になり、Gamepad actuator を試すか視覚 pulse へフォールバックします。次に足すなら実機 XRInputSource のボタン値と source 固有の解除条件です。派生 `Haptic Cue Budget Board` も実装しました。何が動くか: GUIDE / CONFIRM / WARNING の cue を予算内で提案し、urgent では warning を保護します。次に足すなら実機の短い触覚パターン、レート制限、視覚・音の冗長提示です。",
+      "bodyEn": "The main gates an action by intent; the derivative budgets semantic cues. Next: live source values and rate-limited multimodal feedback."
+    }
+  ]
+}
