@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-12",
+  "headline": "WebXR の動的 viewport 縮尺をフレーム順序と可読性から設計する",
+  "headlineEn": "Designing dynamic WebXR viewport scaling around frame order and readability",
+  "summary": "WebXR の動的 viewport scaling を、要求値と実適用値の区別、最初の getViewport() の順序、量子化ヒントへのヒステリシスとして検証する自作サンプル2本を追加しました。",
+  "summaryEn": "Two original prototypes examine requested versus applied viewport scale, first-getViewport ordering, and hysteresis for quantized recommendations.",
+  "keyTopics": [
+    "WebXR の XRView.requestViewportScale() は 0 より大きい値を要求でき、1 を超える値は 1 に丸められる。",
+    "同一フレームでは requestViewportScale() の後に最初の getViewport() を呼ぶと、そのフレームの scaled viewport が確定する。",
+    "recommendedViewportScale は null になり得るため、値があることや端末が要求を受理することを前提にできない。",
+    "推奨値は量子化とヒステリシスで安定化でき、頻繁な品質揺れを避ける助けになる。",
+    "縮尺低下は中央 HUD や重要な文字まで粗くする合図ではなく、背景・粒子・遠景から品質を落とす契機として扱う。"
+  ],
+  "keyTopicsEn": [
+    "XRView.requestViewportScale() requests a positive scale and clamps values above one.",
+    "The first getViewport() after a request applies the scaled viewport for that frame.",
+    "recommendedViewportScale may be null and requests may be ignored.",
+    "Quantization and hysteresis can prevent distracting quality oscillation.",
+    "Scale reduction should protect central HUD text and reduce peripheral detail first."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Dynamic Viewport Scale Lab",
+      "url": "../outputs/2026-11-12_html_dynamic_viewport_scale_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Viewport Recommendation Hysteresis Board",
+      "url": "../outputs/2026-11-12_html_viewport_recommendation_hysteresis_board.html"
+    },
+    {
+      "label": "W3C WebXR Device API — dynamic viewport scaling",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web WebXR Device API explainer",
+      "url": "https://immersive-web.github.io/webxr/explainer.html"
+    },
+    {
+      "label": "Immersive Web WebXR Samples — Viewport Scaling",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "W3C WebXR Device API は、XRView ごとに requestViewportScale() で描画領域の縮尺を要求し、続く最初の getViewport() でそのフレームの viewport を確定する順序を定義します。公式 Viewport Scaling sample は API の入口として有用ですが、公開アーカイブの中心は外部デモではなく自作の判断実験です。本命では軽量、重い shader、UA 推奨、順序ミスを切り替え、要求された値と実際に適用された値を一緒に表示します。",
+      "bodyEn": "The main prototype makes frame ordering and requested-versus-applied scale visible.",
+      "links": [
+        {
+          "label": "WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命は viewport の内側に背景 detail を置き、中央の HUD text を別の優先対象として残します。順序ミスでは request があってもそのフレームの viewport は 1.00 のままと表示し、成功を偽装しません。派生では 0.98 / 0.78 / 0.74 / 0.58 と null のヒントを操作し、1.00 / 0.84 / 0.68 の3段へ丸めます。近い値は hold し、画質の呼吸のような揺れを避けます。",
+      "bodyEn": "The main protects HUD readability; the derivative stabilizes changing recommendations into three tiers."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では XRFrame 内で pose.views を走査し、view.requestViewportScale?.(desiredScale) を getViewport(view) の前に呼びます。recommendedViewportScale は null なら requestViewportScale(null) が無効なので、独自 heuristic または scene complexity の品質階段に落とします。getViewport() が返した幅・高さはそのフレームの実証として記録し、要求値だけで成功判定しません。API が無い、または縮尺が変化しない端末では、ポスト処理、粒子、遠景、影の順に負荷を下げます。",
+      "bodyEn": "Request before getViewport, measure returned dimensions, and use a content-quality ladder when the API is absent or ignored."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "2本から再利用できるのは requested scale、返却 viewport、推奨値、採用 tier、hold 理由、保護したコンテンツという小さな receipt です。GPU timer、WebGPU の pass 時間、音声のビート、視線や手の操作密度と組み合わせれば、派手な効果を落としても会話・字幕・作業手順を保つ XR 品質調整にできます。生の視線や身体データを保存せず、最終判断だけを保存する設計にも向きます。",
+      "bodyEn": "Compact scale receipts can join GPU timing, audio, or interaction density without retaining raw biometric traces."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実端末で dynamic viewport scaling が露出する条件、recommendedViewportScale の刻みと更新頻度、getViewport() の幅・高さがいつ変わるかを追います。WebXR Layers API の composition layer と base layer の品質制御の差、fixedFoveation、視界端の UI 配置、motion-to-photon への影響も比較します。",
+      "bodyEn": "Watch availability, recommendation cadence, observed viewport dimensions, and the interaction with layers and foveation."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で「複雑 shader」と「順序ミスを再現」を交互に押してください。0.68 の要求でも先に getViewport を読めば applied scale は 1.00 に留まることを確認できます。次に派生で 0.78 と 0.74 を往復し、近い変化が hold されること、0.58 でだけ低い tier へ切り替わることを見てください。",
+      "bodyEn": "Compare a proper request with a late request, then test stable holds around the hysteresis boundary."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Device API、Immersive Web explainer、公式 Viewport Scaling sample。設計: request / first getViewport / applied viewport を分離。実装: Dynamic Viewport Scale Lab と Viewport Recommendation Hysteresis Board。次: 実機での viewport 寸法採取、GPU 時間、foveation と content-quality ladder を接続します。",
+      "bodyEn": "Research led to two scale-policy prototypes; next is live dimensions, GPU time, foveation, and content-quality control."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の品質調整は「画質を落とす」一つのレバーではありません。縮尺を変える操作、いつ適用されたか、どの内容を読みやすく残すか、縮尺が使えない時に何を削るかを分けて初めて、端末差の大きい WebXR でも説明可能になります。特に頻繁な品質の往復は快適さを壊し得るため、変化を少数の意味ある段階へ丸める設計が重要です。",
+      "bodyEn": "Quality adaptation becomes trustworthy when application timing, content priority, and fallback are explicit."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Dynamic Viewport Scale Lab` を実装しました。何が動くか: 軽量、重い shader、UA 推奨、順序ミスを切り替え、requested / first getViewport / applied scale と viewport 面積を可視化します。次に足すなら実際の XRView と viewport 幅・高さ、GPU timer です。派生 `Viewport Recommendation Hysteresis Board` も実装しました。何が動くか: 量子化された推奨縮尺と null を入力し、安定した tier と hold 理由を表示します。次に足すなら端末からの実測値、ユーザー設定、scene complexity の自動調整です。",
+      "bodyEn": "The main shows frame-order receipts; the derivative stabilizes recommendations. Next: live dimensions, timers, and adaptive scene complexity."
+    }
+  ]
+}
