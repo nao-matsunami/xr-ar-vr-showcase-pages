@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-13",
+  "headline": "WebXR の secondary views を可変な描画契約と共有 cue として扱う",
+  "headlineEn": "Treating WebXR secondary views as a variable rendering contract and sharing cue",
+  "summary": "WebXR の secondary-views を、固定の左右 stereo 前提を捨てた view 走査と、observer view の情報粒度を明示する自作サンプル2本で検証しました。",
+  "summaryEn": "Two original prototypes test variable view iteration and explicit observer-view sharing policy.",
+  "keyTopics": [
+    "secondary-views は optional feature として有効化し、任意数・可変数の XRView を扱う。",
+    "primary view は常に active だが、secondary view は capture 等に応じて現れたり消えたりする。",
+    "first-person observer view は eye: none になり得て、alpha-blend の扱いと UI 方針を分ける。",
+    "secondary を描かない判断でも primary 体験を成立させ、描画省略を成功として偽装しない。",
+    "外部観察者へ渡す詳細度は capture の可否とは別の、可視で取り消せる共有判断にする。"
+  ],
+  "keyTopicsEn": [
+    "secondary-views is an optional feature for variable view sets.",
+    "Primary views stay active while secondary views can appear with capture.",
+    "First-person observers can use eye none and need distinct UI policy.",
+    "Skipping a secondary view must not compromise primary experience.",
+    "Observer detail needs visible, revocable sharing policy."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Secondary View Contract Lab",
+      "url": "../outputs/2026-11-13_html_secondary_view_contract_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Observer Privacy Cue Board",
+      "url": "../outputs/2026-11-13_html_observer_privacy_cue_board.html"
+    },
+    {
+      "label": "W3C WebXR Device API — primary and secondary views",
+      "url": "https://www.w3.org/TR/webxr/#primary-and-secondary-views"
+    },
+    {
+      "label": "W3C WebXR AR Module — first-person observer views",
+      "url": "https://www.w3.org/TR/webxr-ar-module-1/#first-person-observer-views"
+    },
+    {
+      "label": "Immersive Web WebXR Samples — Spectator Mode",
+      "url": "https://immersive-web.github.io/webxr-samples/spectator-mode.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "W3C WebXR Device API は primary と secondary を区別しつつ、view の数・順序・eye の重複をアプリが固定前提にしてはいけないとします。AR Module の first-person observer view は camera と目の位置差を扱う手掛かりで、capture 中だけ view に現れ得ます。本命はこの契約を、2 view / observer 追加 / 意図的省略 / 4 view に切り替えられる自作の判断実験にしました。",
+      "bodyEn": "The main prototype exposes variable view-set handling rather than assuming a fixed stereo pair.",
+      "links": [
+        {
+          "label": "WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命は view を矩形として並べ、observer が現れた時だけ amber の第三面を出します。描画予算で observer を省略する場合も primary 2 view は残し、reprojection の可能性を結果として記録します。派生は capture off / silhouette / guided / full を操作し、同じ observer view でも共有粒度を変えられることを、常時見える disclosure cue で表現します。",
+      "bodyEn": "The derivative makes disclosure and information granularity manipulable independent of observer availability."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では requestSession の optionalFeatures に secondary-views を入れ、XRFrame ごとに pose.views を for...of で全走査します。index 0 と 1 を left/right と決め打ちせず、view.eye、isFirstPersonObserver、各 view の getViewport(view) を参照します。observer は必要なフレームだけ出るため、GPU target・UI・capture permission を view lifecycle に合わせて更新します。",
+      "bodyEn": "Opt in optionally, iterate every frame's views, and inspect each view rather than array indices."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "再利用する receipt は active view count、observer の有無、render plan、共有粒度、取り消し可能性です。GPU 時間、recording 状態、字幕、リモート支援の接続品質と組み合わせれば、配信のために本人の視界を丸ごと複製しない共同作業 UI にできます。生のカメラ映像や空間メッシュをログへ残す必要はありません。",
+      "bodyEn": "Small policy receipts combine with capture and collaboration state without retaining raw camera or spatial data."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実装ごとの secondary-views 提供条件、observer view が出る frame cadence、isFirstPersonObserver の利用可否、quad views の viewport 配置を追います。WebXR Layers、dynamic viewport scaling、recording UI、reprojection と電力への影響も比較します。",
+      "bodyEn": "Watch availability, cadence, observer detection, quad-view layout, layers, scaling, and power."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で「capture starts」と「observer budget skip」を交互に押し、第三 view の出現と、primary を維持した意図的な省略を比べてください。派生では coarse から guided、full と進め、capture が active でも共有 detail を段階的に上げられ、cue が変わることを確認できます。",
+      "bodyEn": "Compare observer rendering with intentional skipping, then adjust observer disclosure levels."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Device API、AR Module、公式 Spectator Mode。設計: variable view iteration と observer disclosure を分離。実装: Secondary View Contract Lab と Observer Privacy Cue Board。次: 実機の XRView、getViewport、capture session、取り消し操作を結びます。",
+      "bodyEn": "Research led to two contracts; next is live XRView, viewport, capture, and revoke wiring."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の視点は「左右の2枚」ではなく、端末・capture・性能に応じて変わる出力面です。view 数を柔軟に扱うことと、何を外部へ見せるかを本人に分かる形で扱うことは別の責務です。この二つを混ぜない設計ほど、AR 配信・遠隔支援・VR spectator の端末差を穏やかに吸収できます。",
+      "bodyEn": "Variable rendering and sharing consent are separate responsibilities that make XR capture more resilient."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Secondary View Contract Lab` を実装しました。何が動くか: stereo、capture、observer の予算省略、view 数変化を切り替え、feature request / active count / render plan を可視化します。次に足すなら実際の XRView、getViewport と GPU timing です。派生 `Observer Privacy Cue Board` も実装しました。何が動くか: observer の共有粒度と disclosure cue を切り替えます。次に足すなら実 capture と確認・失効 UI です。",
+      "bodyEn": "The main tests variable view contracts; the derivative tests observer disclosure. Next: live capture and revocation."
+    }
+  ]
+}

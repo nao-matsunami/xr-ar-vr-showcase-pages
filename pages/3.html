@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 125</span>
+        <span>days: 126</span>
         <span>page: 3 / 11</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -329,6 +329,29 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-10-18">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.10.18</p>
+              <h2>WebXR Layers の quality を寿命として設計する</h2>
+              <p class="card-subtitle">Designing WebXR Layers quality as a lifecycle</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-10-18" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Layers API の `quality`、`needsRedraw`、layer の破棄を参照し、GPU 圧に応じて composition layer を keep / degrade / redraw / destroy へ説明可能に分ける本命試作と、8 frame の遷移を再生する派生試作を追加しました。</p>
+          <p class="description en-copy">This adds an original composition-layer lifecycle console and an eight-frame transition replayer informed by quality, redraw, and destruction in WebXR Layers.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="../days/2026-10-18.html">その日のページ / Day</a>
+            <a class="secondary-link" href="../outputs/2026-10-18_html_layer_quality_lifecycle_console.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-10-17">
           <div class="card-top">
             <div>
@@ -578,29 +601,6 @@
           <div class="actions">
             <a class="primary" href="../days/2026-10-07.html">その日のページ / Day</a>
             <a class="secondary-link" href="../outputs/2026-10-07_html_predictive_frame_budget_governor.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-10-06">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.10.06</p>
-              <h2>Foveation と Space Warp を同じ予算 row で読む</h2>
-              <p class="card-subtitle">Reading foveation and Space Warp through one budget row</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-10-06" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">Meta Quest Browser の WebGPU foveation / space-warp layers、W3C WebXR Layers の fixedFoveation、WebXR Device API、Immersive Web WebGPU samples を確認し、foveation と Space Warp の信頼度を扱う自作サンプル2本を追加しました。</p>
-          <p class="description en-copy">After checking Meta Quest Browser notes around WebGPU foveation and space-warp layers, W3C WebXR Layers fixedFoveation, the WebXR Device API, and Immersive Web WebGPU samples, today's original work adds two samples that treat foveation and Space Warp as a shared confidence budget.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="../days/2026-10-06.html">その日のページ / Day</a>
-            <a class="secondary-link" href="../outputs/2026-10-06_html_foveation_space_warp_budget_mixer.html">代表サンプル / Sample</a>
           </div>
         </article>
       
