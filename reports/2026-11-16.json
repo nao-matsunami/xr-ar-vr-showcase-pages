@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-16",
+  "headline": "WebXR の許可境界を起動失敗ではなく選べる縮退経路として設計する",
+  "headlineEn": "Designing WebXR permission boundaries as deliberate fallback routes",
+  "summary": "Permissions Policy、ユーザー操作、required / optional feature を別々に扱い、失敗理由に応じて immersive・縮退 XR・inline を選ぶ自作サンプル2本を制作しました。",
+  "summaryEn": "Two original prototypes separate policy, user intent, and feature availability into actionable XR fallback routes.",
+  "keyTopics": [
+    "xr-spatial-tracking の Permissions Policy は immersive session を許可する前提になる。",
+    "埋め込み許可、明示的なユーザー操作、端末・feature の可否は別の判断軸である。",
+    "required feature が欠けると session は開始できず、optional feature は縮退体験へ分岐できる。",
+    "policy に阻まれた場合も端末非対応と断定せず、説明と host 側の修正経路を示す。",
+    "inline は完全な失敗画面ではなく、意思やコンテンツを残す安全な代替面になれる。"
+  ],
+  "keyTopicsEn": [
+    "Permissions Policy gates immersive sessions.",
+    "Policy, intent, and capability are separate gates.",
+    "Required versus optional features lead to different fallbacks.",
+    "Policy denial is not the same as hardware absence.",
+    "Inline can remain a useful alternative surface."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: XR Permission Boundary Lab",
+      "url": "../outputs/2026-11-16_html_xr_permission_boundary_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: XR Feature Fallback Router",
+      "url": "../outputs/2026-11-16_html_xr_feature_fallback_router.html"
+    },
+    {
+      "label": "W3C WebXR Device API — Permissions Policy",
+      "url": "https://www.w3.org/TR/webxr/#permissions-policy"
+    },
+    {
+      "label": "MDN — xr-spatial-tracking Permissions Policy",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy/xr-spatial-tracking"
+    },
+    {
+      "label": "Immersive Web — WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/index.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "W3C WebXR Device API は xr-spatial-tracking policy の対象外では immersive session を阻止し、inline も viewer 空間へ制限し得ると定めます。MDN は policy で止まる isSessionSupported() / requestSession() が SecurityError になり得ることを明記します。本命はこれを「端末が無い」ではなく、policy・intent・session の三段 gate として操作できる自作実験にしました。",
+      "bodyEn": "The main prototype distinguishes policy, intent, and session conditions rather than calling every failure unsupported.",
+      "links": [
+        {
+          "label": "WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命は三つの gate を緑・黄・赤で切り替え、iframe allow 不足、gesture 不足、required feature 不足にそれぞれ異なる回復策を出します。派生は full immersive / reduced XR / inline の三経路を一つずつ選び、失敗理由が体験の切替文言へ変換される様子を示します。",
+      "bodyEn": "The derivative turns capability states into three explicit experience routes."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "埋め込みでは Permissions-Policy header と iframe の allow を確認します。起動は user gesture の handler から requestSession() を呼び、requiredFeatures は成立しない場合の停止条件、optionalFeatures は無ければ縮退できる追加条件として分けます。isSessionSupported() や requestSession() の例外名を記録し、SecurityError と単なる false を同じ表示にしないのが実装上の要点です。",
+      "bodyEn": "Keep policy, gesture, required features, and probe outcomes as separate diagnostic signals."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "再利用できるのは policy 状態、gesture の有無、要求 feature、縮退 route、選択時刻だけです。これを CMS の埋め込み設定、遠隔支援の接続前チェック、展示端末の案内、分析用の匿名化された失敗率と組み合わせると、カメラ映像や空間データを保存せずに起動体験を改善できます。",
+      "bodyEn": "Policy and route receipts improve onboarding without retaining camera or spatial data."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "browser ごとの Permissions Policy API、iframe delegation、immersive-ar / immersive-vr の例外差、feature ごとの consent 要件を追います。実機上の WebXR Samples report と比較し、probe が true でも feature が使えない条件を収集します。",
+      "bodyEn": "Watch delegation support, exception differences, consent requirements, and hardware-specific feature gaps."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で embedded allow missing、gesture missing、required feature absent を順に押し、次の行動が host 修正・ボタン待ち・inline 提案と変わることを確認してください。派生では optional feature missing と required feature missing を比べ、片方だけが immersive を継続できる差を試せます。",
+      "bodyEn": "Compare policy, gesture, and required-feature failures, then contrast optional versus required absence."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C Device API、MDN policy、公式 Samples。設計: 起動条件を三段 gate と route に分離。実装: Permission Boundary Lab と Feature Fallback Router。次: 実 requestSession、iframe host、端末別 telemetry を接続します。",
+      "bodyEn": "Research informed two routing contracts; next is live requests, embedding, and telemetry."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の起動は一つの互換性チェックではなく、文書の権限、利用者の意思、端末能力、体験側の必須条件が重なる契約です。失敗を一色の非対応メッセージに畳まず、どの主体が何を変えられるかへ翻訳すると、埋め込み・企業配布・家庭用端末の差を穏やかに扱えます。",
+      "bodyEn": "XR launch is a multi-party contract; actionable diagnostics make it resilient across contexts."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `XR Permission Boundary Lab` を実装しました。何が動くか: policy、ユーザー操作、required feature の失敗を切り替え、各々の回復策と browser probe を表示します。次に足すなら実 requestSession と iframe host の live check です。派生 `XR Feature Fallback Router` も実装しました。何が動くか: full / reduced / inline を feature 条件に応じて選びます。次に足すなら端末別の capability 結果と利用者の再選択 UI です。",
+      "bodyEn": "The main separates launch gates; the derivative routes full, reduced, and inline experience. Next: live requests and capability data."
+    }
+  ]
+}
