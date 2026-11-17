@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR の終了を共通 cleanup と明示的な再入場に分ける | 2026-11-17</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GD2PHJX65F"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GD2PHJX65F');</script></head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.11.17</p>
+      <h1>WebXR の終了を共通 cleanup と明示的な再入場に分ける</h1>
+      <p class="hero-subtitle">Separating WebXR shutdown cleanup from explicit re-entry</p>
+      <p>WebXR session の end event を終了理由に依存しない cleanup 点として扱い、空間状態を持ち越さない再入場を検証する自作サンプル2本を制作しました。</p>
+      <p class="en-copy">Two original prototypes treat the WebXR end event as universal cleanup and require a fresh, explicit re-entry.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-11-17_html_session_shutdown_receipt_lab.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-11-16.html">← 2026.11.16</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>WebXR Session Shutdown Receipt Lab</h3>
+              <p>自作の最小試作。WebXR の end はアプリ起点でも user agent 起点でも発火します。保存できる軽量状態、即時に解放する XR 資源、次回に明示確認が必要な状態を分け、終了を一つの「戻る」操作に潰さないための実験です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-17_html_session_shutdown_receipt_lab.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>XR Re-entry Consent Checkpoint</h3>
+              <p>派生の自作試作。終了後に「前の XR 状態をそのまま復元」せず、アプリ下書き・空間状態・権限を別々に判定します。再入場のたびに新規 session と明示操作を通す設計を短時間で比較できます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-17_html_reentry_consent_checkpoint.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>XRSession の終了はアプリ起点でも user agent 起点でも end event で受ける。</span>
+              <span class="en-copy">End handles application and user-agent shutdown.</span>
+            </li>
+          
+            <li>
+              <span>終了済み session は不可逆で、再び XR を使うには新しい requestSession() が必要になる。</span>
+              <span class="en-copy">Ended sessions require a new requestSession.</span>
+            </li>
+          
+            <li>
+              <span>cleanup は end handler に集約し、描画 loop・layer・input listener を同じ経路で解放する。</span>
+              <span class="en-copy">Cleanup belongs in the end handler.</span>
+            </li>
+          
+            <li>
+              <span>アプリ下書きと pose・anchor・input source のような session 固有状態は別々に扱う。</span>
+              <span class="en-copy">App drafts differ from session-scoped spatial state.</span>
+            </li>
+          
+            <li>
+              <span>再入場は自動再開でなく、現在の権限・能力・明示操作を改めて通す。</span>
+              <span class="en-copy">Re-entry requires fresh consent and capability checks.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>W3C WebXR Device API は session の shutdown を不可逆とし、アプリと user agent のどちらが終了しても end event を発火します。MDN も資源解放を end handler に置くことを勧めます。本命はこの一点を、終了理由、解放対象、保存対象、次の行動へ分けて動かせる自作実験にしました。</p>
+          <p class="en-copy">The main sample turns a single end event into an inspectable cleanup contract.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">WebXR Device API</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命は session を核、pose cache・GL layer・draft・input route を周囲の token として描き、user exit、UA 終了、device unavailable を切り替えます。派生は下書き、空間状態、新しい consent を三段の checkpoint にし、どこまで復元できるかを比較します。</p>
+          <p class="en-copy">The derivative makes draft restore, spatial invalidation, and new consent visibly distinct.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>session 作成直後に end listener を登録し、listener 内で XR animation frame の取消、WebGL / layer の解放、session 参照の null 化、ページ UI の復帰をまとめます。終了済み session の XRFrame、XRSpace、input source を新 session へ移さず、必要ならアプリ固有の非空間下書きだけを復元候補にします。</p>
+          <p class="en-copy">Register end early, clean up there, and never carry old frame-bound state into a new session.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>再利用するなら終了種別、cleanup 完了時刻、任意のアプリ下書き、再入場を選んだかだけに絞れます。展示の中断復帰、遠隔支援の再接続、作業手順の中断メモと組み合わせても、camera・pose・部屋形状を保存せずに UX の摩擦を測れます。</p>
+          <p class="en-copy">Use minimal lifecycle receipts with installations or remote support without retaining spatial captures.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>実機で end と visibilitychange の順序、requestAnimationFrame の停止、devicechange 後の capability、ページ visibility と XR visibility の違いを確認します。anchor や persistent storage を用いる場合は、再検出・同意・期限を別途設計します。</p>
+          <p class="en-copy">Watch real ordering of end, visibility, render-loop behavior, and re-detection contracts.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で user exits と device lost を順に押し、どちらも『end event 後に解放』へ収束することを見てください。派生では restore draft only と stale spatial data を比べ、見た目の復元と空間 placement の復元が別物だと確かめられます。</p>
+          <p class="en-copy">Compare exits, then contrast draft restoration against stale spatial placement.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C Device API、MDN lifecycle、公式 Samples。設計: 終了の trigger と cleanup を分離。実装: Shutdown Receipt Lab と Re-entry Consent Checkpoint。次: 実 session、frame cancel、anchor 再検出と consent expiry を接続します。</p>
+          <p class="en-copy">Research informed shutdown and re-entry contracts; next is wiring live sessions and re-detection.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>XR の終了は例外処理だけではなく、誰がいつ没入からページへ戻るかの体験設計です。再開を便利さだけで自動化すると、古い空間証拠や前回の意思を現在へ誤って持ち込みます。終了を共通 cleanup、再入場を新しい合意として分けると、XR の状態遷移が説明可能になります。</p>
+          <p class="en-copy">Treat shutdown as a shared cleanup boundary and re-entry as a new agreement.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 `Session Shutdown Receipt Lab` を実装しました。何が動くか: user exit、UA 終了、device unavailable、ごく新しい session を切り替え、解放・保存・次アクションを可視化します。次に足すなら実際の session.end() と end listener です。派生 `Re-entry Consent Checkpoint` も実装しました。何が動くか: 下書きのみ復元、古い空間状態の block、自動再開の拒否を比較します。次に足すなら実 requestSession、再検出、期限付き consent UI です。</p>
+          <p class="en-copy">The main models universal shutdown cleanup; the derivative separates draft restore from new spatial consent.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-11-17_html_session_shutdown_receipt_lab.html" target="_blank" rel="noreferrer">Today's main sample: Session Shutdown Receipt Lab</a></li>
+          
+            <li><a href="../outputs/2026-11-17_html_reentry_consent_checkpoint.html" target="_blank" rel="noreferrer">Today's derivative sample: Re-entry Consent Checkpoint</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/#xrsession" target="_blank" rel="noreferrer">W3C WebXR Device API — XRSession lifecycle</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Startup_and_shutdown" target="_blank" rel="noreferrer">MDN — Starting up and shutting down a WebXR session</a></li>
+          
+            <li><a href="https://immersive-web.github.io/webxr-samples/index.html" target="_blank" rel="noreferrer">Immersive Web — WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-11-17_html_session_shutdown_receipt_lab.html" loading="lazy" title="WebXR Session Shutdown Receipt Lab"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

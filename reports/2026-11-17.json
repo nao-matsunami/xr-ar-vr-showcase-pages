@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-17",
+  "headline": "WebXR の終了を共通 cleanup と明示的な再入場に分ける",
+  "headlineEn": "Separating WebXR shutdown cleanup from explicit re-entry",
+  "summary": "WebXR session の end event を終了理由に依存しない cleanup 点として扱い、空間状態を持ち越さない再入場を検証する自作サンプル2本を制作しました。",
+  "summaryEn": "Two original prototypes treat the WebXR end event as universal cleanup and require a fresh, explicit re-entry.",
+  "keyTopics": [
+    "XRSession の終了はアプリ起点でも user agent 起点でも end event で受ける。",
+    "終了済み session は不可逆で、再び XR を使うには新しい requestSession() が必要になる。",
+    "cleanup は end handler に集約し、描画 loop・layer・input listener を同じ経路で解放する。",
+    "アプリ下書きと pose・anchor・input source のような session 固有状態は別々に扱う。",
+    "再入場は自動再開でなく、現在の権限・能力・明示操作を改めて通す。"
+  ],
+  "keyTopicsEn": [
+    "End handles application and user-agent shutdown.",
+    "Ended sessions require a new requestSession.",
+    "Cleanup belongs in the end handler.",
+    "App drafts differ from session-scoped spatial state.",
+    "Re-entry requires fresh consent and capability checks."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Session Shutdown Receipt Lab",
+      "url": "../outputs/2026-11-17_html_session_shutdown_receipt_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Re-entry Consent Checkpoint",
+      "url": "../outputs/2026-11-17_html_reentry_consent_checkpoint.html"
+    },
+    {
+      "label": "W3C WebXR Device API — XRSession lifecycle",
+      "url": "https://www.w3.org/TR/webxr/#xrsession"
+    },
+    {
+      "label": "MDN — Starting up and shutting down a WebXR session",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Startup_and_shutdown"
+    },
+    {
+      "label": "Immersive Web — WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/index.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "W3C WebXR Device API は session の shutdown を不可逆とし、アプリと user agent のどちらが終了しても end event を発火します。MDN も資源解放を end handler に置くことを勧めます。本命はこの一点を、終了理由、解放対象、保存対象、次の行動へ分けて動かせる自作実験にしました。",
+      "bodyEn": "The main sample turns a single end event into an inspectable cleanup contract.",
+      "links": [
+        {
+          "label": "WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命は session を核、pose cache・GL layer・draft・input route を周囲の token として描き、user exit、UA 終了、device unavailable を切り替えます。派生は下書き、空間状態、新しい consent を三段の checkpoint にし、どこまで復元できるかを比較します。",
+      "bodyEn": "The derivative makes draft restore, spatial invalidation, and new consent visibly distinct."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "session 作成直後に end listener を登録し、listener 内で XR animation frame の取消、WebGL / layer の解放、session 参照の null 化、ページ UI の復帰をまとめます。終了済み session の XRFrame、XRSpace、input source を新 session へ移さず、必要ならアプリ固有の非空間下書きだけを復元候補にします。",
+      "bodyEn": "Register end early, clean up there, and never carry old frame-bound state into a new session."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "再利用するなら終了種別、cleanup 完了時刻、任意のアプリ下書き、再入場を選んだかだけに絞れます。展示の中断復帰、遠隔支援の再接続、作業手順の中断メモと組み合わせても、camera・pose・部屋形状を保存せずに UX の摩擦を測れます。",
+      "bodyEn": "Use minimal lifecycle receipts with installations or remote support without retaining spatial captures."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実機で end と visibilitychange の順序、requestAnimationFrame の停止、devicechange 後の capability、ページ visibility と XR visibility の違いを確認します。anchor や persistent storage を用いる場合は、再検出・同意・期限を別途設計します。",
+      "bodyEn": "Watch real ordering of end, visibility, render-loop behavior, and re-detection contracts."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で user exits と device lost を順に押し、どちらも『end event 後に解放』へ収束することを見てください。派生では restore draft only と stale spatial data を比べ、見た目の復元と空間 placement の復元が別物だと確かめられます。",
+      "bodyEn": "Compare exits, then contrast draft restoration against stale spatial placement."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C Device API、MDN lifecycle、公式 Samples。設計: 終了の trigger と cleanup を分離。実装: Shutdown Receipt Lab と Re-entry Consent Checkpoint。次: 実 session、frame cancel、anchor 再検出と consent expiry を接続します。",
+      "bodyEn": "Research informed shutdown and re-entry contracts; next is wiring live sessions and re-detection."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の終了は例外処理だけではなく、誰がいつ没入からページへ戻るかの体験設計です。再開を便利さだけで自動化すると、古い空間証拠や前回の意思を現在へ誤って持ち込みます。終了を共通 cleanup、再入場を新しい合意として分けると、XR の状態遷移が説明可能になります。",
+      "bodyEn": "Treat shutdown as a shared cleanup boundary and re-entry as a new agreement."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 `Session Shutdown Receipt Lab` を実装しました。何が動くか: user exit、UA 終了、device unavailable、ごく新しい session を切り替え、解放・保存・次アクションを可視化します。次に足すなら実際の session.end() と end listener です。派生 `Re-entry Consent Checkpoint` も実装しました。何が動くか: 下書きのみ復元、古い空間状態の block、自動再開の拒否を比較します。次に足すなら実 requestSession、再検出、期限付き consent UI です。",
+      "bodyEn": "The main models universal shutdown cleanup; the derivative separates draft restore from new spatial consent."
+    }
+  ]
+}
