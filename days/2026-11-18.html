@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>信頼済み UI の前では XR 入力を閉じ、触覚を確定の確認に限定する | 2026-11-18</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GD2PHJX65F"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GD2PHJX65F');</script></head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.11.18</p>
+      <h1>信頼済み UI の前では XR 入力を閉じ、触覚を確定の確認に限定する</h1>
+      <p class="hero-subtitle">Closing XR input for trusted UI and reserving haptics for committed actions</p>
+      <p>WebXR の trusted UI と visibility を入力のプライバシー境界として捉え、入力遮断を可視化する本命と、確定後だけに触覚確認を送る派生の自作サンプル2本を制作しました。</p>
+      <p class="en-copy">Two original prototypes make the trusted-UI input boundary and committed-only haptic acknowledgement inspectable.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-11-18_html_trusted_ui_input_curtain_lab.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-11-17.html">← 2026.11.17</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>WebXR Trusted UI Input Curtain Lab</h3>
+              <p>自作の最小試作。ブラウザや OS の信頼済み UI が前面にあるとき、ページが空間入力から選択内容を推測しないために、XR の表示・frame・input を段階的に止める境界を可視化します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-18_html_trusted_ui_input_curtain_lab.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>XR Haptic Acknowledgement Router</h3>
+              <p>派生の自作試作。空間選択が確定した後だけに、短い触覚フィードバックを送る設計を比較します。信頼済み UI 中・未対応・軽い preview を同じ「成功」扱いにしないためのルーターです。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-18_html_haptic_acknowledgement_router.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>2026年11月9日版 WebXR Device API は、trusted UI 操作中に XR session を hidden または visible-blurred とし、ページによる入力の観測を防ぐ。</span>
+              <span class="en-copy">Trusted UI requires an XR visibility and input boundary.</span>
+            </li>
+          
+            <li>
+              <span>hidden では XR requestAnimationFrame callback と input controller 処理が止まり、visible-blurred でも input はページへ渡されない。</span>
+              <span class="en-copy">Hidden and blurred sessions must not process XR input.</span>
+            </li>
+          
+            <li>
+              <span>XR visibility は document.visibilityState と独立し得るため、ページの可視性だけを XR の復帰条件にできない。</span>
+              <span class="en-copy">XR and document visibility are independent signals.</span>
+            </li>
+          
+            <li>
+              <span>XRInputSource の gamepad は frame ごとに in-place 更新される live object なので、変化比較には値の自前 cache が必要になる。</span>
+              <span class="en-copy">XR gamepad state is a live frame-updated object.</span>
+            </li>
+          
+            <li>
+              <span>Gamepad の haptic output は利用可能な actuator の capability を前提にし、未対応時は視覚的な確認へ落とす。</span>
+              <span class="en-copy">Haptics require capability-aware fallback.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>WebXR Device API の trusted environment は、ページが模倣も観測もできない browser / OS 側の操作面です。仕様はその最中に session を hidden または visible-blurred にし、入力から選択内容を推測する経路を塞ぎます。本命はこれを『演出を薄くする』話で終えず、frame、input、ページの次アクションを別々に切り替えられる自作実験にしました。</p>
+          <p class="en-copy">The main prototype treats trusted UI as a non-spoofable, non-observable input boundary rather than just a visual pause.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">WebXR Device API</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命 Trusted UI Input Curtain Lab は scene focused / trusted UI nearby / trusted UI focused を押して、視界の残り方、ray の停止、input の閉鎖を比べます。派生 Haptic Acknowledgement Router は committed select、preview、trusted UI 中、actuator 未対応を分け、確定していない候補に触覚を付けない設計を動かします。</p>
+          <p class="en-copy">The derivative only routes a short haptic acknowledgement after a committed selection and has explicit silent/fallback states.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では session 作成時に visibilitychange を登録し、visible 以外で XR input による state 更新を止めます。hidden は frame が来ない前提で animation 依存の cleanup を書き、visible へ戻ったら capability と現在の state を再評価します。controller の gamepad は live object なので axes / buttons を plain values に copy して前 frame と比較し、haptic actuator がなければ視覚・音声など任意の安全な確認へ切り替えます。</p>
+          <p class="en-copy">Listen for visibility changes, stop input outside visible, cache gamepad values, and use an explicit non-haptic fallback.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>再利用するなら visibility の遷移、intent が commit されたか、output が capability 不足で fallback したかだけの最小 receipt が有用です。展示の安全停止、遠隔支援の引き継ぎ、作業 UI の確認演出と組み合わせても、ユーザーが trusted UI で何を選んだかや、pose / gaze の連続値を記録せずに、設計上の摩擦だけを観測できます。</p>
+          <p class="en-copy">Minimal transition receipts can measure interaction friction without recording trusted choices, poses, or gaze.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>実機で trusted UI 表示時の visibilitychange 順序、visible-blurred の callback cadence、controller 接続切断、haptic playEffect の result を確認します。Immersive Web の body tracking 提案も含め、より豊かな入力を足すほど、trusted UI 中の input suppression と保存範囲の設計を先に固める必要があります。</p>
+          <p class="en-copy">Check real device event order, throttling, controller loss, and haptic results before adding richer inputs.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で trusted UI nearby と trusted UI focused を切り替え、どちらも input が page へ来ない一方、frame policy は違い得ることを見てください。次に派生で preview only と committed select を比べ、確認の触覚を『候補をなぞる音』ではなく commit の領収書として設計できます。</p>
+          <p class="en-copy">Compare blurred and hidden input closure, then contrast preview against committed haptic acknowledgement.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: 11月9日版 Device API、MDN visibility、Gamepads / Gamepad haptics。設計: trusted UI を非観測の入力境界、haptic を commit の確認として分離。実装: Input Curtain Lab と Acknowledgement Router。次: 実 session listener、XRInputSource の値 cache、実 actuator result と低帯域 fallback を接続します。</p>
+          <p class="en-copy">Research informed a privacy boundary and a committed-only feedback contract; next is wiring real session events and haptic results.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>XR の privacy はカメラ画像や room mesh だけの問題ではありません。browser がユーザーへ問いかける瞬間に、アプリが手の向きや controller の微小変化から答えを推測できるなら、入力の分離は破れます。visibility を performance hint としてだけ使わず、誰の UI が input を受け取るかを示す権限境界として扱うと、表現と安全性を同時に設計できます。</p>
+          <p class="en-copy">Visibility is also an authority boundary: it says whose UI may receive input.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 outputs/2026-11-18_html_trusted_ui_input_curtain_lab.html を実装しました。何が動くか: focused / blurred / hidden の3状態で scene、frame policy、XR input、次アクションを切り替え、browser probe と receipt copy を試せます。次に足すなら実 XRSession.visibilitychange と安全な resume 条件です。派生 outputs/2026-11-18_html_haptic_acknowledgement_router.html も実装しました。何が動くか: commit、preview、trusted UI、actuator 未対応を切り替え、触覚・無音・視覚 fallback のルートを比較できます。次に足すなら実 XRInputSource.gamepad の値 cache と playEffect() 結果の表示です。</p>
+          <p class="en-copy">The main models trusted-UI input closure; the derivative models committed-only haptic routing and fallback.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-11-18_html_trusted_ui_input_curtain_lab.html" target="_blank" rel="noreferrer">Today's main sample: Trusted UI Input Curtain Lab</a></li>
+          
+            <li><a href="../outputs/2026-11-18_html_haptic_acknowledgement_router.html" target="_blank" rel="noreferrer">Today's derivative sample: Haptic Acknowledgement Router</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/#trusted-environment" target="_blank" rel="noreferrer">W3C WebXR Device API — trusted environment and visibility</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSession/visibilityState" target="_blank" rel="noreferrer">MDN — XRSession visibilityState</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr-gamepads-module-1/" target="_blank" rel="noreferrer">W3C WebXR Gamepads Module — frame-updated gamepad state</a></li>
+          
+            <li><a href="https://www.w3.org/TR/gamepad/#dom-gamepadhapticactuator-playeffect" target="_blank" rel="noreferrer">W3C Gamepad — haptic actuator output</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-11-18_html_trusted_ui_input_curtain_lab.html" loading="lazy" title="WebXR Trusted UI Input Curtain Lab"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

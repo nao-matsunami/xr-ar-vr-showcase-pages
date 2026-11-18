@@ -1,0 +1,109 @@
+{
+  "date": "2026-11-18",
+  "headline": "信頼済み UI の前では XR 入力を閉じ、触覚を確定の確認に限定する",
+  "headlineEn": "Closing XR input for trusted UI and reserving haptics for committed actions",
+  "summary": "WebXR の trusted UI と visibility を入力のプライバシー境界として捉え、入力遮断を可視化する本命と、確定後だけに触覚確認を送る派生の自作サンプル2本を制作しました。",
+  "summaryEn": "Two original prototypes make the trusted-UI input boundary and committed-only haptic acknowledgement inspectable.",
+  "keyTopics": [
+    "2026年11月9日版 WebXR Device API は、trusted UI 操作中に XR session を hidden または visible-blurred とし、ページによる入力の観測を防ぐ。",
+    "hidden では XR requestAnimationFrame callback と input controller 処理が止まり、visible-blurred でも input はページへ渡されない。",
+    "XR visibility は document.visibilityState と独立し得るため、ページの可視性だけを XR の復帰条件にできない。",
+    "XRInputSource の gamepad は frame ごとに in-place 更新される live object なので、変化比較には値の自前 cache が必要になる。",
+    "Gamepad の haptic output は利用可能な actuator の capability を前提にし、未対応時は視覚的な確認へ落とす。"
+  ],
+  "keyTopicsEn": [
+    "Trusted UI requires an XR visibility and input boundary.",
+    "Hidden and blurred sessions must not process XR input.",
+    "XR and document visibility are independent signals.",
+    "XR gamepad state is a live frame-updated object.",
+    "Haptics require capability-aware fallback."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Trusted UI Input Curtain Lab",
+      "url": "../outputs/2026-11-18_html_trusted_ui_input_curtain_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Haptic Acknowledgement Router",
+      "url": "../outputs/2026-11-18_html_haptic_acknowledgement_router.html"
+    },
+    {
+      "label": "W3C WebXR Device API — trusted environment and visibility",
+      "url": "https://www.w3.org/TR/webxr/#trusted-environment"
+    },
+    {
+      "label": "MDN — XRSession visibilityState",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/visibilityState"
+    },
+    {
+      "label": "W3C WebXR Gamepads Module — frame-updated gamepad state",
+      "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+    },
+    {
+      "label": "W3C Gamepad — haptic actuator output",
+      "url": "https://www.w3.org/TR/gamepad/#dom-gamepadhapticactuator-playeffect"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "WebXR Device API の trusted environment は、ページが模倣も観測もできない browser / OS 側の操作面です。仕様はその最中に session を hidden または visible-blurred にし、入力から選択内容を推測する経路を塞ぎます。本命はこれを『演出を薄くする』話で終えず、frame、input、ページの次アクションを別々に切り替えられる自作実験にしました。",
+      "bodyEn": "The main prototype treats trusted UI as a non-spoofable, non-observable input boundary rather than just a visual pause.",
+      "links": [
+        {
+          "label": "WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命 Trusted UI Input Curtain Lab は scene focused / trusted UI nearby / trusted UI focused を押して、視界の残り方、ray の停止、input の閉鎖を比べます。派生 Haptic Acknowledgement Router は committed select、preview、trusted UI 中、actuator 未対応を分け、確定していない候補に触覚を付けない設計を動かします。",
+      "bodyEn": "The derivative only routes a short haptic acknowledgement after a committed selection and has explicit silent/fallback states."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では session 作成時に visibilitychange を登録し、visible 以外で XR input による state 更新を止めます。hidden は frame が来ない前提で animation 依存の cleanup を書き、visible へ戻ったら capability と現在の state を再評価します。controller の gamepad は live object なので axes / buttons を plain values に copy して前 frame と比較し、haptic actuator がなければ視覚・音声など任意の安全な確認へ切り替えます。",
+      "bodyEn": "Listen for visibility changes, stop input outside visible, cache gamepad values, and use an explicit non-haptic fallback."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "再利用するなら visibility の遷移、intent が commit されたか、output が capability 不足で fallback したかだけの最小 receipt が有用です。展示の安全停止、遠隔支援の引き継ぎ、作業 UI の確認演出と組み合わせても、ユーザーが trusted UI で何を選んだかや、pose / gaze の連続値を記録せずに、設計上の摩擦だけを観測できます。",
+      "bodyEn": "Minimal transition receipts can measure interaction friction without recording trusted choices, poses, or gaze."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実機で trusted UI 表示時の visibilitychange 順序、visible-blurred の callback cadence、controller 接続切断、haptic playEffect の result を確認します。Immersive Web の body tracking 提案も含め、より豊かな入力を足すほど、trusted UI 中の input suppression と保存範囲の設計を先に固める必要があります。",
+      "bodyEn": "Check real device event order, throttling, controller loss, and haptic results before adding richer inputs."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で trusted UI nearby と trusted UI focused を切り替え、どちらも input が page へ来ない一方、frame policy は違い得ることを見てください。次に派生で preview only と committed select を比べ、確認の触覚を『候補をなぞる音』ではなく commit の領収書として設計できます。",
+      "bodyEn": "Compare blurred and hidden input closure, then contrast preview against committed haptic acknowledgement."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: 11月9日版 Device API、MDN visibility、Gamepads / Gamepad haptics。設計: trusted UI を非観測の入力境界、haptic を commit の確認として分離。実装: Input Curtain Lab と Acknowledgement Router。次: 実 session listener、XRInputSource の値 cache、実 actuator result と低帯域 fallback を接続します。",
+      "bodyEn": "Research informed a privacy boundary and a committed-only feedback contract; next is wiring real session events and haptic results."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の privacy はカメラ画像や room mesh だけの問題ではありません。browser がユーザーへ問いかける瞬間に、アプリが手の向きや controller の微小変化から答えを推測できるなら、入力の分離は破れます。visibility を performance hint としてだけ使わず、誰の UI が input を受け取るかを示す権限境界として扱うと、表現と安全性を同時に設計できます。",
+      "bodyEn": "Visibility is also an authority boundary: it says whose UI may receive input."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 outputs/2026-11-18_html_trusted_ui_input_curtain_lab.html を実装しました。何が動くか: focused / blurred / hidden の3状態で scene、frame policy、XR input、次アクションを切り替え、browser probe と receipt copy を試せます。次に足すなら実 XRSession.visibilitychange と安全な resume 条件です。派生 outputs/2026-11-18_html_haptic_acknowledgement_router.html も実装しました。何が動くか: commit、preview、trusted UI、actuator 未対応を切り替え、触覚・無音・視覚 fallback のルートを比較できます。次に足すなら実 XRInputSource.gamepad の値 cache と playEffect() 結果の表示です。",
+      "bodyEn": "The main models trusted-UI input closure; the derivative models committed-only haptic routing and fallback."
+    }
+  ]
+}
