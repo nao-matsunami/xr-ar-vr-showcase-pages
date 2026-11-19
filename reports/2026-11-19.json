@@ -1,0 +1,109 @@
+{
+  "date": "2026-11-19",
+  "headline": "WebXR のフレームレートを希望値と実効 cadence に分けて扱う",
+  "headlineEn": "Treating WebXR frame rate as a target and an observed cadence",
+  "summary": "対応 frame rate への希望と、コンポジタが一時的に変え得る名目 cadence を分離し、品質を段階的に渡す自作サンプル2本を制作しました。",
+  "summaryEn": "Two original prototypes separate a supported target frame rate from compositor-observed cadence and hand off quality in stages.",
+  "keyTopics": [
+    "`supportedFrameRates` は更新要求に使える値の集合で、集合外の値は拒否される。",
+    "`updateTargetFrameRate()` は希望値を伝える非同期操作で、実効 cadence を即時保証しない。",
+    "trusted UI などでコンポジタが一時的に nominal frame rate を変えることがある。",
+    "一時的な低下を利用者の品質設定変更として保存せず、復帰時の遷移を設計する。",
+    "品質予算は中心の操作対象、空間文脈、装飾の順に段階的に手放す。"
+  ],
+  "keyTopicsEn": [
+    "supportedFrameRates constrains valid update requests.",
+    "A target-frame-rate update is asynchronous rather than a guarantee of immediate cadence.",
+    "The compositor may temporarily alter nominal rate.",
+    "Temporary throttling must not become a persisted user preference.",
+    "Quality should hand off from flair to context while protecting the interaction core."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Frame Rate Contract Lab",
+      "url": "../outputs/2026-11-19_html_frame_rate_contract_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Cadence Quality Handoff Board",
+      "url": "../outputs/2026-11-19_html_cadence_quality_handoff_board.html"
+    },
+    {
+      "label": "W3C WebXR Device API — target frame rate",
+      "url": "https://www.w3.org/TR/webxr/#dom-xrsession-updatetargetframerate-rate"
+    },
+    {
+      "label": "W3C WebXR Device API — supported frame rates",
+      "url": "https://www.w3.org/TR/webxr/#dom-xrsession-supportedframerates"
+    },
+    {
+      "label": "Immersive Web — WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    },
+    {
+      "label": "Immersive Web — WebXR Device API explainer",
+      "url": "https://immersive-web.github.io/webxr/explainer.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "2026年11月9日版 WebXR Device API は、session が対応する値を supportedFrameRates として公開し、集合外の updateTargetFrameRate() を TypeError で拒否します。また、コンポジタが visible-blurred のような理由で名目 frame rate を変えた後は、要因が解消すれば内部 target を使うことを求めます。本命はこの『希望』『実効』『一時的な割り込み』を同じ数字に畳まない自作実験です。",
+      "bodyEn": "The main sample keeps supported intent, nominal cadence, and temporary compositor changes visibly distinct.",
+      "links": [
+        {
+          "label": "WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命 Frame Rate Contract Lab は 90 Hz、対応する 72 Hz request、trusted UI 中の一時 45 Hz、非対応 80 Hz を切り替えます。派生 Cadence Quality Handoff Board は cadence 低下を受けて、中心の操作対象、空間文脈、粒子・履歴表現へ品質を順に配分し、復帰を一括ではなく段階的にします。",
+      "bodyEn": "The derivative turns cadence pressure into staged quality handoff rather than a uniform resolution drop."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では session.supportedFrameRates が存在するかを確認し、その要素だけを updateTargetFrameRate(rate) に渡します。promise が解決しても frame 間隔を決め打ちせず、XRFrame の到着と GPU 計測から実効予算を判断します。visibilitychange や device 状態で一時的に cadence が変わる場合、ユーザー設定・保存済み品質とは別の transient state として扱います。",
+      "bodyEn": "Request only supported rates, observe real frame delivery, and keep transient throttling separate from persisted preference."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "再利用するなら requested rate、観測した cadence tier、品質 handoff、interaction を止めたかだけの簡潔な receipt が適しています。展示の照明変化、遠隔支援の回線劣化、業務 UI の集中モード、音の密度と組み合わせると、pose や部屋の形状を記録せずに、どの表現を先に守るべきかを検討できます。",
+      "bodyEn": "Small cadence receipts can connect to installations, remote support, or audio without storing spatial traces."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実機で supportedFrameRates の有無、updateTargetFrameRate の解決時刻、実際の frame 間隔、visible-blurred 前後の復帰を測ります。secondary views や dynamic viewport scaling と併用するとき、frame rate・view 数・viewport scale のどれが品質低下の原因かを別々にログ化します。",
+      "bodyEn": "Measure support, promise timing, real intervals, and recovery; distinguish rate, view count, and viewport scale."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で 72 Hz request と trusted UI 45 Hz を続けて押し、前者は対応する希望、後者は一時的な実効 cadence だと見比べてください。次に派生で 72 Hz pressure と 45 Hz interruption を比べ、操作対象の可読性を守ったまま何を手放せるかを確認できます。",
+      "bodyEn": "Compare a supported target request with a temporary observed slowdown, then compare their quality handoffs."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: 2026年11月9日版 Device API、公式 WebXR Samples、Device API explainer。設計: target と nominal cadence、恒久設定と一時的割り込みを分離。実装: Frame Rate Contract Lab と Cadence Quality Handoff Board。次: 実 session、GPU timing、viewport scale、secondary views の複合予算を接続します。",
+      "bodyEn": "Research informed a target/cadence contract; next is live sessions with GPU timing, viewport scale, and secondary views."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の frame rate は単純な速さの設定ではなく、ブラウザ・コンポジタ・コンテンツが共有する時間の境界です。希望した数値だけを UI に表示すると、trusted UI や熱・電力の都合で実効が変わったとき、アプリは誤った確信を持ちます。観測と表現の優先順位を分けると、性能低下を『壊れた体験』ではなく安全なモード遷移として扱えます。",
+      "bodyEn": "Frame rate is a shared time boundary; separating intent and observation makes degradation a safe mode transition."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 outputs/2026-11-19_html_frame_rate_contract_lab.html を実装しました。何が動くか: 90 Hz、対応する 72 Hz request、trusted UI 中の 45 Hz、非対応 request を切り替え、target・nominal cadence・品質方針を比べられます。次に足すなら実 XRSession.supportedFrameRates、updateTargetFrameRate()、GPU timing です。派生 outputs/2026-11-19_html_cadence_quality_handoff_board.html も実装しました。何が動くか: 90 / 72 / 45 Hz と回復で、中心操作・空間文脈・装飾の品質予算を段階的に渡します。次に足すなら実測 cadence、ユーザー設定、dynamic viewport scaling です。",
+      "bodyEn": "The main models target versus cadence; the derivative stages quality handoff and recovery."
+    }
+  ]
+}
