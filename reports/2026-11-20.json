@@ -1,0 +1,109 @@
+{
+  "date": "2026-11-20",
+  "headline": "WebXR の viewport scale を要求値ではなく実測 viewport で扱う",
+  "headlineEn": "Treating WebXR viewport scale as a measured viewport, not a request",
+  "summary": "Dynamic Viewport Scaling の要求値と実際に返る viewport を分離し、画素予算の変化でも可読性と操作対象を守る自作サンプル2本を制作しました。",
+  "summaryEn": "Two original prototypes separate requested viewport scale from the returned viewport while protecting readability and interaction.",
+  "keyTopics": [
+    "Dynamic Viewport Scaling は XRView ごとに opt-in する高頻度の解像度調整手段である。",
+    "requestViewportScale() は希望であり、実効サイズは getViewport() の返り値で確認する。",
+    "対応しない実装では要求が無視されるため、描画負荷を下げる代替経路が必要になる。",
+    "framebuffer の再確保を伴う scale 変更と、viewport の細かな変更は別の使い分けになる。",
+    "低い scale では文字と選択対象を先に守り、装飾と履歴表現を後から削る。"
+  ],
+  "keyTopicsEn": [
+    "Dynamic viewport scaling is an opt-in, per-XRView fine-grained resolution control.",
+    "The request is intent; getViewport() is the observed result.",
+    "Unsupported implementations need a scene-complexity fallback.",
+    "Framebuffer reallocations differ from frequent viewport adjustments.",
+    "Protect readable text and interaction before flair."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Viewport Scale Contract Lab",
+      "url": "../outputs/2026-11-20_html_viewport_scale_contract_lab.html"
+    },
+    {
+      "label": "Today's derivative sample: Viewport Scale Quality Router",
+      "url": "../outputs/2026-11-20_html_viewport_scale_quality_router.html"
+    },
+    {
+      "label": "Immersive Web — WebXR Device API explainer: Dynamic viewport scaling",
+      "url": "https://immersive-web.github.io/webxr/explainer.html#dynamic-viewport-scaling"
+    },
+    {
+      "label": "W3C WebXR Device API — XRView requestViewportScale",
+      "url": "https://www.w3.org/TR/webxr/#dom-xrview-requestviewportscale"
+    },
+    {
+      "label": "MDN — WebXR Device API",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API"
+    },
+    {
+      "label": "Immersive Web — WebXR Samples",
+      "url": "https://immersive-web.github.io/webxr-samples/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Immersive Web の Device API explainer は、dynamic viewport scaling を頻繁に変化する描画解像度向けの opt-in 機能として説明しています。XRView.requestViewportScale(scale) の後、XRWebGLLayer.getViewport(view) が同一 frame の実効 viewport を返します。要求をしたという UI 表示だけでは足りず、返り値を読むことで初めて品質制御が現実の GPU 資源と結び付く点が面白いところです。",
+      "bodyEn": "The interesting contract is between an app request and the viewport actually returned for that frame.",
+      "links": [
+        {
+          "label": "WebXR Device API explainer",
+          "url": "https://immersive-web.github.io/webxr/explainer.html#dynamic-viewport-scaling"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命 Viewport Scale Contract Lab は full、UA 推奨、負荷時、未対応という4状態を切り替え、request と returned viewport、画素予算、代替経路を比較します。派生 Viewport Scale Quality Router は返った scale ごとに、文字・選択対象、空間文脈、影・粒子・history の順に予算を配ることで、単なるぼかしではない品質低下を試します。",
+      "bodyEn": "The derivative routes the budget by semantic importance instead of applying a uniform blur."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装は pose.views を固定の左右2枚として扱わず、各 view に requestViewportScale があるかを確認して呼びます。その後に getViewport(view) を読み、gl.viewport と render target をそのサイズに合わせます。API が無い、または返り値が変わらないときは連続リトライせず、LOD・影・透明物・更新頻度を下げる fallback を選びます。頻繁な調整には viewport scale を使い、XRWebGLLayer の framebufferScaleFactor 再作成はまれなモード遷移に限ります。",
+      "bodyEn": "Check per-view support, render to the observed viewport, and fall back to complexity and update-rate reductions."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "再利用するなら requested scale、returned width/height、GPU 時間、切り替えた品質レーンだけの小さな receipt が適しています。空間そのものを記録せずに、展示の混雑度、遠隔支援の回線状態、音楽の盛り上がり、業務 UI の精読モードと組み合わせ、いつ何を守るべきだったかを比較できます。",
+      "bodyEn": "Small quality receipts can connect to installations, remote support, and audio without storing spatial traces."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実機で recommendedViewportScale の有無、request 後に返る viewport、GPU timer query、scale が往復する頻度を測ります。fixed foveation、frame rate、secondary views を同時に使うときは、どの変数が視覚変化を起こしたかを別のログ項目にして、効果を混同しないようにします。",
+      "bodyEn": "Measure support, returned viewport, GPU time, and scale oscillation; log foveation, rate, and views separately."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で recommended 0.78 と API unavailable を順に選び、希望値ではなく returned viewport を判断基準にする違いを見てください。次に派生で 0.62 returned と request ignored を比べると、両方で文字を守りながら、解像度の有無に応じて品質を下げる経路が変わることを確認できます。",
+      "bodyEn": "Compare a returned smaller viewport with an ignored request to see two distinct adaptation paths."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: WebXR Device API explainer、Device API、公式 Samples。設計: request、returned viewport、pixel budget、fallback を分離。実装: Viewport Scale Contract Lab と Viewport Scale Quality Router。次: 実 XRView、GPU timing、hysteresis、fixed foveation を接続し、品質変化を滑らかにします。",
+      "bodyEn": "Research informed a request/observation/fallback contract; next is live views, GPU timing, hysteresis, and foveation."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の画素数は単独の品質つまみではなく、frame の到着、view の数、GPU の余白、可読性と結び付く共有資源です。request の数字だけを保存すると、互換性の違いや UA の判断をアプリ側の意図と取り違えます。観測値と表現の優先順位を分けると、解像度の変化を壊れた画面ではなく、理解できる品質遷移として設計できます。",
+      "bodyEn": "Pixels are shared XR resources; separating requests from observations turns resolution shifts into comprehensible mode changes."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 outputs/2026-11-20_html_viewport_scale_contract_lab.html を実装しました。何が動くか: full、推奨値、負荷時、未対応を切り替え、requested scale と returned viewport、画素予算、fallback を比べられます。次に足すなら実 XRView.requestViewportScale()、XRWebGLLayer.getViewport()、GPU timer query です。派生 outputs/2026-11-20_html_viewport_scale_quality_router.html も実装しました。何が動くか: 返った viewport ごとに文字・選択対象、空間文脈、装飾の品質予算を振り分けます。次に足すなら hysteresis、実測 GPU 時間、利用者が選ぶ可読性の下限です。",
+      "bodyEn": "The main contrasts request and observed viewport; the derivative routes quality by semantic priority."
+    }
+  ]
+}
