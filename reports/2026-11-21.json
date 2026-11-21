@@ -1,0 +1,111 @@
+{
+  "date": "2026-11-21",
+  "headline": "手の追跡欠損と深度遮蔽を、空間表現のリズムとして設計する",
+  "headlineEn": "Design hand-tracking loss and depth occlusion as spatial rhythm",
+  "summary": "WebXR Hand Input と Depth Sensing の一次情報を手掛かりに、関節が欠ける瞬間と仮想物が遮蔽物の奥へ入る瞬間を、失敗表示ではなく理解可能な状態遷移として試す自作サンプル2本を制作しました。",
+  "summaryEn": "Two original prototypes turn missing hand joints and depth occlusion into understandable state transitions rather than failures.",
+  "keyTopics": [
+    "W3C の Hand Input Working Draft は hand-tracking を明示的な session feature とし、関節 pose は一式得られるか null として扱う設計を示す。",
+    "W3C Immersive Web は 2026年10月に Hand Input の新しい Working Draft を公開し、更新頻度の hint を追加した。",
+    "Depth Sensing は現実との物理的相互作用、遮蔽、非視覚的な環境認識を用途として挙げる。",
+    "WebXR Device API はコントローラ、光学追跡された手、視線を XR input source の例として扱う。"
+  ],
+  "keyTopicsEn": [
+    "Hand input makes tracking an explicit session feature and treats hand poses as present or absent.",
+    "A 2026 Working Draft adds a hand-tracking frequency hint.",
+    "Depth sensing supports physical interaction, occlusion, and environment awareness.",
+    "WebXR accepts controllers, tracked hands, and gaze as XR input sources."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Hand Signal Loom",
+      "url": "../outputs/2026-11-21_html_hand_signal_loom.html"
+    },
+    {
+      "label": "Today's derivative sample: Occlusion Rhythm Notebook",
+      "url": "../outputs/2026-11-21_html_occlusion_rhythm_notebook.html"
+    },
+    {
+      "label": "W3C — WebXR Hand Input Module Level 1 (2026 Working Draft)",
+      "url": "https://www.w3.org/TR/2026/WD-webxr-hand-input-1-20261029/"
+    },
+    {
+      "label": "W3C — Immersive Web publications",
+      "url": "https://www.w3.org/groups/wg/immersive-web/publications/"
+    },
+    {
+      "label": "W3C — WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "MDN — WebXR Device API",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "W3C の Hand Input Module は、articulated hand pose を session の hand-tracking feature として要求する構造にしています。さらに、手が一部隠れた場合は全関節を補間するか全体を null にする、と定めます。これは「少しだけ残った古い指先」を UI が本物らしく見せないための重要な境界です。Depth Sensing は遮蔽を代表的な用途に挙げており、手と深度のどちらも“取れた値”と“取れない値”を表現の条件にするのが面白い点です。",
+      "bodyEn": "Both specifications make absence a first-class condition, which is useful for coherent spatial feedback.",
+      "links": [
+        {
+          "label": "W3C Hand Input Module",
+          "url": "https://www.w3.org/TR/2026/WD-webxr-hand-input-1-20261029/"
+        },
+        {
+          "label": "W3C Immersive Web publications",
+          "url": "https://www.w3.org/groups/wg/immersive-web/publications/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命 Hand Signal Loom は、二つの合成 tip が近づくと線ではなく短い織り目を残し、片手を隠すと古い位置に留めず null pose に切り替えます。派生 Occlusion Rhythm Notebook は、光点を遮蔽物の前後に描き分け、奥に入る／出るリズムだけを抜き出します。どちらも不確かさを赤いエラーにせず、次に何が観測できれば再開するかを読める表示にします。",
+      "bodyEn": "The main uses weaving marks for two tips; the derivative makes front/back ordering visible with particles."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では requestSession の optionalFeatures か requiredFeatures に hand-tracking を明示し、inputSource.hand、各 XRJointSpace、getJointPose の戻り値を同一 frame で判定します。null pose を前 frame の座標で埋めず、短いフェードか入力保留にします。Depth Sensing は depth data の更新時刻、座標変換、信頼度を一緒に見て、欠けた frame では遮蔽を無効化する fallback を持たせます。WebXR は HTTPS の secure context が必要で、実機の対応範囲も確認します。",
+      "bodyEn": "Check live hand and joint poses per frame; use an explicit no-occlusion fallback when depth is unavailable."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "残すなら空間座標そのものではなく、joint の利用可否、近接した時刻、遮蔽の前後、fallback に入った理由という小さな receipt が適しています。展示の照明変化、触覚フィードバック、音のアタック、遠隔支援の確認 UI と結ぶと、追跡の不確かさを身体データの保存なしで体験演出に変えられます。",
+      "bodyEn": "Availability and transition receipts can join audio, haptics, and assistance UIs without preserving spatial traces."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実機で hand-tracking の permission 経路、片手だけが遮られたときの pose の連続性、frequencyHint の反映、depth の更新頻度と信頼度を測ります。手と depth が同時に欠ける場合に、何を優先して隠すかも確認対象です。",
+      "bodyEn": "Measure permission behavior, pose continuity, frequency hints, and depth confidence on device."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "まず本命で「片手を隠す」を押し、左手の過去位置が残らず、織り目だけが静かに消えることを見てください。次に派生で z 値の異なる3点を置き、occluder depth を動かすと、同じ点でも前面／背面の表示順が変わることを確認できます。",
+      "bodyEn": "Hide one hand, then move the occluder depth through the seeded particle depths."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C Hand Input、Immersive Web publications、Device API、MDN。設計: pose の有無と深度の前後関係を別々の receipt にする。実装: Hand Signal Loom と Occlusion Rhythm Notebook。次: 実 XRSession、実 hand joints、camera/depth texture、触覚または音の再開合図を接続します。",
+      "bodyEn": "Research informed two small receipts; next is live sessions, real joints, depth textures, and restart cues."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "空間体験では、常に正確に見えることより、何が今は観測可能かを利用者が理解できることが信頼につながります。手の null pose と depth の欠損を描画バグとして隠すのではなく、表現のテンポに組み込むと、対応機種差や照明条件の変動にも耐える体験になります。",
+      "bodyEn": "Making observability legible is more trustworthy than pretending spatial data is always precise."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 outputs/2026-11-21_html_hand_signal_loom.html を実装しました。何が動くか: ポインタで合成した hand tip を動かし、二つが近づくと織り目が残り、片手を隠すと null pose に変わります。次に足すなら実 XRInputSource.hand、getJointPose、pinch 判定、触覚／音の再開合図です。派生 outputs/2026-11-21_html_occlusion_rhythm_notebook.html も実装しました。何が動くか: クリックで深度付き光点を置き、遮蔽物の depth を動かして前面／背面を切り替えます。次に足すなら実 XRDepthInformation、depth confidence、camera passthrough との合成です。",
+      "bodyEn": "The main handles synthetic hand loss; the derivative contrasts particles around a synthetic depth occluder."
+    }
+  ]
+}

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>手の追跡欠損と深度遮蔽を、空間表現のリズムとして設計する | 2026-11-21</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GD2PHJX65F"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GD2PHJX65F');</script></head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.11.21</p>
+      <h1>手の追跡欠損と深度遮蔽を、空間表現のリズムとして設計する</h1>
+      <p class="hero-subtitle">Design hand-tracking loss and depth occlusion as spatial rhythm</p>
+      <p>WebXR Hand Input と Depth Sensing の一次情報を手掛かりに、関節が欠ける瞬間と仮想物が遮蔽物の奥へ入る瞬間を、失敗表示ではなく理解可能な状態遷移として試す自作サンプル2本を制作しました。</p>
+      <p class="en-copy">Two original prototypes turn missing hand joints and depth occlusion into understandable state transitions rather than failures.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-11-21_html_hand_signal_loom.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-11-20.html">← 2026.11.20</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Hand Signal Loom</h3>
+              <p>WebXR Hand Input の「関節の有無を毎フレーム確認する」という考えを、追跡の揺れ・消失を含めて試す自作ミニ試作です。ポインタを動かすと右手の index tip、Shift を押すと左手の thumb tip が動き、二点の近さが織り目になります。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-21_html_hand_signal_loom.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Occlusion Rhythm Notebook</h3>
+              <p>Depth Sensing が使える環境での「仮想物を現実の手前／奥へ置く」判断を、カメラなしで確かめる派生試作です。ポインタで光点を置き、深度の境界をまたぐと、点が隠れる前後のリズムを観察できます。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-21_html_occlusion_rhythm_notebook.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>W3C の Hand Input Working Draft は hand-tracking を明示的な session feature とし、関節 pose は一式得られるか null として扱う設計を示す。</span>
+              <span class="en-copy">Hand input makes tracking an explicit session feature and treats hand poses as present or absent.</span>
+            </li>
+          
+            <li>
+              <span>W3C Immersive Web は 2026年10月に Hand Input の新しい Working Draft を公開し、更新頻度の hint を追加した。</span>
+              <span class="en-copy">A 2026 Working Draft adds a hand-tracking frequency hint.</span>
+            </li>
+          
+            <li>
+              <span>Depth Sensing は現実との物理的相互作用、遮蔽、非視覚的な環境認識を用途として挙げる。</span>
+              <span class="en-copy">Depth sensing supports physical interaction, occlusion, and environment awareness.</span>
+            </li>
+          
+            <li>
+              <span>WebXR Device API はコントローラ、光学追跡された手、視線を XR input source の例として扱う。</span>
+              <span class="en-copy">WebXR accepts controllers, tracked hands, and gaze as XR input sources.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>W3C の Hand Input Module は、articulated hand pose を session の hand-tracking feature として要求する構造にしています。さらに、手が一部隠れた場合は全関節を補間するか全体を null にする、と定めます。これは「少しだけ残った古い指先」を UI が本物らしく見せないための重要な境界です。Depth Sensing は遮蔽を代表的な用途に挙げており、手と深度のどちらも“取れた値”と“取れない値”を表現の条件にするのが面白い点です。</p>
+          <p class="en-copy">Both specifications make absence a first-class condition, which is useful for coherent spatial feedback.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/2026/WD-webxr-hand-input-1-20261029/" target="_blank" rel="noreferrer">W3C Hand Input Module</a></li>
+          
+            <li><a href="https://www.w3.org/groups/wg/immersive-web/publications/" target="_blank" rel="noreferrer">W3C Immersive Web publications</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命 Hand Signal Loom は、二つの合成 tip が近づくと線ではなく短い織り目を残し、片手を隠すと古い位置に留めず null pose に切り替えます。派生 Occlusion Rhythm Notebook は、光点を遮蔽物の前後に描き分け、奥に入る／出るリズムだけを抜き出します。どちらも不確かさを赤いエラーにせず、次に何が観測できれば再開するかを読める表示にします。</p>
+          <p class="en-copy">The main uses weaving marks for two tips; the derivative makes front/back ordering visible with particles.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では requestSession の optionalFeatures か requiredFeatures に hand-tracking を明示し、inputSource.hand、各 XRJointSpace、getJointPose の戻り値を同一 frame で判定します。null pose を前 frame の座標で埋めず、短いフェードか入力保留にします。Depth Sensing は depth data の更新時刻、座標変換、信頼度を一緒に見て、欠けた frame では遮蔽を無効化する fallback を持たせます。WebXR は HTTPS の secure context が必要で、実機の対応範囲も確認します。</p>
+          <p class="en-copy">Check live hand and joint poses per frame; use an explicit no-occlusion fallback when depth is unavailable.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>残すなら空間座標そのものではなく、joint の利用可否、近接した時刻、遮蔽の前後、fallback に入った理由という小さな receipt が適しています。展示の照明変化、触覚フィードバック、音のアタック、遠隔支援の確認 UI と結ぶと、追跡の不確かさを身体データの保存なしで体験演出に変えられます。</p>
+          <p class="en-copy">Availability and transition receipts can join audio, haptics, and assistance UIs without preserving spatial traces.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>実機で hand-tracking の permission 経路、片手だけが遮られたときの pose の連続性、frequencyHint の反映、depth の更新頻度と信頼度を測ります。手と depth が同時に欠ける場合に、何を優先して隠すかも確認対象です。</p>
+          <p class="en-copy">Measure permission behavior, pose continuity, frequency hints, and depth confidence on device.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>まず本命で「片手を隠す」を押し、左手の過去位置が残らず、織り目だけが静かに消えることを見てください。次に派生で z 値の異なる3点を置き、occluder depth を動かすと、同じ点でも前面／背面の表示順が変わることを確認できます。</p>
+          <p class="en-copy">Hide one hand, then move the occluder depth through the seeded particle depths.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C Hand Input、Immersive Web publications、Device API、MDN。設計: pose の有無と深度の前後関係を別々の receipt にする。実装: Hand Signal Loom と Occlusion Rhythm Notebook。次: 実 XRSession、実 hand joints、camera/depth texture、触覚または音の再開合図を接続します。</p>
+          <p class="en-copy">Research informed two small receipts; next is live sessions, real joints, depth textures, and restart cues.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>空間体験では、常に正確に見えることより、何が今は観測可能かを利用者が理解できることが信頼につながります。手の null pose と depth の欠損を描画バグとして隠すのではなく、表現のテンポに組み込むと、対応機種差や照明条件の変動にも耐える体験になります。</p>
+          <p class="en-copy">Making observability legible is more trustworthy than pretending spatial data is always precise.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 outputs/2026-11-21_html_hand_signal_loom.html を実装しました。何が動くか: ポインタで合成した hand tip を動かし、二つが近づくと織り目が残り、片手を隠すと null pose に変わります。次に足すなら実 XRInputSource.hand、getJointPose、pinch 判定、触覚／音の再開合図です。派生 outputs/2026-11-21_html_occlusion_rhythm_notebook.html も実装しました。何が動くか: クリックで深度付き光点を置き、遮蔽物の depth を動かして前面／背面を切り替えます。次に足すなら実 XRDepthInformation、depth confidence、camera passthrough との合成です。</p>
+          <p class="en-copy">The main handles synthetic hand loss; the derivative contrasts particles around a synthetic depth occluder.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-11-21_html_hand_signal_loom.html" target="_blank" rel="noreferrer">Today's main sample: Hand Signal Loom</a></li>
+          
+            <li><a href="../outputs/2026-11-21_html_occlusion_rhythm_notebook.html" target="_blank" rel="noreferrer">Today's derivative sample: Occlusion Rhythm Notebook</a></li>
+          
+            <li><a href="https://www.w3.org/TR/2026/WD-webxr-hand-input-1-20261029/" target="_blank" rel="noreferrer">W3C — WebXR Hand Input Module Level 1 (2026 Working Draft)</a></li>
+          
+            <li><a href="https://www.w3.org/groups/wg/immersive-web/publications/" target="_blank" rel="noreferrer">W3C — Immersive Web publications</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C — WebXR Device API</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API" target="_blank" rel="noreferrer">MDN — WebXR Device API</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-11-21_html_hand_signal_loom.html" loading="lazy" title="Hand Signal Loom"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
