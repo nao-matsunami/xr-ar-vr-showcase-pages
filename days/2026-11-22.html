@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebXR の機能要求を階段化し、入力の手渡しを見える化する | 2026-11-22</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GD2PHJX65F"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GD2PHJX65F');</script></head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.11.22</p>
+      <h1>WebXR の機能要求を階段化し、入力の手渡しを見える化する</h1>
+      <p class="hero-subtitle">Stage WebXR feature requests and make input handoffs visible</p>
+      <p>WebXR の session mode・feature negotiation・入力 source を一次情報で整理し、未対応の能力で体験全体を止めず、利用可能な入力へ意図を渡す自作サンプル2本を制作しました。</p>
+      <p class="en-copy">Two original prototypes stage session features and route one intent through available XR inputs instead of stopping the whole experience.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-11-22_html_feature_ladder_studio.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-11-21.html">← 2026.11.21</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>WebXR Feature Ladder Studio</h3>
+              <p>WebXR の session feature を「必須なら入場不可、任意なら品質を変えて続行」として扱う自作ミニ試作です。上から欲しい体験を選び、下の利用可能な能力に合わせて着地点を観察します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-22_html_feature_ladder_studio.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>Input Handoff Constellation</h3>
+              <p>一つの選択意図を、hand・controller・gaze のどれで受けても同じ「確定」に届ける派生試作です。入力の見た目ではなく、handoff の瞬間を小さな receipt として残します。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-22_html_input_handoff_constellation.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR は inline、immersive-vr、immersive-ar の session mode を持ち、開始前に isSessionSupported() で可用性を確かめられる。</span>
+              <span class="en-copy">WebXR offers inline, immersive-vr, and immersive-ar modes and exposes session support checks.</span>
+            </li>
+          
+            <li>
+              <span>requestSession() の requiredFeatures は満たせないと session 自体を拒否し得るため、目的に不要な能力を必須にしない設計が重要になる。</span>
+              <span class="en-copy">Unmet required features can reject a session, so requirements should be deliberately minimal.</span>
+            </li>
+          
+            <li>
+              <span>WebXR は controller、追跡された手、視線を input source として扱い、表示と入力経路を能力に応じて切り替えられる。</span>
+              <span class="en-copy">Controllers, tracked hands, and gaze can be distinct XR input sources.</span>
+            </li>
+          
+            <li>
+              <span>WebXR はレンダリング技術ではなく、追跡と session を扱う API なので、scene と fallback の責任はアプリ側に残る。</span>
+              <span class="en-copy">WebXR manages sessions and tracking, leaving scene and fallback design to the app.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>MDN の lifecycle と requestSession() の一次ドキュメントは、session mode を調べ、利用者の操作から session を要求し、終了も扱う一連の流れを示します。面白いのは、support の確認と feature の要求が別の判断である点です。mode が使えても、不要に多い requiredFeatures が session を入口で閉じてしまいます。Immersive Web の説明どおり、WebXR は能力を対象にする API なので、体験側は能力の組み合わせを設計できます。</p>
+          <p class="en-copy">Mode availability and feature negotiation are separate choices; the app should preserve a useful route when optional capabilities vary.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Lifecycle" target="_blank" rel="noreferrer">MDN — WebXR application life cycle</a></li>
+          
+            <li><a href="https://immersiveweb.dev/" target="_blank" rel="noreferrer">Immersive Web — WebXR</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命 Feature Ladder Studio は hand-tracking、hit-test、depth-sensing を段ごとに置き、欲しい能力・取れた能力・採用した route を分けて見せます。派生 Input Handoff Constellation は、同じ select intent を hand、controller、gaze のどれが受けたかを星と receipt に変換します。入力が欠けても意図を勝手に実行せず、利用可能な経路へ明示的に手渡す表現です。</p>
+          <p class="en-copy">The main separates desire, availability, and route; the derivative visualizes which input receives an explicit select intent.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>最初に navigator.xr の有無を確認し、isSessionSupported() で mode ごとの入口を決めます。requestSession() はユーザー操作から呼び、local など本当に必要な reference space のみを requiredFeatures に入れます。hand-tracking、hit-test、depth-sensing は対応機器差が大きいため optionalFeatures とし、得られた session.enabledFeatures、inputSources、frame の値をその frame で評価します。fallback は同じ意図を保ち、入力 UI と説明だけを能力に合わせて変えます。</p>
+          <p class="en-copy">Probe modes first, request only necessary required features, and evaluate optional capabilities on live session/frame values.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>保存するなら座標やカメラ映像ではなく、requested/available/selected route、handoff 回数、確定までの時間だけで足ります。展示ではライトや音のレイヤーを route に連動させ、業務支援では「手で確認」「controller で確定」のような操作説明へ、教育では capabilities の変化を小さなクイズへつなげられます。</p>
+          <p class="en-copy">Small capability and handoff receipts can connect to installation cues, operational guidance, and education without retaining spatial data.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>実機で immersive-vr と immersive-ar の可用性、requestSession の feature failure、inputSourceschange、select/squeeze event、hand の復帰タイミングを測ります。DOM Overlay を併用する場合は、HTML UI が input を奪う瞬間と XR の select を分離して確認します。</p>
+          <p class="en-copy">Measure real mode support, feature failure, input-source changes, select events, hand recovery, and DOM-overlay interaction boundaries.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>まず本命で「手を望む」を保ったまま「手追跡を欠損」を押し、session を止めずに controller/gaze fallback へ route が切り替わることを見てください。次に派生で hand を選び入力を欠損させてからキャンバスをクリックし、同じ意図が controller または gaze に手渡されることを確かめます。</p>
+          <p class="en-copy">Drop the preferred hand input and observe a controlled route change rather than a stale or automatic action.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: MDN lifecycle、requestSession、Immersive Web、three.js WebXR examples。設計: mode、required、optional、selected route を分離。実装: Feature Ladder Studio と Input Handoff Constellation。次: 実 XRSession、enabledFeatures、XRInputSource、select event、短い触覚 confirmation を接続します。</p>
+          <p class="en-copy">Research led to a staged capability model; next is a live session, enabled features, input sources, events, and haptic confirmation.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>対応能力の違いは XR 体験の例外ではなく前提です。最上位の表現を要求することと、そこへ入れない利用者を置き去りにすることは別です。能力の不足を“失敗”として隠すより、現在の route を読める形にすると、利用者は何ができ、何を待つ必要があるかを理解できます。</p>
+          <p class="en-copy">Capability variation is normal in XR. Legible routes build trust better than concealing unavailable features.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 outputs/2026-11-22_html_feature_ladder_studio.html を実装しました。何が動くか: hand、hit-test、depth の希望と可用性を切り替え、required/optional と fallback route を比較できます。次に足すなら実 isSessionSupported()、requestSession()、session.enabledFeatures、実機 feature failure です。派生 outputs/2026-11-22_html_input_handoff_constellation.html も実装しました。何が動くか: クリックで select intent を送り、hand/controller/gaze の可用性に応じて受信経路と handoff receipt が変わります。次に足すなら XRInputSource、select/squeeze、入力ごとの affordance、haptic acknowledgement です。</p>
+          <p class="en-copy">The main models negotiated features; the derivative routes one select intent through available input sources.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-11-22_html_feature_ladder_studio.html" target="_blank" rel="noreferrer">Today's main sample: WebXR Feature Ladder Studio</a></li>
+          
+            <li><a href="../outputs/2026-11-22_html_input_handoff_constellation.html" target="_blank" rel="noreferrer">Today's derivative sample: Input Handoff Constellation</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Lifecycle" target="_blank" rel="noreferrer">MDN — WebXR application life cycle</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession" target="_blank" rel="noreferrer">MDN — XRSystem requestSession()</a></li>
+          
+            <li><a href="https://immersiveweb.dev/" target="_blank" rel="noreferrer">Immersive Web — WebXR</a></li>
+          
+            <li><a href="https://threejs.org/examples/?q=WebXR" target="_blank" rel="noreferrer">three.js — WebXR examples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-11-22_html_feature_ladder_studio.html" loading="lazy" title="WebXR Feature Ladder Studio"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

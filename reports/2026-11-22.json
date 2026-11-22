@@ -1,0 +1,111 @@
+{
+  "date": "2026-11-22",
+  "headline": "WebXR の機能要求を階段化し、入力の手渡しを見える化する",
+  "headlineEn": "Stage WebXR feature requests and make input handoffs visible",
+  "summary": "WebXR の session mode・feature negotiation・入力 source を一次情報で整理し、未対応の能力で体験全体を止めず、利用可能な入力へ意図を渡す自作サンプル2本を制作しました。",
+  "summaryEn": "Two original prototypes stage session features and route one intent through available XR inputs instead of stopping the whole experience.",
+  "keyTopics": [
+    "WebXR は inline、immersive-vr、immersive-ar の session mode を持ち、開始前に isSessionSupported() で可用性を確かめられる。",
+    "requestSession() の requiredFeatures は満たせないと session 自体を拒否し得るため、目的に不要な能力を必須にしない設計が重要になる。",
+    "WebXR は controller、追跡された手、視線を input source として扱い、表示と入力経路を能力に応じて切り替えられる。",
+    "WebXR はレンダリング技術ではなく、追跡と session を扱う API なので、scene と fallback の責任はアプリ側に残る。"
+  ],
+  "keyTopicsEn": [
+    "WebXR offers inline, immersive-vr, and immersive-ar modes and exposes session support checks.",
+    "Unmet required features can reject a session, so requirements should be deliberately minimal.",
+    "Controllers, tracked hands, and gaze can be distinct XR input sources.",
+    "WebXR manages sessions and tracking, leaving scene and fallback design to the app."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: WebXR Feature Ladder Studio",
+      "url": "../outputs/2026-11-22_html_feature_ladder_studio.html"
+    },
+    {
+      "label": "Today's derivative sample: Input Handoff Constellation",
+      "url": "../outputs/2026-11-22_html_input_handoff_constellation.html"
+    },
+    {
+      "label": "MDN — WebXR application life cycle",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Lifecycle"
+    },
+    {
+      "label": "MDN — XRSystem requestSession()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSystem/requestSession"
+    },
+    {
+      "label": "Immersive Web — WebXR",
+      "url": "https://immersiveweb.dev/"
+    },
+    {
+      "label": "three.js — WebXR examples",
+      "url": "https://threejs.org/examples/?q=WebXR"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "MDN の lifecycle と requestSession() の一次ドキュメントは、session mode を調べ、利用者の操作から session を要求し、終了も扱う一連の流れを示します。面白いのは、support の確認と feature の要求が別の判断である点です。mode が使えても、不要に多い requiredFeatures が session を入口で閉じてしまいます。Immersive Web の説明どおり、WebXR は能力を対象にする API なので、体験側は能力の組み合わせを設計できます。",
+      "bodyEn": "Mode availability and feature negotiation are separate choices; the app should preserve a useful route when optional capabilities vary.",
+      "links": [
+        {
+          "label": "MDN — WebXR application life cycle",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Lifecycle"
+        },
+        {
+          "label": "Immersive Web — WebXR",
+          "url": "https://immersiveweb.dev/"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命 Feature Ladder Studio は hand-tracking、hit-test、depth-sensing を段ごとに置き、欲しい能力・取れた能力・採用した route を分けて見せます。派生 Input Handoff Constellation は、同じ select intent を hand、controller、gaze のどれが受けたかを星と receipt に変換します。入力が欠けても意図を勝手に実行せず、利用可能な経路へ明示的に手渡す表現です。",
+      "bodyEn": "The main separates desire, availability, and route; the derivative visualizes which input receives an explicit select intent."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "最初に navigator.xr の有無を確認し、isSessionSupported() で mode ごとの入口を決めます。requestSession() はユーザー操作から呼び、local など本当に必要な reference space のみを requiredFeatures に入れます。hand-tracking、hit-test、depth-sensing は対応機器差が大きいため optionalFeatures とし、得られた session.enabledFeatures、inputSources、frame の値をその frame で評価します。fallback は同じ意図を保ち、入力 UI と説明だけを能力に合わせて変えます。",
+      "bodyEn": "Probe modes first, request only necessary required features, and evaluate optional capabilities on live session/frame values."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "保存するなら座標やカメラ映像ではなく、requested/available/selected route、handoff 回数、確定までの時間だけで足ります。展示ではライトや音のレイヤーを route に連動させ、業務支援では「手で確認」「controller で確定」のような操作説明へ、教育では capabilities の変化を小さなクイズへつなげられます。",
+      "bodyEn": "Small capability and handoff receipts can connect to installation cues, operational guidance, and education without retaining spatial data."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実機で immersive-vr と immersive-ar の可用性、requestSession の feature failure、inputSourceschange、select/squeeze event、hand の復帰タイミングを測ります。DOM Overlay を併用する場合は、HTML UI が input を奪う瞬間と XR の select を分離して確認します。",
+      "bodyEn": "Measure real mode support, feature failure, input-source changes, select events, hand recovery, and DOM-overlay interaction boundaries."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "まず本命で「手を望む」を保ったまま「手追跡を欠損」を押し、session を止めずに controller/gaze fallback へ route が切り替わることを見てください。次に派生で hand を選び入力を欠損させてからキャンバスをクリックし、同じ意図が controller または gaze に手渡されることを確かめます。",
+      "bodyEn": "Drop the preferred hand input and observe a controlled route change rather than a stale or automatic action."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: MDN lifecycle、requestSession、Immersive Web、three.js WebXR examples。設計: mode、required、optional、selected route を分離。実装: Feature Ladder Studio と Input Handoff Constellation。次: 実 XRSession、enabledFeatures、XRInputSource、select event、短い触覚 confirmation を接続します。",
+      "bodyEn": "Research led to a staged capability model; next is a live session, enabled features, input sources, events, and haptic confirmation."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "対応能力の違いは XR 体験の例外ではなく前提です。最上位の表現を要求することと、そこへ入れない利用者を置き去りにすることは別です。能力の不足を“失敗”として隠すより、現在の route を読める形にすると、利用者は何ができ、何を待つ必要があるかを理解できます。",
+      "bodyEn": "Capability variation is normal in XR. Legible routes build trust better than concealing unavailable features."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 outputs/2026-11-22_html_feature_ladder_studio.html を実装しました。何が動くか: hand、hit-test、depth の希望と可用性を切り替え、required/optional と fallback route を比較できます。次に足すなら実 isSessionSupported()、requestSession()、session.enabledFeatures、実機 feature failure です。派生 outputs/2026-11-22_html_input_handoff_constellation.html も実装しました。何が動くか: クリックで select intent を送り、hand/controller/gaze の可用性に応じて受信経路と handoff receipt が変わります。次に足すなら XRInputSource、select/squeeze、入力ごとの affordance、haptic acknowledgement です。",
+      "bodyEn": "The main models negotiated features; the derivative routes one select intent through available input sources."
+    }
+  ]
+}
