@@ -1,0 +1,111 @@
+{
+  "date": "2026-11-23",
+  "headline": "WebXR の hit-test を安定化し、参照空間の回復を読める形にする",
+  "headlineEn": "Stabilize WebXR hit tests and make reference-space recovery legible",
+  "summary": "hit-test の対象種別と参照空間の追跡回復を一次情報で確認し、配置候補を即時確定しない本命と、追跡ロストを隠さない派生の自作サンプル2本を制作しました。",
+  "summaryEn": "Two original prototypes turn hit-test confidence and reference-space recovery into explicit, inspectable interaction states.",
+  "keyTopics": [
+    "WebXR の hit-test は plane、point、mesh を対象にでき、結果は XRFrame ごとに得るため、単発の位置を即時確定しない設計が有効。",
+    "hit-test は実験的で HTTPS と feature の有効化を必要とし、未対応機器では代替導線が必要。",
+    "参照空間はローカル座標系を定義するだけでなく、追跡ロストからの連続性・回復をアプリ設計に持ち込む。",
+    "WebXR Layers はアプリの描画更新とは別に compositor が提示でき、状態変化時ほど軽い UI と明確な confirmation が重要になる。"
+  ],
+  "keyTopicsEn": [
+    "Hit tests can target planes, points, and meshes, so a single result need not become an immediate placement.",
+    "Hit testing is experimental, secure-context-only, and needs a fallback.",
+    "Reference spaces make tracking-loss continuity and recovery an application concern.",
+    "Composition layers separate compositor presentation from app updates, making clear state changes important."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Hit-test Confidence Garden",
+      "url": "../outputs/2026-11-23_html_hit_test_confidence_garden.html"
+    },
+    {
+      "label": "Today's derivative sample: Reference Space Recovery Ribbon",
+      "url": "../outputs/2026-11-23_html_reference_space_recovery_ribbon.html"
+    },
+    {
+      "label": "MDN — XRSession.requestHitTestSource()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestHitTestSource"
+    },
+    {
+      "label": "MDN — Spaces and reference spaces: Spatial tracking in WebXR",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Spatial_tracking"
+    },
+    {
+      "label": "W3C — WebXR Layers API Level 1",
+      "url": "https://www.w3.org/TR/webxrlayers-1/"
+    },
+    {
+      "label": "Immersive Web — WebXR",
+      "url": "https://immersiveweb.dev/"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "MDN の requestHitTestSource() は plane、point、mesh を entityTypes として選べ、XRFrame から結果を得る流れを示します。面白いのは、これは「場所を一つ返す API」ではなく、毎フレームの観測を材料にする API だという点です。空間の揺れや対象種別を UI に出すと、利用者は“まだ候補”と“ここに置く”を区別できます。MDN の空間追跡ガイドも、参照空間を局所座標系と追跡断からの回復を考える基盤として説明しています。",
+      "bodyEn": "Hit-test results are frame observations, not a mandate to commit a single location; reference spaces also require a recovery story.",
+      "links": [
+        {
+          "label": "MDN — requestHitTestSource()",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestHitTestSource"
+        },
+        {
+          "label": "MDN — Spatial tracking",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Spatial_tracking"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命 Hit-test Confidence Garden は、クリックした位置を候補として動かし、連続性と面の確からしさから“ready / hold”を変えます。固定は緑になっても自動では起きません。派生 Reference Space Recovery Ribbon は tracking → limited → lost → relocalized を一本のリボンにし、lost では stale pose を使わず confirmation を止めることを可視化します。",
+      "bodyEn": "The main keeps placement explicit; the derivative turns tracking loss and recovery into a visible state ribbon."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では requestSession の optionalFeatures に hit-test を入れ、session と viewer/reference space を得て requestHitTestSource() を一度作成します。各 XRFrame で getHitTestResults() と getPose(referenceSpace) を読み、短い移動平均・対象種別・時間で候補を採点します。確定は利用者操作で行い、session 終了時に XRHitTestSource.cancel() を呼びます。未対応・拒否・追跡不安定時は 2D picker に同じ確定意図を移します。",
+      "bodyEn": "Create one hit-test source, score per-frame poses briefly, commit only from explicit input, cancel it on session end, and preserve intent in a 2D fallback."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "座標そのものを残さず、entity type、安定度、候補から確定までの時間、追跡状態遷移だけを匿名の receipt にできます。展示なら音の粒や光の密度を安定度に結び、教育なら“なぜ今は置けないか”の説明に、業務 UI なら確認待ちの根拠にできます。カメラ映像や room mesh を保存しないため、試作段階の観測ログを最小化できます。",
+      "bodyEn": "Anonymous state receipts can drive installation cues, teaching prompts, and operational confirmations without retaining spatial imagery."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実機で plane / point / mesh の戻り方、参照空間の reset、移動中の候補の揺れ、session 終了時の cancel、同一地点への再配置を観察します。Layers を併用する場合は、layer の表示更新と hit-test UI の confirmation が視覚的に矛盾しないかも確認します。",
+      "bodyEn": "Watch entity-type returns, resets, moving jitter, cleanup, relocation, and UI consistency when layers are present."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で候補を動かし、連続性または面の確からしさを 64 未満にして固定を試してください。置けない理由が見えます。次に派生で状態を lost まで進め、最後の位置を固定して扱わず、relocalized で再評価してから復帰する流れを確認してください。",
+      "bodyEn": "Lower confidence before committing, then step through loss and relocalization to see why stale poses are withheld."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: MDN hit-test / spatial tracking、W3C Layers、Immersive Web。設計: 観測、候補、確定、回復を分離。実装: Confidence Garden と Recovery Ribbon。次: 実 XRSession、XRFrame、hit-test source、reference space reset、anchor の再評価へ接続します。",
+      "bodyEn": "Research led to an observation/candidate/commit/recovery model; next is wiring it to live WebXR state."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "空間に物が“ぴたり”と置ける瞬間だけを見せると、現実の不確かさは隠れます。XR の信頼感は、精度を装うことではなく、候補・待機・再確認を静かに読めることから生まれます。Layer のように提示経路が高品質になっても、操作の根拠まで自動で高品質にはなりません。",
+      "bodyEn": "Trust comes from legible candidate, waiting, and recovery states—not from pretending spatial certainty."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 outputs/2026-11-23_html_hit_test_confidence_garden.html を実装しました。何が動くか: キャンバス上の hit-test 候補を動かし、plane / point / mesh と安定度を変え、明示操作でだけ印を確定できます。次に足すなら実 XRFrame.getHitTestResults()、getPose()、短い pose 平滑化、session 終了時の cancel です。派生 outputs/2026-11-23_html_reference_space_recovery_ribbon.html も実装しました。何が動くか: tracking、limited、lost、relocalized の状態を進め、confirmation と stale pose の扱いが変わります。次に足すなら XRReferenceSpace の reset、anchor/hit-test の再取得、再配置が必要な対象だけの通知です。",
+      "bodyEn": "The main stages hit-test confidence before an explicit commit; the derivative stages reference-space recovery without trusting a stale pose."
+    }
+  ]
+}
