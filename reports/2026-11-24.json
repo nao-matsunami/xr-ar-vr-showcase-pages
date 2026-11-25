@@ -1,0 +1,111 @@
+{
+  "date": "2026-11-24",
+  "headline": "WebXR アンカーを「固定座標」ではなく更新される関係として扱う",
+  "headlineEn": "Treat WebXR anchors as evolving relationships, not frozen coordinates",
+  "summary": "WebXR Anchors の一次資料を基に、hit-test 後のアンカー生成・補正・ロストを読む本命と、1個の root anchor に相対配置を束ねる派生の自作サンプル2本を制作しました。",
+  "summaryEn": "Two original prototypes make anchor refinement, tracking loss, and relative child layout inspectable without presenting external demos as archive content.",
+  "keyTopics": [
+    "WebXR アンカーは現実空間との関係を維持するためのもので、システムの世界理解が更新されれば pose も更新される。",
+    "アンカーは hit-test 結果または任意 pose から非同期に作成でき、描画時には anchorSpace を基準にそのフレームの pose を読む。",
+    "trackedAnchors から外れたアンカーはアプリに通知なく追跡不能になり得るため、最後の pose を現在値として確定しない。",
+    "同じ物理地点に属する複数の表示物は一つの root anchor への相対配置にすると、補正を一貫して受け取れる。"
+  ],
+  "keyTopicsEn": [
+    "Anchor poses can evolve as world understanding improves.",
+    "Anchors are asynchronous and their current pose is read per frame from anchorSpace.",
+    "Tracking loss must not turn a stale pose into a confirmed present location.",
+    "Relative children can share one root anchor when they belong to the same physical place."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Anchor Receipt Garden",
+      "url": "../outputs/2026-11-24_html_anchor_receipt_garden.html"
+    },
+    {
+      "label": "Today's derivative sample: Anchor Scope Orchestra",
+      "url": "../outputs/2026-11-24_html_anchor_scope_orchestra.html"
+    },
+    {
+      "label": "Immersive Web — WebXR Anchors explainer",
+      "url": "https://github.com/immersive-web/anchors/blob/main/explainer.md"
+    },
+    {
+      "label": "Immersive Web — WebXR Device API explainer",
+      "url": "https://github.com/immersive-web/webxr/blob/main/explainer.md"
+    },
+    {
+      "label": "Immersive Web — Spatial Tracking explainer",
+      "url": "https://github.com/immersive-web/webxr/blob/main/spatial-tracking-explainer.md"
+    },
+    {
+      "label": "Immersive Web — WebXR samples anchors reference",
+      "url": "https://github.com/immersive-web/webxr-samples/blob/main/anchors.html"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "Immersive Web の Anchors explainer は、現実世界に留まるべき仮想物を anchor に相対化し、世界理解やワールド座標が修正されても関係を維持する考え方を示します。面白いのは、アンカーを“保存した座標”ではなく、毎フレーム読み直す関係として扱う点です。公式サンプルの anchors.html は API 接続の参照に留め、公開アーカイブには自作の Receipt Garden と Scope Orchestra だけを置きます。",
+      "bodyEn": "The anchor explainer frames an anchor as a maintained relationship to the physical world; official samples are references, while this archive publishes only original prototypes.",
+      "links": [
+        {
+          "label": "WebXR Anchors explainer",
+          "url": "https://github.com/immersive-web/anchors/blob/main/explainer.md"
+        },
+        {
+          "label": "WebXR Samples — anchors",
+          "url": "https://github.com/immersive-web/webxr-samples/blob/main/anchors.html"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命 Anchor Receipt Garden は、クリックで得た候補から明示操作で anchor を作り、世界理解の補正で印が動く様子と tracking loss 時に stale pose を描かない方針を見せます。派生 Anchor Scope Orchestra は、root anchor と相対的な子パートを音楽のアンサンブルに見立てます。root の補正が全パートに届く一方、子の局所編集は root の世界配置を壊しません。",
+      "bodyEn": "The main stages create/refine/loss; the derivative makes one-root relative layout visible as a small ensemble."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では hit-test result の createAnchor()、または XRFrame.createAnchor() の Promise を解決してから anchor を登録します。各 XRFrame で frame.trackedAnchors と frame.getPose(anchor.anchorSpace, referenceSpace) を読み、欠落した anchor は描画・操作とも保留にします。終了時には不要な anchor.delete() を呼びます。複数 UI を同地点に置くなら child transform を root anchor 基準で保ち、世界座標へ焼き込まないのが安全です。",
+      "bodyEn": "Create anchors asynchronously, read trackedAnchors and fresh anchorSpace poses each frame, withhold missing anchors, delete unneeded ones, and retain child transforms relative to their root."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "座標や空間画像を残さず、作成・補正・ロスト・削除のイベント、root に属する子数、復帰待ち時間だけを receipt として保存できます。展示では補正を音の和音変化に、業務 UI では再確認待ちの根拠に、教育では座標系と親子変換の可視化にできます。空間メッシュやカメラ映像を必要としないため、初期検証のログを小さく保てます。",
+      "bodyEn": "Event-only receipts can power installation cues, operational review, and teaching without retaining spatial imagery or coordinates."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実機で anchor が trackedAnchors に入るまでの待ち、world understanding 補正時の pose 変化、同一地点に複数 anchor を置いた際の相対ずれ、loss と再追跡、session end 後の delete を確認します。共有や永続化を想定する前に、ユーザーへどの状態を見せるかと保持期間を決めます。",
+      "bodyEn": "Watch materialization delay, pose refinement, relative drift, loss/reacquisition, deletion, and the user-visible state before considering sharing or persistence."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "まず本命で候補をクリックして anchor を作り、「世界理解を補正」を何度か押してください。印が動いても関係が更新されている、と読めます。次に追跡をロストし、利用不能の輪が出たときに最後の位置を“今ここ”として使わないことを確認してください。派生では root を補正して、全パートが一緒に動くことを見ます。",
+      "bodyEn": "Create, refine, then lose an anchor; verify that unavailable anchors do not masquerade as fresh poses, then watch a root correction move its relative children."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: Anchors / WebXR / spatial tracking の一次資料。設計: hit-test の候補から anchor、補正、ロスト、復帰を別状態にする。実装: Receipt Garden と Scope Orchestra。次: 実 XRSession に hit-test result、anchorSpace、trackedAnchors、session cleanup を接続し、11月23日の参照空間回復試作と統合します。",
+      "bodyEn": "Primary-source research became a create/refine/loss model; next is live XRSession wiring and integration with yesterday's reference-space recovery study."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "空間配置が安定して見えるのは、内部で何も動いていないからではなく、世界への関係を更新し続けているからです。だから XR の信頼感は“絶対に動かない”約束ではなく、更新・保留・復帰をアプリが誠実に扱うことから生まれます。アンカーを単体オブジェクトでなく、複数表現の座標基盤として設計すると、この違いが作品の振る舞いに表れます。",
+      "bodyEn": "Spatial stability is maintained through updates; trust comes from honest refine, hold, and recovery states rather than a promise of immobility."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 outputs/2026-11-24_html_anchor_receipt_garden.html を実装しました。何が動くか: hit-test 候補からアンカーを作り、補正・追跡ロスト・削除を操作でき、ロスト時には stale pose を描かず receipt に状態だけが残ります。次に足すなら XRHitTestResult.createAnchor()、XRFrame.trackedAnchors、anchorSpace の実 pose です。派生 outputs/2026-11-24_html_anchor_scope_orchestra.html も実装しました。何が動くか: root anchor の補正が複数子パートへ相対的に伝わり、個別の局所移動と root の移動の違いを触れます。次に足すなら実 anchor のロスト時に全パートを一括保留し、音・DOM overlay・3D 表示へ同じ相対座標を渡すことです。",
+      "bodyEn": "The main stages anchor receipt and loss without stale-pose rendering; the derivative shows root-relative child propagation."
+    }
+  ]
+}

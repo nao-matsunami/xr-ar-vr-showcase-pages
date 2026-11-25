@@ -269,7 +269,7 @@
         Each card opens a page for that specific day. The site is organized around daily entries rather than only standalone samples, and it paginates automatically as the archive grows.
       </p>
       <div class="meta">
-        <span>days: 134</span>
+        <span>days: 136</span>
         <span>page: 1 / 12</span>
         <span>storage: localStorage likes</span>
       </div>
@@ -333,6 +333,52 @@
 
     <section class="grid">
       
+        <article class="card" data-slug="2026-11-25">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.11.25</p>
+              <h2>WebXR の可視性変化を、pose と操作の明示的な境界として扱う</h2>
+              <p class="card-subtitle">Treat WebXR visibility changes as explicit boundaries for poses and actions</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-11-25" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Device API と MDN の一次・公式資料を基に、表示状態別の pose / input 方針を見せる本命と、復帰後の操作を明示確認へ戻す派生の自作サンプル2本を制作しました。</p>
+          <p class="description en-copy">Two original prototypes make session visibility policy inspectable: fresh-pose rendering and explicit intent re-entry.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-11-25.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-11-25_html_visibility_pose_conductor.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
+        <article class="card" data-slug="2026-11-24">
+          <div class="card-top">
+            <div>
+              <p class="date">2026.11.24</p>
+              <h2>WebXR アンカーを「固定座標」ではなく更新される関係として扱う</h2>
+              <p class="card-subtitle">Treat WebXR anchors as evolving relationships, not frozen coordinates</p>
+            </div>
+            <button class="like-button" type="button" data-slug="2026-11-24" aria-pressed="false">
+              <span class="heart">♡</span>
+              <span class="label">好き / Like</span>
+            </button>
+          </div>
+          <p class="description">WebXR Anchors の一次資料を基に、hit-test 後のアンカー生成・補正・ロストを読む本命と、1個の root anchor に相対配置を束ねる派生の自作サンプル2本を制作しました。</p>
+          <p class="description en-copy">Two original prototypes make anchor refinement, tracking loss, and relative child layout inspectable without presenting external demos as archive content.</p>
+          <p class="card-subtitle">samples: 2</p>
+          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
+          <div class="actions">
+            <a class="primary" href="days/2026-11-24.html">その日のページ / Day</a>
+            <a class="secondary-link" href="outputs/2026-11-24_html_anchor_receipt_garden.html">代表サンプル / Sample</a>
+          </div>
+        </article>
+      
+
         <article class="card" data-slug="2026-11-23">
           <div class="card-top">
             <div>
@@ -559,52 +605,6 @@
           <div class="actions">
             <a class="primary" href="days/2026-11-12.html">その日のページ / Day</a>
             <a class="secondary-link" href="outputs/2026-11-12_html_dynamic_viewport_scale_lab.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-11-11">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.11.11</p>
-              <h2>WebXR の連続入力を意図と触覚キューに分けて扱う</h2>
-              <p class="card-subtitle">Separating continuous WebXR input from intent and haptic cues</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-11-11" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">WebXR の gamepad 入力を連続値のまま実行へ結ばず、preview / commit と触覚の可否を分ける本命と、少ない触覚キューを優先度で配分する派生試作を追加しました。</p>
-          <p class="description en-copy">Two original prototypes separate input intensity, intent, and haptic availability, then budget sparse cues by priority.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-11-11.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-11-11_html_input_haptic_intent_lab.html">代表サンプル / Sample</a>
-          </div>
-        </article>
-      
-
-        <article class="card" data-slug="2026-11-10">
-          <div class="card-top">
-            <div>
-              <p class="date">2026.11.10</p>
-              <h2>WebXR の固定フォービエーションを周辺品質と可読性の設計として扱う</h2>
-              <p class="card-subtitle">Treating WebXR fixed foveation as a design for peripheral quality and legibility</p>
-            </div>
-            <button class="like-button" type="button" data-slug="2026-11-10" aria-pressed="false">
-              <span class="heart">♡</span>
-              <span class="label">好き / Like</span>
-            </button>
-          </div>
-          <p class="description">固定フォービエーションの対応可否、周辺の品質低下、中心に守るUIを混同しない本命と、負荷別に周辺コンテンツの優先度を切り替える派生試作を追加しました。</p>
-          <p class="description en-copy">Two original prototypes separate foveation capability from peripheral quality policy and content priority.</p>
-          <p class="card-subtitle">samples: 2</p>
-          <div class="tags"><span class="tag">xr</span><span class="tag">html-surface</span></div>
-          <div class="actions">
-            <a class="primary" href="days/2026-11-10.html">その日のページ / Day</a>
-            <a class="secondary-link" href="outputs/2026-11-10_html_foveation_quality_receipt_lab.html">代表サンプル / Sample</a>
           </div>
         </article>
       

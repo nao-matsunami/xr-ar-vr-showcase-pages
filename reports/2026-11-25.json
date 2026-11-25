@@ -1,0 +1,111 @@
+{
+  "date": "2026-11-25",
+  "headline": "WebXR の可視性変化を、pose と操作の明示的な境界として扱う",
+  "headlineEn": "Treat WebXR visibility changes as explicit boundaries for poses and actions",
+  "summary": "WebXR Device API と MDN の一次・公式資料を基に、表示状態別の pose / input 方針を見せる本命と、復帰後の操作を明示確認へ戻す派生の自作サンプル2本を制作しました。",
+  "summaryEn": "Two original prototypes make session visibility policy inspectable: fresh-pose rendering and explicit intent re-entry.",
+  "keyTopics": [
+    "WebXR Device API は immersive session を transient activation 内で開始し、XRSession の frame loop を session 終了まで扱う流れを定義する。",
+    "XRSession.visibilityState は document の visibilityState と別物で、visible / visible-blurred / hidden を持つ。",
+    "hidden では XR の requestAnimationFrame callback と input controller 処理が止まり、visible-blurred では frame が間引かれ input が処理されない場合がある。",
+    "XRFrame.getViewerPose() は session frame callback 内で読むため、可視性変化をまたぐ古い観測を現在の pose や操作確認に転用しない。"
+  ],
+  "keyTopicsEn": [
+    "WebXR session startup is user-activated and its frame loop is session-scoped.",
+    "XR visibility is distinct from document visibility.",
+    "Hidden and blurred states change both cadence and input policy.",
+    "Viewer poses are frame observations, not durable permission to commit an action."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Visibility Pose Conductor",
+      "url": "../outputs/2026-11-25_html_visibility_pose_conductor.html"
+    },
+    {
+      "label": "Today's derivative sample: Re-entry Intent Gate",
+      "url": "../outputs/2026-11-25_html_reentry_intent_gate.html"
+    },
+    {
+      "label": "W3C — WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "MDN — XRSession.visibilityState",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/visibilityState"
+    },
+    {
+      "label": "MDN — XRFrame.getViewerPose()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRFrame/getViewerPose"
+    },
+    {
+      "label": "MDN — WebXR rendering frame callback",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Rendering"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "W3C WebXR Device API は、ユーザーの transient activation で session を始め、session ごとの frame loop を動かす流れを示します。MDN の visibilityState 解説が特に重要なのは、headset 上の表示状態がページ自体の可視性とは一致しないこと、hidden では frame callback が実行されず input も扱われないことを明確にしている点です。公式資料は挙動の根拠として参照し、公開アーカイブには自作の2本だけを載せます。",
+      "bodyEn": "Official material distinguishes session visibility from document visibility; this archive publishes original interaction studies, not an external-demo list.",
+      "links": [
+        {
+          "label": "W3C WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        },
+        {
+          "label": "MDN visibilityState",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/visibilityState"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命 Visibility Pose Conductor は visible / visible-blurred / hidden を切り替え、点として描く fresh pose、input の可否、frame cadence の意味を一枚の舞台にします。派生 Re-entry Intent Gate は、focus を失う前の配置 intent を復帰時に自動実行せず、fresh frame の後にもう一度確認へ戻す小さな状態機械です。",
+      "bodyEn": "The main conducts pose and input policy by visibility; the derivative makes re-entry a renewed-confirmation path."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では session.addEventListener('visibilitychange', ...) で visibilityState を読むだけでなく、hidden / visible-blurred へ移った時点で連続操作・haptic・確定待ちを保留します。render callback 内で frame.getViewerPose(referenceSpace) を読み、null や state 変化後の stale pose で配置・anchor 作成を確定しません。visible 復帰後は最初の fresh frame で候補を再評価し、ユーザーの再確認を待ちます。",
+      "bodyEn": "Listen for visibility changes, hold commitments, obtain a fresh pose only inside a frame callback, then re-evaluate and reconfirm after return."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "保存するなら pose や映像ではなく、visibility の遷移、input の hold / confirm、復帰までの時間、再評価の成否だけを receipt にします。展示では明滅ではなく音量・粒子密度を状態に結び、業務 XR では安全な中断理由に、教育では frame lifecycle の観察に転用できます。11月23日の参照空間回復と11月24日の anchor receipt を、同じ再確認 UI に束ねられます。",
+      "bodyEn": "State-only receipts can connect recovery, anchors, art cues, and operational safety without retaining poses or imagery."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実機では headset のシステム UI、別アプリへの切替、sleep / wake、入力 source の追加・削除の各場面で visibilitychange と frame cadence を測ります。visible-blurred 中に haptic や select を送ろうとした場合、復帰後に同じ source がまだ存在するか、hit-test / anchor の候補が fresh frame で維持されるかを確認します。",
+      "bodyEn": "Measure state changes, cadence, source continuity, haptics, and candidate freshness under real headset interruptions."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で visible-blurred と hidden を順に選び、同じ「選択 intent」を送って receipt の扱いを比べてください。次に派生で intent をキューして focus を外し、visible に戻しても「再確認して実行」までは commit しない流れを確認します。",
+      "bodyEn": "Compare the same intent across visibility states, then verify that returning visible never auto-commits it."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C WebXR Device API と MDN の visibility / rendering / viewer pose。設計: visibility、fresh pose、intent、confirmation を別状態にする。実装: Pose Conductor と Re-entry Gate。次: 11月23日の hit-test / reference space、11月24日の anchor へ live XRSession の visibilitychange を接続し、復帰後の再評価を実機で検証します。",
+      "bodyEn": "Research became a visibility/freshness/intent model; next is live session integration with hit tests, reference spaces, and anchors."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR がいったん見えなくなったとき、アプリに必要なのは「続ける」意志よりも、いま誰に何が見え、何が観測できるかを切り分ける静けさです。可視性は描画最適化の信号であると同時に、操作の根拠を更新する境界です。復帰を自動実行にしないだけで、空間の不確かさを利用者に押しつけない体験へ近づきます。",
+      "bodyEn": "Visibility is both a rendering signal and a boundary for action authority; re-entry should restore choice, not silently execute it."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 outputs/2026-11-25_html_visibility_pose_conductor.html を実装しました。何が動くか: visible / visible-blurred / hidden を選び、fresh pose の描画、input の確認・保留・拒否が receipt とともに変化します。次に足すなら実 XRSession の visibilitychange と XRFrame.getViewerPose() を接続します。派生 outputs/2026-11-25_html_reentry_intent_gate.html も実装しました。何が動くか: 配置 intent をキューし、focus loss、visible 復帰、明示再確認までを順に操作できます。次に足すなら hit-test / anchor の候補を復帰後の fresh frame で再評価し、input source が変わったときは確認を作り直します。",
+      "bodyEn": "The main stages visibility-specific pose/input policy; the derivative stages a held intent through renewed confirmation."
+    }
+  ]
+}
