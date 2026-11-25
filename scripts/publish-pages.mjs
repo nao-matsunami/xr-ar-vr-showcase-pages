@@ -4,7 +4,7 @@ import { spawn } from "node:child_process";
 import { Buffer } from "node:buffer";
 
 const sourceDir = "/Users/nao/Documents/Codex/2026-07-07-xr-ar-vr-showcase";
-const targetDir = "/Users/nao/Documents/Codex/xr-ar-vr-showcase-pages";
+const targetDir = process.env.PUBLISH_TARGET_DIR || path.join(sourceDir, ".pages-repo");
 
 async function pathExists(targetPath) {
   try {
@@ -26,7 +26,7 @@ async function copyRecursive(from, to) {
     await ensureDir(to);
     const entries = await fs.readdir(from, { withFileTypes: true });
     for (const entry of entries) {
-      if (entry.name === ".git") continue;
+      if (entry.name === ".git" || entry.name === ".pages-repo") continue;
       if (entry.name === "node_modules") continue;
       await copyRecursive(path.join(from, entry.name), path.join(to, entry.name));
     }
@@ -40,7 +40,7 @@ async function copyRecursive(from, to) {
 async function emptyTargetDir(targetPath) {
   const entries = await fs.readdir(targetPath, { withFileTypes: true });
   for (const entry of entries) {
-    if (entry.name === ".git") continue;
+    if (entry.name === ".git" || entry.name === ".pages-repo") continue;
     if (entry.name === ".github") continue;
     await fs.rm(path.join(targetPath, entry.name), { recursive: true, force: true });
   }
@@ -51,7 +51,7 @@ async function copyProject() {
 
   const entries = await fs.readdir(sourceDir, { withFileTypes: true });
   for (const entry of entries) {
-    if (entry.name === ".git") continue;
+    if (entry.name === ".git" || entry.name === ".pages-repo") continue;
     if (entry.name === ".github") continue;
     if (entry.name === ".nojekyll") continue;
     if (entry.name === "node_modules") continue;
@@ -107,10 +107,7 @@ function runCapture(command, args, cwd) {
 async function main() {
   const hasGit = await pathExists(path.join(targetDir, ".git"));
   if (!hasGit) {
-    throw new Error(
-      `Publish target is not a git repository: ${targetDir}\n` +
-      "Create or clone the GitHub Pages repo there first."
-    );
+    await run("git", ["clone", "https://github.com/nao-matsunami/xr-ar-vr-showcase-pages.git", targetDir], sourceDir);
   }
 
   await run("node", ["scripts/build-gallery.mjs"], sourceDir);
