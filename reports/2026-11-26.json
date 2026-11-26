@@ -1,0 +1,111 @@
+{
+  "date": "2026-11-26",
+  "headline": "WebXR の入力ソース変化を、操作の引き継ぎではなく明示的な境界として扱う",
+  "headlineEn": "Treat WebXR input-source changes as explicit action boundaries, not handoffs",
+  "summary": "W3C WebXR Device API / Gamepads Module と MDN の一次・公式資料を基に、入力デバイスの追加・削除中に primary action を別 source へ黙って渡さない自作サンプル2本を制作しました。",
+  "summaryEn": "Two original prototypes inspect safe primary-action handling when WebXR input sources appear, disappear, or have uncertain profiles.",
+  "keyTopics": [
+    "WebXR Device API は XRInputSource と XRInputSourceEvent を通じ、入力の状態変化を session に結び付ける。",
+    "inputsourceschange は利用可能な入力デバイス集合が変わった時に発火し、追加・削除を明示的に扱える。",
+    "XRInputSourceEvent.frame はイベント時点の frame であり、現在の animation frame や viewer pose と同一視できない。",
+    "WebXR Gamepads Module は button、trigger、thumbstick、touchpad を扱うための拡張で、xr-standard mapping と platform reserved buttons を定義する。"
+  ],
+  "keyTopicsEn": [
+    "WebXR associates source state transitions with a session.",
+    "inputsourceschange explicitly exposes added and removed devices.",
+    "An input event frame is not the current animation frame.",
+    "The Gamepads Module defines controller data and mapping concerns."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Input Source Relay Desk",
+      "url": "../outputs/2026-11-26_html_input_source_relay_desk.html"
+    },
+    {
+      "label": "Today's derivative sample: Input Profile Receipt Mixer",
+      "url": "../outputs/2026-11-26_html_input_profile_receipt_mixer.html"
+    },
+    {
+      "label": "W3C — WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "W3C — WebXR Gamepads Module Level 1",
+      "url": "https://www.w3.org/TR/webxr-gamepads-module-1/"
+    },
+    {
+      "label": "MDN — XRInputSourceEvent",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRInputSourceEvent"
+    },
+    {
+      "label": "MDN — inputsourceschange",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/inputsourceschange_event"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "W3C の WebXR Device API は input source を session に属する観測として定義し、MDN は inputsourceschange をデバイスの追加・消失を検知するイベントとして整理しています。特に XRInputSourceEvent.frame は過去に render された event frame でもあり得るため、操作イベントを現在の pose と混ぜない設計が重要です。公式資料は根拠として参照し、公開アーカイブには外部デモ一覧ではなく自作の操作実験だけを並べます。",
+      "bodyEn": "The event-frame distinction makes source changes a useful boundary for original interaction studies, rather than a reason to publish an external-demo list.",
+      "links": [
+        {
+          "label": "W3C WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        },
+        {
+          "label": "MDN XRInputSourceEvent",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRInputSourceEvent"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命 Input Source Relay Desk は hand / controller / gaze を接続・切断し、primary action の所有 source を一つだけ表示します。操作中の source を切断すると完了ではなく cancel と記録し、残存 source に引き継がないことを光と receipt で見せます。派生 Profile Receipt Mixer は profile によって primary action の意味を確かめ、未知 profile は preview のままにします。",
+      "bodyEn": "The main visualizes an action owner and cancellation; the derivative turns profiles into cautious semantic capability receipts."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では XRSession に inputsourceschange、selectstart、selectend、select を別々に登録し、removed source に紐づく連続操作を閉じます。event.inputSource の同一性で action owner を照合し、別 source の select を既存の操作の終端に変換しません。controller の軸や haptics は Gamepads Module の有無を確認し、targetRayMode・profiles・action capability を混ぜずに評価します。",
+      "bodyEn": "Register source-set and action events separately; match ownership by source identity and negotiate controller capabilities independently."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "保存するのは profile 名そのものや姿勢ではなく、source added / removed、action start / cancel / commit、capability 判定だけの小さな receipt がよいでしょう。展示なら source 切替を音色や線の編み直しへ、業務 UI なら機器交換時の安全な確認へ、教育では event frame と render frame の違いを示すログへ接続できます。11月25日の visibility 境界と組み合わせれば、不可視化と source 消失を同じ再確認規則で扱えます。",
+      "bodyEn": "Minimal state receipts can drive audiovisual cues, operational recovery, and lifecycle teaching without retaining pose data."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実機では controller の電源断、hand tracking の一時消失、gaze と tracked-pointer の併存時に、selectstart / selectend / inputsourceschange の順序を記録します。reserved button、haptic actuator、profile registry の対応を機種別に確認し、unknown profile を過剰に推測しない fallback を保ちます。",
+      "bodyEn": "Measure real event ordering under disconnects and mixed sources, while preserving conservative handling for unknown profiles."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で primary action を開始してから「選択中 source を切断」し、controller を接続しても古い操作が完了しないことを確かめてください。次に派生で Unknown profile を選び、select 要求が preview に留まることを比べます。",
+      "bodyEn": "Start an action then disconnect its owner; compare that cancellation with the derivative's unknown-profile hold."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C Device API / Gamepads Module と MDN input event / source-change 資料。設計: source-set、action owner、profile capability、receipt を分離。実装: Relay Desk と Profile Mixer。次: 11月25日の visibility re-entry と結び、実 XRSession で source 消失後の hit-test / anchor 候補を fresh frame で再評価します。",
+      "bodyEn": "Research became a source/action/profile model; next is live-session re-evaluation after visibility or source loss."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の入力は「次に使える手段がある」ことと、「いま始まった意図を実行してよい」ことを分けると穏やかになります。手が消えた瞬間、別の controller を便利な代理人にするより、操作を一度静かに閉じるほうが、空間に対する利用者の因果感を守れます。",
+      "bodyEn": "Availability and authority are different: closing an interrupted action can preserve agency better than silently relaying it."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 outputs/2026-11-26_html_input_source_relay_desk.html を実装しました。何が動くか: hand / controller / gaze の追加・削除、primary action の開始・完了、所有 source 消失時の cancel が receipt に表示されます。次に足すなら実 XRSession の event listener と action owner の source identity 照合です。派生 outputs/2026-11-26_html_input_profile_receipt_mixer.html も実装しました。何が動くか: profile ごとの semantic capability を選び、select 要求を許可または hold に振り分けます。次に足すなら inputSource.profiles と公式 controller model registry の安全な非同期取得です。",
+      "bodyEn": "The main cancels interrupted actions rather than relaying them; the derivative makes profile uncertainty visible before a commitment."
+    }
+  ]
+}
