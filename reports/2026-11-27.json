@@ -1,0 +1,111 @@
+{
+  "date": "2026-11-27",
+  "headline": "WebXR の feature 要求を小さな契約として見せ、tracking reset を再評価の合図にする",
+  "headlineEn": "Treat WebXR feature requests as small contracts and tracking resets as re-evaluation signals",
+  "summary": "W3C WebXR Device API、MDN、Immersive Web の公式サンプルを参照し、required / optional feature の境界と reference space reset 後の再評価を扱う自作サンプル2本を制作しました。",
+  "summaryEn": "Two original prototypes make feature negotiation and reference-space reset recovery visible without publishing an external-demo list.",
+  "keyTopics": [
+    "WebXR の requiredFeatures は開始に必須の条件で、満たせない場合は session を作成しない。",
+    "optionalFeatures は利用できれば有効化されるが、不在でも session 作成を止めない。",
+    "immersive session の requestSession は通常 user activation の中で呼ぶ必要があり、isSessionSupported は成功予約ではない。",
+    "XRReferenceSpace の reset は tracking origin の不連続を示し、以前の pose と fresh frame を混ぜない設計が必要になる。"
+  ],
+  "keyTopicsEn": [
+    "Required features form a hard session-start gate.",
+    "Optional features enable progressive enhancement.",
+    "Support probes do not reserve immersive sessions.",
+    "Reference-space resets require fresh-frame evaluation."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: XR Feature Contract Garden",
+      "url": "../outputs/2026-11-27_html_xr_feature_contract_garden.html"
+    },
+    {
+      "label": "Today's derivative sample: Reference Space Reset Ribbon",
+      "url": "../outputs/2026-11-27_html_reference_space_reset_ribbon.html"
+    },
+    {
+      "label": "W3C — WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "Immersive Web — WebXR Device API explained",
+      "url": "https://immersive-web.github.io/webxr/explainer.html"
+    },
+    {
+      "label": "MDN — Starting up and shutting down a WebXR session",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Startup_and_shutdown"
+    },
+    {
+      "label": "Immersive Web — WebXR Samples",
+      "url": "https://github.com/immersive-web/webxr-samples"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "WebXR Device API は requiredFeatures と optionalFeatures を分け、前者が利用できなければ session 作成を拒否し、後者は使えれば有効にする契約を示します。公式 samples には input、hit-test、framebuffer / viewport scaling などが揃い、同じ機能でも『成立に必要か、表現を育てる追加か』を分離する見方ができます。外部デモは根拠として参照し、公開アーカイブには自作試作だけを置きます。",
+      "bodyEn": "The specification's required/optional split is a practical interaction-design contract, not just API syntax.",
+      "links": [
+        {
+          "label": "W3C WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        },
+        {
+          "label": "Official WebXR Samples",
+          "url": "https://github.com/immersive-web/webxr-samples"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命 Feature Contract Garden は feature を required / optional / off に切り替え、厳格な開始条件と段階的な表現を同じ画面に見せます。派生 Reset Ribbon は tracking origin の変化後、オブジェクトを即座に確定し直さず、紫のリボンで pending を見せて fresh frame の再評価で落ち着かせます。",
+      "bodyEn": "The main exposes feature contracts; the derivative turns reset recovery into a visible pending state."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "immersive session の requestSession は user activation に結び付け、isSessionSupported の結果だけで開始成功を約束しません。requiredFeatures は本当に無ければ体験が破綻するものへ限定し、optionalFeatures は取得結果を実際に試してから使います。reference space の reset を受けたら、変換を反映するまで古い pose、hit-test、anchor 候補を現在の commit に流用しない方針が安全です。",
+      "bodyEn": "Request inside activation, keep required features minimal, and re-evaluate spatial evidence after reset."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "feature receipt には session mode、feature の要求区分、結果、fallback を残し、空間画像や生の pose は保存しない設計が扱いやすいです。展示なら required / optional を植物の根と花に対応させ、業務 UI なら許可・失敗・代替経路の説明に、教育なら probe と request の違いを示す教材にできます。Reset Ribbon の freshness 状態は、11月26日の input source 消失後の操作再開判定とも組み合わせられます。",
+      "bodyEn": "Small capability and freshness receipts can support installation, operational UI, and teaching without retaining spatial data."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実機では requestSession の失敗理由、同時に一つしか持てない immersive session、optional feature の許可結果を mode ごとに記録します。tracking 再較正、境界変更、headset の復帰で reset と visibility change がどう並ぶかを確認し、fresh frame 前の UI を静かに pending に保ちます。",
+      "bodyEn": "Track real request outcomes and the ordering of reset and visibility events across devices."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で hit-test を optional、local-floor を required にして session request の receipt を見てください。次に派生で reset を押し、fresh frame で再評価するまで古い pose が commit されないことを比べます。",
+      "bodyEn": "Compare an optional hit-test with a required floor space, then defer spatial commitment until a fresh frame."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C Device API、公式 explainer、MDN lifecycle、公式 samples。設計: feature contract と spatial freshness を分離。実装: Contract Garden と Reset Ribbon。次: 実 XRSession に接続して request 結果、reference space reset、input source lifecycle を同じ時系列 receipt にまとめます。",
+      "bodyEn": "Research became a feature/freshness model; next is a real-session lifecycle receipt."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の豊かさは最初から全部を要求することではなく、何が無いと物語が始まらないかを小さく言えることにあります。空間が少しずれた時も、即座に整ったふりをせず、再び見定める余白を UI に残すと体験の因果が保たれます。",
+      "bodyEn": "XR feels more trustworthy when its limits and re-alignment moments remain legible."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 outputs/2026-11-27_html_xr_feature_contract_garden.html を実装しました。何が動くか: feature を required / optional / off に切り替え、session mode、probe、明示操作後の request 方針を receipt で確認できます。次に足すなら実 requestSession の enabled feature を表示します。派生 outputs/2026-11-27_html_reference_space_reset_ribbon.html も実装しました。何が動くか: tracking origin reset、pending 状態、fresh frame の再評価を可視化します。次に足すなら XRReferenceSpace reset event と transform を実接続します。",
+      "bodyEn": "The main models feature negotiation; the derivative models a safe spatial re-alignment pause."
+    }
+  ]
+}
