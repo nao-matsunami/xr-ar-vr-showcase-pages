@@ -1,0 +1,111 @@
+{
+  "date": "2026-11-28",
+  "headline": "XR の frame ごとの確かさを配置と描画予算の共通ルールにする",
+  "headlineEn": "Make per-frame freshness a shared rule for placement and render budget",
+  "summary": "W3C WebXR Device API と MDN の frame loop・session lifecycle を参照し、同一フレームの空間証拠だけを確定する本命試作と、描画予算を段階的に守る派生試作を自作しました。",
+  "summaryEn": "Two original prototypes turn frame coherence and adaptive render budget decisions into visible, inspectable receipts.",
+  "keyTopics": [
+    "WebXR の描画は XRSession.requestAnimationFrame() の callback ごとに XRFrame を受けて更新する。",
+    "window の requestAnimationFrame と XRSession の frame loop は交換可能ではなく、XR frame の状態を一単位として扱う。",
+    "visibility change や reference-space の変化の後は、古い空間証拠をそのまま commit しない。",
+    "フレーム予算を超える時は pose を使い回すのではなく、新しい詳細の確定を保留し品質を落とす。"
+  ],
+  "keyTopicsEn": [
+    "The XR frame callback is the unit of spatial evidence.",
+    "Window and XR animation loops are not interchangeable.",
+    "Fresh evidence matters after lifecycle changes.",
+    "Defer detail before reusing stale poses."
+  ],
+  "links": [
+    {
+      "label": "Today's main sample: Frame Freshness Studio",
+      "url": "../outputs/2026-11-28_html_frame_freshness_studio.html"
+    },
+    {
+      "label": "Today's derivative sample: XR Render Budget Metronome",
+      "url": "../outputs/2026-11-28_html_xr_render_budget_metronome.html"
+    },
+    {
+      "label": "W3C — WebXR Device API",
+      "url": "https://www.w3.org/TR/webxr/"
+    },
+    {
+      "label": "MDN — XRSession.requestAnimationFrame()",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestAnimationFrame"
+    },
+    {
+      "label": "MDN — WebXR application life cycle",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Lifecycle"
+    },
+    {
+      "label": "Immersive Web — WebXR Samples",
+      "url": "https://github.com/immersive-web/webxr-samples"
+    }
+  ],
+  "sections": [
+    {
+      "title": "注目事例と何が面白いか",
+      "titleEn": "Notable example and why it matters",
+      "body": "WebXR Device API の通常の流れは session を作り、XRSession.requestAnimationFrame() ごとに XRFrame を受けて入力・pose・描画を更新するものです。MDN は window と XRSession の animation frame を交換可能と見なさないよう注意しています。これは性能の話だけではなく、『どの空間証拠を一緒に確定してよいか』を示す境界でもあります。公式 samples は参照として使い、公開アーカイブには外部デモでなく自作試作だけを置きます。",
+      "bodyEn": "The XR callback is a useful boundary for both rendering and spatial commitment.",
+      "links": [
+        {
+          "label": "W3C WebXR Device API",
+          "url": "https://www.w3.org/TR/webxr/"
+        },
+        {
+          "label": "MDN XR frame callback",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestAnimationFrame"
+        }
+      ]
+    },
+    {
+      "title": "表現・インタラクションのアイデア",
+      "titleEn": "Expression and interaction idea",
+      "body": "本命 Frame Freshness Studio は pose と hit-test の frame 番号を分け、同じ新鮮な frame で揃った時だけ配置を commit します。reference space reset や片方だけの更新では、体験を止めずに pending を見せます。派生 Render Budget Metronome は、予算超過時に古い pose を流用するのではなく、追加する詳細を保留または縮小するリズムを棒グラフにしました。",
+      "bodyEn": "One prototype guards spatial commitment; the other guards detail commitment."
+    },
+    {
+      "title": "制作に使えそうな技術メモ",
+      "titleEn": "Production note",
+      "body": "実装では一つの XR frame callback の中で getViewerPose、hit-test 結果、入力の起点を束ね、参照空間と時刻を receipt として持たせます。visibilitychange、reset、input source の消失後は fresh frame まで confirm 操作を保留します。描画が重い場合は XRSession の次 frame を必ず予約しつつ、解像度、粒子数、postFX を段階的に下げます。",
+      "bodyEn": "Bundle spatial evidence per callback, then degrade optional visual detail before compromising freshness."
+    },
+    {
+      "title": "サンプルデータの可能性と組み合わせ",
+      "titleEn": "Sample data potential and combinations",
+      "body": "frame 番号、reference-space epoch、品質 tier、commit / hold の理由は、実空間の画像や生 pose を残さずに扱える軽い運用ログです。展示では pending を音の間や淡い光にし、業務 UI では位置確定の説明責任にし、AI 推論では入力 frame と結果 frame の差を見せられます。11月27日の feature contract と合わせれば、feature の許可から実行中の品質制御までを一つの receipt にできます。",
+      "bodyEn": "Small receipts connect a privacy-conscious log to installation, operational UI, and AI timing."
+    },
+    {
+      "title": "明日以降ウォッチする対象",
+      "titleEn": "Watch next",
+      "body": "実機で visibilitychange、reference-space reset、input source change がどの順に来るか、immersive-vr と immersive-ar で frame cadence がどう異なるかを観察します。WebXR Device API の更新と、Layers・WebGPU・capture 系の仕様で frame lifetime に影響する変更も追います。",
+      "bodyEn": "Observe lifecycle ordering and cadence on real devices, then track adjacent WebXR proposals."
+    },
+    {
+      "title": "試すならこれ",
+      "titleEn": "If you try one thing",
+      "body": "本命で「古い pose を混ぜる」を押してから配置を commit し、reject を確認してください。次に fresh frame を受信して緑の commit に変わる差を見ます。派生では重い postFX にして8 frames再生し、15ms 超過が detail tier を下げるだけで pose を再利用しないことを確かめます。",
+      "bodyEn": "First force a mismatch, then restore coherence; next observe quality fall before pose reuse."
+    },
+    {
+      "title": "進行マップ",
+      "titleEn": "Progress map",
+      "body": "調査: W3C Device API、MDN frame callback / lifecycle、公式 samples。設計: freshness と品質予算を別々の commit 規則にした。実装: Frame Freshness Studio と Render Budget Metronome。次: 実 XRSession の pose・hit-test・visibility から receipt を生成し、実測タイミングで tier を決めます。",
+      "bodyEn": "Research became two explicit commit policies; next is real XRSession telemetry."
+    },
+    {
+      "title": "俯瞰メモ",
+      "titleEn": "Bird's-eye memo",
+      "body": "XR の滑らかさは、常に何かを描き続けることだけでは生まれません。今の世界を本当に見た frame だけで決めること、重い時には表現を静かに簡略化することが、空間に置いた意味を守ります。",
+      "bodyEn": "Trust comes from making fewer claims when evidence or budget is thin."
+    },
+    {
+      "title": "今日のミニ試作候補",
+      "titleEn": "Today's mini prototype candidate",
+      "body": "本命 outputs/2026-11-28_html_frame_freshness_studio.html を実装しました。何が動くか: pose と hit-test の frame 整合、reference space reset、pending / reject / commit を操作できます。次に足すなら実 XRFrame の pose と hit-test を同じ callback で接続します。派生 outputs/2026-11-28_html_xr_render_budget_metronome.html も実装しました。何が動くか: synthetic frame budget に応じて detail tier と新要素の確定を変えます。次に足すなら GPU timer と viewport scale を実測接続します。",
+      "bodyEn": "The main models coherent spatial evidence; the derivative models budget-aware detail deferral."
+    }
+  ]
+}

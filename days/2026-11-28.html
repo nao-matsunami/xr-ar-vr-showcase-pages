@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XR の frame ごとの確かさを配置と描画予算の共通ルールにする | 2026-11-28</title>
+  <style>
+    :root {
+      --bg0: #07111a;
+      --bg1: #102338;
+      --panel: rgba(9, 20, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --line: rgba(126, 228, 255, 0.12);
+      --text: #ebf8ff;
+      --muted: #9ab6c8;
+      --accent: #7ce4ff;
+      --accent2: #ffd868;
+      --shadow: rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Hiragino Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(124, 228, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(255, 216, 104, 0.12), transparent 20%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+
+    .hero,
+    .detail-block,
+    .preview,
+    .day-nav {
+      border-radius: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p,
+    .detail-block p,
+    .detail-block li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .en-copy,
+    .heading-pair-secondary,
+    .hero-subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .heading-pair {
+      display: grid;
+      gap: 4px;
+    }
+
+    .hero-subtitle {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .date {
+      margin: 0 0 10px;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .actions,
+    .day-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary-link,
+    .day-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), #8effc8);
+      color: #062334;
+    }
+
+    .secondary-link,
+    .day-link {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .day-nav {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-block {
+      padding: 22px;
+    }
+
+    .detail-block h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .link-list {
+      display: grid;
+      gap: 8px;
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .link-list a {
+      color: var(--accent);
+    }
+
+    .topic-list {
+      display: grid;
+      gap: 12px;
+      padding-left: 22px;
+      margin: 12px 0 0;
+    }
+
+    .topic-list li span {
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sample-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sample-item-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sample-item h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .sample-item p {
+      margin: 0;
+    }
+
+    .preview {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    iframe {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 960px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      iframe {
+        height: 420px;
+      }
+    }
+  </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GD2PHJX65F"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GD2PHJX65F');</script></head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="date">2026.11.28</p>
+      <h1>XR の frame ごとの確かさを配置と描画予算の共通ルールにする</h1>
+      <p class="hero-subtitle">Make per-frame freshness a shared rule for placement and render budget</p>
+      <p>W3C WebXR Device API と MDN の frame loop・session lifecycle を参照し、同一フレームの空間証拠だけを確定する本命試作と、描画予算を段階的に守る派生試作を自作しました。</p>
+      <p class="en-copy">Two original prototypes turn frame coherence and adaptive render budget decisions into visible, inspectable receipts.</p>
+      <div class="actions">
+        <a class="primary" href="../outputs/2026-11-28_html_frame_freshness_studio.html">代表サンプルを開く / Open sample</a>
+        <a class="secondary-link" href="../index.html">一覧へ戻る / Back to archive</a>
+      </div>
+    </section>
+
+    <nav class="day-nav" aria-label="日付移動">
+      <a class="day-link" href="../days/2026-11-27.html">← 2026.11.27</a>
+      <span class="day-link">最新日 / Latest</span>
+    </nav>
+
+    <section class="content">
+      <div class="stack">
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">この日のサンプル</span><span class="heading-pair-secondary">Samples for this day</span></span></h2>
+          <div class="sample-list">
+            
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>XR Frame Freshness Studio</h3>
+              <p>XR の pose・hit-test・入力を別々の時刻から寄せ集めず、同じ frame の証拠だけを commit に使うための自作ミニ試作です。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-28_html_frame_freshness_studio.html">開く / Open</a>
+          </div>
+        </article>
+      
+        <article class="sample-item">
+          <div class="sample-item-head">
+            <div>
+              <h3>XR Render Budget Metronome</h3>
+              <p>XR 専用の frame loop を「描けたか」ではなく、次の repaint までに品質をどう落として守るかとして試す派生プロトタイプです。</p>
+            </div>
+            <a class="secondary-link" href="../outputs/2026-11-28_html_xr_render_budget_metronome.html">開く / Open</a>
+          </div>
+        </article>
+      
+          </div>
+        </section>
+        
+      <section class="detail-block">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">今日の重要トピック</span><span class="heading-pair-secondary">Key topics today</span></span></h2>
+        <ol class="topic-list">
+          
+            <li>
+              <span>WebXR の描画は XRSession.requestAnimationFrame() の callback ごとに XRFrame を受けて更新する。</span>
+              <span class="en-copy">The XR frame callback is the unit of spatial evidence.</span>
+            </li>
+          
+            <li>
+              <span>window の requestAnimationFrame と XRSession の frame loop は交換可能ではなく、XR frame の状態を一単位として扱う。</span>
+              <span class="en-copy">Window and XR animation loops are not interchangeable.</span>
+            </li>
+          
+            <li>
+              <span>visibility change や reference-space の変化の後は、古い空間証拠をそのまま commit しない。</span>
+              <span class="en-copy">Fresh evidence matters after lifecycle changes.</span>
+            </li>
+          
+            <li>
+              <span>フレーム予算を超える時は pose を使い回すのではなく、新しい詳細の確定を保留し品質を落とす。</span>
+              <span class="en-copy">Defer detail before reusing stale poses.</span>
+            </li>
+          
+        </ol>
+      </section>
+  
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">注目事例と何が面白いか</span><span class="heading-pair-secondary">Notable example and why it matters</span></span></h2>
+          <p>WebXR Device API の通常の流れは session を作り、XRSession.requestAnimationFrame() ごとに XRFrame を受けて入力・pose・描画を更新するものです。MDN は window と XRSession の animation frame を交換可能と見なさないよう注意しています。これは性能の話だけではなく、『どの空間証拠を一緒に確定してよいか』を示す境界でもあります。公式 samples は参照として使い、公開アーカイブには外部デモでなく自作試作だけを置きます。</p>
+          <p class="en-copy">The XR callback is a useful boundary for both rendering and spatial commitment.</p>
+          
+    <ul class="link-list">
+      
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C WebXR Device API</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestAnimationFrame" target="_blank" rel="noreferrer">MDN XR frame callback</a></li>
+          
+    </ul>
+  
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">表現・インタラクションのアイデア</span><span class="heading-pair-secondary">Expression and interaction idea</span></span></h2>
+          <p>本命 Frame Freshness Studio は pose と hit-test の frame 番号を分け、同じ新鮮な frame で揃った時だけ配置を commit します。reference space reset や片方だけの更新では、体験を止めずに pending を見せます。派生 Render Budget Metronome は、予算超過時に古い pose を流用するのではなく、追加する詳細を保留または縮小するリズムを棒グラフにしました。</p>
+          <p class="en-copy">One prototype guards spatial commitment; the other guards detail commitment.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">制作に使えそうな技術メモ</span><span class="heading-pair-secondary">Production note</span></span></h2>
+          <p>実装では一つの XR frame callback の中で getViewerPose、hit-test 結果、入力の起点を束ね、参照空間と時刻を receipt として持たせます。visibilitychange、reset、input source の消失後は fresh frame まで confirm 操作を保留します。描画が重い場合は XRSession の次 frame を必ず予約しつつ、解像度、粒子数、postFX を段階的に下げます。</p>
+          <p class="en-copy">Bundle spatial evidence per callback, then degrade optional visual detail before compromising freshness.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルデータの可能性と組み合わせ</span><span class="heading-pair-secondary">Sample data potential and combinations</span></span></h2>
+          <p>frame 番号、reference-space epoch、品質 tier、commit / hold の理由は、実空間の画像や生 pose を残さずに扱える軽い運用ログです。展示では pending を音の間や淡い光にし、業務 UI では位置確定の説明責任にし、AI 推論では入力 frame と結果 frame の差を見せられます。11月27日の feature contract と合わせれば、feature の許可から実行中の品質制御までを一つの receipt にできます。</p>
+          <p class="en-copy">Small receipts connect a privacy-conscious log to installation, operational UI, and AI timing.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">明日以降ウォッチする対象</span><span class="heading-pair-secondary">Watch next</span></span></h2>
+          <p>実機で visibilitychange、reference-space reset、input source change がどの順に来るか、immersive-vr と immersive-ar で frame cadence がどう異なるかを観察します。WebXR Device API の更新と、Layers・WebGPU・capture 系の仕様で frame lifetime に影響する変更も追います。</p>
+          <p class="en-copy">Observe lifecycle ordering and cadence on real devices, then track adjacent WebXR proposals.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">試すならこれ</span><span class="heading-pair-secondary">If you try one thing</span></span></h2>
+          <p>本命で「古い pose を混ぜる」を押してから配置を commit し、reject を確認してください。次に fresh frame を受信して緑の commit に変わる差を見ます。派生では重い postFX にして8 frames再生し、15ms 超過が detail tier を下げるだけで pose を再利用しないことを確かめます。</p>
+          <p class="en-copy">First force a mismatch, then restore coherence; next observe quality fall before pose reuse.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">進行マップ</span><span class="heading-pair-secondary">Progress map</span></span></h2>
+          <p>調査: W3C Device API、MDN frame callback / lifecycle、公式 samples。設計: freshness と品質予算を別々の commit 規則にした。実装: Frame Freshness Studio と Render Budget Metronome。次: 実 XRSession の pose・hit-test・visibility から receipt を生成し、実測タイミングで tier を決めます。</p>
+          <p class="en-copy">Research became two explicit commit policies; next is real XRSession telemetry.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">俯瞰メモ</span><span class="heading-pair-secondary">Bird's-eye memo</span></span></h2>
+          <p>XR の滑らかさは、常に何かを描き続けることだけでは生まれません。今の世界を本当に見た frame だけで決めること、重い時には表現を静かに簡略化することが、空間に置いた意味を守ります。</p>
+          <p class="en-copy">Trust comes from making fewer claims when evidence or budget is thin.</p>
+          
+        </section>
+      
+
+        <section class="detail-block">
+          <h2><span class="heading-pair"><span class="heading-pair-primary">今日のミニ試作候補</span><span class="heading-pair-secondary">Today's mini prototype candidate</span></span></h2>
+          <p>本命 outputs/2026-11-28_html_frame_freshness_studio.html を実装しました。何が動くか: pose と hit-test の frame 整合、reference space reset、pending / reject / commit を操作できます。次に足すなら実 XRFrame の pose と hit-test を同じ callback で接続します。派生 outputs/2026-11-28_html_xr_render_budget_metronome.html も実装しました。何が動くか: synthetic frame budget に応じて detail tier と新要素の確定を変えます。次に足すなら GPU timer と viewport scale を実測接続します。</p>
+          <p class="en-copy">The main models coherent spatial evidence; the derivative models budget-aware detail deferral.</p>
+          
+        </section>
+      
+        
+              <section class="detail-block">
+                <h2><span class="heading-pair"><span class="heading-pair-primary">参考リンク</span><span class="heading-pair-secondary">Reference links</span></span></h2>
+                
+    <ul class="link-list">
+      
+            <li><a href="../outputs/2026-11-28_html_frame_freshness_studio.html" target="_blank" rel="noreferrer">Today's main sample: Frame Freshness Studio</a></li>
+          
+            <li><a href="../outputs/2026-11-28_html_xr_render_budget_metronome.html" target="_blank" rel="noreferrer">Today's derivative sample: XR Render Budget Metronome</a></li>
+          
+            <li><a href="https://www.w3.org/TR/webxr/" target="_blank" rel="noreferrer">W3C — WebXR Device API</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestAnimationFrame" target="_blank" rel="noreferrer">MDN — XRSession.requestAnimationFrame()</a></li>
+          
+            <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API/Lifecycle" target="_blank" rel="noreferrer">MDN — WebXR application life cycle</a></li>
+          
+            <li><a href="https://github.com/immersive-web/webxr-samples" target="_blank" rel="noreferrer">Immersive Web — WebXR Samples</a></li>
+          
+    </ul>
+  
+              </section>
+            
+      </div>
+
+      <aside class="preview">
+        <h2><span class="heading-pair"><span class="heading-pair-primary">サンプルプレビュー</span><span class="heading-pair-secondary">Sample preview</span></span></h2>
+        <iframe src="../outputs/2026-11-28_html_frame_freshness_studio.html" loading="lazy" title="XR Frame Freshness Studio"></iframe>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
